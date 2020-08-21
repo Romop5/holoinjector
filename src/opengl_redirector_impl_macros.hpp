@@ -66,7 +66,7 @@
 
 /// Redirect glXYZ to OpenglRedirectorBase's method
 #define OPENGL_REDIRECTOR_API(_retType, _name, ...)\
-_retType _name ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) )\
+_retType impl##_name( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) )\
 {\
     return g_OpenGLRedirector-> _name(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__));\
 }

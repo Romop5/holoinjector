@@ -474,3 +474,22 @@ OPENGL_FORWARD(void,glBlendEquationSeparateATI,GLenum,modeRGB,GLenum,modeA);
 OPENGL_FORWARD(void,glEGLImageTargetTexture2DOES,GLenum,target,GLeglImageOES,image);
 OPENGL_FORWARD(void,glEGLImageTargetRenderbufferStorageOES,GLenum,target,GLeglImageOES,image);
 
+
+void OpenglRedirectorBase::registerOpenGLSymbols(const std::vector<std::string>& symbols, SymbolRedirection& redirector)
+{
+    //TODO: do this properly (e.g. static initialization with macros)
+    std::unordered_map<std::string, void*> map = 
+    {
+        {"glClear", reinterpret_cast<void*>(&implglClear)},
+    };
+
+    for(const auto& symbol: symbols)
+    {
+        if(map.count(symbol) > 0)
+        {
+            redirector.addRedirection(symbol, map[symbol]);
+        }
+    }
+}
+
+

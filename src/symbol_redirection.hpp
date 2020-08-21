@@ -10,6 +10,7 @@ namespace ve
         private:
             std::unordered_map<std::string, void*> mapping;
         public:
+            SymbolRedirection() = default;
             bool hasRedirection(const std::string& symbolName) const
             {
                 return mapping.count(symbolName) > 0;
@@ -19,7 +20,7 @@ namespace ve
                 return mapping.at(symbolName);
             }
 
-            void* addRedirection(const std::string& symbol, void* address)
+            void addRedirection(const std::string& symbol, void* address)
             {
                 mapping[symbol] = address;
             }
