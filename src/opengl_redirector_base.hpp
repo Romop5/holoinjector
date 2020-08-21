@@ -7,6 +7,15 @@ namespace ve
 {
     /**
      * @brief Defines mechanism to redirect calls, specific to OpenGL
+     *
+     * This base class attempts to define whole OpenGL API. If you want 
+     * to redirect specific subclass of functions, use subclass of this
+     * class, define your own overrides, and call registerOpenGLSymbols()
+     * with redirection-desired API names.
+     *
+     * Call OpenglRedirectorBase's method with corresponding name in order
+     * to invoke original function.
+     *
      */
     class OpenglRedirectorBase: public RedirectorBase
     {

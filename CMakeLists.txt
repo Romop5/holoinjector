@@ -3,9 +3,12 @@ project(enhancer)
 
 option(ENHANCER_32 "Force 32-bit compilation" OFF)
 
+# Stores 32 or 64 into ENHANCER_BITS
+set(ENHANCER_BITS 64)
 
 if(${ENHANCER_32})
     message(STATUS "Forcing 32-bit compilation")
+    set(ENHANCER_BITS 32)
 endif()
 
 set(PROJECT_SUFFIX, "")
@@ -15,8 +18,11 @@ endif()
 ###############################################################################
 # Find subhook
 ###############################################################################
-find_file (SUBHOOK_SO NAMES libsubhook.so PATHS /usr/local/lib/ REQUIRED)
+find_file (SUBHOOK_SO32 NAMES libsubhook.so PATHS /usr/local/lib/ REQUIRED)
+find_file (SUBHOOK_SO64 NAMES libsubhook.so PATHS /usr/local/lib64/ REQUIRED)
 find_file (SUBHOOK_H NAMES subhook.h REQUIRED)
+
+set(SUBHOOK_SO ${SUBHOOK_SO${ENHANCER_BITS}})
 
 get_filename_component(SUBHOOK_INCL ${SUBHOOK_H} DIRECTORY)
 ###############################################################################

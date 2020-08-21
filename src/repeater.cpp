@@ -10,7 +10,7 @@ void Repeater::registerCallbacks(SymbolRedirection& redirector)
 
 void Repeater::glClear(GLbitfield mask)
 {
-    std::cout << "Redirecting glClear()" << std::endl;
+    printf("[Repeater] Redirecting glClear\n");
     OpenglRedirectorBase::glClear(mask);
 } 
 

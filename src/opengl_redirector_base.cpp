@@ -1,3 +1,14 @@
+/*
+ * BEWARE !!!
+ *
+ * Following .cpp file is heavily overusing macros. 
+ * In order not to loose your head, use following sequence of commands
+ * to get expanded C++ code in reasonable format:
+ *
+ * g++ -E opengl_redirector_base.cpp | clang-format 
+ */
+
+#include <unordered_map>
 #include "opengl_redirector_base.hpp"
 #include "opengl_redirector_impl_macros.hpp"
 
@@ -16,6 +27,32 @@ OpenglRedirectorBase::OpenglRedirectorBase()
     g_OpenGLRedirector = this;
 }
 
+namespace helper
+{
+    static std::unordered_map<std::string, void*> definedAPIFunctions;
+    /// Register corresponding OpenGL API rediction into definedAPIFunctions
+    class RegisterAPIFunction
+    {
+        public:
+        RegisterAPIFunction(const std::string& name, void* address)
+        {
+            definedAPIFunctions[name] = address;
+        }
+    };
+
+    void log_api_call(std::string apiName, ...)
+    {
+        printf("[Enhancer API CALL: %s]\n", apiName.c_str());
+    }
+}
+
+/*
+ * OPENGL_FORWARD does following:
+ *  - a single static function with name implglXYZ, calling OpenglRedirectorBase::XYZ on call
+ *  with g_OpenGLRedirector as instance.
+ *  - a single method of class OpenglRedirectorBase for class method XYZ
+ *  - an instance of RegisterAPIFunction with XYZ and address of implglXYZ
+ */
 OPENGL_FORWARD(void,glClearIndex,GLfloat,c);
 OPENGL_FORWARD(void,glClearColor,GLclampf,red,GLclampf,green,GLclampf,blue,GLclampf,alpha);
 OPENGL_FORWARD(void,glClear,GLbitfield,mask);
@@ -475,20 +512,21 @@ OPENGL_FORWARD(void,glEGLImageTargetTexture2DOES,GLenum,target,GLeglImageOES,ima
 OPENGL_FORWARD(void,glEGLImageTargetRenderbufferStorageOES,GLenum,target,GLeglImageOES,image);
 
 
+/// Register all OpenGLAPI calls, defined above
 void OpenglRedirectorBase::registerOpenGLSymbols(const std::vector<std::string>& symbols, SymbolRedirection& redirector)
 {
-    //TODO: do this properly (e.g. static initialization with macros)
-    std::unordered_map<std::string, void*> map = 
-    {
-        {"glClear", reinterpret_cast<void*>(&implglClear)},
-    };
-
+    /*
     for(const auto& symbol: symbols)
     {
-        if(map.count(symbol) > 0)
+        if(helper::definedAPIFunctions.count(symbol) > 0)
         {
-            redirector.addRedirection(symbol, map[symbol]);
+            redirector.addRedirection(symbol, helper::definedAPIFunctions[symbol]);
         }
+    }*/
+    
+    for(auto& pair: helper::definedAPIFunctions)
+    {
+        redirector.addRedirection(pair.first, pair.second);
     }
 }
 

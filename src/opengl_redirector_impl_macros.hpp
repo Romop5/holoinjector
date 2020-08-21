@@ -45,38 +45,42 @@
 /*==================================================
  * HELPER MACROS - OpenGL
  *=================================================*/
+#define OPENGL_LOG_API_CALL helper::log_api_call
+
 /// Expands 'type, name' to ', type name '
 #define OPENGL_EXPAND_PAIR(a,b) , a b
 /// Expands a sequence of pairs into comma-separated 'type name' pairs
-#define OPENGL_EXPAND_PROTOTYPE(a,b, ...)\
+#define OPENGL_EXPAND_PROTOTYPE(a,b, ...) \
     a b EXPANDB(OPENGL_EXPAND_PAIR, __VA_ARGS__)
 
 
 /// Expands 'type, name' to ', type name '
 #define OPENGL_EXPAND_LOG_PAIR(a,b)  << ", " << std::to_string(b)
 /// Expand (a,b,...) to a << ", " << b << ...
-#define OPENGL_EXPAND_LOG(a,b, ...)\
+#define OPENGL_EXPAND_LOG(a,b, ...) \
     std::to_string(b) EXPANDB(OPENGL_EXPAND_LOG_PAIR, __VA_ARGS__)
 
 #define OPENGL_EXPAND_NAME(a,b) , b
 /// Expands a sequence of pairs into call list
-#define OPENGL_EXPAND_ARGUMENTS(a,b, ...)\
+#define OPENGL_EXPAND_ARGUMENTS(a,b, ...) \
     b EXPANDB(OPENGL_EXPAND_NAME,__VA_ARGS__)
 
 
 /// Redirect glXYZ to OpenglRedirectorBase's method
 #define OPENGL_REDIRECTOR_API(_retType, _name, ...)\
-_retType impl##_name( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) )\
-{\
-    return g_OpenGLRedirector-> _name(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__));\
-}
+_retType impl##_name( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ) \
+{ \
+    OPENGL_LOG_API_CALL (""#_name); \
+    return g_OpenGLRedirector-> _name(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__)); \
+} \
+static helper::RegisterAPIFunction register_impl##_name(""#_name, reinterpret_cast<void*>(&impl##_name));
 
 #define OPENGL_REDIRECTOR_METHOD(_retType, _name, ...)\
-_retType OpenglRedirectorBase :: _name ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) )\
-{\
-    using implType = _retType ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) );\
-    static auto original = getOriginalSymbolAddress(""#_name);\
-    return reinterpret_cast<implType*>(original)(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__));\
+_retType OpenglRedirectorBase :: _name ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ) \
+{ \
+    using implType = _retType ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ); \
+    static auto original = getOriginalSymbolAddress(""#_name); \
+    return reinterpret_cast<implType*>(original)(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__)); \
 }
 
 
@@ -87,8 +91,8 @@ _retType OpenglRedirectorBase :: _name ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) )\
  * GLAPI void GLAPIENTRY glClear( GLbitfield mask );
  */
 #define OPENGL_FORWARD(_retType, _name, ...)\
-    OPENGL_REDIRECTOR_API(_retType, _name, __VA_ARGS__)\
-    OPENGL_REDIRECTOR_METHOD(_retType, _name, __VA_ARGS__)\
+    OPENGL_REDIRECTOR_API(_retType, _name, __VA_ARGS__) \
+    OPENGL_REDIRECTOR_METHOD(_retType, _name, __VA_ARGS__) \
 
 
 /*
@@ -97,11 +101,10 @@ _retType OpenglRedirectorBase :: _name ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) )\
  * one could use FORWARD object to forward original parameters or ORIGINAL
  */
 #define OPENGL_REDEFINE(_retType, _name, ...)\
-extern "C" _retType _name ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) )\
-{\
-    using implType = _retType ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) );\
-    static auto _Symbol = hooking::SymbolReference(libglPath, ""#_name);\
-    auto ORIGINAL = reinterpret_cast<implType*>(_Symbol());\
-    auto FORWARD = std::bind(ORIGINAL, OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__) );\
-
+extern "C" _retType _name ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ) \
+{ \
+    using implType = _retType ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ); \
+    static auto _Symbol = hooking::SymbolReference(libglPath, ""#_name); \
+    auto ORIGINAL = reinterpret_cast<implType*>(_Symbol()); \
+    auto FORWARD = std::bind(ORIGINAL, OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__) ); \
 
