@@ -158,7 +158,7 @@ __attribute((constructor)) void setup()
     context->repeater.setSymbolGetter([](const char* symbol)->void* 
     {
         printf("[Enhancer- symbol getter] Calling original dlsym with symbo %s\n",symbol);
-        auto addr = ve::original_dlsym(RTLD_DEFAULT,symbol);
+        auto addr = ve::original_dlsym(RTLD_NEXT,symbol);
         if(addr == NULL)
         {
             puts("[Enhancer- symbol getter] Failed to get original address via dlsym()");
