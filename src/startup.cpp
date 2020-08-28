@@ -27,13 +27,19 @@ static std::unique_ptr<EnhancerContext> context = nullptr;
 
 namespace ve
 {
-    void* original_glXGetProcAddress(const GLubyte * procName)
+    void* original_dlsym(void* params, const char* symbol);
+
+    
+    void (*original_glXGetProcAddress(const GLubyte * procName))(void)
     {
-        auto original = subhook_get_trampoline(context->glxGetProcAddressHook);
+        auto original = original_dlsym(RTLD_NEXT, "glXGetProcAddress");
         return reinterpret_cast<decltype(original_glXGetProcAddress)*>(original)(procName);
+
+        //auto original = subhook_get_trampoline(context->glxGetProcAddressHook);
+        //return reinterpret_cast<decltype(original_glXGetProcAddress)*>(original)(procName);
     }
 
-    void* hooked_glXGetProcAddress(const GLubyte * procName)
+    void (*hooked_glXGetProcAddress(const GLubyte * procName))(void)
     {
         static std::mutex mutex;
         auto lock = std::unique_lock<std::mutex>(mutex);
@@ -49,9 +55,10 @@ namespace ve
         if(context->redictions.hasRedirection(symbol))
         {
             auto* const targetAddress = context->redictions.getTarget(symbol);
-            return targetAddress;
+            return reinterpret_cast<void(*)(void)>(targetAddress);
         }
 
+        printf("[Enhancer glxGetProcAddress] %s => calling original func\n", procName);
         return original_glXGetProcAddress(procName);
     }
 
@@ -94,6 +101,19 @@ namespace ve
 
     }
 
+void (*glXGetProcAddressARB(const GLubyte * procName))(void)
+{
+    printf("glXGetProcAddress ARB\n");
+    return hooked_glXGetProcAddress(procName);
+}
+
+void (*glXGetProcAddress(const GLubyte * procName))(void)
+{
+    return hooked_glXGetProcAddress(procName);
+}
+
+
+
 
 /**
  * @brief Execute when DLL is loaded to process
@@ -123,6 +143,9 @@ __attribute((constructor)) void setup()
         return;
     }
 
+    
+    if(false)
+    {
     void* glxGetProcAddressOriginal = original_dlsym(RTLD_NEXT, "glXGetProcAddress");
     if(glxGetProcAddressOriginal != nullptr)
     {
@@ -136,19 +159,29 @@ __attribute((constructor)) void setup()
             fputs("Enhancer failed: failed to hook dlsym()\n",stdout);
             return;
         }
-    }
-    void* glxGetProcAddressARBOriginal = original_dlsym(RTLD_DEFAULT, "glXGetProcAddressARB");
-    if(glxGetProcAddressARBOriginal != nullptr)
-    {
-        /*
-         * Hook dlopen/dlsym functions and dispatch via our own function
-         */
-        context->glxGetProcAddressHookARB = subhook_new(reinterpret_cast<void *>(glxGetProcAddressARBOriginal), reinterpret_cast<void *>(hooked_glXGetProcAddress), static_cast<subhook_flags>(0));
-        retval = subhook_install(context->glxGetProcAddressHookARB);
-        if(retval != 0)
+
+        auto trampoline_test = subhook_get_trampoline(context->glxGetProcAddressHook);
+        if(trampoline_test == NULL)
         {
-            fputs("Enhancer failed: failed to hook dlsym()\n",stdout);
+            fputs("Enhancer failed: failed to create trampoline() for glxGetProcAddress\n",stdout);
             return;
+        }
+
+    }
+
+        void* glxGetProcAddressARBOriginal = original_dlsym(RTLD_DEFAULT, "glXGetProcAddressARB");
+        if(glxGetProcAddressARBOriginal != nullptr)
+        {
+            /*
+             * Hook dlopen/dlsym functions and dispatch via our own function
+             */
+            context->glxGetProcAddressHookARB = subhook_new(reinterpret_cast<void *>(glxGetProcAddressARBOriginal), reinterpret_cast<void *>(hooked_glXGetProcAddress), static_cast<subhook_flags>(0));
+            retval = subhook_install(context->glxGetProcAddressHookARB);
+            if(retval != 0)
+            {
+                fputs("Enhancer failed: failed to hook dlsym()\n",stdout);
+                return;
+            }
         }
     }
 
