@@ -27,6 +27,9 @@ set(SUBHOOK_SO ${SUBHOOK_SO${ENHANCER_BITS}})
 get_filename_component(SUBHOOK_INCL ${SUBHOOK_H} DIRECTORY)
 ###############################################################################
 
+find_package(glm REQUIRED)
+###############################################################################
+
 set(ENHANCER_PROJECT_NAME "enhancer${PROJECT_SUFFIX}")
 message(STATUS "Using project name: ${ENHANCER_PROJECT_NAME}")
 add_library(${ENHANCER_PROJECT_NAME} SHARED
@@ -36,6 +39,7 @@ add_library(${ENHANCER_PROJECT_NAME} SHARED
 )
 
 target_link_libraries(${ENHANCER_PROJECT_NAME} PRIVATE ${SUBHOOK_SO} dl)
+target_link_libraries(${ENHANCER_PROJECT_NAME} PRIVATE glm)
 
 if(${ENHANCER_32})
     set_target_properties(${ENHANCER_PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")

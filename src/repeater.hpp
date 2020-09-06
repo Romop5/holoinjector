@@ -1,7 +1,8 @@
 #include <functional>
 #include "opengl_redirector_base.hpp"
-
 #include <unordered_map>
+
+#include "glm/glm.hpp"
 
 namespace ve
 {
@@ -27,7 +28,8 @@ namespace ve
 
         private:
         GLint getCurrentProgram();
-        void setEnhancerShift(GLfloat x, GLfloat y, GLfloat z);
+        void setEnhancerShift(const glm::vec3& clipSpaceTransformation);
+        void setEnhancerShift(const glm::mat4& clipSpaceTransformation);
 
         void duplicateCode(const std::function<void(void)>& code);
 

@@ -1,8 +1,10 @@
 #include "repeater.hpp"
 #include <iostream>
 #include <cassert>
-
 #include <regex>
+
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/transform.hpp>
 
 using namespace ve;
 
@@ -32,7 +34,10 @@ namespace helper
         auto mainPosition = shader.find("void main()");
         if(mainPosition == std::string::npos)
             return;
-        shader.insert(mainPosition, "uniform vec3 enhancer_shift;\n");
+        //shader.insert(mainPosition, "uniform vec3 enhancer_shift;\n");
+        //mainPosition = shader.find("void main()");
+
+        shader.insert(mainPosition, "uniform mat4 enhancer_transform;\n");
         mainPosition = shader.find("void main()");
 
         auto firstBrace = shader.find("{", mainPosition);
@@ -52,7 +57,7 @@ namespace helper
         if(braceCount == 0)
         {
             braceIterator--;
-            shader.insert(braceIterator-shader.begin(), "\n\tgl_Position.xyz += enhancer_shift;\n");
+            shader.insert(braceIterator-shader.begin(), "\n\tvec3 enhancer_shift = vec3(0.0,0.0,2.0)*gl_Position.w; \n\tgl_Position.xyz = (enhancer_transform*(vec4(enhancer_shift+gl_Position.xyz,1.0))).xyz-enhancer_shift;\n");
         }
     }
 
@@ -138,11 +143,20 @@ GLint Repeater::getCurrentProgram()
     return id;
 }
 
-void Repeater::setEnhancerShift(GLfloat x, GLfloat y, GLfloat z)
+void Repeater::setEnhancerShift(const glm::vec3& clipSpaceTransformation)
+{
+    return;
+    auto program = getCurrentProgram();
+    auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_transform");
+
+    glm::mat4 tmpMat = glm::mat4(glm::vec4(1,0,0,0),glm::vec4(0,1,0,0),glm::vec4(0,0,1,0),glm::vec4(clipSpaceTransformation,0.0));
+    OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(tmpMat)));
+}
+void Repeater::setEnhancerShift(const glm::mat4& clipSpaceTransformation)
 {
     auto program = getCurrentProgram();
-    auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_shift");
-    OpenglRedirectorBase::glUniform3f(location, x,y,z);
+    auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_transform");
+    OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(clipSpaceTransformation)));
 }
 
 
@@ -153,11 +167,16 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, viewport);
     // Set bottom (y is reverted in OpenGL) 
     OpenglRedirectorBase::glViewport(viewport[0],viewport[1], viewport[2],viewport[3]/2);
-    setEnhancerShift(0.3,0,0);
+    //setEnhancerShift(glm::vec3(0.3,0,0));
+
+    static const glm::mat4 plusRotation = glm::rotate(-0.05f, glm::vec3(0.f,1.0f,0.f));
+    setEnhancerShift(plusRotation);
     code();
     // Set top
     OpenglRedirectorBase::glViewport(viewport[0],viewport[1]+viewport[3]/2, viewport[2],viewport[3]/2);
-    setEnhancerShift(-0.3,0,0);
+    //setEnhancerShift(glm::vec3(-0.3,0,0));
+    static const glm::mat4 minusRotation = glm::rotate(0.05f,glm::vec3(0.f,1.0f,0.f));
+    setEnhancerShift(minusRotation);
     code();
     // restore viewport
     OpenglRedirectorBase::glViewport(viewport[0],viewport[1], viewport[2],viewport[3]);
