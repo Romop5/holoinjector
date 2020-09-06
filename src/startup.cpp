@@ -10,12 +10,6 @@
 
 #include "repeater.hpp"
 
-/*extern "C" void glClear(GLbitfield)
-{
-    puts("Yeah, I am a fake original glClear\n");
-}*/
-
-
 using namespace ve;
 
 struct EnhancerContext
@@ -90,7 +84,7 @@ namespace helper
  *
  * Hooks all neccessary functions to detour OpenGL library calls
  */
-__attribute((constructor)) void setup()
+__attribute((constructor)) void enhancer_setup()
 {
     // Decide whether to use 64bit hook or not
     auto hookTypeFlags = static_cast<subhook_flags>(SUBHOOK_BITS == 32?0:SUBHOOK_64BIT_OFFSET);
@@ -119,4 +113,9 @@ __attribute((constructor)) void setup()
      */
     context->repeater.registerCallbacks();    
     fputs("[Enhancer] Registration done\n",stdout);
+}
+
+__attribute((destructor)) void enhancer_cleaner()
+{
+    context.reset();
 }

@@ -1,6 +1,8 @@
 #include <functional>
 #include "opengl_redirector_base.hpp"
 
+#include <unordered_map>
+
 namespace ve
 {
     struct Viewport
@@ -14,6 +16,8 @@ namespace ve
         virtual void registerCallbacks() override;
 
         virtual void glClear(GLbitfield mask) override;
+
+        virtual GLuint glCreateShader(GLenum shaderType);
         virtual void glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length);
 
 
@@ -22,6 +26,16 @@ namespace ve
 
 
         private:
+        GLint getCurrentProgram();
+        void setEnhancerShift(GLfloat x, GLfloat y, GLfloat z);
+
         void duplicateCode(const std::function<void(void)>& code);
+
+        struct ShaderMetadata
+        {
+            bool isVertexShader;
+        };
+
+        std::unordered_map<size_t, ShaderMetadata> m_shaderDatabase;
     };
 }
