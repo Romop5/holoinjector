@@ -24,13 +24,15 @@ namespace ve
         protected:
         OpenglRedirectorBase();
         /// Register subset of OpenGL API, specified in 'symbols'
-        void registerOpenGLSymbols(const std::vector<std::string>& symbols, SymbolRedirection& redirector);
+        void registerOpenGLSymbols();
 
         public:
         /*
          * X Window methods
          */
         virtual void glXSwapBuffers(	Display * dpy, GLXDrawable drawable);
+        virtual void (*glXGetProcAddress(	const GLubyte * procName))(void);
+        virtual void (*glXGetProcAddressARB(	const GLubyte * procName))(void);
         /*
          * Declarations of virtual OpenGL API calls that can be overloaded.
          * @note when function is not overloaded, or overloaded function is called,

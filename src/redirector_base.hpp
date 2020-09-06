@@ -10,17 +10,24 @@ namespace ve
     {
         private:
             original_symbol_getter getter;
+        protected:
+            SymbolRedirection redirector;
         public:
         virtual void setSymbolGetter(original_symbol_getter getter)
         {
             this->getter = getter;
         }
 
-        virtual void registerCallbacks(SymbolRedirection& redirector) = 0;
+        virtual void registerCallbacks() = 0;
 
         void* getOriginalSymbolAddress(const char* symbolName)
         {
             return getter(symbolName);
+        }
+
+        const SymbolRedirection& getRedirectedFunctions() const
+        {
+            return redirector;
         }
     };
 } // namespace ve

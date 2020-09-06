@@ -3,9 +3,9 @@
 
 using namespace ve;
 
-void Repeater::registerCallbacks(SymbolRedirection& redirector) 
+void Repeater::registerCallbacks() 
 {
-    registerOpenGLSymbols({"glClear"}, redirector);
+    registerOpenGLSymbols();
 }
 
 void Repeater::glClear(GLbitfield mask)

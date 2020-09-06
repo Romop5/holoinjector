@@ -2,6 +2,10 @@
 #include "GL/gl.h"
 #include <iostream>
 
+void glClear(GLbitfield mask)
+{
+    std::cout << "Hello!"<< std::endl;
+}
 
 int main()
 {

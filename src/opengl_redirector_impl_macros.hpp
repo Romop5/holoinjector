@@ -143,6 +143,12 @@ _retType OpenglRedirectorBase :: _name ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ) 
     OPENGL_REDIRECTOR_API(_retType, _name, __VA_ARGS__) \
     OPENGL_REDIRECTOR_METHOD(_retType, _name, __VA_ARGS__) \
 
+/*
+ * @brief Only forwards system API call, left virtual method undefined
+ */
+#define OPENGL_FORWARD_LOADER_ONLY(_retType, _name, ...)\
+    OPENGL_REDIRECTOR_API(_retType, _name, __VA_ARGS__) \
+
 
 /*
  * @brief Define own handler

@@ -44,9 +44,45 @@ namespace helper
     {
         printf("[Enhancer API CALL: %s]\n", apiName.c_str());
     }
+
+    using ReturnFunctionType = void(*)();
+
+    std::string convertGLString(const GLubyte * name)
+    {
+        size_t i = 0;
+        while(name[i] != '\0')
+            i++;
+        return std::string(reinterpret_cast<const char*>(name), i);
+    }
 }
 
 OPENGL_FORWARD(void,glXSwapBuffers,Display*, dpy, GLXDrawable, drawable);
+OPENGL_FORWARD_LOADER_ONLY(helper::ReturnFunctionType,glXGetProcAddress,const GLubyte *, procName);
+void (*OpenglRedirectorBase::glXGetProcAddress(	const GLubyte * procName))(void)
+{
+    helper::log_api_call("glXGetProcAddress");
+    const std::string name = helper::convertGLString(procName);
+    if(redirector.hasRedirection(name))
+    {
+        return reinterpret_cast<helper::ReturnFunctionType>(redirector.getTarget(name));
+    }
+    auto originalAddress = reinterpret_cast<decltype(&::glXGetProcAddress)>(getOriginalSymbolAddress("glXGetProcAddress"));
+    return originalAddress(procName);
+}
+
+OPENGL_FORWARD_LOADER_ONLY(helper::ReturnFunctionType,glXGetProcAddressARB,const GLubyte *, procName);
+void (*OpenglRedirectorBase::glXGetProcAddressARB(	const GLubyte * procName))(void)
+{
+    helper::log_api_call("glXGetProcAddress");
+    const std::string name = helper::convertGLString(procName);
+    if(redirector.hasRedirection(name))
+    {
+        return reinterpret_cast<helper::ReturnFunctionType>(redirector.getTarget(name));
+    }
+    auto originalAddress = reinterpret_cast<decltype(&::glXGetProcAddress)>(getOriginalSymbolAddress("glXGetProcAddressARB"));
+    return originalAddress(procName);
+}
+
 /*
  * OPENGL_FORWARD does following:
  *  - a single static function with name implglXYZ, calling OpenglRedirectorBase::XYZ on call
@@ -3023,7 +3059,7 @@ OPENGL_FORWARD(void,glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN ,co
 
 
 /// Register all OpenGLAPI calls, defined above
-void OpenglRedirectorBase::registerOpenGLSymbols(const std::vector<std::string>& symbols, SymbolRedirection& redirector)
+void OpenglRedirectorBase::registerOpenGLSymbols()
 {
     /*
     for(const auto& symbol: symbols)
