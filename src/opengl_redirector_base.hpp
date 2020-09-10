@@ -33,6 +33,9 @@ namespace ve
         virtual void glXSwapBuffers(	Display * dpy, GLXDrawable drawable);
         virtual void (*glXGetProcAddress(	const GLubyte * procName))(void);
         virtual void (*glXGetProcAddressARB(	const GLubyte * procName))(void);
+
+        virtual int XNextEvent(Display *display, XEvent *event_return);
+
         /*
          * Declarations of virtual OpenGL API calls that can be overloaded.
          * @note when function is not overloaded, or overloaded function is called,

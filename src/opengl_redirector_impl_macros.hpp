@@ -8,6 +8,7 @@
 #define ARG_COUNT_IMPL(a,b,c,d,e,f,h,i,j,k,l,m,n,o,p,r,s,t,v,u,w,z,aa,ab,ac,ad,ae,af,ag,ah,ai,aj,ak,al,am,an,ao,ap,ar,as,at,av,au,aw,az,ba,bb,bc,...) bc
 #define ARG_COUNT(...) ARG_COUNT_IMPL(__VA_ARGS__,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0)
 
+
 // CONCAT allows to turn macro argument to part of indetifier
 // e.g. in order to use EXPAND_INDEX, where INDEX is a macro, see below for usage
 #define CAT(a, ...) a ## __VA_ARGS__
@@ -89,12 +90,11 @@
 #define EXPANDB_50(F, paramA,paramB, ...) F(paramA,paramB) EXPANDB_48(F,__VA_ARGS__)
 #define EXPANDB(F,...) CONCAT(EXPANDB_,ARG_COUNT(__VA_ARGS__)) (F,__VA_ARGS__)
 
-
-
 /*==================================================
  * HELPER MACROS - OpenGL
  *=================================================*/
 #define OPENGL_LOG_API_CALL helper::log_api_call
+#define OPENGL_PACK_ARGS helper::packArgs
 
 /// Expands 'type, name' to ', type name '
 #define OPENGL_EXPAND_PAIR(a,b) , a b
@@ -119,7 +119,7 @@
 #define OPENGL_REDIRECTOR_API(_retType, _name, ...)\
 _retType _name( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ) \
 { \
-    OPENGL_LOG_API_CALL (""#_name); \
+    OPENGL_LOG_API_CALL (""#_name, OPENGL_PACK_ARGS(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__))); \
     return g_OpenGLRedirector-> _name(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__)); \
 } \
 static helper::RegisterAPIFunction register_impl##_name(""#_name, reinterpret_cast<void*>(&_name));

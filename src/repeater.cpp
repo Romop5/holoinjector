@@ -57,7 +57,7 @@ namespace helper
         if(braceCount == 0)
         {
             braceIterator--;
-            shader.insert(braceIterator-shader.begin(), "\n\tvec3 enhancer_shift = vec3(0.0,0.0,2.0)*gl_Position.w; \n\tgl_Position.xyz = (enhancer_transform*(vec4(enhancer_shift+gl_Position.xyz,1.0))).xyz-enhancer_shift;\n");
+            shader.insert(braceIterator-shader.begin(), "\n\tvec3 enhancer_shift = vec3(0.0,0.0,0.1)*gl_Position.w; \n\tgl_Position.xyz = (enhancer_transform*(vec4(enhancer_shift+gl_Position.xyz,1.0))).xyz-enhancer_shift;\n");
         }
     }
 
@@ -132,6 +132,28 @@ void Repeater::glDrawElements(GLenum mode,GLsizei count,GLenum type,const GLvoid
 
 }
 
+
+int Repeater::XNextEvent(Display *display, XEvent *event_return)
+{
+    auto returnVal = OpenglRedirectorBase::XNextEvent(display,event_return);
+    if(event_return->type == KeyPress)
+    {
+        auto keySym = XLookupKeysym(reinterpret_cast<XKeyEvent*>(event_return), 0);
+        if(keySym == XK_F1)
+        {
+            angle += 0.01;
+            puts("[Repeater] F1 pressed");
+        }
+        if(keySym == XK_F2)
+        {
+            angle -= 0.01;
+            puts("[Repeater] F2 pressed");
+        }
+
+    }
+    return returnVal;
+}
+
 //-----------------------------------------------------------------------------
 // Utils
 //-----------------------------------------------------------------------------
@@ -169,13 +191,13 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     OpenglRedirectorBase::glViewport(viewport[0],viewport[1], viewport[2],viewport[3]/2);
     //setEnhancerShift(glm::vec3(0.3,0,0));
 
-    static const glm::mat4 plusRotation = glm::rotate(-0.05f, glm::vec3(0.f,1.0f,0.f));
+    const glm::mat4 plusRotation = glm::rotate(-angle, glm::vec3(0.f,1.0f,0.f));
     setEnhancerShift(plusRotation);
     code();
     // Set top
     OpenglRedirectorBase::glViewport(viewport[0],viewport[1]+viewport[3]/2, viewport[2],viewport[3]/2);
     //setEnhancerShift(glm::vec3(-0.3,0,0));
-    static const glm::mat4 minusRotation = glm::rotate(0.05f,glm::vec3(0.f,1.0f,0.f));
+    const glm::mat4 minusRotation = glm::rotate(+angle,glm::vec3(0.f,1.0f,0.f));
     setEnhancerShift(minusRotation);
     code();
     // restore viewport

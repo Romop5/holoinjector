@@ -38,8 +38,7 @@ add_library(${ENHANCER_PROJECT_NAME} SHARED
     src/startup.cpp
 )
 
-target_link_libraries(${ENHANCER_PROJECT_NAME} PRIVATE ${SUBHOOK_SO} dl)
-target_link_libraries(${ENHANCER_PROJECT_NAME} PRIVATE glm)
+target_link_libraries(${ENHANCER_PROJECT_NAME} PRIVATE ${SUBHOOK_SO} dl X11 glm)
 
 if(${ENHANCER_32})
     set_target_properties(${ENHANCER_PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")

@@ -9,6 +9,7 @@
  */
 
 #include <unordered_map>
+#include <sstream>
 #include "opengl_redirector_base.hpp"
 #include "opengl_redirector_impl_macros.hpp"
 
@@ -40,9 +41,106 @@ namespace helper
         }
     };
 
-    void log_api_call(std::string apiName, ...)
+    std::string serialize(...)
     {
-        printf("[Enhancer API CALL: %s]\n", apiName.c_str());
+        return "Unknown";
+    }
+
+    std::string serialize(const GLubyte* s)
+    {
+        std::stringstream ss;
+        ss << "\"" << reinterpret_cast<const char*>(s) << "\"";
+        return ss.str();
+    }
+
+    std::string serialize(const std::string s)
+    {
+        std::stringstream ss;
+        ss << "\"" << s << "\"";
+        return ss.str();
+    }
+
+    std::string serialize(char c)
+    {
+        std::stringstream ss;
+        ss << "'" << c << "'";
+        return ss.str();
+    }
+
+    std::string serialize(XEvent* event)
+    {
+        std::string eventTypes[] = {
+            "Unknown 0",
+            "Unknown 1",
+            "KeyPress",
+            "KeyRelease",
+            "ButtonPress",
+            "ButtonRelease",
+            "MotionNotify",
+            "EnterNotify",
+            "LeaveNotify",
+            "FocusIn",
+            "FocusOut",
+            "KeymapNotify",
+            "Expose",
+            "GraphicsExpose",
+            "NoExpose",
+            "VisibilityNotify",
+            "CreateNotify",
+            "DestroyNotify",
+            "UnmapNotify",
+            "MapNotify",
+            "MapRequest",
+            "ReparentNotify",
+            "ConfigureNotify",
+            "ConfigureRequest",
+            "GravityNotify",
+            "ResizeRequest",
+            "CirculateNotify",
+            "CirculateRequest",
+            "PropertyNotify",
+            "SelectionClear",
+            "SelectionRequest",
+            "SelectionNotify",
+            "ColormapNotify",
+            "ClientMessage",
+            "MappingNotify",
+            "GenericEvent"
+        };
+        const auto& type = eventTypes[event->type];
+        return type;
+    }
+
+
+
+    template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
+    std::string  serialize(T val)
+    {
+        return std::to_string(val);
+    }
+
+    template <typename T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
+    std::string  serialize(T val)
+    {
+        return std::to_string(val);
+    }
+
+    std::string packArgs()
+    {
+        return "";
+    }
+
+    template <typename FIRST, typename... T>
+    std::string packArgs(FIRST head, T... args)
+    {
+        if(sizeof...(args) == 0)
+            return serialize(head);
+        return serialize(head)+", "+packArgs(args...);
+    }
+
+    void log_api_call(const std::string apiName, const std::string serializedArguments = "")
+    {
+        printf("[Enhancer API CALL: %s] %s\n", apiName.c_str(), serializedArguments.c_str());
     }
 
     using ReturnFunctionType = void(*)();
@@ -60,7 +158,7 @@ OPENGL_FORWARD(void,glXSwapBuffers,Display*, dpy, GLXDrawable, drawable);
 OPENGL_FORWARD_LOADER_ONLY(helper::ReturnFunctionType,glXGetProcAddress,const GLubyte *, procName);
 void (*OpenglRedirectorBase::glXGetProcAddress(	const GLubyte * procName))(void)
 {
-    helper::log_api_call("glXGetProcAddress");
+    helper::log_api_call("glXGetProcAddress", helper::packArgs(procName));
     const std::string name = helper::convertGLString(procName);
     if(redirector.hasRedirection(name))
     {
@@ -73,7 +171,7 @@ void (*OpenglRedirectorBase::glXGetProcAddress(	const GLubyte * procName))(void)
 OPENGL_FORWARD_LOADER_ONLY(helper::ReturnFunctionType,glXGetProcAddressARB,const GLubyte *, procName);
 void (*OpenglRedirectorBase::glXGetProcAddressARB(	const GLubyte * procName))(void)
 {
-    helper::log_api_call("glXGetProcAddress");
+    helper::log_api_call("glXGetProcAddressARB", helper::packArgs(procName));
     const std::string name = helper::convertGLString(procName);
     if(redirector.hasRedirection(name))
     {
@@ -82,6 +180,8 @@ void (*OpenglRedirectorBase::glXGetProcAddressARB(	const GLubyte * procName))(vo
     auto originalAddress = reinterpret_cast<decltype(&::glXGetProcAddress)>(getOriginalSymbolAddress("glXGetProcAddressARB"));
     return originalAddress(procName);
 }
+
+OPENGL_FORWARD(int,XNextEvent,Display *,display, XEvent *,event_return);
 
 /*
  * OPENGL_FORWARD does following:

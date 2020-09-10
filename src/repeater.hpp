@@ -26,6 +26,8 @@ namespace ve
         virtual void glDrawElements(GLenum mode,GLsizei count,GLenum type,const GLvoid* indices) override;
 
 
+        virtual int XNextEvent(Display *display, XEvent *event_return);
+
         private:
         GLint getCurrentProgram();
         void setEnhancerShift(const glm::vec3& clipSpaceTransformation);
@@ -39,5 +41,7 @@ namespace ve
         };
 
         std::unordered_map<size_t, ShaderMetadata> m_shaderDatabase;
+
+        float angle = 0.0;
     };
 }
