@@ -75,6 +75,7 @@ endmacro()
 # Create apps
 ###############################################################################
 createEnhancerApplication(repeater src/startup_repeater.cpp src/repeater.cpp)
+createEnhancerApplication(shaderDumper src/startup_dumper.cpp src/shader_dumper.cpp)
 
 ###############################################################################
 # Create test app

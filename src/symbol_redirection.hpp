@@ -8,7 +8,8 @@ namespace ve
     class SymbolRedirection
     {
         private:
-            std::unordered_map<std::string, void*> mapping;
+            using dictType = std::unordered_map<std::string, void*>;
+            dictType mapping;
         public:
             SymbolRedirection() = default;
             bool hasRedirection(const std::string& symbolName) const
@@ -23,6 +24,11 @@ namespace ve
             void addRedirection(const std::string& symbol, void* address)
             {
                 mapping[symbol] = address;
+            }
+        
+            const dictType& getMapping() const
+            {
+                return mapping;
             }
     };
 } //namespace ve

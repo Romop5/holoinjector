@@ -93,8 +93,14 @@
 /*==================================================
  * HELPER MACROS - OpenGL
  *=================================================*/
+#define EMPTY_FUNC(...) 
+
 #define OPENGL_LOG_API_CALL helper::log_api_call
 #define OPENGL_PACK_ARGS helper::packArgs
+
+
+//#define OPENGL_LOG_API_CALL EMPTY_FUNC
+//#define OPENGL_PACK_ARGS EMPTY_FUNC
 
 /// Expands 'type, name' to ', type name '
 #define OPENGL_EXPAND_PAIR(a,b) , a b

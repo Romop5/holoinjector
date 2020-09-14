@@ -37,7 +37,9 @@ namespace helper
         public:
         RegisterAPIFunction(const std::string& name, void* address)
         {
-            definedAPIFunctions[name] = address;
+            printf("[Enhancer] Registering redirection for %s\n", name.c_str());
+            g_OpenGLRedirector->redirector.addRedirection(name,address);
+            //definedAPIFunctions[name] = address;
         }
     };
 
@@ -107,6 +109,9 @@ namespace helper
             "MappingNotify",
             "GenericEvent"
         };
+
+        return "UNKNOWN";
+
         const auto& type = eventTypes[event->type];
         return type;
     }

@@ -5,6 +5,11 @@
 #include <vector>
 #include <string>
 
+namespace helper
+{
+    class RegisterAPIFunction;
+}
+
 namespace ve
 {
     /**
@@ -3005,5 +3010,7 @@ namespace ve
         virtual void glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN (const GLuint* rc, const GLfloat* tc, const GLfloat* n, const GLfloat* v);
         virtual void glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN (GLuint rc, GLfloat s, GLfloat t, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z);
         virtual void glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN (const GLuint* rc, const GLfloat* tc, const GLfloat* c, const GLfloat* n, const GLfloat* v);
+
+        friend class helper::RegisterAPIFunction;
     };
 } //namespace ve

@@ -79,6 +79,17 @@ namespace helper
         }
         return true;
     }
+
+    template<typename DICT>
+    void dumpRedirections(DICT dict)
+    {
+        printf("Dumping redirected functions (%d):\n", dict.size());
+        for(const auto& keyValue: dict)
+        {
+            puts(keyValue.first.c_str());
+        }
+        puts("End of dump");
+    }
 } //namespace helper
 
 
@@ -117,6 +128,7 @@ void enhancer_setup(std::unique_ptr<RedirectorBase> redirector)
      * Register OpenGL calls that should be redirected
      */
     context->redirector->registerCallbacks();    
+    helper::dumpRedirections(context->redirector->getRedirectedFunctions().getMapping());
     fputs("[Enhancer] Registration done\n",stdout);
     if(dlSymHookStatus == false)
     {

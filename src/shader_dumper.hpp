@@ -9,5 +9,6 @@ namespace ve
 
         virtual GLuint glCreateShader(GLenum shaderType);
         virtual void glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length);
+        virtual void glShaderSourceARB (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length);
     };
 }

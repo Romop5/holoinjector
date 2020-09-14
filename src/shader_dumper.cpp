@@ -1,4 +1,7 @@
 #include "shader_dumper.hpp"
+
+using namespace ve;
+
 namespace helper
 {
     void dumpShaderSources(const GLchar* const* strings, GLsizei count)
@@ -21,10 +24,6 @@ void ShaderDumper::registerCallbacks()
 GLuint ShaderDumper::glCreateShader(GLenum shaderType)
 {
     auto id = OpenglRedirectorBase::glCreateShader(shaderType);
-
-    ShaderMetadata metadata;
-    metadata.isVertexShader = shaderType == GL_VERTEX_SHADER;
-    m_shaderDatabase[id] = metadata;
     return id;
 }
 
@@ -34,5 +33,12 @@ void ShaderDumper::glShaderSource (GLuint shader, GLsizei count, const GLchar* c
     helper::dumpShaderSources(string, count);
     OpenglRedirectorBase::glShaderSource(shader,count,string,length);
 }
+void ShaderDumper::glShaderSourceARB (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length)
+{
+    printf("[ShaderDumper] glShaderSource: \n");
+    helper::dumpShaderSources(string, count);
+    OpenglRedirectorBase::glShaderSource(shader,count,string,length);
+}
+
 
 
