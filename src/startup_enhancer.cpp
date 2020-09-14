@@ -8,13 +8,15 @@
 #include <mutex>
 #include <memory>
 
-#include "repeater.hpp"
+#include "redirector_base.hpp"
+
+#include <unistd.h>
 
 using namespace ve;
 
 struct EnhancerContext
 {
-    Repeater repeater;
+    std::unique_ptr<RedirectorBase> redirector;
     subhook_t dlsymhook;
 };
 
@@ -32,7 +34,7 @@ namespace ve
             original_dlsym = subhook_get_trampoline(context->dlsymhook);
         if(original_dlsym == nullptr)
         {
-            puts("Enhancer faield to get original address of dlsym\n");
+            puts("[Enhancer] failed to get original address of dlsym\n");
             exit(1);
         }
         using dlsym_type = void*(void*, const char*);
@@ -45,7 +47,7 @@ namespace ve
 
         printf("[Enhancer dlsym] '%s'\n", symbol);
 
-        const auto& functions = context->repeater.getRedirectedFunctions();
+        const auto& functions = context->redirector->getRedirectedFunctions();
         if(functions.hasRedirection(symbol))
         {
             auto* const targetAddress = functions.getTarget(symbol);
@@ -59,22 +61,23 @@ namespace ve
 
 namespace helper
 {
-    void hook_function(subhook_t& hook, void* target, void* ourHandler,subhook_flags_t hookTypeFlags = (subhook_flags_t)(0))
+    bool hook_function(subhook_t& hook, void* target, void* ourHandler,subhook_flags_t hookTypeFlags = (subhook_flags_t)(0))
     {
         hook = subhook_new(target, ourHandler, hookTypeFlags);
         auto retval = subhook_install(hook);
         if(retval != 0)
         {
-            fputs("Enhancer failed: failed to hook dlsym()\n",stdout);
-            return;
+            fputs("[Enhancer] failed: failed to hook dlsym()\n",stdout);
+            return false;
         }
 
         auto trampoline_test = subhook_get_trampoline(hook);
         if(trampoline_test == NULL)
         {
-            fputs("Enhancer failed: failed to create trampoline()\n",stdout);
-            return;
+            fputs("[Enhancer] failed: failed to create trampoline()\n",stdout);
+            return false;
         }
+        return true;
     }
 } //namespace helper
 
@@ -84,20 +87,22 @@ namespace helper
  *
  * Hooks all neccessary functions to detour OpenGL library calls
  */
-__attribute((constructor)) void enhancer_setup()
+void enhancer_setup(std::unique_ptr<RedirectorBase> redirector)
 {
+    puts("[Enhancer] starting setup...");
     // Decide whether to use 64bit hook or not
     auto hookTypeFlags = static_cast<subhook_flags>(SUBHOOK_BITS == 32?0:SUBHOOK_64BIT_OFFSET);
     context = std::make_unique<EnhancerContext>();
+    context->redirector = std::move(redirector);
     /*
      * Hook dlopen/dlsym functions and dispatch via our own function
      */
-    helper::hook_function(context->dlsymhook, reinterpret_cast<void *>(dlsym), reinterpret_cast<void *>(hooked_dlsym), hookTypeFlags);
+    auto dlSymHookStatus = helper::hook_function(context->dlsymhook, reinterpret_cast<void *>(dlsym), reinterpret_cast<void *>(hooked_dlsym), hookTypeFlags);
     
     /*
      * Set original symbol getter using trampolined dlsym()
      */
-    context->repeater.setSymbolGetter([](const char* symbol)->void* 
+    context->redirector->setSymbolGetter([](const char* symbol)->void* 
     {
         printf("[Enhancer- symbol getter] Calling original dlsym with symbo %s\n",symbol);
         auto addr = ve::original_dlsym(RTLD_NEXT,symbol);
@@ -111,11 +116,17 @@ __attribute((constructor)) void enhancer_setup()
     /*
      * Register OpenGL calls that should be redirected
      */
-    context->repeater.registerCallbacks();    
+    context->redirector->registerCallbacks();    
     fputs("[Enhancer] Registration done\n",stdout);
+    if(dlSymHookStatus == false)
+    {
+        fputs("[Enhancer] Hooking dlsym() failed -> we can't hook any of OpenGL API functions\n",stdout);
+        fputs("[Enhancer] Make sure that 'getsebool allow_execheap' is on\n",stdout);
+        fputs("[Enhancer] If not, run 'setsebool allow_execheap on' as administrator\n",stdout);
+    }
 }
 
-__attribute((destructor)) void enhancer_cleaner()
+void enhancer_cleaner()
 {
     context.reset();
 }

@@ -1,3 +1,5 @@
+#ifndef __REDIRECTOR_BASE_HPP
+#define __REDIRECTOR_BASE_HPP
 #include <functional>
 #include "symbol_redirection.hpp"
 
@@ -13,6 +15,7 @@ namespace ve
         protected:
             SymbolRedirection redirector;
         public:
+        virtual ~RedirectorBase() = default;
         virtual void setSymbolGetter(original_symbol_getter getter)
         {
             this->getter = getter;
@@ -31,3 +34,4 @@ namespace ve
         }
     };
 } // namespace ve
+#endif
