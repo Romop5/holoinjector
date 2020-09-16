@@ -37,6 +37,11 @@ namespace helper
         public:
         RegisterAPIFunction(const std::string& name, void* address)
         {
+            if(!g_OpenGLRedirector)
+            {
+                printf("[Enhancer] Error: g_OpenGLRedirector == nullptr\nenhancer_startup() was not called before C++ initialization. (%s)\n", name.c_str());
+                return;
+            }
             printf("[Enhancer] Registering redirection for %s\n", name.c_str());
             g_OpenGLRedirector->redirector.addRedirection(name,address);
             //definedAPIFunctions[name] = address;
