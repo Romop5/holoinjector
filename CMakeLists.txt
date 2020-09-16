@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(enhancer)
 
+option(ENHANCER_BUILD_TESTS "Should also build unittests?" ON)
 ###############################################################################
 # Decide bits (32 or 64)?
 ###############################################################################
@@ -38,9 +39,24 @@ find_package(glm REQUIRED)
 ###############################################################################
 
 ###############################################################################
-# Create base library (enhancer)
+# Create core library (enhancer)
 ###############################################################################
 
+add_library(enhancer_utils INTERFACE 
+)
+
+target_sources(enhancer_utils INTERFACE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/projection_estimator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/projection_estimator.hpp
+    )
+
+target_link_libraries(enhancer_utils INTERFACE glm)
+target_include_directories(enhancer_utils INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+
+###############################################################################
+# Create utils library (enhancer_utils)
+###############################################################################
 add_library(${ENHANCER_PROJECT_NAME} INTERFACE 
 )
 
@@ -51,14 +67,12 @@ target_sources(${ENHANCER_PROJECT_NAME} INTERFACE
 
 target_link_libraries(${ENHANCER_PROJECT_NAME} INTERFACE ${SUBHOOK_SO} dl X11 glm)
 
+
 ###############################################################################
 # Define function for applications, based on redirector (enhancer)
 ###############################################################################
 macro(createEnhancerApplication name)
-    message ("ARGN: ${ARGN}")
-    message ("Suffix: ${PROJECT_SUFFIX}")
     set(APPLICATION_NAME "${name}${PROJECT_SUFFIX}")
-    message ("Appname: ${APPLICATION_NAME}")
 
     add_library(${APPLICATION_NAME} SHARED
         ${ARGN}
@@ -87,3 +101,21 @@ if(${ENHANCER_32})
     set_target_properties(app PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
 endif()
 target_link_libraries(app PRIVATE repeater${PROJECT_SUFFIX} dl)
+
+###############################################################################
+# Create tests
+###############################################################################
+
+if(${ENHANCER_BUILD_TESTS})
+    enable_testing()
+    find_package(GTest REQUIRED)
+
+    set(GTEST_ROOT "${CMAKE_BINARY_DIR}/")
+
+    #TODO: reorganize unit_test hierarchy later. Tip: have a look at Dormon's repos :D 
+    add_executable(unit_tests tests/unittests/projection_estimator_test.cpp)
+    target_link_libraries(unit_tests ${GTEST_BOTH_LIBRARIES} enhancer_utils)
+
+    add_test(NAME AllTests COMMAND "$<TARGET_FILE:unit_tests>")
+
+endif()
