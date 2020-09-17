@@ -48,6 +48,8 @@ add_library(enhancer_utils INTERFACE
 target_sources(enhancer_utils INTERFACE 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/projection_estimator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/projection_estimator.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_inspector.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_inspector.cpp
     )
 
 target_link_libraries(enhancer_utils INTERFACE glm)
@@ -113,7 +115,10 @@ if(${ENHANCER_BUILD_TESTS})
     set(GTEST_ROOT "${CMAKE_BINARY_DIR}/")
 
     #TODO: reorganize unit_test hierarchy later. Tip: have a look at Dormon's repos :D 
-    add_executable(unit_tests tests/unittests/projection_estimator_test.cpp)
+    add_executable(unit_tests 
+        tests/unittests/projection_estimator_test.cpp
+        tests/unittests/shader_inspector_test.cpp
+    )
     target_link_libraries(unit_tests ${GTEST_BOTH_LIBRARIES} enhancer_utils)
 
     add_test(NAME AllTests COMMAND "$<TARGET_FILE:unit_tests>")

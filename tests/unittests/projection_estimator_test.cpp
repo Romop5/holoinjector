@@ -78,7 +78,7 @@ glm::mat4 TRANSL(float x,float y, float z){ return glm::translate(glm::vec3(x,y,
 glm::mat4 SCALE(float s) { return glm::scale(glm::vec3(s)); }
 
 namespace {
-TEST(Test, AlwaysPass) {
+TEST(ProjectionEstimator, Identity) {
     const auto IDENTITY = glm::identity<glm::mat4>();
 
     TEST_MV_PERSPECTIVE(IDENTITY,20.0,1.5,0.1,1000.0);
@@ -88,6 +88,8 @@ TEST(Test, AlwaysPass) {
     TEST_MV_PERSPECTIVE(IDENTITY,16.0,4.5,0.1,500.0);
     TEST_MV_PERSPECTIVE(IDENTITY,0.1,4.5,0.1,500.0);
 
+}
+TEST(ProjectionEstimator, Rotation) {
     TEST_MV_PERSPECTIVE(ROT_X(1.0)*ROT_Y(3.0),20.0,1.5,0.5,100.0);
 
     TEST_MV_PERSPECTIVE(ROT_X(5)*ROT_Y(2.0),20.0,1.5,0.1,1000.0);
@@ -96,6 +98,9 @@ TEST(Test, AlwaysPass) {
     TEST_MV_PERSPECTIVE(ROT_X(5)*ROT_Y(2.0),56.0,4.5,0.1,500.0);
     TEST_MV_PERSPECTIVE(ROT_X(5)*ROT_Y(2.0),16.0,4.5,0.1,500.0);
     TEST_MV_PERSPECTIVE(ROT_X(5)*ROT_Y(2.0),0.1,4.5,0.1,500.0);
+
+}
+TEST(ProjectionEstimator, Scale) {
 
     TEST_MV_PERSPECTIVE(SCALE(3.0)*ROT_X(5)*ROT_Y(2.0),0.1,4.5,0.1,500.0);
     TEST_MV_PERSPECTIVE(ROT_Y(2.130)*SCALE(3.0)*ROT_X(5)*ROT_Y(2.0),0.1,4.5,0.1,500.0);
