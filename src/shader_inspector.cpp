@@ -44,13 +44,13 @@ namespace helper {
 
 
 
-bool ve::isBuiltinGLSLType(const std::string& token)
+bool ve::ShaderInspector::isBuiltinGLSLType(const std::string& token)
 {
     static const auto builtinTypes = std::unordered_set<std::string>{ "vec3", "vec4", "mat3", "mat4", "float", "double"};
     return (builtinTypes.count(token) > 0);
 }
 
-bool ve::isUniformVariable(const std::string& identifier, const std::string& sourceCode)
+bool ve::ShaderInspector::isUniformVariable(const std::string& identifier) const
 {
     std::string regexLiteral = std::string("uniform[^;]*[\f\n\r\t\v ]") + identifier + std::string("[\f\n\r\t\v ]*;");
     auto isDefinedAsUniform = std::regex(regexLiteral,std::regex::extended);
@@ -60,7 +60,7 @@ bool ve::isUniformVariable(const std::string& identifier, const std::string& sou
 }
 
 
-std::string ve::getVariableType(const std::string& variable, const std::string& sourceCode)
+std::string ve::ShaderInspector::getVariableType(const std::string& variable) const
 {
     std::string regexLiteral = std::string("[a-zA-Z0-9]+[\f\n\r\t\v ]+") + variable+ std::string("[\f\n\r\t\v ]*;");
     auto definitionPattern = std::regex(regexLiteral,std::regex::extended);
@@ -73,7 +73,7 @@ std::string ve::getVariableType(const std::string& variable, const std::string& 
     return definitionStatementRawText.substr(0, firstWhitespacePosition);
 }
 
-std::vector<VertextAssignment> ve::findAllOutVertexAssignments(const std::string& sourceCode)
+std::vector<ShaderInspector::VertextAssignment> ve::ShaderInspector::findAllOutVertexAssignments() const
 {
     std::vector<VertextAssignment> results;
     // Search for all assignments into gl_Position
@@ -94,12 +94,13 @@ std::vector<VertextAssignment> ve::findAllOutVertexAssignments(const std::string
 }
 
 
-std::string ve::injectShader(const std::vector<VertextAssignment>& assignments, const std::string& sourceCode)
+std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector::VertextAssignment>& assignments)
 {
     std::string output = sourceCode;
     for(auto& statement: assignments)
     {
-        auto newStatement = helper::wrapAssignmentExpresion(statement.statementRawText, "enhancer_transform");
+        const auto enhancerFunctionName = isBuiltinGLSLType(statement.firstTokenFromLeft)?"enhancer_transform_HUD": "enhancer_transform";
+        const auto newStatement = helper::wrapAssignmentExpresion(statement.statementRawText, enhancerFunctionName);
         auto startPosition = output.find(statement.statementRawText);
         if(startPosition == std::string::npos)
             continue;
@@ -142,4 +143,14 @@ std::string ve::injectShader(const std::vector<VertextAssignment>& assignments, 
 
     output.insert(startOfFunction, code);
     return output;
+}
+
+std::string ve::ShaderInspector::getTransformationUniformName(std::vector<VertextAssignment> assignments)
+{
+    for(const auto& statement: assignments)
+    {
+        if(isUniformVariable(statement.firstTokenFromLeft))
+            return statement.firstTokenFromLeft;
+    }
+    return "";
 }
