@@ -1,10 +1,48 @@
 #include "shader_inspector.hpp"
 #include <regex>
 #include <unordered_set>
-
-#include <iostream>
+#include <cassert>
 
 using namespace ve;
+
+namespace helper {
+    /**
+     * @brief Returns first right-hand identifier/token literal
+     * @return "" or token
+     */
+    std::string getFirstTokenAfterEq(const std::string assignmentStatement)
+    {
+        // trim gl_Position = X*Y*Z.... to '= X'
+        static auto firstTokenPattern = std::regex("=[\f\n\r\t\v ]*[a-zA-Z0-9_]*");
+        std::smatch m;
+        std::regex_search(assignmentStatement, m, firstTokenPattern); 
+
+        // if trimming was possible 
+        if(m.size())
+        {
+            // then take everything since last whitespace character till the end
+            const std::string str = m[0];
+            auto start = str.find_last_of("\f\n\r\t\v ");
+            start = (start == std::string::npos)?start:start+1;
+            return str.substr(start);
+        }
+        return "";
+    }
+
+    /// Given "X = Y;", do "X = expression (Y);"
+    std::string wrapAssignmentExpresion(const std::string assignment, const std::string expression)
+    {
+        std::string output = assignment;
+        auto equalSign = output.find("=")+1;
+        output.insert(equalSign, expression+std::string("("));
+
+        auto semicolon = output.rfind(";");
+        output.insert(semicolon, std::string(")"));
+        return output;
+    }
+} // namespace helper
+
+
 
 bool ve::isBuiltinGLSLType(const std::string& token)
 {
@@ -35,47 +73,73 @@ std::string ve::getVariableType(const std::string& variable, const std::string& 
     return definitionStatementRawText.substr(0, firstWhitespacePosition);
 }
 
-namespace helper {
-    /**
-     * @brief Returns first right-hand identifier/token literal
-     * @return "" or token
-     */
-    std::string getFirstTokenAfterEq(const std::string assignmentStatement)
-    {
-        // trim gl_Position = X*Y*Z.... to '= X'
-        static auto firstTokenPattern = std::regex("=[\f\n\r\t\v ]*[a-zA-Z0-9_]*");
-        std::smatch m;
-        std::regex_search(assignmentStatement, m, firstTokenPattern); 
-
-        // if trimming was possible 
-        if(m.size())
-        {
-            // then take everything since last whitespace character till the end
-            const std::string str = m[0];
-            auto start = str.find_last_of("\f\n\r\t\v ");
-            start = (start == std::string::npos)?start:start+1;
-            return str.substr(start);
-        }
-        return "";
-    }
-} // namespace helper
-
 std::vector<VertextAssignment> ve::findAllOutVertexAssignments(const std::string& sourceCode)
 {
     std::vector<VertextAssignment> results;
     // Search for all assignments into gl_Position
     auto vertexTransformationPattern  = std::regex("gl_Position[\f\n\r\t\v ]*=[\f\n\r\t\v ]*[^;]*;", std::regex::extended);
     std::smatch assignments;
-    std::regex_search(sourceCode, assignments, vertexTransformationPattern);
-
-    if(assignments.size() == 0)
-        return {};
-    for(const auto& statement: assignments)
+    std::string toBeSearched = sourceCode;
+    while(std::regex_search(toBeSearched, assignments, vertexTransformationPattern))
     {
+        std::string foundText = assignments.str();
         VertextAssignment outputAssignment;
-        outputAssignment.statementRawText = statement;
-        outputAssignment.firstTokenFromLeft = helper::getFirstTokenAfterEq(statement);
+        outputAssignment.statementRawText = foundText;
+        outputAssignment.firstTokenFromLeft = helper::getFirstTokenAfterEq(foundText);
         results.push_back(outputAssignment);
+
+        toBeSearched = assignments.suffix();
     }
     return results;
+}
+
+
+std::string ve::injectShader(const std::vector<VertextAssignment>& assignments, const std::string& sourceCode)
+{
+    std::string output = sourceCode;
+    for(auto& statement: assignments)
+    {
+        auto newStatement = helper::wrapAssignmentExpresion(statement.statementRawText, "enhancer_transform");
+        auto startPosition = output.find(statement.statementRawText);
+        if(startPosition == std::string::npos)
+            continue;
+        output.replace(startPosition,statement.statementRawText.length(),newStatement);
+    }
+    auto startOfFunction = output.find("main");
+    assert(startOfFunction != std::string::npos);
+    startOfFunction = output.rfind("\n", startOfFunction);
+
+    // At this point, caller must have verified that this is a VS, containing void main() method
+    assert(startOfFunction != std::string::npos);
+    std::string code = R"(
+        // Contains PROJ*VIEW per-view camera
+        uniform mat4 enhancer_view_transform; 
+
+        // Contains (fx,fy, near,far), estimated from original projection
+        uniform vec4 enhancer_estimatedParameters;
+
+        // Reversts original projection and apple per-view transformation & projection
+        vec4 enhancer_transform(vec4 clipSpace)
+        {
+            float fx = enhancer_estimatedParameters[0];
+            float fy = enhancer_estimatedParameters[1];
+            float near = enhancer_estimatedParameters[2];
+            float far = enhancer_estimatedParameters[3];
+            // Revert clip-space to view-space
+            vec4 viewSpace = vec4(clipSpace.x/fx, clipSpace.y/fy, -clipSpace.w,1.0);
+
+            // Do per-view transformation
+            vec4 viewSpaceTransformed = enhancer_view_transform * viewSpace;
+        }
+
+        // Transform without deprojecting
+        vec4 enhancer_transform_HUD(vec4 clipSpace)
+        {
+            // Revert clip-space to view-space
+            return enhancer_view_transform*clipSpace;
+        }
+    )";
+
+    output.insert(startOfFunction, code);
+    return output;
 }
