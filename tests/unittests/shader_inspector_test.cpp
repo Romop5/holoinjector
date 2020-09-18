@@ -44,6 +44,7 @@ TEST(ShaderInspector, TextVS) {
 /// Verify that gl_Position is skipped when used as R-value
 TEST(ShaderInspector, VSFalseTestMultiline) {
     std::string shader = R"(
+        #version 330 core
         layout(location = 3) in vec3 normal;
         int main()
         {
@@ -63,6 +64,7 @@ TEST(ShaderInspector, VSFalseTestMultiline) {
 
 TEST(ShaderInspector, TextVSXYZ) {
     std::string shader = R"(
+        #version 330 core
         layout(location = 3) in vec3 normal;
         int main()
         {
@@ -76,6 +78,7 @@ TEST(ShaderInspector, TextVSXYZ) {
 
 TEST(ShaderInspector, TextVSReplace) {
     std::string shader = R"(
+        #version 330 core
         layout(location = 3) in vec4 normal;
         int main()
         {
@@ -97,6 +100,7 @@ TEST(ShaderInspector, TextVSReplace) {
 
 TEST(ShaderInspector, VSTakeFirstMVP) {
     std::string shader = R"(
+        #version 330 core
         layout(location = 0) in vec4 position;
         uniform mat4 MV;
         uniform mat4 MVP;
@@ -115,6 +119,8 @@ TEST(ShaderInspector, VSTakeFirstMVP) {
 
     ASSERT_EQ(inspector.getTransformationUniformName(assignments), "MVP");
 }
+
+
 
 
 }
