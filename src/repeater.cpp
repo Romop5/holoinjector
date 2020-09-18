@@ -6,6 +6,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
 
+#include "shader_inspector.hpp"
+
 using namespace ve;
 
 void Repeater::registerCallbacks() 
@@ -97,8 +99,15 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
         {
             if(helper::containsMainFunction(string[cnt]))
             {
-                newShader = string[cnt];
-                helper::insertEnhancerShift(newShader);
+                //newShader = string[cnt];
+                //helper::insertEnhancerShift(newShader);
+
+                ShaderInspector inspector(newShader);
+                auto statements = inspector.findAllOutVertexAssignments();
+                auto transformationName = inspector.getTransformationUniformName(statements);
+                m_shaderDatabase[id].transformationName = transformationName;
+                newShader = inspector.injectShader(statements);
+                
                 printf("[Repeater] injecting shader shift\n");
                 preparedShaders.push_back(newShader.data());
             } else {
@@ -111,6 +120,50 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
         helper::dumpShaderSources(string, count);
         OpenglRedirectorBase::glShaderSource(shader,count,string,length);
     }
+}
+
+
+
+
+virtual void Repeater::glAttachShader (GLuint program, GLuint shader)
+{
+    if(m_shaderDatabase.count(shader) == 0)
+        return;
+
+    const auto& shaderMeta = m_shaderDatabase[shader];
+    if(!shaderMeta.isVertexShader())
+        return;
+
+    m_programVertexShaderDatabase[program] = shader;
+    OpenglRedirectorBase::glAttachShader(program,shader);
+}
+
+
+virtual void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+{
+    OpenglRedirectorBase::glUniformMatrix4fv (location, count, transpose, value);
+    // get current's program transformation matrix name
+    auto program = getCurrentProgram();
+    if(m_programVertexShaderDatabase.count(program) == 0)
+        return;
+    auto shaderID = m_programVertexShaderDatabase[program];
+    if(m_shaderDatabase.count(shaderID) == 0)
+        return;
+    auto shaderMetaData = m_shaderDatabase[shaderID];
+    if(ShaderMetadata.transformationMatrixName == "")
+        return;
+
+    // get original MVP matrix location
+    auto originalLocation = OpenglRedirectorBase::glGetUniformLocation(program, ShaderMetadata.transformationMatrixName);
+    if(originalLocation != location)
+        return;
+
+    // estimate projection matrix from value
+    glm::mat4 mat;
+    std::memcpy(glm::value_ptr(mat), value, 16*sizeof(float));
+    // TODO: estimate projection params
+    //
+    // TODO: store enhancer_estimatedParameters into program via glUniform
 }
 
 //-----------------------------------------------------------------------------
@@ -132,7 +185,9 @@ void Repeater::glDrawElements(GLenum mode,GLsizei count,GLenum type,const GLvoid
 
 }
 
-
+//-----------------------------------------------------------------------------
+// Debugging utils
+//-----------------------------------------------------------------------------
 int Repeater::XNextEvent(Display *display, XEvent *event_return)
 {
     auto returnVal = OpenglRedirectorBase::XNextEvent(display,event_return);

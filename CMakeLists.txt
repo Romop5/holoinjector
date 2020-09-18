@@ -67,7 +67,7 @@ target_sources(${ENHANCER_PROJECT_NAME} INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/startup_enhancer.cpp
     )
 
-target_link_libraries(${ENHANCER_PROJECT_NAME} INTERFACE ${SUBHOOK_SO} dl X11 glm)
+target_link_libraries(${ENHANCER_PROJECT_NAME} INTERFACE ${SUBHOOK_SO} dl X11 glm enhancer_utils)
 
 
 ###############################################################################
