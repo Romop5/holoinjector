@@ -4,6 +4,8 @@
 
 #include "glm/glm.hpp"
 
+#include "shader_manager.hpp"
+
 namespace ve
 {
     struct Viewport
@@ -22,11 +24,15 @@ namespace ve
         virtual void glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length);
 
 
+        virtual GLuint glCreateProgram (void);
+
+
         // Map program to vertex shader
         virtual void glAttachShader (GLuint program, GLuint shader);
 
         virtual void glDrawArrays(GLenum mode,GLint first,GLsizei count) override;
         virtual void glDrawElements(GLenum mode,GLsizei count,GLenum type,const GLvoid* indices) override;
+        virtual void glDrawElementsInstanced (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount);
 
 
         virtual void glUniformMatrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
@@ -41,18 +47,9 @@ namespace ve
 
         void duplicateCode(const std::function<void(void)>& code);
 
-        struct ShaderMetadata
-        {
-            bool isVertexShader;
-            std::string transformationMatrixName;
-        };
+        float m_Angle = 0.0;
+        float m_Distance = 1.0;
 
-        /// Maps shader ID to metadata structure
-        std::unordered_map<size_t, ShaderMetadata> m_shaderDatabase;
-
-        /// Mapping from program ID to vertex shader ID
-        std::unordered_map<size_t, size_t> m_programVertexShaderDatabase;
-
-        float angle = 0.0;
+        ShaderManager m_Manager;
     };
 }

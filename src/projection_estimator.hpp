@@ -17,6 +17,10 @@ namespace ve
         float farPlane; // distance of far plane in view-space
         float A; //matrix[2,2] => -2/(f-n)
         float B; //matrix[2,3] => -(f+n)/(f-n)
+
+        glm::vec4 asVector() const {
+            return glm::vec4(fx,fy,nearPlane, farPlane);
+        }
     };
 
     /**

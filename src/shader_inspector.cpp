@@ -99,6 +99,10 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
     std::string output = sourceCode;
     for(auto& statement: assignments)
     {
+        const auto isUniform = isUniformVariable(statement.firstTokenFromLeft);
+        const auto isBuiltin= isBuiltinGLSLType(statement.firstTokenFromLeft);
+        if(!isBuiltin && !isUniform)
+            continue;
         const auto enhancerFunctionName = isBuiltinGLSLType(statement.firstTokenFromLeft)?"enhancer_transform_HUD": "enhancer_transform";
         const auto newStatement = helper::wrapAssignmentExpresion(statement.statementRawText, enhancerFunctionName);
         auto startPosition = output.find(statement.statementRawText);
@@ -129,8 +133,13 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
             // Revert clip-space to view-space
             vec4 viewSpace = vec4(clipSpace.x/fx, clipSpace.y/fy, -clipSpace.w,1.0);
 
+            float A = -2.0/(far-near);
+            float B = -(far+near)/(far-near);
+            mat4 projection = mat4(vec4(fx,0.0f,0.0f,0.0), vec4(0.0f,fy,0.0f,0.0), vec4(0.0f,0.0f,A,-1.0), vec4(0.0f,0.0f,B,0.0));
+
             // Do per-view transformation
-            vec4 viewSpaceTransformed = enhancer_view_transform * viewSpace;
+            vec4 viewSpaceTransformed = projection*enhancer_view_transform * viewSpace;
+            return viewSpaceTransformed;
         }
 
         // Transform without deprojecting

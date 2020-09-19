@@ -50,6 +50,8 @@ target_sources(enhancer_utils INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/projection_estimator.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_inspector.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_inspector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_manager.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_manager.cpp
     )
 
 target_link_libraries(enhancer_utils INTERFACE glm)

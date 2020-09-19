@@ -7,6 +7,7 @@
 #include <glm/gtx/transform.hpp>
 
 #include "shader_inspector.hpp"
+#include "projection_estimator.hpp"
 
 using namespace ve;
 
@@ -77,17 +78,14 @@ namespace helper
 GLuint Repeater::glCreateShader(GLenum shaderType)
 {
     auto id = OpenglRedirectorBase::glCreateShader(shaderType);
-
-    ShaderMetadata metadata;
-    metadata.isVertexShader = shaderType == GL_VERTEX_SHADER;
-    m_shaderDatabase[id] = metadata;
+    m_Manager.addShader(id, (shaderType == GL_VERTEX_SHADER)?(ShaderManager::ShaderTypes::VS):(ShaderManager::ShaderTypes::GENERIC));
     return id;
 }
 
 void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length)
 {
     printf("[Repeater] glShaderSource: \n");
-    if(m_shaderDatabase.count(shader) > 0 && m_shaderDatabase[shader].isVertexShader)
+    if(m_Manager.hasShader(shader) && m_Manager.getShaderDescription(shader).m_Type == ShaderManager::ShaderTypes::VS)
     {
         // when length is an array, handling is different 
         assert(length == nullptr);
@@ -99,13 +97,18 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
         {
             if(helper::containsMainFunction(string[cnt]))
             {
-                //newShader = string[cnt];
                 //helper::insertEnhancerShift(newShader);
+                newShader = string[cnt];
 
+                printf("[Repeater] inspecting shader '%s'\n",newShader.c_str());
                 ShaderInspector inspector(newShader);
                 auto statements = inspector.findAllOutVertexAssignments();
                 auto transformationName = inspector.getTransformationUniformName(statements);
-                m_shaderDatabase[id].transformationName = transformationName;
+                
+                auto& metadata = m_Manager.getShaderDescription(shader);
+                printf("[Repeater] found transformation name: %s\n",transformationName.c_str());
+                metadata.m_TransformationMatrixName = transformationName;
+
                 newShader = inspector.injectShader(statements);
                 
                 printf("[Repeater] injecting shader shift\n");
@@ -122,48 +125,62 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
     }
 }
 
-
-
-
-virtual void Repeater::glAttachShader (GLuint program, GLuint shader)
+void Repeater::glAttachShader (GLuint program, GLuint shader)
 {
-    if(m_shaderDatabase.count(shader) == 0)
-        return;
-
-    const auto& shaderMeta = m_shaderDatabase[shader];
-    if(!shaderMeta.isVertexShader())
-        return;
-
-    m_programVertexShaderDatabase[program] = shader;
     OpenglRedirectorBase::glAttachShader(program,shader);
+
+    if(!m_Manager.hasProgram(program))
+        return;
+    if(!m_Manager.hasShader(shader))
+        return;
+    if(m_Manager.getShaderDescription(shader).m_Type != ShaderManager::ShaderTypes::VS)
+        return;
+    m_Manager.attachShaderToProgram(shader, program);
 }
 
 
-virtual void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
+    printf("[Repeater] generic uniform matrix\n");
     OpenglRedirectorBase::glUniformMatrix4fv (location, count, transpose, value);
+
     // get current's program transformation matrix name
     auto program = getCurrentProgram();
-    if(m_programVertexShaderDatabase.count(program) == 0)
+    if(!m_Manager.hasProgram(program))
         return;
-    auto shaderID = m_programVertexShaderDatabase[program];
-    if(m_shaderDatabase.count(shaderID) == 0)
+    const auto vertexShaderID = m_Manager.getProgram(program).m_VertexShader;
+    if(vertexShaderID == -1 || !m_Manager.hasShader(vertexShaderID))
         return;
-    auto shaderMetaData = m_shaderDatabase[shaderID];
-    if(ShaderMetadata.transformationMatrixName == "")
+    auto shaderMetaData = m_Manager.getShaderDescription(vertexShaderID);
+    if(shaderMetaData.m_TransformationMatrixName == "")
         return;
 
     // get original MVP matrix location
-    auto originalLocation = OpenglRedirectorBase::glGetUniformLocation(program, ShaderMetadata.transformationMatrixName);
+    auto originalLocation = OpenglRedirectorBase::glGetUniformLocation(program, shaderMetaData.m_TransformationMatrixName.c_str());
+    
+    // if the matrix being uploaded isn't detected MVP, then continue
     if(originalLocation != location)
         return;
 
     // estimate projection matrix from value
     glm::mat4 mat;
     std::memcpy(glm::value_ptr(mat), value, 16*sizeof(float));
-    // TODO: estimate projection params
-    //
-    // TODO: store enhancer_estimatedParameters into program via glUniform
+    auto estimatedParameters = estimatePerspectiveProjection(mat);
+
+    printf("[Repeater] estimating parameters from uniform matrix\n");
+    printf("[Repeater] parameters: fx(%f) fy(%f) near (%f) near(%f) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane);
+
+    // upload parameters to GPU's program
+    auto parametersLocation = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_estimatedParameters");
+    OpenglRedirectorBase::glUniform4fv(parametersLocation,1,glm::value_ptr(estimatedParameters.asVector()));
+}
+
+
+GLuint Repeater::glCreateProgram (void)
+{
+    auto result = OpenglRedirectorBase::glCreateProgram();
+    m_Manager.addProgram(result);
+    return result;
 }
 
 //-----------------------------------------------------------------------------
@@ -182,7 +199,14 @@ void Repeater::glDrawElements(GLenum mode,GLsizei count,GLenum type,const GLvoid
     Repeater::duplicateCode([&]() {
         OpenglRedirectorBase::glDrawElements(mode,count,type,indices);
     });
+}
 
+
+void Repeater::glDrawElementsInstanced (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount)
+{
+    Repeater::duplicateCode([&]() {
+        OpenglRedirectorBase::glDrawElementsInstanced(mode,count,type,indices,instancecount);
+    });
 }
 
 //-----------------------------------------------------------------------------
@@ -196,14 +220,35 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
         auto keySym = XLookupKeysym(reinterpret_cast<XKeyEvent*>(event_return), 0);
         if(keySym == XK_F1)
         {
-            angle += 0.01;
-            puts("[Repeater] F1 pressed");
+            m_Angle += 0.01;
+            puts("[Repeater] Setting: F1 pressed - increase angle");
         }
         if(keySym == XK_F2)
         {
-            angle -= 0.01;
-            puts("[Repeater] F2 pressed");
+            m_Angle -= 0.01;
+            puts("[Repeater] Setting: F2 pressed - decrease angle");
         }
+
+        if(keySym == XK_F3)
+        {
+            m_Distance += 0.1;
+            puts("[Repeater] Setting: F3 pressed increase dist");
+        }
+
+        if(keySym == XK_F4)
+        {
+            m_Distance -= 0.1;
+            puts("[Repeater] Setting: F4 pressed decrease dist");
+        }
+
+        if(keySym == XK_F5)
+        {
+            m_Distance = 1.0;
+            m_Angle = 0.0;
+            puts("[Repeater] Setting: F5 pressed - reset");
+        }
+
+        printf("[Repeater] Setting: dist (%f), angle (%f)\n", m_Distance, m_Angle);
 
     }
     return returnVal;
@@ -224,16 +269,20 @@ void Repeater::setEnhancerShift(const glm::vec3& clipSpaceTransformation)
 {
     return;
     auto program = getCurrentProgram();
-    auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_transform");
+    auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
 
     glm::mat4 tmpMat = glm::mat4(glm::vec4(1,0,0,0),glm::vec4(0,1,0,0),glm::vec4(0,0,1,0),glm::vec4(clipSpaceTransformation,0.0));
     OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(tmpMat)));
 }
 void Repeater::setEnhancerShift(const glm::mat4& clipSpaceTransformation)
 {
+    float dist = m_Distance;
+    auto T = glm::translate(glm::vec3(0.0f,0.0f,dist));
+    auto invT = glm::translate(glm::vec3(0.0f,0.0f,-dist));
+    auto resultMat = invT*clipSpaceTransformation*T;
     auto program = getCurrentProgram();
-    auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_transform");
-    OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(clipSpaceTransformation)));
+    auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
+    OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
 }
 
 
@@ -246,13 +295,13 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     OpenglRedirectorBase::glViewport(viewport[0],viewport[1], viewport[2],viewport[3]/2);
     //setEnhancerShift(glm::vec3(0.3,0,0));
 
-    const glm::mat4 plusRotation = glm::rotate(-angle, glm::vec3(0.f,1.0f,0.f));
+    const glm::mat4 plusRotation = glm::rotate(-m_Angle, glm::vec3(0.f,1.0f,0.f));
     setEnhancerShift(plusRotation);
     code();
     // Set top
     OpenglRedirectorBase::glViewport(viewport[0],viewport[1]+viewport[3]/2, viewport[2],viewport[3]/2);
     //setEnhancerShift(glm::vec3(-0.3,0,0));
-    const glm::mat4 minusRotation = glm::rotate(+angle,glm::vec3(0.f,1.0f,0.f));
+    const glm::mat4 minusRotation = glm::rotate(+m_Angle,glm::vec3(0.f,1.0f,0.f));
     setEnhancerShift(minusRotation);
     code();
     // restore viewport
