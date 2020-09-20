@@ -121,7 +121,8 @@ if(${ENHANCER_BUILD_TESTS})
         tests/unittests/projection_estimator_test.cpp
         tests/unittests/shader_inspector_test.cpp
     )
-    target_link_libraries(unit_tests ${GTEST_BOTH_LIBRARIES} enhancer_utils)
+    find_package(Threads)
+    target_link_libraries(unit_tests ${GTEST_BOTH_LIBRARIES} enhancer_utils Threads::Threads)
 
     add_test(NAME AllTests COMMAND "$<TARGET_FILE:unit_tests>")
 
