@@ -36,6 +36,9 @@ namespace ve
 
         /// Get transformation matrix from assigments
         std::string getTransformationUniformName(std::vector<VertextAssignment>);
+
+        /// Get count of declared uniforms in shader in O(n)
+        size_t getCountOfUniforms() const;
     };
 } //namespace ve
 

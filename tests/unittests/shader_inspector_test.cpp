@@ -60,6 +60,7 @@ TEST(ShaderInspector, VSFalseTestMultiline) {
     ASSERT_EQ(assignments[1].statementRawText, "gl_Position = gl_Position+vec3(1.0);");
 
     ASSERT_EQ(inspector.getTransformationUniformName(assignments), "");
+    ASSERT_EQ(inspector.getCountOfUniforms(), 0);
 }
 
 TEST(ShaderInspector, TextVSXYZ) {
@@ -74,6 +75,7 @@ TEST(ShaderInspector, TextVSXYZ) {
     auto inspector = ve::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 0);
+    ASSERT_EQ(inspector.getCountOfUniforms(), 0);
 }
 
 TEST(ShaderInspector, TextVSReplace) {
@@ -96,6 +98,7 @@ TEST(ShaderInspector, TextVSReplace) {
     ASSERT_NE(result.find("=enhancer_transform_HUD("), std::string::npos);
 
     ASSERT_EQ(inspector.getTransformationUniformName(assignments), "");
+    ASSERT_EQ(inspector.getCountOfUniforms(), 0);
 }
 
 TEST(ShaderInspector, VSTakeFirstMVP) {
@@ -118,6 +121,7 @@ TEST(ShaderInspector, VSTakeFirstMVP) {
     ASSERT_EQ(assignments[1].statementRawText, "gl_Position = gl_Position + vec4(0.0,0.0,1.0,0.0);");
 
     ASSERT_EQ(inspector.getTransformationUniformName(assignments), "MVP");
+    ASSERT_EQ(inspector.getCountOfUniforms(), 2);
 }
 
 TEST(ShaderInspector, VSExample) {
@@ -149,6 +153,7 @@ TEST(ShaderInspector, VSExample) {
     ASSERT_EQ(assignments[0].statementRawText, "gl_Position =  MVP * vec4(vertexPosition_modelspace,1);");
 
     ASSERT_EQ(inspector.getTransformationUniformName(assignments), "MVP");
+    ASSERT_EQ(inspector.getCountOfUniforms(), 1);
 }
 
 

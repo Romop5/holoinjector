@@ -110,6 +110,8 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
                 metadata.m_TransformationMatrixName = transformationName;
 
                 newShader = inspector.injectShader(statements);
+                auto & description = m_Manager.getShaderDescription(shader);
+                description.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
                 
                 printf("[Repeater] injecting shader shift\n");
                 preparedShaders.push_back(newShader.data());
@@ -181,6 +183,12 @@ GLuint Repeater::glCreateProgram (void)
     auto result = OpenglRedirectorBase::glCreateProgram();
     m_Manager.addProgram(result);
     return result;
+}
+
+void Repeater::glUseProgram (GLuint program)
+{
+    OpenglRedirectorBase::glUseProgram(program);
+    m_Manager.bind(program);
 }
 
 //-----------------------------------------------------------------------------
@@ -335,7 +343,13 @@ void Repeater::setEnhancerIdentity()
 
 void Repeater::duplicateCode(const std::function<void(void)>& code)
 {
-    if(m_FBOTracker.isFBOshadowMap())
+    bool shouldNotDuplicate = (
+            // don't duplicate while rendering light's point of view into shadow map
+            m_FBOTracker.isFBOshadowMap() ||
+            // don't duplicate while rendering post-processing effect
+            (m_Manager.isAnyBound() && !m_Manager.getBoundedVS().m_HasAnyUniform));
+
+    if(shouldNotDuplicate)
     {
         setEnhancerIdentity();
         code();

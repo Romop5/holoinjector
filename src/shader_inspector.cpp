@@ -169,3 +169,17 @@ std::string ve::ShaderInspector::getTransformationUniformName(std::vector<Vertex
     }
     return "";
 }
+
+
+/// Get count of declared uniforms in shader
+size_t ve::ShaderInspector::getCountOfUniforms() const
+{
+    size_t count = 0;
+    size_t position = sourceCode.find("uniform");
+    while(position != std::string::npos)
+    {
+        count++;
+        position = sourceCode.find("uniform",position+1);
+    } 
+    return count;
+}

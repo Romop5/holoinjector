@@ -30,6 +30,7 @@ namespace ve
         // Shader end 
 
         virtual GLuint glCreateProgram (void);
+        virtual void glUseProgram (GLuint program);
 
 
 
