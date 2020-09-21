@@ -19,8 +19,6 @@ namespace ve
         public:
         virtual void registerCallbacks() override;
 
-        virtual void glClear(GLbitfield mask) override;
-
         // Shader start
         virtual GLuint glCreateShader(GLenum shaderType);
         virtual void glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length);

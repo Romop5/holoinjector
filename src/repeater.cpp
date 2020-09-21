@@ -16,12 +16,6 @@ void Repeater::registerCallbacks()
     registerOpenGLSymbols();
 }
 
-void Repeater::glClear(GLbitfield mask)
-{
-    printf("[Repeater] Redirecting glClear\n");
-    OpenglRedirectorBase::glClear(mask);
-} 
-
 namespace helper
 {
     bool containsMainFunction(const std::string& shader)
@@ -30,38 +24,6 @@ namespace helper
         static std::regex glPositionRegex("gl_Position *=",
                 std::regex_constants::ECMAScript | std::regex_constants::icase);
         return (std::regex_search(shader, glPositionRegex));
-    }
-
-    void insertEnhancerShift(std::string& shader)
-    {
-        auto mainPosition = shader.find("void main()");
-        if(mainPosition == std::string::npos)
-            return;
-        //shader.insert(mainPosition, "uniform vec3 enhancer_shift;\n");
-        //mainPosition = shader.find("void main()");
-
-        shader.insert(mainPosition, "uniform mat4 enhancer_transform;\n");
-        mainPosition = shader.find("void main()");
-
-        auto firstBrace = shader.find("{", mainPosition);
-        auto braceIterator = shader.begin()+firstBrace+1;
-        size_t braceCount = 1;
-        while(braceIterator != shader.end() && braceCount > 0)
-        {
-            if(*braceIterator == '}')
-                braceCount--;
-
-            if(*braceIterator == '{')
-                braceCount++;
-
-            braceIterator++;
-        }
-
-        if(braceCount == 0)
-        {
-            braceIterator--;
-            shader.insert(braceIterator-shader.begin(), "\n\tvec3 enhancer_shift = vec3(0.0,0.0,0.1)*gl_Position.w; \n\tgl_Position.xyz = (enhancer_transform*(vec4(enhancer_shift+gl_Position.xyz,1.0))).xyz-enhancer_shift;\n");
-        }
     }
 
     void dumpShaderSources(const GLchar* const* strings, GLsizei count)
@@ -97,7 +59,6 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
         {
             if(helper::containsMainFunction(string[cnt]))
             {
-                //helper::insertEnhancerShift(newShader);
                 newShader = string[cnt];
 
                 printf("[Repeater] inspecting shader '%s'\n",newShader.c_str());
