@@ -117,6 +117,8 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
     // At this point, caller must have verified that this is a VS, containing void main() method
     assert(startOfFunction != std::string::npos);
     std::string code = R"(
+        // when true, keeps original transformation flowing => used for shadow maps
+        uniform bool enhancer_identity; 
         // Contains PROJ*VIEW per-view camera
         uniform mat4 enhancer_view_transform; 
 
@@ -126,6 +128,8 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
         // Reversts original projection and apple per-view transformation & projection
         vec4 enhancer_transform(vec4 clipSpace)
         {
+            if(enhancer_identity)
+                return clipSpace;
             float fx = enhancer_estimatedParameters[0];
             float fy = enhancer_estimatedParameters[1];
             float near = enhancer_estimatedParameters[2];
@@ -145,6 +149,8 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
         // Transform without deprojecting
         vec4 enhancer_transform_HUD(vec4 clipSpace)
         {
+            if(enhancer_identity)
+                return clipSpace;
             // Revert clip-space to view-space
             return enhancer_view_transform*clipSpace;
         }

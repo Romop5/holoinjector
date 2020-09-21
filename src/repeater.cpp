@@ -208,6 +208,37 @@ void Repeater::glDrawElementsInstanced (GLenum mode, GLsizei count, GLenum type,
         OpenglRedirectorBase::glDrawElementsInstanced(mode,count,type,indices,instancecount);
     });
 }
+void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
+{
+    OpenglRedirectorBase::glGenFramebuffers(n, framebuffers);
+    for(size_t i=0;i < n; i++)
+    {
+        m_FBOTracker.addFramebuffer(framebuffers[i]);
+    }
+}
+
+void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
+{
+    OpenglRedirectorBase::glBindFramebuffer(target,framebuffer);
+    m_FBOTracker.bind(framebuffer);
+}
+
+
+void Repeater::glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
+{
+    OpenglRedirectorBase::glFramebufferTexture1D(target,attachment,textarget, texture,level);
+    m_FBOTracker.attach(attachment, texture);
+}
+void Repeater::glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
+{
+    OpenglRedirectorBase::glFramebufferTexture2D(target,attachment,textarget, texture,level);
+    m_FBOTracker.attach(attachment, texture);
+}
+void Repeater::glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset)
+{
+    OpenglRedirectorBase::glFramebufferTexture3D(target,attachment,textarget, texture,level,zoffset);
+    m_FBOTracker.attach(attachment, texture);
+}
 
 //-----------------------------------------------------------------------------
 // Debugging utils
@@ -283,12 +314,29 @@ void Repeater::setEnhancerShift(const glm::mat4& clipSpaceTransformation)
     auto program = getCurrentProgram();
     auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
     OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
+
+    location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
+    OpenglRedirectorBase::glUniform1i(location, GL_FALSE);
+}
+
+void Repeater::setEnhancerIdentity()
+{
+    const auto identity = glm::mat4(1.0);
+    auto program = getCurrentProgram();
+    auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
+    OpenglRedirectorBase::glUniform1i(location, GL_TRUE);
 }
 
 
 void Repeater::duplicateCode(const std::function<void(void)>& code)
 {
-    
+    if(m_FBOTracker.isFBOshadowMap())
+    {
+        setEnhancerIdentity();
+        code();
+        return;
+    }
+
     GLint viewport[4];
     OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, viewport);
     // Set bottom (y is reverted in OpenGL) 
