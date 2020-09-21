@@ -356,7 +356,69 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         return;
     }
 
+    // Get original viewport
     GLint viewport[4];
+    OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, viewport);
+
+    /*
+     * Define viewports
+     */
+
+    constexpr size_t tilesPerX = 3;
+
+    struct Views
+    {
+        float angleX;
+        float angleY;
+    };
+
+    /*
+    std::array<Views,3> views 
+    { {
+        {0.0f,-1.0f},
+        {0.0f,0.0f},
+        {0.0f,1.0f}
+      } };
+    */
+    std::array<Views,9> views 
+    { {
+        {-1.0f,-1.0f},
+        {-1.0f,0.0f},
+        {-1.0f,1.0f},
+
+        {0.0f,-1.0f},
+        {0.0f,0.0f},
+        {0.0f,1.0f},
+
+        {1.0f,-1.0f},
+        {1.0f,0.0f},
+        {1.0f,1.0f},
+      } };
+
+    constexpr size_t tilesPerY = views.size()/tilesPerX + ((views.size() % tilesPerX) > 0);
+
+    const size_t width = viewport[2]/tilesPerX;
+    const size_t height= viewport[3]/tilesPerY;
+
+    const size_t startX= viewport[0];
+    const size_t startY= viewport[1];
+
+    for(size_t i = 0; i < views.size(); i++)
+    {
+        const Views& currentView = views[i];
+        size_t posX = i % tilesPerX;
+        size_t posY = i / tilesPerX;
+
+        size_t currentStartX = startX + posX*width;
+        size_t currentStartY = startY + posY*height;
+        OpenglRedirectorBase::glViewport(currentStartX, currentStartY, width, height);
+
+        const glm::mat4 rotationX = glm::rotate(m_Angle*currentView.angleX, glm::vec3(1.f,0.0f,0.f));
+        const glm::mat4 rotationY = glm::rotate(m_Angle*currentView.angleY, glm::vec3(0.f,1.0f,0.f));
+        setEnhancerShift(rotationX*rotationY);
+        code();
+    }
+    /*
     OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, viewport);
     // Set bottom (y is reverted in OpenGL) 
     OpenglRedirectorBase::glViewport(viewport[0],viewport[1], viewport[2],viewport[3]/2);
@@ -372,6 +434,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     setEnhancerShift(minusRotation);
     code();
     // restore viewport
+    // */
     OpenglRedirectorBase::glViewport(viewport[0],viewport[1], viewport[2],viewport[3]);
 }
 
