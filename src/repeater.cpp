@@ -223,6 +223,11 @@ void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
     m_FBOTracker.bind(framebuffer);
 }
 
+void Repeater::glFramebufferTexture (GLenum target, GLenum attachment, GLuint texture, GLint level)
+{
+    OpenglRedirectorBase::glFramebufferTexture(target,attachment, texture,level);
+    m_FBOTracker.attach(attachment, texture);
+}
 
 void Repeater::glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {

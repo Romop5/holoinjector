@@ -37,6 +37,7 @@ namespace ve
         // Framebuffers
         virtual void glGenFramebuffers (GLsizei n, GLuint* framebuffers);
         virtual void glBindFramebuffer (GLenum target, GLuint framebuffer);
+        virtual void glFramebufferTexture (GLenum target, GLenum attachment, GLuint texture, GLint level);
         virtual void glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
         virtual void glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
         virtual void glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
