@@ -117,6 +117,7 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
     // At this point, caller must have verified that this is a VS, containing void main() method
     assert(startOfFunction != std::string::npos);
     std::string code = R"(
+        uniform bool enhancer_isOrthogonal; 
         // when true, keeps original transformation flowing => used for shadow maps
         uniform bool enhancer_identity; 
         // Contains PROJ*VIEW per-view camera
@@ -137,9 +138,24 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
             // Revert clip-space to view-space
             vec4 viewSpace = vec4(clipSpace.x/fx, clipSpace.y/fy, -clipSpace.w,1.0);
 
+            if(enhancer_isOrthogonal)
+            {
+                viewSpace[2] = 0;
+            }
+
             float A = -2.0/(far-near);
             float B = -(far+near)/(far-near);
+            if(enhancer_isOrthogonal)
+            {
+                A = 1.0;
+                B = 0.0;
+            }
             mat4 projection = mat4(vec4(fx,0.0f,0.0f,0.0), vec4(0.0f,fy,0.0f,0.0), vec4(0.0f,0.0f,A,-1.0), vec4(0.0f,0.0f,B,0.0));
+            if(enhancer_isOrthogonal)
+            {
+                projection[3][3] = 1.0;
+                projection[2][3] = 0.0;
+            }
 
             // Do per-view transformation
             vec4 viewSpaceTransformed = projection*enhancer_view_transform * viewSpace;

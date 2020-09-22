@@ -11,12 +11,14 @@ namespace ve
 {
     struct PerspectiveProjectionParameters
     {
+        bool isPerspective = true;
+
         float fx; // field of view x
         float fy; // field of view y
-        float nearPlane; // distance of near plane in view-space
-        float farPlane; // distance of far plane in view-space
-        float A; //matrix[2,2] => -2/(f-n)
-        float B; //matrix[2,3] => -(f+n)/(f-n)
+        float nearPlane = 0.0f; // distance of near plane in view-space
+        float farPlane = 0.0f; // distance of far plane in view-space
+        float A = 0.0f; //matrix[2,2] => -2/(f-n)
+        float B = 0.0f; //matrix[2,3] => -(f+n)/(f-n)
 
         glm::vec4 asVector() const {
             return glm::vec4(fx,fy,nearPlane, farPlane);

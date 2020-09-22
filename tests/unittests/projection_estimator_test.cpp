@@ -50,6 +50,7 @@ float calculateFX(float deg, float aspectRatio = 1.0)
 \
     ASSERT_NEAR_RELATIVE(estimation.nearPlane, near,1e-3);\
     ASSERT_NEAR_RELATIVE(estimation.farPlane, far,1e-1);\
+    ASSERT_EQ(estimation.isPerspective, true);\
 \
     OUTPUTTER << "Params: " << angleDegrees << ", " << aspect << ", " << near << ", " << far << "\n";\
     OUTPUTTER << "MVP: " << glm::to_string(mvp) << "\n";\
@@ -112,6 +113,15 @@ TEST(ProjectionEstimator, Scale) {
     TEST_MV_PERSPECTIVE(ROT_Y(2.130)*SCALE(3.0)*ROT_X(5)*ROT_Y(2.0),16.0,4.5,0.1,500.0);
     TEST_MV_PERSPECTIVE(ROT_Y(2.130)*SCALE(3.0)*ROT_X(5)*ROT_Y(2.0),0.1,4.5,0.1,500.0);
 
+}
+
+TEST(ProjectionEstimator, OrthogonalProjection) {
+    auto ortho = glm::mat4(glm::vec4(1.0,0.0,0.0,0.0), glm::vec4(0.0,1.0,0.0,0.0), glm::vec4(0.0,0.0,5.0,0.0), glm::vec4(0.0,0.0,1.0,1.0)); 
+
+    auto projection = ve::estimatePerspectiveProjection(ortho);
+    ASSERT_EQ(projection.isPerspective, false);
+    ASSERT_EQ(projection.fx, 1.0);
+    ASSERT_EQ(projection.fy, 1.0);
 }
 }
 

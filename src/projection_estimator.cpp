@@ -54,10 +54,16 @@ namespace helper
         // If scale transformation was used, 3x3 matrix is scaled. 
         // This can be corrected perfectly provided a single scalar was used for scaling
         auto scalingCorrection = (glm::length2(glm::vec3(glm::row(mvp,3))));
+        if(scalingCorrection < 1e-6)
+        {
+            // for orthogonal projection, we can't estimate depth => use fixed depth
+            result.isPerspective = false;
+            return result;
+        }
 
         // Only rescale if scale is significantly different from 1.0 to preserve precision
         bool needsScalingCorrection = ((scalingCorrection-1.0) > 1e-6);
-        if(needsScalingCorrection)
+        if(needsScalingCorrection && result.isPerspective)
         {
             auto realScale = (glm::length(glm::vec3(glm::row(mvp,3))));
             scalingCorrection = realScale;

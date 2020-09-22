@@ -154,6 +154,9 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     // upload parameters to GPU's program
     auto parametersLocation = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_estimatedParameters");
     OpenglRedirectorBase::glUniform4fv(parametersLocation,1,glm::value_ptr(estimatedParameters.asVector()));
+
+    auto typeLocation= OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_isOrthogonal");
+    OpenglRedirectorBase::glUniform1i(typeLocation,!estimatedParameters.isPerspective);
 }
 
 
