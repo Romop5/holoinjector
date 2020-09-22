@@ -64,6 +64,8 @@ namespace ve
         float m_Angle = 0.0;
         float m_Distance = 1.0;
 
+        bool m_IsDuplicationOn = false;
+
         ShaderManager m_Manager;
         FramebufferTracker m_FBOTracker;
     };

@@ -238,39 +238,65 @@ void Repeater::glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum 
 int Repeater::XNextEvent(Display *display, XEvent *event_return)
 {
     auto returnVal = OpenglRedirectorBase::XNextEvent(display,event_return);
+
     if(event_return->type == KeyPress)
     {
+        auto keyEvent = reinterpret_cast<XKeyEvent*>(event_return);
+        static unsigned long lastSerial = 0;
+        if(keyEvent->serial == lastSerial)
+        {
+            return returnVal;
+        } else {
+            lastSerial = keyEvent->serial;
+        }
+        printf("[Repeater] XNextEvent KeyPress %d, %lu - %d - %p - [%d %d] [%u %u] %d\n",
+                keyEvent->type,keyEvent->serial, keyEvent->send_event,keyEvent->display, 
+                keyEvent->x,keyEvent->y,keyEvent->state,keyEvent->keycode, keyEvent->same_screen);
         auto keySym = XLookupKeysym(reinterpret_cast<XKeyEvent*>(event_return), 0);
-        if(keySym == XK_F1)
+        switch(keySym)
         {
-            m_Angle += 0.01;
-            puts("[Repeater] Setting: F1 pressed - increase angle");
-        }
-        if(keySym == XK_F2)
-        {
-            m_Angle -= 0.01;
-            puts("[Repeater] Setting: F2 pressed - decrease angle");
-        }
+            case XK_F1:
+            {
+                m_Angle += 0.01;
+                puts("[Repeater] Setting: F1 pressed - increase angle");
+            }
+            break;
+            case XK_F2:
+            {
+                m_Angle -= 0.01;
+                puts("[Repeater] Setting: F2 pressed - decrease angle");
+            }
+            break;
 
-        if(keySym == XK_F3)
-        {
-            m_Distance += 0.1;
-            puts("[Repeater] Setting: F3 pressed increase dist");
-        }
+            case XK_F3:
+            {
+                m_Distance += 0.1;
+                puts("[Repeater] Setting: F3 pressed increase dist");
+            }
+            break;
 
-        if(keySym == XK_F4)
-        {
-            m_Distance -= 0.1;
-            puts("[Repeater] Setting: F4 pressed decrease dist");
-        }
+            case XK_F4:
+            {
+                m_Distance -= 0.1;
+                puts("[Repeater] Setting: F4 pressed decrease dist");
+            }
+            break;
 
-        if(keySym == XK_F5)
-        {
-            m_Distance = 1.0;
-            m_Angle = 0.0;
-            puts("[Repeater] Setting: F5 pressed - reset");
-        }
+            case XK_F5:
+            {
+                m_Distance = 1.0;
+                m_Angle = 0.0;
+                puts("[Repeater] Setting: F5 pressed - reset");
+                break;
+            }
 
+            case XK_F11:
+            {
+                m_IsDuplicationOn = !m_IsDuplicationOn;
+                puts("[Repeater] Setting: F11 pressed - toggle");
+            }
+            break;
+        }
         printf("[Repeater] Setting: dist (%f), angle (%f)\n", m_Distance, m_Angle);
 
     }
@@ -323,6 +349,7 @@ void Repeater::setEnhancerIdentity()
 void Repeater::duplicateCode(const std::function<void(void)>& code)
 {
     bool shouldNotDuplicate = (
+            !m_IsDuplicationOn ||
             // don't duplicate while rendering light's point of view into shadow map
             m_FBOTracker.isFBOshadowMap() ||
             // don't duplicate while rendering post-processing effect
@@ -401,23 +428,6 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         setEnhancerShift(rotationY*rotationX);
         code();
     }
-    /*
-    OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, viewport);
-    // Set bottom (y is reverted in OpenGL) 
-    OpenglRedirectorBase::glViewport(viewport[0],viewport[1], viewport[2],viewport[3]/2);
-    //setEnhancerShift(glm::vec3(0.3,0,0));
-
-    const glm::mat4 plusRotation = glm::rotate(-m_Angle, glm::vec3(0.f,1.0f,0.f));
-    setEnhancerShift(plusRotation);
-    code();
-    // Set top
-    OpenglRedirectorBase::glViewport(viewport[0],viewport[1]+viewport[3]/2, viewport[2],viewport[3]/2);
-    //setEnhancerShift(glm::vec3(-0.3,0,0));
-    const glm::mat4 minusRotation = glm::rotate(+m_Angle,glm::vec3(0.f,1.0f,0.f));
-    setEnhancerShift(minusRotation);
-    code();
-    // restore viewport
-    // */
     OpenglRedirectorBase::glViewport(viewport[0],viewport[1], viewport[2],viewport[3]);
 }
 
