@@ -11,11 +11,6 @@
 
 using namespace ve;
 
-void Repeater::registerCallbacks() 
-{
-    registerOpenGLSymbols();
-}
-
 namespace helper
 {
     bool containsMainFunction(const std::string& shader)
@@ -35,7 +30,30 @@ namespace helper
             printf("---\n");
         }
     }
+
+    float getEnviromentValue(const std::string& variable, float defaultValue = 0.0f)
+    {
+        auto envStringRaw = getenv(variable.c_str());
+        if(!envStringRaw)
+            return defaultValue;
+        float resultValue;
+        try {
+            resultValue = std::stof(envStringRaw);
+        } catch(...)
+        {
+            return defaultValue;
+        }
+        return resultValue;
+    }
 } // namespace helper
+
+void Repeater::registerCallbacks() 
+{
+    registerOpenGLSymbols();
+
+    m_Angle = helper::getEnviromentValue("ENHANCER_ANGLE", m_Angle); 
+    m_Distance = helper::getEnviromentValue("ENHANCER_DISTANCE", m_Distance); 
+}
 
 GLuint Repeater::glCreateShader(GLenum shaderType)
 {
@@ -343,17 +361,21 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     */
     std::array<Views,9> views 
     { {
-        {-1.0f,-1.0f},
-        {-1.0f,0.0f},
+
+
+
         {-1.0f,1.0f},
+        {-1.0f,0.0f},
+        {-1.0f,-1.0f},
 
-        {0.0f,-1.0f},
-        {0.0f,0.0f},
         {0.0f,1.0f},
+        {0.0f,0.0f},
+        {0.0f,-1.0f},
 
-        {1.0f,-1.0f},
-        {1.0f,0.0f},
         {1.0f,1.0f},
+        {1.0f,0.0f},
+        {1.0f,-1.0f},
+
       } };
 
     constexpr size_t tilesPerY = views.size()/tilesPerX + ((views.size() % tilesPerX) > 0);
@@ -376,7 +398,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
 
         const glm::mat4 rotationX = glm::rotate(m_Angle*currentView.angleX, glm::vec3(1.f,0.0f,0.f));
         const glm::mat4 rotationY = glm::rotate(m_Angle*currentView.angleY, glm::vec3(0.f,1.0f,0.f));
-        setEnhancerShift(rotationX*rotationY);
+        setEnhancerShift(rotationY*rotationX);
         code();
     }
     /*
