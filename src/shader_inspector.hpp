@@ -25,6 +25,10 @@ namespace ve
         /// Get string repr. from declaration or empty string if variable is not declared
         std::string getVariableType(const std::string& variable) const;
 
+
+        /// Verifies if identifier is an uniform in any interface block
+        bool isUniformVariableInInterfaceBlock(const std::string& identifier) const;
+
         /// Verifies if token 'identifier' is declared as uniform variable in source code
         bool isUniformVariable(const std::string& identifier) const;
 

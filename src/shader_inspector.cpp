@@ -50,8 +50,20 @@ bool ve::ShaderInspector::isBuiltinGLSLType(const std::string& token)
     return (builtinTypes.count(token) > 0);
 }
 
+bool ve::ShaderInspector::isUniformVariableInInterfaceBlock(const std::string& identifier) const
+{
+    std::string regexLiteral = std::string("uniform[^;]*\\{[^\\}]*[\f\n\r\t\v ]") + identifier + std::string("[\f\n\r\t\v ]*;[^\\}]*\\}");
+    auto isDefinedAsUniform = std::regex(regexLiteral,std::regex::extended);
+    std::smatch m;
+    std::regex_search(sourceCode, m, isDefinedAsUniform); 
+    return m.size() > 0;
+}
+
+
 bool ve::ShaderInspector::isUniformVariable(const std::string& identifier) const
 {
+    if(isUniformVariableInInterfaceBlock(identifier))
+            return true;
     std::string regexLiteral = std::string("uniform[^;]*[\f\n\r\t\v ]") + identifier + std::string("[\f\n\r\t\v ]*;");
     auto isDefinedAsUniform = std::regex(regexLiteral,std::regex::extended);
     std::smatch m;
