@@ -116,7 +116,7 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
 
     // At this point, caller must have verified that this is a VS, containing void main() method
     assert(startOfFunction != std::string::npos);
-    std::string code = R"(
+    static std::string code = R"(
         uniform bool enhancer_isOrthogonal; 
         // when true, keeps original transformation flowing => used for shadow maps
         uniform bool enhancer_identity; 

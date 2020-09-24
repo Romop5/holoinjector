@@ -50,6 +50,10 @@ namespace ve
         virtual void glUniformMatrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
 
 
+        // Viewport start
+        virtual void glViewport(GLint x,GLint y,GLsizei width,GLsizei height);
+        virtual void glScissor(GLint x,GLint y,GLsizei width,GLsizei height);
+        // Viewport end 
 
         virtual int XNextEvent(Display *display, XEvent *event_return);
 
@@ -68,5 +72,20 @@ namespace ve
 
         ShaderManager m_Manager;
         FramebufferTracker m_FBOTracker;
+
+        struct ViewportArea 
+        {
+            GLint x = 0;
+            GLint y = 0;
+            GLsizei width = 0;
+            GLsizei height = 0;
+            void set(GLint x, GLint y, GLsizei width, GLsizei height)
+            {
+                this->x = x;
+                this->y = y;
+                this->width = width;
+                this->height = height;
+            }
+        } currentViewport, currentScissorArea;
     };
 }

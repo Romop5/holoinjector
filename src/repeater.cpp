@@ -58,21 +58,24 @@ void Repeater::registerCallbacks()
 GLuint Repeater::glCreateShader(GLenum shaderType)
 {
     auto id = OpenglRedirectorBase::glCreateShader(shaderType);
+    
+    printf("[Repeater] glCreateShader: %d\n",shaderType);
+    
     m_Manager.addShader(id, (shaderType == GL_VERTEX_SHADER)?(ShaderManager::ShaderTypes::VS):(ShaderManager::ShaderTypes::GENERIC));
     return id;
 }
 
 void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length)
 {
-    printf("[Repeater] glShaderSource: \n");
+    printf("[Repeater] glShaderSource: [%d]\n",shader);
     if(m_Manager.hasShader(shader) && m_Manager.getShaderDescription(shader).m_Type == ShaderManager::ShaderTypes::VS)
     {
-        // when length is an array, handling is different 
-        assert(length == nullptr);
-
         std::string newShader;
         std::vector<const GLchar*> preparedShaders;
         preparedShaders.reserve(count);
+
+        std::vector<GLint> preparedShadersLengths;
+        preparedShadersLengths.reserve(count);
         for(size_t cnt = 0; cnt < count; cnt++)
         {
             if(helper::containsMainFunction(string[cnt]))
@@ -94,12 +97,14 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
                 
                 printf("[Repeater] injecting shader shift\n");
                 preparedShaders.push_back(newShader.data());
+                preparedShadersLengths.push_back(newShader.size());
             } else {
                 preparedShaders.push_back(string[cnt]);
+                preparedShadersLengths.push_back(length[cnt]);
             }
         }
         helper::dumpShaderSources(preparedShaders.data(), count);
-        OpenglRedirectorBase::glShaderSource(shader,count,preparedShaders.data(),length);
+        OpenglRedirectorBase::glShaderSource(shader,count,preparedShaders.data(),preparedShadersLengths.data());
     } else {
         helper::dumpShaderSources(string, count);
         OpenglRedirectorBase::glShaderSource(shader,count,string,length);
@@ -108,6 +113,7 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
 
 void Repeater::glAttachShader (GLuint program, GLuint shader)
 {
+    printf("[Repeater] attaching shader [%d] to program [%d] \n", shader, program);
     OpenglRedirectorBase::glAttachShader(program,shader);
 
     if(!m_Manager.hasProgram(program))
@@ -171,6 +177,19 @@ void Repeater::glUseProgram (GLuint program)
 {
     OpenglRedirectorBase::glUseProgram(program);
     m_Manager.bind(program);
+}
+
+
+void Repeater::glViewport(GLint x,GLint y,GLsizei width,GLsizei height)
+{
+    OpenglRedirectorBase::glViewport(x,y,width,height);
+    currentViewport.set(x,y,width,height);
+}
+
+void Repeater::glScissor(GLint x,GLint y,GLsizei width,GLsizei height)
+{
+    OpenglRedirectorBase::glScissor(x,y,width,height);
+    currentScissorArea.set(x,y,width,height);
 }
 
 //-----------------------------------------------------------------------------
@@ -366,14 +385,14 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     }
 
     // Get original viewport
-    GLint viewport[4];
-    OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, viewport);
+    auto originalViewport = currentViewport;
+    auto originalScissor = currentScissorArea;
 
     /*
      * Define viewports
      */
 
-    constexpr size_t tilesPerX = 3;
+    constexpr size_t tilesPerX = 1;
 
     struct Views
     {
@@ -381,14 +400,21 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         float angleY;
     };
 
-    /*
+   std::array<Views,2> views 
+    { {
+        {0.0f,-1.0f},
+        {0.0f,1.0f}
+      } };
+    
+    /* 
     std::array<Views,3> views 
     { {
         {0.0f,-1.0f},
         {0.0f,0.0f},
         {0.0f,1.0f}
       } };
-    */
+    
+    /*
     std::array<Views,9> views 
     { {
 
@@ -407,14 +433,15 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         {1.0f,-1.0f},
 
       } };
+    */
 
     constexpr size_t tilesPerY = views.size()/tilesPerX + ((views.size() % tilesPerX) > 0);
 
-    const size_t width = viewport[2]/tilesPerX;
-    const size_t height= viewport[3]/tilesPerY;
+    const size_t width = originalViewport.width/tilesPerX;
+    const size_t height= originalViewport.height/tilesPerY;
 
-    const size_t startX= viewport[0];
-    const size_t startY= viewport[1];
+    const size_t startX= originalViewport.x;
+    const size_t startY= originalViewport.y;
 
     for(size_t i = 0; i < views.size(); i++)
     {
@@ -422,15 +449,22 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         size_t posX = i % tilesPerX;
         size_t posY = i / tilesPerX;
 
-        size_t currentStartX = startX + posX*width;
-        size_t currentStartY = startY + posY*height;
+        const size_t currentStartX = startX + posX*width;
+        const size_t currentStartY = startY + posY*height;
         OpenglRedirectorBase::glViewport(currentStartX, currentStartY, width, height);
+        const auto scissorDiffX = (originalScissor.x-originalViewport.x)/tilesPerX;
+        const auto scissorDiffY = (originalScissor.y-originalViewport.y)/tilesPerY;
+        const auto scissorWidth = originalScissor.width/tilesPerX; 
+        const auto scissorHeight = originalScissor.height/tilesPerY; 
+        OpenglRedirectorBase::glScissor(currentStartX+scissorDiffX, currentStartY+scissorDiffY, scissorWidth, scissorHeight);
 
         const glm::mat4 rotationX = glm::rotate(m_Angle*currentView.angleX, glm::vec3(1.f,0.0f,0.f));
         const glm::mat4 rotationY = glm::rotate(m_Angle*currentView.angleY, glm::vec3(0.f,1.0f,0.f));
         setEnhancerShift(rotationY*rotationX);
         code();
     }
-    OpenglRedirectorBase::glViewport(viewport[0],viewport[1], viewport[2],viewport[3]);
+    // restore
+    OpenglRedirectorBase::glViewport(originalViewport.x, originalViewport.y, originalViewport.width, originalViewport.height);
+    OpenglRedirectorBase::glScissor(originalScissor.x, originalViewport.y, originalScissor.width, originalScissor.height);
 }
 
