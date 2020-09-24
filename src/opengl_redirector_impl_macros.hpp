@@ -122,11 +122,11 @@
 
 
 /// Redirect glXYZ to OpenglRedirectorBase's method
-#define OPENGL_REDIRECTOR_API(_retType, _name, ...)\
+#define OPENGL_REDIRECTOR_API(_retType, _name, _handler, ...)\
 _retType _name( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ) \
 { \
     OPENGL_LOG_API_CALL (""#_name, OPENGL_PACK_ARGS(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__))); \
-    return g_OpenGLRedirector-> _name(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__)); \
+    return g_OpenGLRedirector-> _handler(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__)); \
 } \
 static helper::RegisterAPIFunction register_impl##_name(""#_name, reinterpret_cast<void*>(&_name));
 
@@ -146,15 +146,23 @@ _retType OpenglRedirectorBase :: _name ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ) 
  * GLAPI void GLAPIENTRY glClear( GLbitfield mask );
  */
 #define OPENGL_FORWARD(_retType, _name, ...)\
-    OPENGL_REDIRECTOR_API(_retType, _name, __VA_ARGS__) \
+    OPENGL_REDIRECTOR_API(_retType, _name, _name, __VA_ARGS__) \
     OPENGL_REDIRECTOR_METHOD(_retType, _name, __VA_ARGS__) \
+
+/*
+ * @brief Define and forward proxy to implementation of extension (such as ARB)
+ *
+ * e.g. OPENGL_FORWARD(void, glClear, GLbitfield, mask); will be forwarded to:
+ * GLAPI void GLAPIENTRY glClear( GLbitfield mask );
+ */
+#define OPENGL_FORWARD_EXT(_extension, _retType, _name, ...)\
+    OPENGL_REDIRECTOR_API(_retType, _name##_extension, _name, __VA_ARGS__) \
 
 /*
  * @brief Only forwards system API call, left virtual method undefined
  */
 #define OPENGL_FORWARD_LOADER_ONLY(_retType, _name, ...)\
-    OPENGL_REDIRECTOR_API(_retType, _name, __VA_ARGS__) \
-
+    OPENGL_REDIRECTOR_API(_retType, _name, _name, __VA_ARGS__) \
 
 /*
  * @brief Define own handler

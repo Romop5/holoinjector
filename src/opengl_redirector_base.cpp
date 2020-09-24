@@ -12,6 +12,7 @@
 #include <sstream>
 #include "opengl_redirector_base.hpp"
 #include "opengl_redirector_impl_macros.hpp"
+#include "opengl_utils.hpp"
 
 /*
  * To redirect API call to our class method, a static method with same type must be
@@ -65,6 +66,11 @@ namespace helper
         std::stringstream ss;
         ss << "\"" << s << "\"";
         return ss.str();
+    }
+
+    std::string serialize(GLenum c)
+    {
+        return ve::opengl_utils::getEnumStringRepresentation(c);
     }
 
     std::string serialize(char c)
@@ -1456,32 +1462,32 @@ OPENGL_FORWARD(void,glDeleteObjectARB ,GLhandleARB,obj)
 OPENGL_FORWARD(GLhandleARB,glGetHandleARB ,GLenum,pname)
 OPENGL_FORWARD(void,glDetachObjectARB ,GLhandleARB,containerObj, GLhandleARB,attachedObj)
 OPENGL_FORWARD(GLhandleARB,glCreateShaderObjectARB ,GLenum,shaderType)
-OPENGL_FORWARD(void,glShaderSourceARB ,GLhandleARB,shaderObj, GLsizei,count, const GLcharARB**,string, const GLint*,length)
-OPENGL_FORWARD(void,glCompileShaderARB ,GLhandleARB,shaderObj)
-OPENGL_FORWARD(GLhandleARB,glCreateProgramObjectARB ,void,)
+OPENGL_FORWARD_EXT(ARB,void,glShaderSource ,GLhandleARB,shaderObj, GLsizei,count, const GLcharARB**,string, const GLint*,length)
+OPENGL_FORWARD_EXT(ARB,void,glCompileShader ,GLhandleARB,shaderObj)
+OPENGL_FORWARD_EXT(ObjectARB, GLhandleARB,glCreateProgram,void,)
 OPENGL_FORWARD(void,glAttachObjectARB ,GLhandleARB,containerObj, GLhandleARB,obj)
-OPENGL_FORWARD(void,glLinkProgramARB ,GLhandleARB,programObj)
-OPENGL_FORWARD(void,glUseProgramObjectARB ,GLhandleARB,programObj)
+OPENGL_FORWARD_EXT(ARB,void,glLinkProgram,GLhandleARB,programObj)
+OPENGL_FORWARD_EXT(ObjectARB,void,glUseProgram,GLhandleARB,programObj)
 OPENGL_FORWARD(void,glValidateProgramARB ,GLhandleARB,programObj)
-OPENGL_FORWARD(void,glUniform1fARB ,GLint,location, GLfloat,v0)
-OPENGL_FORWARD(void,glUniform2fARB ,GLint,location, GLfloat,v0, GLfloat,v1)
-OPENGL_FORWARD(void,glUniform3fARB ,GLint,location, GLfloat,v0, GLfloat,v1, GLfloat,v2)
-OPENGL_FORWARD(void,glUniform4fARB ,GLint,location, GLfloat,v0, GLfloat,v1, GLfloat,v2, GLfloat,v3)
-OPENGL_FORWARD(void,glUniform1iARB ,GLint,location, GLint,v0)
-OPENGL_FORWARD(void,glUniform2iARB ,GLint,location, GLint,v0, GLint,v1)
-OPENGL_FORWARD(void,glUniform3iARB ,GLint,location, GLint,v0, GLint,v1, GLint,v2)
-OPENGL_FORWARD(void,glUniform4iARB ,GLint,location, GLint,v0, GLint,v1, GLint,v2, GLint,v3)
-OPENGL_FORWARD(void,glUniform1fvARB ,GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniform2fvARB ,GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniform3fvARB ,GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniform4fvARB ,GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniform1ivARB ,GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD(void,glUniform2ivARB ,GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD(void,glUniform3ivARB ,GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD(void,glUniform4ivARB ,GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD(void,glUniformMatrix2fvARB ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniformMatrix3fvARB ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniformMatrix4fvARB ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
+OPENGL_FORWARD_EXT(ARB,void,glUniform1f ,GLint,location, GLfloat,v0)
+OPENGL_FORWARD_EXT(ARB,void,glUniform2f ,GLint,location, GLfloat,v0, GLfloat,v1)
+OPENGL_FORWARD_EXT(ARB,void,glUniform3f ,GLint,location, GLfloat,v0, GLfloat,v1, GLfloat,v2)
+OPENGL_FORWARD_EXT(ARB,void,glUniform4f ,GLint,location, GLfloat,v0, GLfloat,v1, GLfloat,v2, GLfloat,v3)
+OPENGL_FORWARD_EXT(ARB,void,glUniform1i ,GLint,location, GLint,v0)
+OPENGL_FORWARD_EXT(ARB,void,glUniform2i ,GLint,location, GLint,v0, GLint,v1)
+OPENGL_FORWARD_EXT(ARB,void,glUniform3i ,GLint,location, GLint,v0, GLint,v1, GLint,v2)
+OPENGL_FORWARD_EXT(ARB,void,glUniform4i ,GLint,location, GLint,v0, GLint,v1, GLint,v2, GLint,v3)
+OPENGL_FORWARD_EXT(ARB,void,glUniform1fv ,GLint,location, GLsizei,count, const GLfloat*,value)
+OPENGL_FORWARD_EXT(ARB,void,glUniform2fv ,GLint,location, GLsizei,count, const GLfloat*,value)
+OPENGL_FORWARD_EXT(ARB,void,glUniform3fv ,GLint,location, GLsizei,count, const GLfloat*,value)
+OPENGL_FORWARD_EXT(ARB,void,glUniform4fv ,GLint,location, GLsizei,count, const GLfloat*,value)
+OPENGL_FORWARD_EXT(ARB,void,glUniform1iv ,GLint,location, GLsizei,count, const GLint*,value)
+OPENGL_FORWARD_EXT(ARB,void,glUniform2iv ,GLint,location, GLsizei,count, const GLint*,value)
+OPENGL_FORWARD_EXT(ARB,void,glUniform3iv ,GLint,location, GLsizei,count, const GLint*,value)
+OPENGL_FORWARD_EXT(ARB,void,glUniform4iv ,GLint,location, GLsizei,count, const GLint*,value)
+OPENGL_FORWARD_EXT(ARB,void,glUniformMatrix2fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
+OPENGL_FORWARD_EXT(ARB,void,glUniformMatrix3fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
+OPENGL_FORWARD_EXT(ARB,void,glUniformMatrix4fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
 OPENGL_FORWARD(void,glGetObjectParameterfvARB ,GLhandleARB,obj, GLenum,pname, GLfloat*,params)
 OPENGL_FORWARD(void,glGetObjectParameterivARB ,GLhandleARB,obj, GLenum,pname, GLint*,params)
 OPENGL_FORWARD(void,glGetInfoLogARB ,GLhandleARB,obj, GLsizei,maxLength, GLsizei*,length, GLcharARB*,infoLog)
@@ -1523,7 +1529,7 @@ OPENGL_FORWARD(void,glWeightusvARB ,GLint,size, const GLushort*,weights)
 OPENGL_FORWARD(void,glWeightuivARB ,GLint,size, const GLuint*,weights)
 OPENGL_FORWARD(void,glWeightPointerARB ,GLint,size, GLenum,type, GLsizei,stride, const void*,pointer)
 OPENGL_FORWARD(void,glVertexBlendARB ,GLint,count)
-OPENGL_FORWARD(void,glBindBufferARB ,GLenum,target, GLuint,buffer)
+OPENGL_FORWARD_EXT(ARB,void,glBindBuffer ,GLenum,target, GLuint,buffer)
 OPENGL_FORWARD(void,glDeleteBuffersARB ,GLsizei,n, const GLuint*,buffers)
 OPENGL_FORWARD(void,glGenBuffersARB ,GLsizei,n, GLuint*,buffers)
 OPENGL_FORWARD(GLboolean,glIsBufferARB ,GLuint,buffer)

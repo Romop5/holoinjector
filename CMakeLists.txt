@@ -54,6 +54,8 @@ target_sources(enhancer_utils INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/framebuffer_tracker.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/framebuffer_tracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/opengl_utils.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/opengl_utils.cpp
     )
 
 target_link_libraries(enhancer_utils INTERFACE glm)
