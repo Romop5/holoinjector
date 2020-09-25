@@ -99,7 +99,8 @@
 #define OPENGL_PACK_ARGS helper::packArgs
 
 
-//#define OPENGL_LOG_API_CALL EMPTY_FUNC
+#undef OPENGL_LOG_API_CALL
+#define OPENGL_LOG_API_CALL EMPTY_FUNC
 //#define OPENGL_PACK_ARGS EMPTY_FUNC
 
 /// Expands 'type, name' to ', type name '
@@ -157,6 +158,13 @@ _retType OpenglRedirectorBase :: _name ( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ) 
  */
 #define OPENGL_FORWARD_EXT(_extension, _retType, _name, ...)\
     OPENGL_REDIRECTOR_API(_retType, _name##_extension, _name, __VA_ARGS__) \
+
+/*
+ * @brief Define and forward proxy to implementation, e.g. forward glAttachObjectARB to
+ * glAttachShader
+ */
+#define OPENGL_FORWARD_REDIRECT(_retType, _name, _redirected, ...)\
+    OPENGL_REDIRECTOR_API(_retType, _name, _redirected, __VA_ARGS__) \
 
 /*
  * @brief Only forwards system API call, left virtual method undefined

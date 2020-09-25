@@ -1306,7 +1306,7 @@ namespace ve
         //virtual void glShaderSourceARB (GLhandleARB shaderObj, GLsizei count, const GLcharARB** string, const GLint* length);
         //virtual void glCompileShaderARB (GLhandleARB shaderObj);
         //virtual GLhandleARB glCreateProgramObjectARB (void);
-        virtual void glAttachObjectARB (GLhandleARB containerObj, GLhandleARB obj);
+        //virtual void glAttachObjectARB (GLhandleARB containerObj, GLhandleARB obj);
         //virtual void glLinkProgramARB (GLhandleARB programObj);
         //virtual void glUseProgramObjectARB (GLhandleARB programObj);
         virtual void glValidateProgramARB (GLhandleARB programObj);
