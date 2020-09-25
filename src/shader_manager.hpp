@@ -29,7 +29,7 @@ namespace ve
 
         bool hasProgram(size_t ID) const;
         void addProgram(size_t ID);
-        const ShaderProgram& getProgram(size_t ID);
+        const ShaderProgram& getProgram(size_t ID) const;
 
         void attachShaderToProgram(size_t shaderID, size_t programID);
 
@@ -38,6 +38,9 @@ namespace ve
         
         /// Is any valid program bounded
         bool isAnyBound() const;
+
+        /// Is VS bound
+        bool isVSBound() const;
 
         /// Get metadata for currently bounded program
         ShaderMetadata& getBoundedVS();

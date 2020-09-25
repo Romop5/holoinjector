@@ -30,9 +30,6 @@ namespace ve
         virtual GLuint glCreateProgram (void);
         virtual void glUseProgram (GLuint program);
 
-
-
-
         // Framebuffers
         virtual void glGenFramebuffers (GLsizei n, GLuint* framebuffers);
         virtual void glBindFramebuffer (GLenum target, GLuint framebuffer);
@@ -56,13 +53,13 @@ namespace ve
         virtual void glViewport(GLint x,GLint y,GLsizei width,GLsizei height);
         virtual void glScissor(GLint x,GLint y,GLsizei width,GLsizei height);
         // Viewport end 
-
+        
         virtual int XNextEvent(Display *display, XEvent *event_return);
 
         private:
         GLint getCurrentProgram();
-        void setEnhancerShift(const glm::vec3& clipSpaceTransformation);
         void setEnhancerShift(const glm::mat4& clipSpaceTransformation);
+        void resetShift();
         void setEnhancerIdentity();
 
         void duplicateCode(const std::function<void(void)>& code);

@@ -192,6 +192,7 @@ void Repeater::glScissor(GLint x,GLint y,GLsizei width,GLsizei height)
     currentScissorArea.set(x,y,width,height);
 }
 
+
 //-----------------------------------------------------------------------------
 // Duplicate API calls
 //-----------------------------------------------------------------------------
@@ -344,15 +345,6 @@ GLint Repeater::getCurrentProgram()
     return id;
 }
 
-void Repeater::setEnhancerShift(const glm::vec3& clipSpaceTransformation)
-{
-    return;
-    auto program = getCurrentProgram();
-    auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
-
-    glm::mat4 tmpMat = glm::mat4(glm::vec4(1,0,0,0),glm::vec4(0,1,0,0),glm::vec4(0,0,1,0),glm::vec4(clipSpaceTransformation,0.0));
-    OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(tmpMat)));
-}
 void Repeater::setEnhancerShift(const glm::mat4& clipSpaceTransformation)
 {
     float dist = m_Distance;
@@ -365,6 +357,18 @@ void Repeater::setEnhancerShift(const glm::mat4& clipSpaceTransformation)
 
     location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
     OpenglRedirectorBase::glUniform1i(location, GL_FALSE);
+
+
+    // Legacy support
+    OpenglRedirectorBase::glMatrixMode(GL_MODELVIEW);
+    OpenglRedirectorBase::glPushMatrix();
+    OpenglRedirectorBase::glMultMatrixf(glm::value_ptr(resultMat));
+}
+
+
+void Repeater::resetShift()
+{
+    OpenglRedirectorBase::glPopMatrix();
 }
 
 void Repeater::setEnhancerIdentity()
@@ -383,7 +387,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
             // don't duplicate while rendering light's point of view into shadow map
             m_FBOTracker.isFBOshadowMap() ||
             // don't duplicate while rendering post-processing effect
-            (m_Manager.isAnyBound() && !m_Manager.getBoundedVS().m_HasAnyUniform));
+            (m_Manager.isAnyBound() && m_Manager.isVSBound() && !m_Manager.getBoundedVS().m_HasAnyUniform));
 
     if(shouldNotDuplicate)
     {
@@ -408,13 +412,14 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         float angleY;
     };
 
+   /*
    std::array<Views,2> views 
     { {
         {0.0f,-1.0f},
         {0.0f,1.0f}
       } };
     
-    /* 
+     
     std::array<Views,3> views 
     { {
         {0.0f,-1.0f},
@@ -422,7 +427,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         {0.0f,1.0f}
       } };
     
-    /*
+    */ 
     std::array<Views,9> views 
     { {
 
@@ -441,7 +446,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         {1.0f,-1.0f},
 
       } };
-    */
+    
 
     constexpr size_t tilesPerY = views.size()/tilesPerX + ((views.size() % tilesPerX) > 0);
 

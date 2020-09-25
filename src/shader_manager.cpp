@@ -33,9 +33,9 @@ void ShaderManager::addProgram(size_t ID)
     m_programDatabase[ID] = p;
 }
 
-const ShaderManager::ShaderProgram& ShaderManager::getProgram(size_t ID)
+const ShaderManager::ShaderProgram& ShaderManager::getProgram(size_t ID) const
 {
-    return m_programDatabase[ID];
+    return m_programDatabase.at(ID);
 }
 
 void ShaderManager::attachShaderToProgram(size_t shaderID, size_t programID)
@@ -59,12 +59,23 @@ bool ShaderManager::isAnyBound() const
     return m_BoundProgram != 0;
 }
 
+
+/// Is VS bound
+bool ShaderManager::isVSBound() const
+{
+    if(!isAnyBound())
+        return false;
+    const auto VS = getProgram(m_BoundProgram).m_VertexShader;
+    return (VS != 1) && hasShader(VS);
+}
+
 /// Get metadata for currently bounded program
 ShaderManager::ShaderMetadata& ShaderManager::getBoundedVS()
 {
     assert(m_BoundProgram != 0);
     const auto VS = getProgram(m_BoundProgram).m_VertexShader;
     assert(VS != -1);
+    assert(hasShader(VS));
     return getShaderDescription(VS);
 }
 
