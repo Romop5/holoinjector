@@ -277,6 +277,30 @@ void Repeater::glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum 
     m_FBOTracker.attach(attachment, texture);
 }
 
+void Repeater::glMatrixMode(GLenum mode)
+{
+    OpenglRedirectorBase::glMatrixMode(mode);
+    printf("[Repeater] glMatrixMode %s\n", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
+}
+void Repeater::glLoadMatrixd(const GLdouble* m)
+{
+    OpenglRedirectorBase::glLoadMatrixd(m);
+    printf("[Repeater] Matrix: \n");
+    printf("[Repeater] %f %f %f %f\n", m[0],m[4],m[8],m[12]);
+    printf("[Repeater] %f %f %f %f\n", m[1],m[5],m[9],m[13]);
+    printf("[Repeater] %f %f %f %f\n", m[2],m[6],m[10],m[14]);
+    printf("[Repeater] %f %f %f %f\n", m[3],m[7],m[11],m[15]);
+}
+void Repeater::glLoadMatrixf(const GLfloat* m)
+{
+    OpenglRedirectorBase::glLoadMatrixf(m);
+    printf("[Repeater] Matrix: \n");
+    printf("[Repeater] %f %f %f %f\n", m[0],m[4],m[8],m[12]);
+    printf("[Repeater] %f %f %f %f\n", m[1],m[5],m[9],m[13]);
+    printf("[Repeater] %f %f %f %f\n", m[2],m[6],m[10],m[14]);
+    printf("[Repeater] %f %f %f %f\n", m[3],m[7],m[11],m[15]);
+}
+
 //-----------------------------------------------------------------------------
 // Debugging utils
 //-----------------------------------------------------------------------------
@@ -360,14 +384,17 @@ GLint Repeater::getCurrentProgram()
     return id;
 }
 
-void Repeater::setEnhancerShift(const glm::mat4& clipSpaceTransformation)
+void Repeater::setEnhancerShift(float rotationAroundX, float rotationAroundY)
 {
+    const auto rotX = glm::rotate(rotationAroundX, glm::vec3(1,0,0));
+    const auto rotY = glm::rotate(rotationAroundY, glm::vec3(0,1,0));
+    const auto cameraRotation = rotY*rotX;
     float dist = m_Distance;
     auto T = glm::translate(glm::vec3(0.0f,0.0f,dist));
     auto invT = glm::translate(glm::vec3(0.0f,0.0f,-dist));
 
-    auto resultMat = clipSpaceTransformation;
-    //auto resultMat = invT*clipSpaceTransformation*T;
+    //auto resultMat = clipSpaceTransformation;
+    auto resultMat = invT*cameraRotation*T;
     auto program = getCurrentProgram();
     auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
     OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
@@ -377,7 +404,14 @@ void Repeater::setEnhancerShift(const glm::mat4& clipSpaceTransformation)
 
 
     // Legacy support
-    OpenglRedirectorBase::glMatrixMode(GL_MODELVIEW);
+    /*
+     * multiply GL_PROJECTION from right
+     * Note: GL_PROJECTION_STACK_DEPTH must be at least 2
+     *
+     * Note: sometimes GL_PROJECTION may not be well-shaped
+     * e.g. when porting DirectX game to OpenGL
+     */
+    OpenglRedirectorBase::glMatrixMode(GL_PROJECTION);
     OpenglRedirectorBase::glPushMatrix();
     OpenglRedirectorBase::glMultMatrixf(glm::value_ptr(resultMat));
 }
@@ -515,9 +549,9 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         const auto scissorHeight = originalScissor.getHeight()/tilesPerY; 
         OpenglRedirectorBase::glScissor(currentStartX+scissorDiffX, currentStartY+scissorDiffY, scissorWidth, scissorHeight);
 
-        const glm::mat4 rotationX = glm::rotate(m_Angle*currentView.angleX, glm::vec3(1.f,0.0f,0.f));
-        const glm::mat4 rotationY = glm::rotate(m_Angle*currentView.angleY, glm::vec3(0.f,1.0f,0.f));
-        setEnhancerShift(rotationY*rotationX);
+        const auto rotXAngle = m_Angle*currentView.angleX;
+        const auto rotYAngle = m_Angle*currentView.angleY;
+        setEnhancerShift(rotXAngle, rotYAngle);
         code();
         resetEnhancerShift();
     }

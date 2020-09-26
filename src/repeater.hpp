@@ -57,12 +57,15 @@ namespace ve
         virtual void glViewport(GLint x,GLint y,GLsizei width,GLsizei height);
         virtual void glScissor(GLint x,GLint y,GLsizei width,GLsizei height);
         // Viewport end 
+        virtual void glMatrixMode(GLenum mode);
+        virtual void glLoadMatrixd(const GLdouble* m);
+        virtual void glLoadMatrixf(const GLfloat* m);
         
         virtual int XNextEvent(Display *display, XEvent *event_return);
 
         private:
         GLint getCurrentProgram();
-        void setEnhancerShift(const glm::mat4& clipSpaceTransformation);
+        void setEnhancerShift(float rotationAroundX, float rotationAroundY);
         void resetEnhancerShift();
         void setEnhancerIdentity();
 
