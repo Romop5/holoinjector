@@ -46,6 +46,16 @@ namespace helper
         }
         return resultValue;
     }
+
+    template<typename T>
+    void dumpOpenglMatrix(const T* m)
+    {
+        printf("[Repeater] Matrix: \n");
+        printf("[Repeater] %f %f %f %f\n", m[0],m[4],m[8],m[12]);
+        printf("[Repeater] %f %f %f %f\n", m[1],m[5],m[9],m[13]);
+        printf("[Repeater] %f %f %f %f\n", m[2],m[6],m[10],m[14]);
+        printf("[Repeater] %f %f %f %f\n", m[3],m[7],m[11],m[15]);
+    }
 } // namespace helper
 
 void Repeater::registerCallbacks() 
@@ -73,7 +83,7 @@ GLuint Repeater::glCreateShader(GLenum shaderType)
 {
     auto id = OpenglRedirectorBase::glCreateShader(shaderType);
     
-    printf("[Repeater] glCreateShader: %d\n",shaderType);
+    printf("[Repeater] glCreateShader: %s\n",opengl_utils::getEnumStringRepresentation(shaderType).c_str());
     
     m_Manager.addShader(id, (shaderType == GL_VERTEX_SHADER)?(ShaderManager::ShaderTypes::VS):(ShaderManager::ShaderTypes::GENERIC));
     return id;
@@ -114,7 +124,8 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
                 preparedShadersLengths.push_back(newShader.size());
             } else {
                 preparedShaders.push_back(string[cnt]);
-                preparedShadersLengths.push_back(length[cnt]);
+                auto shaderLength = (!length)?strlen(string[cnt]):length[cnt];
+                preparedShadersLengths.push_back(shaderLength);
             }
         }
         helper::dumpShaderSources(preparedShaders.data(), count);
@@ -280,25 +291,32 @@ void Repeater::glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum 
 void Repeater::glMatrixMode(GLenum mode)
 {
     OpenglRedirectorBase::glMatrixMode(mode);
+    m_LegacyTracker.matrixMode(mode);
     printf("[Repeater] glMatrixMode %s\n", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
 }
 void Repeater::glLoadMatrixd(const GLdouble* m)
 {
     OpenglRedirectorBase::glLoadMatrixd(m);
-    printf("[Repeater] Matrix: \n");
-    printf("[Repeater] %f %f %f %f\n", m[0],m[4],m[8],m[12]);
-    printf("[Repeater] %f %f %f %f\n", m[1],m[5],m[9],m[13]);
-    printf("[Repeater] %f %f %f %f\n", m[2],m[6],m[10],m[14]);
-    printf("[Repeater] %f %f %f %f\n", m[3],m[7],m[11],m[15]);
+    GLfloat newM[16];
+
+    for(size_t i=0;i < 16;i++)
+    {
+        newM[i] = static_cast<float>(m[i]);
+    }
+    glm::mat4 result;
+    std::memcpy(glm::value_ptr(result), newM, 16*sizeof(GLfloat));
+    m_LegacyTracker.loadMatrix(std::move(result));
+
+    //helper::dumpOpenglMatrix(m);
 }
 void Repeater::glLoadMatrixf(const GLfloat* m)
 {
     OpenglRedirectorBase::glLoadMatrixf(m);
-    printf("[Repeater] Matrix: \n");
-    printf("[Repeater] %f %f %f %f\n", m[0],m[4],m[8],m[12]);
-    printf("[Repeater] %f %f %f %f\n", m[1],m[5],m[9],m[13]);
-    printf("[Repeater] %f %f %f %f\n", m[2],m[6],m[10],m[14]);
-    printf("[Repeater] %f %f %f %f\n", m[3],m[7],m[11],m[15]);
+    glm::mat4 result;
+    std::memcpy(glm::value_ptr(result), m, 16);
+    m_LegacyTracker.loadMatrix(std::move(result));
+
+    //helper::dumpOpenglMatrix(m);
 }
 
 //-----------------------------------------------------------------------------
@@ -402,7 +420,6 @@ void Repeater::setEnhancerShift(float rotationAroundX, float rotationAroundY)
     location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
     OpenglRedirectorBase::glUniform1i(location, GL_FALSE);
 
-
     // Legacy support
     /*
      * multiply GL_PROJECTION from right
@@ -411,15 +428,21 @@ void Repeater::setEnhancerShift(float rotationAroundX, float rotationAroundY)
      * Note: sometimes GL_PROJECTION may not be well-shaped
      * e.g. when porting DirectX game to OpenGL
      */
-    OpenglRedirectorBase::glMatrixMode(GL_PROJECTION);
-    OpenglRedirectorBase::glPushMatrix();
-    OpenglRedirectorBase::glMultMatrixf(glm::value_ptr(resultMat));
+
+    if(m_LegacyTracker.isLegacyNeeded())
+    {
+        OpenglRedirectorBase::glMatrixMode(GL_PROJECTION);
+        OpenglRedirectorBase::glPushMatrix();
+        if(!m_LegacyTracker.isOrthogonalProjection())
+            OpenglRedirectorBase::glMultMatrixf(glm::value_ptr(resultMat));
+    }
 }
 
 
 void Repeater::resetEnhancerShift()
 {
-    OpenglRedirectorBase::glPopMatrix();
+    if(m_LegacyTracker.isLegacyNeeded())
+        OpenglRedirectorBase::glPopMatrix();
 }
 
 void Repeater::setEnhancerIdentity()

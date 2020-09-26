@@ -3,10 +3,11 @@
 #include <unordered_map>
 
 #include <GL/gl.h>
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
 
 #include "shader_manager.hpp"
 #include "framebuffer_tracker.hpp"
+#include "legacy_tracker.hpp"
 
 namespace ve
 {
@@ -85,6 +86,7 @@ namespace ve
 
         ShaderManager m_Manager;
         FramebufferTracker m_FBOTracker;
+        LegacyTracker m_LegacyTracker;
 
         struct ViewportArea 
         {
