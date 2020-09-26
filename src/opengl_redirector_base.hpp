@@ -1302,7 +1302,7 @@ namespace ve
         virtual void glDeleteObjectARB (GLhandleARB obj);
         virtual GLhandleARB glGetHandleARB (GLenum pname);
         virtual void glDetachObjectARB (GLhandleARB containerObj, GLhandleARB attachedObj);
-        virtual GLhandleARB glCreateShaderObjectARB (GLenum shaderType);
+        //virtual GLhandleARB glCreateShaderObjectARB (GLenum shaderType);
         //virtual void glShaderSourceARB (GLhandleARB shaderObj, GLsizei count, const GLcharARB** string, const GLint* length);
         //virtual void glCompileShaderARB (GLhandleARB shaderObj);
         //virtual GLhandleARB glCreateProgramObjectARB (void);
