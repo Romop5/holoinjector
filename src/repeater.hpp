@@ -2,6 +2,7 @@
 #include "opengl_redirector_base.hpp"
 #include <unordered_map>
 
+#include <GL/gl.h>
 #include "glm/glm.hpp"
 
 #include "shader_manager.hpp"
@@ -59,7 +60,7 @@ namespace ve
         private:
         GLint getCurrentProgram();
         void setEnhancerShift(const glm::mat4& clipSpaceTransformation);
-        void resetShift();
+        void resetEnhancerShift();
         void setEnhancerIdentity();
 
         void duplicateCode(const std::function<void(void)>& code);
@@ -72,19 +73,35 @@ namespace ve
         ShaderManager m_Manager;
         FramebufferTracker m_FBOTracker;
 
+        
         struct ViewportArea 
         {
-            GLint x = 0;
-            GLint y = 0;
-            GLsizei width = 0;
-            GLsizei height = 0;
+            GLint data[4];
+
+            ViewportArea()
+            {
+                for(size_t i = 0; i< 3;i++)
+                    data[i] = 0;
+            }
+
+            GLint* getDataPtr() 
+            {
+                return data;
+            }
             void set(GLint x, GLint y, GLsizei width, GLsizei height)
             {
-                this->x = x;
-                this->y = y;
-                this->width = width;
-                this->height = height;
+                this->data[0] = x;
+                this->data[1] = y;
+                this->data[2] = width;
+                this->data[3] = height;
             }
-        } currentViewport, currentScissorArea;
+            
+            GLint getX() const { return data[0]; }
+            GLint getY() const { return data[1]; }
+            GLint getWidth() const { return data[2]; }
+            GLint getHeight() const { return data[3]; }
+        }; 
+        ViewportArea currentViewport, currentScissorArea;
+        
     };
 }

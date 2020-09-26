@@ -183,13 +183,13 @@ void Repeater::glUseProgram (GLuint program)
 void Repeater::glViewport(GLint x,GLint y,GLsizei width,GLsizei height)
 {
     OpenglRedirectorBase::glViewport(x,y,width,height);
-    currentViewport.set(x,y,width,height);
+    //currentViewport.set(x,y,width,height);
 }
 
 void Repeater::glScissor(GLint x,GLint y,GLsizei width,GLsizei height)
 {
     OpenglRedirectorBase::glScissor(x,y,width,height);
-    currentScissorArea.set(x,y,width,height);
+    //currentScissorArea.set(x,y,width,height);
 }
 
 
@@ -321,6 +321,7 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
                 break;
             }
 
+            case XK_F12:
             case XK_F11:
             {
                 m_IsDuplicationOn = !m_IsDuplicationOn;
@@ -350,7 +351,9 @@ void Repeater::setEnhancerShift(const glm::mat4& clipSpaceTransformation)
     float dist = m_Distance;
     auto T = glm::translate(glm::vec3(0.0f,0.0f,dist));
     auto invT = glm::translate(glm::vec3(0.0f,0.0f,-dist));
-    auto resultMat = invT*clipSpaceTransformation*T;
+
+    auto resultMat = clipSpaceTransformation;
+    //auto resultMat = invT*clipSpaceTransformation*T;
     auto program = getCurrentProgram();
     auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
     OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
@@ -366,7 +369,7 @@ void Repeater::setEnhancerShift(const glm::mat4& clipSpaceTransformation)
 }
 
 
-void Repeater::resetShift()
+void Repeater::resetEnhancerShift()
 {
     OpenglRedirectorBase::glPopMatrix();
 }
@@ -397,6 +400,8 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     }
 
     // Get original viewport
+    glGetIntegerv(GL_VIEWPORT, currentViewport.getDataPtr());
+    glGetIntegerv(GL_SCISSOR_BOX, currentScissorArea.getDataPtr());
     auto originalViewport = currentViewport;
     auto originalScissor = currentScissorArea;
 
@@ -404,7 +409,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
      * Define viewports
      */
 
-    constexpr size_t tilesPerX = 1;
+    constexpr size_t tilesPerX = 3;
 
     struct Views
     {
@@ -428,6 +433,8 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
       } };
     
     */ 
+    /*
+    // XY axis
     std::array<Views,9> views 
     { {
 
@@ -446,15 +453,38 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         {1.0f,-1.0f},
 
       } };
+      */
+
+    // Only X-axis
+    
+    std::array<Views,9> views 
+    { {
+
+        {0.0f,4.0f},
+        {0.0f,3.0f},
+        {0.0f,2.0f},
+
+        {0.0f,1.0f},
+        {0.0f,0.0f},
+        {0.0f,-1.0f},
+
+        {0.0f,-2.0f},
+        {0.0f,-3.0f},
+        {0.0f,-1.0f},
+
+      } };
+      
+    
+
     
 
     constexpr size_t tilesPerY = views.size()/tilesPerX + ((views.size() % tilesPerX) > 0);
 
-    const size_t width = originalViewport.width/tilesPerX;
-    const size_t height= originalViewport.height/tilesPerY;
+    const size_t width = originalViewport.getWidth()/tilesPerX;
+    const size_t height= originalViewport.getHeight()/tilesPerY;
 
-    const size_t startX= originalViewport.x;
-    const size_t startY= originalViewport.y;
+    const size_t startX= originalViewport.getX();
+    const size_t startY= originalViewport.getY();
 
     for(size_t i = 0; i < views.size(); i++)
     {
@@ -465,19 +495,20 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         const size_t currentStartX = startX + posX*width;
         const size_t currentStartY = startY + posY*height;
         OpenglRedirectorBase::glViewport(currentStartX, currentStartY, width, height);
-        const auto scissorDiffX = (originalScissor.x-originalViewport.x)/tilesPerX;
-        const auto scissorDiffY = (originalScissor.y-originalViewport.y)/tilesPerY;
-        const auto scissorWidth = originalScissor.width/tilesPerX; 
-        const auto scissorHeight = originalScissor.height/tilesPerY; 
+        const auto scissorDiffX = (originalScissor.getX()-originalViewport.getX())/tilesPerX;
+        const auto scissorDiffY = (originalScissor.getY()-originalViewport.getY())/tilesPerY;
+        const auto scissorWidth = originalScissor.getWidth()/tilesPerX; 
+        const auto scissorHeight = originalScissor.getHeight()/tilesPerY; 
         OpenglRedirectorBase::glScissor(currentStartX+scissorDiffX, currentStartY+scissorDiffY, scissorWidth, scissorHeight);
 
         const glm::mat4 rotationX = glm::rotate(m_Angle*currentView.angleX, glm::vec3(1.f,0.0f,0.f));
         const glm::mat4 rotationY = glm::rotate(m_Angle*currentView.angleY, glm::vec3(0.f,1.0f,0.f));
         setEnhancerShift(rotationY*rotationX);
         code();
+        resetEnhancerShift();
     }
     // restore
-    OpenglRedirectorBase::glViewport(originalViewport.x, originalViewport.y, originalViewport.width, originalViewport.height);
-    OpenglRedirectorBase::glScissor(originalScissor.x, originalViewport.y, originalScissor.width, originalScissor.height);
+    OpenglRedirectorBase::glViewport(originalViewport.getX(), originalViewport.getY(), originalViewport.getWidth(), originalViewport.getHeight());
+    OpenglRedirectorBase::glScissor(originalScissor.getX(), originalViewport.getY(), originalScissor.getWidth(), originalScissor.getHeight());
 }
 
