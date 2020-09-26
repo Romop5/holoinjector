@@ -20,6 +20,9 @@ namespace ve
         public:
         virtual void registerCallbacks() override;
 
+        // Swap buffers
+        virtual void glXSwapBuffers(	Display * dpy, GLXDrawable drawable);
+
         // Shader start
         virtual GLuint glCreateShader(GLenum shaderType);
         virtual void glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length);
@@ -68,12 +71,18 @@ namespace ve
         float m_Angle = 0.0;
         float m_Distance = 1.0;
 
+        /// Options
         bool m_IsDuplicationOn = false;
+
+        /// Debug option: count rendered frames
+        size_t m_ElapsedFrames = 0;
+
+        /// Debug option: terminate process after N frames (or go for infty in case of 0)
+        size_t m_ExitAfterFrames = 0;
 
         ShaderManager m_Manager;
         FramebufferTracker m_FBOTracker;
 
-        
         struct ViewportArea 
         {
             GLint data[4];

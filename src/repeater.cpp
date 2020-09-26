@@ -8,6 +8,7 @@
 
 #include "shader_inspector.hpp"
 #include "projection_estimator.hpp"
+#include "opengl_utils.hpp"
 
 using namespace ve;
 
@@ -53,6 +54,19 @@ void Repeater::registerCallbacks()
 
     m_Angle = helper::getEnviromentValue("ENHANCER_ANGLE", m_Angle); 
     m_Distance = helper::getEnviromentValue("ENHANCER_DISTANCE", m_Distance); 
+    m_ExitAfterFrames = helper::getEnviromentValue("ENHANCER_EXIT_AFTER", 0); 
+}
+
+
+void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
+{
+    OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
+    m_ElapsedFrames++; 
+    if(m_ExitAfterFrames && m_ExitAfterFrames <= m_ElapsedFrames)
+    {
+        // Note: this is debug only, leaves mem. leaks and uncleaned objects
+        exit(5);
+    }
 }
 
 GLuint Repeater::glCreateShader(GLenum shaderType)
