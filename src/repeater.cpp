@@ -24,7 +24,7 @@ namespace helper
 
     void dumpShaderSources(const GLchar* const* strings, GLsizei count)
     {
-        for(size_t i=0; i < count; i++)
+        for(size_t i = 0; i < count; i++)
         {
             printf("Dumping shader source i: %d\n", i);
             puts(strings[i]);
@@ -56,6 +56,26 @@ namespace helper
         printf("[Repeater] %f %f %f %f\n", m[2],m[6],m[10],m[14]);
         printf("[Repeater] %f %f %f %f\n", m[3],m[7],m[11],m[15]);
     }
+
+    glm::mat4 createMatrixFromRawGL(const GLfloat* values)
+    {
+        glm::mat4 result;
+        std::memcpy(glm::value_ptr(result), values, 16*sizeof(GLfloat));
+        return result;
+    }
+
+    glm::mat4 createMatrixFromRawGL(const GLdouble* value)
+    {
+        GLfloat newM[16];
+        for(size_t i=0;i < 16;i++)
+        {
+            newM[i] = static_cast<float>(value[i]);
+        }
+        glm::mat4 result;
+        std::memcpy(glm::value_ptr(result), newM, 16*sizeof(GLfloat));
+        return result;
+    }
+
 } // namespace helper
 
 void Repeater::registerCallbacks() 
@@ -175,8 +195,7 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
         return;
 
     // estimate projection matrix from value
-    glm::mat4 mat;
-    std::memcpy(glm::value_ptr(mat), value, 16*sizeof(float));
+    const auto mat = helper::createMatrixFromRawGL(value);
     auto estimatedParameters = estimatePerspectiveProjection(mat);
 
     printf("[Repeater] estimating parameters from uniform matrix\n");
@@ -297,25 +316,15 @@ void Repeater::glMatrixMode(GLenum mode)
 void Repeater::glLoadMatrixd(const GLdouble* m)
 {
     OpenglRedirectorBase::glLoadMatrixd(m);
-    GLfloat newM[16];
-
-    for(size_t i=0;i < 16;i++)
-    {
-        newM[i] = static_cast<float>(m[i]);
-    }
-    glm::mat4 result;
-    std::memcpy(glm::value_ptr(result), newM, 16*sizeof(GLfloat));
+    const auto result = helper::createMatrixFromRawGL(m);
     m_LegacyTracker.loadMatrix(std::move(result));
-
     //helper::dumpOpenglMatrix(m);
 }
 void Repeater::glLoadMatrixf(const GLfloat* m)
 {
     OpenglRedirectorBase::glLoadMatrixf(m);
-    glm::mat4 result;
-    std::memcpy(glm::value_ptr(result), m, 16);
+    const auto result = helper::createMatrixFromRawGL(m);
     m_LegacyTracker.loadMatrix(std::move(result));
-
     //helper::dumpOpenglMatrix(m);
 }
 
@@ -411,14 +420,14 @@ void Repeater::setEnhancerShift(float rotationAroundX, float rotationAroundY)
     auto T = glm::translate(glm::vec3(0.0f,0.0f,dist));
     auto invT = glm::translate(glm::vec3(0.0f,0.0f,-dist));
 
-    //auto resultMat = clipSpaceTransformation;
+    //auto resultMat = cameraRotation;
     auto resultMat = invT*cameraRotation*T;
     auto program = getCurrentProgram();
     auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
-    OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
+    //OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
 
     location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
-    OpenglRedirectorBase::glUniform1i(location, GL_FALSE);
+    //OpenglRedirectorBase::glUniform1i(location, GL_FALSE);
 
     // Legacy support
     /*
@@ -432,17 +441,18 @@ void Repeater::setEnhancerShift(float rotationAroundX, float rotationAroundY)
     if(m_LegacyTracker.isLegacyNeeded())
     {
         OpenglRedirectorBase::glMatrixMode(GL_PROJECTION);
-        OpenglRedirectorBase::glPushMatrix();
+        const auto newProjection = m_LegacyTracker.getProjection()*resultMat;
         if(!m_LegacyTracker.isOrthogonalProjection())
-            OpenglRedirectorBase::glMultMatrixf(glm::value_ptr(resultMat));
+            OpenglRedirectorBase::glLoadMatrixf(glm::value_ptr(newProjection));
     }
 }
-
 
 void Repeater::resetEnhancerShift()
 {
     if(m_LegacyTracker.isLegacyNeeded())
-        OpenglRedirectorBase::glPopMatrix();
+    {
+        OpenglRedirectorBase::glMatrixMode(m_LegacyTracker.getCurrentMode());
+    }
 }
 
 void Repeater::setEnhancerIdentity()
@@ -544,11 +554,6 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         {0.0f,-1.0f},
 
       } };
-      
-    
-
-    
-
     constexpr size_t tilesPerY = views.size()/tilesPerX + ((views.size() % tilesPerX) > 0);
 
     const size_t width = originalViewport.getWidth()/tilesPerX;
@@ -574,6 +579,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
 
         const auto rotXAngle = m_Angle*currentView.angleX;
         const auto rotYAngle = m_Angle*currentView.angleY;
+        setEnhancerIdentity();
         setEnhancerShift(rotXAngle, rotYAngle);
         code();
         resetEnhancerShift();

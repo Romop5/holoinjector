@@ -9,11 +9,14 @@ class LegacyTracker
     /* Query - start */
     bool isLegacyNeeded() const;
     bool isOrthogonalProjection();
+    GLenum getCurrentMode() const;
     /* Query - end */
     /// set current mode, affecting operations afterwards
     void matrixMode(GLenum type);
     /// store matrix according to mode
     void loadMatrix(const glm::mat4&& projection);
+
+    const glm::mat4& getProjection() const;
     private:
     GLenum m_currentMode = GL_PROJECTION;
     glm::mat4 m_currentProjection = glm::mat4(1.0);

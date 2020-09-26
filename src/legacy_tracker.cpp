@@ -18,6 +18,11 @@ bool LegacyTracker::isOrthogonalProjection()
     return true;
 }
 
+GLenum LegacyTracker::getCurrentMode() const
+{
+    return m_currentMode;
+}
+
 void LegacyTracker::matrixMode(GLenum type)
 {
     m_isLegacyOpenGLUsed = true;
@@ -36,4 +41,9 @@ void LegacyTracker::loadMatrix(const glm::mat4&& projection)
         {
         }
     }
+}
+
+const glm::mat4& LegacyTracker::getProjection() const
+{
+    return m_currentProjection;
 }
