@@ -93,6 +93,9 @@ void VirtualCameras::recalculateViewports()
         // Calculate subviewport based on global m_viewport
         size_t posX = i % tilesPerX;
         size_t posY = i / tilesPerX;
+        
+        // Invert upside-down => OpenGL starts (0,0) at the bottom of screen
+        posY = tilesPerY-posY-1;
 
         const size_t currentStartX = startX + posX*width;
         const size_t currentStartY = startY + posY*height;
