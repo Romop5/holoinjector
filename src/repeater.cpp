@@ -380,31 +380,33 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
                 keyEvent->type,keyEvent->serial, keyEvent->send_event,keyEvent->display, 
                 keyEvent->x,keyEvent->y,keyEvent->state,keyEvent->keycode, keyEvent->same_screen);
         auto keySym = XLookupKeysym(reinterpret_cast<XKeyEvent*>(event_return), 0);
+
+        const float increment = 0.10f;
         switch(keySym)
         {
             case XK_F1:
             {
-                m_cameraParameters.m_angleMultiplier += 0.01;
+                m_cameraParameters.m_angleMultiplier += increment;
                 puts("[Repeater] Setting: F1 pressed - increase angle");
             }
             break;
             case XK_F2:
             {
-                m_cameraParameters.m_angleMultiplier -= 0.01;
+                m_cameraParameters.m_angleMultiplier -= increment;
                 puts("[Repeater] Setting: F2 pressed - decrease angle");
             }
             break;
 
             case XK_F3:
             {
-                m_cameraParameters.m_distance += 0.1;
+                m_cameraParameters.m_distance += 0.5;
                 puts("[Repeater] Setting: F3 pressed increase dist");
             }
             break;
 
             case XK_F4:
             {
-                m_cameraParameters.m_distance -= 0.1;
+                m_cameraParameters.m_distance -= 0.5;
                 puts("[Repeater] Setting: F4 pressed decrease dist");
             }
             break;
