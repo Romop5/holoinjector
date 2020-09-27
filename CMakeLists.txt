@@ -58,6 +58,10 @@ target_sources(enhancer_utils INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/opengl_utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/legacy_tracker.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/legacy_tracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/viewport_area.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/viewport_area.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/virtual_cameras.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/virtual_cameras.cpp
     )
 
 target_link_libraries(enhancer_utils INTERFACE glm)

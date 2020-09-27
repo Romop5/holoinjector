@@ -47,6 +47,11 @@ namespace helper
         return resultValue;
     }
 
+    void getEnviroment(const std::string& variable, float& storage)
+    {
+        storage = getEnviromentValue(variable, storage);
+    }
+
     template<typename T>
     void dumpOpenglMatrix(const T* m)
     {
@@ -78,13 +83,36 @@ namespace helper
 
 } // namespace helper
 
+void Repeater::initialize()
+{
+    // Get parameters from enviroment
+    helper::getEnviromentValue("ENHANCER_ANGLE", m_cameraParameters.m_angleMultiplier); 
+    helper::getEnviromentValue("ENHANCER_DISTANCE", m_cameraParameters.m_distance); 
+    m_ExitAfterFrames = helper::getEnviromentValue("ENHANCER_EXIT_AFTER", 0); 
+
+    /// Fill viewports
+    glGetIntegerv(GL_VIEWPORT, currentViewport.getDataPtr());
+    glGetIntegerv(GL_SCISSOR_BOX, currentScissorArea.getDataPtr());
+    m_cameras.setupWindows(9,3);
+    m_cameras.updateViewports(currentViewport);
+    m_cameras.updateParamaters(m_cameraParameters);
+}
+
+void Repeater::glClear(GLbitfield mask) 
+{
+    static bool isInitialized = false;
+    if(!isInitialized)
+    {
+        initialize();
+        isInitialized = true;
+    }
+    OpenglRedirectorBase::glClear(mask);
+    
+}
 void Repeater::registerCallbacks() 
 {
     registerOpenGLSymbols();
 
-    m_Angle = helper::getEnviromentValue("ENHANCER_ANGLE", m_Angle); 
-    m_Distance = helper::getEnviromentValue("ENHANCER_DISTANCE", m_Distance); 
-    m_ExitAfterFrames = helper::getEnviromentValue("ENHANCER_EXIT_AFTER", 0); 
 }
 
 
@@ -227,13 +255,14 @@ void Repeater::glUseProgram (GLuint program)
 void Repeater::glViewport(GLint x,GLint y,GLsizei width,GLsizei height)
 {
     OpenglRedirectorBase::glViewport(x,y,width,height);
-    //currentViewport.set(x,y,width,height);
+    currentViewport.set(x,y,width,height);
+    m_cameras.updateViewports(currentViewport);
 }
 
 void Repeater::glScissor(GLint x,GLint y,GLsizei width,GLsizei height)
 {
     OpenglRedirectorBase::glScissor(x,y,width,height);
-    //currentScissorArea.set(x,y,width,height);
+    currentScissorArea.set(x,y,width,height);
 }
 
 
@@ -353,35 +382,35 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
         {
             case XK_F1:
             {
-                m_Angle += 0.01;
+                m_cameraParameters.m_angleMultiplier += 0.01;
                 puts("[Repeater] Setting: F1 pressed - increase angle");
             }
             break;
             case XK_F2:
             {
-                m_Angle -= 0.01;
+                m_cameraParameters.m_angleMultiplier -= 0.01;
                 puts("[Repeater] Setting: F2 pressed - decrease angle");
             }
             break;
 
             case XK_F3:
             {
-                m_Distance += 0.1;
+                m_cameraParameters.m_distance += 0.1;
                 puts("[Repeater] Setting: F3 pressed increase dist");
             }
             break;
 
             case XK_F4:
             {
-                m_Distance -= 0.1;
+                m_cameraParameters.m_distance -= 0.1;
                 puts("[Repeater] Setting: F4 pressed decrease dist");
             }
             break;
 
             case XK_F5:
             {
-                m_Distance = 1.0;
-                m_Angle = 0.0;
+                m_cameraParameters.m_distance = 1.0;
+                m_cameraParameters.m_angleMultiplier = 0.0;
                 puts("[Repeater] Setting: F5 pressed - reset");
                 break;
             }
@@ -394,8 +423,9 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
             }
             break;
         }
-        printf("[Repeater] Setting: dist (%f), angle (%f)\n", m_Distance, m_Angle);
-
+        printf("[Repeater] Setting: dist (%f), angle (%f)\n", 
+                m_cameraParameters.m_distance, m_cameraParameters.m_angleMultiplier);
+        m_cameras.updateParamaters(m_cameraParameters);
     }
     return returnVal;
 }
@@ -411,23 +441,15 @@ GLint Repeater::getCurrentProgram()
     return id;
 }
 
-void Repeater::setEnhancerShift(float rotationAroundX, float rotationAroundY)
+void Repeater::setEnhancerShift(const glm::mat4& viewSpaceTransform)
 {
-    const auto rotX = glm::rotate(rotationAroundX, glm::vec3(1,0,0));
-    const auto rotY = glm::rotate(rotationAroundY, glm::vec3(0,1,0));
-    const auto cameraRotation = rotY*rotX;
-    float dist = m_Distance;
-    auto T = glm::translate(glm::vec3(0.0f,0.0f,dist));
-    auto invT = glm::translate(glm::vec3(0.0f,0.0f,-dist));
-
-    //auto resultMat = cameraRotation;
-    auto resultMat = invT*cameraRotation*T;
+    const auto& resultMat = viewSpaceTransform;
     auto program = getCurrentProgram();
     auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
-    //OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
+    OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
 
     location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
-    //OpenglRedirectorBase::glUniform1i(location, GL_FALSE);
+    OpenglRedirectorBase::glUniform1i(location, GL_FALSE);
 
     // Legacy support
     /*
@@ -481,106 +503,30 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     }
 
     // Get original viewport
-    glGetIntegerv(GL_VIEWPORT, currentViewport.getDataPtr());
+    //glGetIntegerv(GL_VIEWPORT, currentViewport.getDataPtr());
     glGetIntegerv(GL_SCISSOR_BOX, currentScissorArea.getDataPtr());
     auto originalViewport = currentViewport;
     auto originalScissor = currentScissorArea;
 
-    /*
-     * Define viewports
-     */
-
-    constexpr size_t tilesPerX = 3;
-
-    struct Views
+    const auto setup = m_cameras.getCameraGridSetup();
+    const auto& tilesPerX = setup.first;
+    const auto& tilesPerY = setup.second;
+    // for each virtual camera, create a subview (subviewport)
+    // and render draw call using its transformation into this subview
+    for(const auto& camera: m_cameras.getCameras())
     {
-        float angleX;
-        float angleY;
-    };
+        const auto& currentStartX = camera.getViewport().getX();
+        const auto& currentStartY = camera.getViewport().getY();
 
-   /*
-   std::array<Views,2> views 
-    { {
-        {0.0f,-1.0f},
-        {0.0f,1.0f}
-      } };
-    
-     
-    std::array<Views,3> views 
-    { {
-        {0.0f,-1.0f},
-        {0.0f,0.0f},
-        {0.0f,1.0f}
-      } };
-    
-    */ 
-    /*
-    // XY axis
-    std::array<Views,9> views 
-    { {
-
-
-
-        {-1.0f,1.0f},
-        {-1.0f,0.0f},
-        {-1.0f,-1.0f},
-
-        {0.0f,1.0f},
-        {0.0f,0.0f},
-        {0.0f,-1.0f},
-
-        {1.0f,1.0f},
-        {1.0f,0.0f},
-        {1.0f,-1.0f},
-
-      } };
-      */
-
-    // Only X-axis
-    
-    std::array<Views,9> views 
-    { {
-
-        {0.0f,4.0f},
-        {0.0f,3.0f},
-        {0.0f,2.0f},
-
-        {0.0f,1.0f},
-        {0.0f,0.0f},
-        {0.0f,-1.0f},
-
-        {0.0f,-2.0f},
-        {0.0f,-3.0f},
-        {0.0f,-1.0f},
-
-      } };
-    constexpr size_t tilesPerY = views.size()/tilesPerX + ((views.size() % tilesPerX) > 0);
-
-    const size_t width = originalViewport.getWidth()/tilesPerX;
-    const size_t height= originalViewport.getHeight()/tilesPerY;
-
-    const size_t startX= originalViewport.getX();
-    const size_t startY= originalViewport.getY();
-
-    for(size_t i = 0; i < views.size(); i++)
-    {
-        const Views& currentView = views[i];
-        size_t posX = i % tilesPerX;
-        size_t posY = i / tilesPerX;
-
-        const size_t currentStartX = startX + posX*width;
-        const size_t currentStartY = startY + posY*height;
-        OpenglRedirectorBase::glViewport(currentStartX, currentStartY, width, height);
         const auto scissorDiffX = (originalScissor.getX()-originalViewport.getX())/tilesPerX;
         const auto scissorDiffY = (originalScissor.getY()-originalViewport.getY())/tilesPerY;
         const auto scissorWidth = originalScissor.getWidth()/tilesPerX; 
         const auto scissorHeight = originalScissor.getHeight()/tilesPerY; 
         OpenglRedirectorBase::glScissor(currentStartX+scissorDiffX, currentStartY+scissorDiffY, scissorWidth, scissorHeight);
 
-        const auto rotXAngle = m_Angle*currentView.angleX;
-        const auto rotYAngle = m_Angle*currentView.angleY;
-        setEnhancerIdentity();
-        setEnhancerShift(rotXAngle, rotYAngle);
+        const auto& v = camera.getViewport();
+        OpenglRedirectorBase::glViewport(v.getX(), v.getY(), v.getWidth(), v.getHeight());
+        setEnhancerShift(camera.getViewMatrix());
         code();
         resetEnhancerShift();
     }

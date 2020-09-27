@@ -8,6 +8,8 @@
 #include "shader_manager.hpp"
 #include "framebuffer_tracker.hpp"
 #include "legacy_tracker.hpp"
+#include "viewport_area.hpp"
+#include "virtual_cameras.hpp"
 
 namespace ve
 {
@@ -21,59 +23,61 @@ namespace ve
         public:
         virtual void registerCallbacks() override;
 
+        // Used for initialization
+        virtual  void glClear(GLbitfield mask) override;
+
         // Swap buffers
-        virtual void glXSwapBuffers(	Display * dpy, GLXDrawable drawable);
+        virtual  void glXSwapBuffers(	Display * dpy, GLXDrawable drawable) override;
 
         // Shader start
-        virtual GLuint glCreateShader(GLenum shaderType);
-        virtual void glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length);
+        virtual  GLuint glCreateShader(GLenum shaderType) override;
+        virtual  void glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length) override;
 
         // Map program to vertex shader
-        virtual void glAttachShader (GLuint program, GLuint shader);
+        virtual  void glAttachShader (GLuint program, GLuint shader) override;
         // Shader end 
 
-        virtual GLuint glCreateProgram (void);
-        virtual void glUseProgram (GLuint program);
+        virtual  GLuint glCreateProgram (void) override;
+        virtual  void glUseProgram (GLuint program) override;
 
         // Framebuffers
-        virtual void glGenFramebuffers (GLsizei n, GLuint* framebuffers);
-        virtual void glBindFramebuffer (GLenum target, GLuint framebuffer);
-        virtual void glFramebufferTexture (GLenum target, GLenum attachment, GLuint texture, GLint level);
-        virtual void glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-        virtual void glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-        virtual void glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
+        virtual  void glGenFramebuffers (GLsizei n, GLuint* framebuffers) override;
+        virtual  void glBindFramebuffer (GLenum target, GLuint framebuffer) override;
+        virtual  void glFramebufferTexture (GLenum target, GLenum attachment, GLuint texture, GLint level) override;
+        virtual  void glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) override;
+        virtual  void glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) override;
+        virtual  void glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset) override;
         // Framebuffers end
 
         // Draw calls start
         virtual void glDrawArrays(GLenum mode,GLint first,GLsizei count) override;
         virtual void glDrawElements(GLenum mode,GLsizei count,GLenum type,const GLvoid* indices) override;
-        virtual void glDrawElementsInstanced (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount);
-        virtual void glDrawRangeElements (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices);
+        virtual  void glDrawElementsInstanced (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount) override;
+        virtual  void glDrawRangeElements (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices) override;
 
-        // Draw calls end 
-        virtual void glUniformMatrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+        virtual  void glUniformMatrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value) override;
 
 
         // Viewport start
-        virtual void glViewport(GLint x,GLint y,GLsizei width,GLsizei height);
-        virtual void glScissor(GLint x,GLint y,GLsizei width,GLsizei height);
+        virtual  void glViewport(GLint x,GLint y,GLsizei width,GLsizei height) override;
+        virtual  void glScissor(GLint x,GLint y,GLsizei width,GLsizei height) override;
         // Viewport end 
-        virtual void glMatrixMode(GLenum mode);
-        virtual void glLoadMatrixd(const GLdouble* m);
-        virtual void glLoadMatrixf(const GLfloat* m);
+        virtual  void glMatrixMode(GLenum mode) override;
+        virtual  void glLoadMatrixd(const GLdouble* m) override;
+        virtual  void glLoadMatrixf(const GLfloat* m) override;
         
-        virtual int XNextEvent(Display *display, XEvent *event_return);
+        virtual  int XNextEvent(Display *display, XEvent *event_return) override;
 
         private:
+        /// Build cache structures
+        void initialize();
+
         GLint getCurrentProgram();
-        void setEnhancerShift(float rotationAroundX, float rotationAroundY);
+        void setEnhancerShift(const glm::mat4& viewSpaceTransform);
         void resetEnhancerShift();
         void setEnhancerIdentity();
 
         void duplicateCode(const std::function<void(void)>& code);
-
-        float m_Angle = 0.0;
-        float m_Distance = 1.0;
 
         /// Options
         bool m_IsDuplicationOn = false;
@@ -86,36 +90,16 @@ namespace ve
 
         ShaderManager m_Manager;
         FramebufferTracker m_FBOTracker;
+        /// Keeps track of OpenGL fixed-pipeline calls
         LegacyTracker m_LegacyTracker;
 
-        struct ViewportArea 
-        {
-            GLint data[4];
+        CameraParameters m_cameraParameters;
+        /// Store's repeating setup
+        VirtualCameras m_cameras;
 
-            ViewportArea()
-            {
-                for(size_t i = 0; i< 3;i++)
-                    data[i] = 0;
-            }
-
-            GLint* getDataPtr() 
-            {
-                return data;
-            }
-            void set(GLint x, GLint y, GLsizei width, GLsizei height)
-            {
-                this->data[0] = x;
-                this->data[1] = y;
-                this->data[2] = width;
-                this->data[3] = height;
-            }
-            
-            GLint getX() const { return data[0]; }
-            GLint getY() const { return data[1]; }
-            GLint getWidth() const { return data[2]; }
-            GLint getHeight() const { return data[3]; }
-        }; 
         ViewportArea currentViewport, currentScissorArea;
+        /// Is scissor region different 
+        bool m_isScissorRegionActive = false;
         
     };
 }
