@@ -12,10 +12,7 @@ bool LegacyTracker::isLegacyNeeded() const
 }
 bool LegacyTracker::isOrthogonalProjection()
 {
-    const auto& lastVector = glm::row(m_currentProjection, 3);
-    if(lastVector == glm::vec4(0,0,-1,0))
-        return false;
-    return true;
+    return m_isOrthogonalProjection;
 }
 
 GLenum LegacyTracker::getCurrentMode() const
@@ -29,13 +26,22 @@ void LegacyTracker::matrixMode(GLenum type)
     m_currentMode = type;
 }
 
+GLenum LegacyTracker::getMatrixMode() const
+{
+    return m_currentMode;
+}
+
 void LegacyTracker::loadMatrix(const glm::mat4&& projection)
 {
     m_isLegacyOpenGLUsed = true;
     switch(m_currentMode)
     {
         case GL_PROJECTION:
-            m_currentProjection = projection;
+        {
+            m_currentProjection = std::move(projection);
+            const auto& lastVector = glm::row(m_currentProjection, 3);
+            m_isOrthogonalProjection = !(lastVector == glm::vec4(0,0,-1,0));
+        }
         break;
         default:
         {

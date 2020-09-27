@@ -24,7 +24,7 @@ namespace helper
 
     void dumpShaderSources(const GLchar* const* strings, GLsizei count)
     {
-        for(size_t i = 0; i < count; i++)
+        for(size_t i = 0;i < count;i++)
         {
             printf("Dumping shader source i: %d\n", i);
             puts(strings[i]);
@@ -346,13 +346,15 @@ void Repeater::glLoadMatrixd(const GLdouble* m)
 {
     OpenglRedirectorBase::glLoadMatrixd(m);
     const auto result = helper::createMatrixFromRawGL(m);
-    m_LegacyTracker.loadMatrix(std::move(result));
+    if(m_LegacyTracker.getMatrixMode() == GL_PROJECTION)
+        m_LegacyTracker.loadMatrix(std::move(result));
     //helper::dumpOpenglMatrix(m);
 }
 void Repeater::glLoadMatrixf(const GLfloat* m)
 {
     OpenglRedirectorBase::glLoadMatrixf(m);
     const auto result = helper::createMatrixFromRawGL(m);
+    if(m_LegacyTracker.getMatrixMode() == GL_PROJECTION)
     m_LegacyTracker.loadMatrix(std::move(result));
     //helper::dumpOpenglMatrix(m);
 }
