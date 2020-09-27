@@ -76,9 +76,13 @@ void VirtualCameras::recalculateTransformations()
 
 void VirtualCameras::recalculateViewports()
 {
+    if(m_cameras.size() == 0)
+        return;
     const auto setup = getCameraGridSetup();
     const auto& tilesPerX = setup.first;
     const size_t tilesPerY = setup.second;
+    // Grid must have logical sizes in order to be constructible
+    assert(tilesPerX > 0 && tilesPerY > 0);
 
     const size_t width = m_viewport.getWidth()/tilesPerX;
     const size_t height= m_viewport.getHeight()/tilesPerY;
