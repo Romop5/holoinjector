@@ -11,6 +11,7 @@
 #include "redirector_base.hpp"
 
 #include <unistd.h>
+#include <cassert>
 
 using namespace ve;
 
@@ -47,6 +48,7 @@ namespace ve
 
         printf("[Enhancer dlsym] '%s'\n", symbol);
 
+        assert(context != nullptr);
         const auto& functions = context->redirector->getRedirectedFunctions();
         if(functions.hasRedirection(symbol))
         {
@@ -92,6 +94,19 @@ namespace helper
     }
 } //namespace helper
 
+/* 
+ * Calls dlsym() at least once before hooking. The idea is that dlsym() is called via PLT and GOT,
+ * and shared loaders use 'lazy binding', so the real address is rellocated/placed in PLT only
+ * after the first call.
+ *
+ * If we hooked dlsym() without calling it first, the first call to such hooked function would
+ * replace/corrupt trampoline code, leading to crash.
+ */
+void _hack_preventLazyBinding()
+{
+    auto test = dlsym(reinterpret_cast<void*>(RTLD_DEFAULT), "enhancer_setup");
+    static_cast<void>(test);
+}
 
 /**
  * @brief Execute when DLL is loaded to process
@@ -100,6 +115,9 @@ namespace helper
  */
 void enhancer_setup(std::unique_ptr<RedirectorBase> redirector)
 {
+    // Necessary hack
+    _hack_preventLazyBinding();
+
     puts("[Enhancer] starting setup...");
     // Decide whether to use 64bit hook or not
     auto hookTypeFlags = static_cast<subhook_flags>(SUBHOOK_BITS == 32?0:SUBHOOK_64BIT_OFFSET);
