@@ -31,21 +31,35 @@ GLenum LegacyTracker::getMatrixMode() const
     return m_currentMode;
 }
 
-void LegacyTracker::loadMatrix(const glm::mat4&& projection)
+void LegacyTracker::loadMatrix(const glm::mat4&& m)
 {
     m_isLegacyOpenGLUsed = true;
     switch(m_currentMode)
     {
         case GL_PROJECTION:
         {
-            m_currentProjection = std::move(projection);
+            m_currentProjection = std::move(m);
             const auto& lastVector = glm::row(m_currentProjection, 3);
             m_isOrthogonalProjection = !(lastVector == glm::vec4(0,0,-1,0));
         }
         break;
-        default:
+        default: {}
+    }
+}
+
+void LegacyTracker::multMatrix(const glm::mat4&& m)
+{
+    m_isLegacyOpenGLUsed = true;
+    switch(m_currentMode)
+    {
+        case GL_PROJECTION:
         {
+            m_currentProjection = m_currentProjection*m;
+            const auto& lastVector = glm::row(m_currentProjection, 3);
+            m_isOrthogonalProjection = !(lastVector == glm::vec4(0,0,-1,0));
         }
+        break;
+        default: {}
     }
 }
 

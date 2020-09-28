@@ -65,8 +65,21 @@ namespace ve
         virtual  void glMatrixMode(GLenum mode) override;
         virtual  void glLoadMatrixd(const GLdouble* m) override;
         virtual  void glLoadMatrixf(const GLfloat* m) override;
+        virtual void glLoadIdentity(void);
+        virtual void glMultMatrixd(const GLdouble* m);
+        virtual void glMultMatrixf(const GLfloat* m);
+
+        virtual void glOrtho(GLdouble left,GLdouble right,GLdouble bottom,GLdouble top,GLdouble near_val,GLdouble far_val);
+        virtual void glFrustum(GLdouble left,GLdouble right,GLdouble bottom,GLdouble top,GLdouble near_val,GLdouble far_val);
+        virtual void glCallList(GLuint list);
+        virtual void glCallLists(GLsizei n,GLenum type,const GLvoid* lists);
         
         virtual  int XNextEvent(Display *display, XEvent *event_return) override;
+
+        // Legacy OpenGL fixed-pipeline wihout VBO and VAO
+        virtual void glBegin(GLenum mode);
+        virtual void glEnd();
+        // Legacy end
 
         private:
         /// Build cache structures
@@ -101,5 +114,11 @@ namespace ve
         /// Is scissor region different 
         bool m_isScissorRegionActive = false;
         
+        /* 
+         * Global glCallList for legacy OpenGL primitives
+         * - record everything between glBegin()/glEnd() 
+         *   and then, duplicate it
+         */
+        GLint m_callList = 0;
     };
 }

@@ -345,18 +345,98 @@ void Repeater::glMatrixMode(GLenum mode)
 void Repeater::glLoadMatrixd(const GLdouble* m)
 {
     OpenglRedirectorBase::glLoadMatrixd(m);
-    const auto result = helper::createMatrixFromRawGL(m);
     if(m_LegacyTracker.getMatrixMode() == GL_PROJECTION)
+    {
+        const auto result = helper::createMatrixFromRawGL(m);
         m_LegacyTracker.loadMatrix(std::move(result));
+    }
     //helper::dumpOpenglMatrix(m);
 }
 void Repeater::glLoadMatrixf(const GLfloat* m)
 {
     OpenglRedirectorBase::glLoadMatrixf(m);
-    const auto result = helper::createMatrixFromRawGL(m);
     if(m_LegacyTracker.getMatrixMode() == GL_PROJECTION)
-    m_LegacyTracker.loadMatrix(std::move(result));
+    {
+        const auto result = helper::createMatrixFromRawGL(m);
+        m_LegacyTracker.loadMatrix(std::move(result));
+    }
     //helper::dumpOpenglMatrix(m);
+}
+
+void Repeater::glLoadIdentity(void)
+{
+    OpenglRedirectorBase::glLoadIdentity();
+    if(m_LegacyTracker.getMatrixMode() == GL_PROJECTION)
+    {
+        glm::mat4 identity = glm::mat4(1.0);
+        m_LegacyTracker.loadMatrix(std::move(identity));
+    }
+}
+
+void Repeater::glMultMatrixd(const GLdouble* m)
+{
+    OpenglRedirectorBase::glMultMatrixd(m);
+    if(m_LegacyTracker.getMatrixMode() == GL_PROJECTION)
+    {
+        const auto result = helper::createMatrixFromRawGL(m);
+        m_LegacyTracker.loadMatrix(std::move(result));
+    }
+}
+
+void Repeater::glMultMatrixf(const GLfloat* m)
+{
+    OpenglRedirectorBase::glMultMatrixf(m);
+    if(m_LegacyTracker.getMatrixMode() == GL_PROJECTION)
+    {
+        const auto result = helper::createMatrixFromRawGL(m);
+        m_LegacyTracker.loadMatrix(std::move(result));
+    }
+}
+
+
+void Repeater::glOrtho(GLdouble left,GLdouble right,GLdouble bottom,GLdouble top,GLdouble near_val,GLdouble far_val)
+{
+    OpenglRedirectorBase::glOrtho(left,right,bottom,top,near_val,far_val);
+    m_LegacyTracker.multMatrix(glm::ortho(left,right,bottom,top,near_val,far_val));
+}
+
+void Repeater::glFrustum(GLdouble left,GLdouble right,GLdouble bottom,GLdouble top,GLdouble near_val,GLdouble far_val)
+{
+    OpenglRedirectorBase::glFrustum(left,right,bottom,top,near_val,far_val);
+    m_LegacyTracker.multMatrix(glm::frustum(left,right,bottom,top,near_val,far_val));
+}
+
+void Repeater::glBegin(GLenum mode)
+{
+    if(m_callList == 0)
+    {
+        m_callList = glGenLists(1);
+    }
+    glNewList(m_callList, GL_COMPILE);
+    OpenglRedirectorBase::glBegin(mode);
+}
+
+void Repeater::glEnd()
+{
+    OpenglRedirectorBase::glEnd();
+    glEndList();
+
+    Repeater::duplicateCode([&]() {
+        OpenglRedirectorBase::glCallList(m_callList);
+    });
+}
+
+void Repeater::glCallList(GLuint list)
+{
+    Repeater::duplicateCode([&]() {
+        OpenglRedirectorBase::glCallList(list);
+    });
+}
+void Repeater::glCallLists(GLsizei n,GLenum type,const GLvoid* lists)
+{
+    Repeater::duplicateCode([&]() {
+        OpenglRedirectorBase::glCallLists(n,type, lists);
+    });
 }
 
 //-----------------------------------------------------------------------------
@@ -449,11 +529,14 @@ void Repeater::setEnhancerShift(const glm::mat4& viewSpaceTransform)
 {
     const auto& resultMat = viewSpaceTransform;
     auto program = getCurrentProgram();
-    auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
-    OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
+    if(program)
+    {
+        auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
+        OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
 
-    location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
-    OpenglRedirectorBase::glUniform1i(location, GL_FALSE);
+        location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
+        OpenglRedirectorBase::glUniform1i(location, GL_FALSE);
+    }
 
     // Legacy support
     /*
@@ -477,6 +560,7 @@ void Repeater::resetEnhancerShift()
 {
     if(m_LegacyTracker.isLegacyNeeded())
     {
+        OpenglRedirectorBase::glLoadMatrixf(glm::value_ptr(m_LegacyTracker.getProjection()));
         OpenglRedirectorBase::glMatrixMode(m_LegacyTracker.getCurrentMode());
     }
 }
@@ -488,7 +572,6 @@ void Repeater::setEnhancerIdentity()
     auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
     OpenglRedirectorBase::glUniform1i(location, GL_TRUE);
 }
-
 
 void Repeater::duplicateCode(const std::function<void(void)>& code)
 {
@@ -508,7 +591,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
 
     // Get original viewport
     //glGetIntegerv(GL_VIEWPORT, currentViewport.getDataPtr());
-    glGetIntegerv(GL_SCISSOR_BOX, currentScissorArea.getDataPtr());
+    //glGetIntegerv(GL_SCISSOR_BOX, currentScissorArea.getDataPtr());
     auto originalViewport = currentViewport;
     auto originalScissor = currentScissorArea;
 
