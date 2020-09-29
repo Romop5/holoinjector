@@ -131,7 +131,7 @@ GLuint Repeater::glCreateShader(GLenum shaderType)
 {
     auto id = OpenglRedirectorBase::glCreateShader(shaderType);
     
-    printf("[Repeater] glCreateShader: %s\n",opengl_utils::getEnumStringRepresentation(shaderType).c_str());
+    //printf("[Repeater] glCreateShader: %s\n",opengl_utils::getEnumStringRepresentation(shaderType).c_str());
     
     m_Manager.addShader(id, (shaderType == GL_VERTEX_SHADER)?(ShaderManager::ShaderTypes::VS):(ShaderManager::ShaderTypes::GENERIC));
     return id;
@@ -201,7 +201,6 @@ void Repeater::glAttachShader (GLuint program, GLuint shader)
 
 void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
-    printf("[Repeater] generic uniform matrix\n");
     OpenglRedirectorBase::glUniformMatrix4fv (location, count, transpose, value);
 
     // get current's program transformation matrix name
@@ -340,7 +339,7 @@ void Repeater::glMatrixMode(GLenum mode)
 {
     OpenglRedirectorBase::glMatrixMode(mode);
     m_LegacyTracker.matrixMode(mode);
-    printf("[Repeater] glMatrixMode %s\n", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
+    //printf("[Repeater] glMatrixMode %s\n", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
 }
 void Repeater::glLoadMatrixd(const GLdouble* m)
 {
