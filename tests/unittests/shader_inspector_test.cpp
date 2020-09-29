@@ -190,7 +190,50 @@ TEST(ShaderInspector, InterfaceBlockUniform) {
     ASSERT_EQ(inspector.getCountOfUniforms(), 1);
 }
 
+TEST(ShaderInspector, VSClipSpace) {
+    std::string shader = R"(
+        #version 330 core
+        layout (location = 0) in vec3 aPos;
 
+        out vec3 TexCoords;
 
+        uniform mat4 projection;
+        uniform mat4 view;
 
+        void main()
+        {
+            TexCoords = aPos;
+            vec4 pos = projection * view * vec4(aPos, 1.0);
+            gl_Position = pos.xyww;
+        }        
+        )";
+    auto inspector = ve::ShaderInspector(shader);
+    auto assignments = inspector.findAllOutVertexAssignments();
+    ASSERT_EQ(assignments.size(), 1);
+    ASSERT_EQ(assignments[0].statementRawText, "gl_Position = pos.xyww;");
+
+    ASSERT_EQ(inspector.getTransformationUniformName(assignments), "");
+    ASSERT_EQ(inspector.getCountOfUniforms(), 2);
+}
+
+TEST(ShaderInspector, VSUniforms) {
+    std::string shader = R"(
+        #version 330 core
+        layout (location = 0) in vec3 aPos;
+
+        out vec3 TexCoords;
+
+        uniform mat4 projection;
+        uniform mat4 view;
+
+        void main()
+        {
+            TexCoords = aPos;
+            vec4 pos = projection * view * vec4(aPos, 1.0);
+            gl_Position = pos.xyww;
+        }        
+        )";
+    auto inspector = ve::ShaderInspector(shader);
+    inspector.
+}
 }

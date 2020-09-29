@@ -40,6 +40,53 @@ namespace helper {
         output.insert(semicolon, std::string(")"));
         return output;
     }
+
+    size_t findFirstNonwhitespaceCharacter(const std::string_view& str)
+    {
+        auto result = std::find_if(str.begin(),str.end(), std::isspace());
+        if(result == str.end())
+            return std::string::npos;
+        return (result-str.begin());
+    }
+    size_t findEndOfToken(const std::string_view& str)
+    {
+        enum TokenType
+        {
+            IDENDIFIER, // [a-zA-Z0-9]
+            OPERATOR, // * - + /
+            SEMICOLON, // ;
+            BRACE, // { } [ ] ( )
+            DOT, // .
+            LITERAL // [0-9]\+(.[0-9]*(f)?)?
+        };
+        size_t endPosition = str.size();
+        for(auto it = str.begin();  it < str.end(); it++)
+        {
+            if(std::isspace(*it))
+                break;
+        }
+
+    }
+    std::vector<std::string_view> whitespaceSeparatedTokens(const std::string& code)
+    {
+        auto remainingString = code;
+        auto startingPosition = 0;
+        while((startingPosition = helper::findFirstNonwhitespaceCharacter(remainingString))
+                != std::string::npos)
+        {
+            enum TokenType
+            {
+
+            };
+
+            auto tokenStartPosition = startingPosition;
+            for(auto it = code.begin()+startingPosition;  it < code.end(); it++)
+            {
+                if(std::isspace(*it))
+                    break;
+            }
+        }
+    }
 } // namespace helper
 
 
@@ -211,3 +258,18 @@ size_t ve::ShaderInspector::getCountOfUniforms() const
     } 
     return count;
 }
+
+std::vector<std::pair<std::string, std::string>> Repeater::getListOfUniforms() const
+{
+    size_t count = 0;
+    size_t position = sourceCode.find("uniform");
+    while(position != std::string::npos)
+    {
+        count++;
+        position = sourceCode.find("uniform",position+1);
+        positionSemicolon = sourceCode.find_first_of(";",position+1);
+        auto uniformDefinition = sourceCode.substr(position, positionSemicolon-position);
+    } 
+    return count;
+}
+

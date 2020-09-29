@@ -43,6 +43,9 @@ namespace ve
 
         /// Get count of declared uniforms in shader in O(n)
         size_t getCountOfUniforms() const;
+
+        /// List uniforms pairs <type, name>
+        std::vector<std::pair<std::string, std::string>>getListOfUniforms() const;
     };
 } //namespace ve
 
