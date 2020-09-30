@@ -234,6 +234,6 @@ TEST(ShaderInspector, VSUniforms) {
         }        
         )";
     auto inspector = ve::ShaderInspector(shader);
-    inspector.
+    inspector.getListOfUniforms();
 }
 }

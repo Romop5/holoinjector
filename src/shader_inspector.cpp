@@ -2,6 +2,10 @@
 #include <regex>
 #include <unordered_set>
 #include <cassert>
+#include <string_view>
+#include <algorithm>
+#include <cctype>
+#include <iostream>
 
 using namespace ve;
 
@@ -43,7 +47,7 @@ namespace helper {
 
     size_t findFirstNonwhitespaceCharacter(const std::string_view& str)
     {
-        auto result = std::find_if(str.begin(),str.end(), std::isspace());
+        auto result = std::find_if(str.begin(),str.end(), [](char c)->bool{ return std::isspace(c);} );
         if(result == str.end())
             return std::string::npos;
         return (result-str.begin());
@@ -65,7 +69,8 @@ namespace helper {
             if(std::isspace(*it))
                 break;
         }
-
+        // TODO
+        return 0;
     }
     std::vector<std::string_view> whitespaceSeparatedTokens(const std::string& code)
     {
@@ -86,6 +91,7 @@ namespace helper {
                     break;
             }
         }
+        return {};
     }
 } // namespace helper
 
@@ -259,17 +265,24 @@ size_t ve::ShaderInspector::getCountOfUniforms() const
     return count;
 }
 
-std::vector<std::pair<std::string, std::string>> Repeater::getListOfUniforms() const
+std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfUniforms() const
 {
-    size_t count = 0;
+    std::vector<std::pair<std::string, std::string>> result;
     size_t position = sourceCode.find("uniform");
     while(position != std::string::npos)
     {
-        count++;
-        position = sourceCode.find("uniform",position+1);
-        positionSemicolon = sourceCode.find_first_of(";",position+1);
+        auto positionSemicolon = sourceCode.find_first_of(";",position+1);
         auto uniformDefinition = sourceCode.substr(position, positionSemicolon-position);
+        auto lastSpace = uniformDefinition.find_last_of(" \f\n\r\t\v");
+        auto lastlastSpace = uniformDefinition.find_last_of(" \f\n\r\t\v", lastSpace-2);
+
+        auto uniformName = uniformDefinition.substr(lastSpace+1);
+        auto uniformType= uniformDefinition.substr(lastlastSpace+1, lastSpace-lastlastSpace-1);
+
+        result.emplace_back(std::make_pair(std::move(uniformType), std::move(uniformName)));
+
+        position = sourceCode.find("uniform",position+1);
     } 
-    return count;
+    return result;
 }
 

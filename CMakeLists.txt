@@ -66,6 +66,7 @@ target_sources(enhancer_utils INTERFACE
 
 target_link_libraries(enhancer_utils INTERFACE glm)
 target_include_directories(enhancer_utils INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(enhancer_utils INTERFACE cxx_std_17)
 
 
 ###############################################################################
@@ -133,6 +134,7 @@ if(${ENHANCER_BUILD_TESTS})
     )
     find_package(Threads)
     target_link_libraries(unit_tests ${GTEST_BOTH_LIBRARIES} enhancer_utils Threads::Threads)
+    set(TARGET unit_tests PROPERTY CXX_STANDARD 17)
 
     add_test(NAME AllTests COMMAND "$<TARGET_FILE:unit_tests>")
 
