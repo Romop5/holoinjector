@@ -59,6 +59,8 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/viewport_area.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/virtual_cameras.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/virtual_cameras.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_parser.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_parser.cpp
     )
 
 # Hack: we would like a static library to be linked into shared library later

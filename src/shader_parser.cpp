@@ -1,10 +1,13 @@
+#include "shader_parser.hpp"
+
 #include <iostream>
-#include <vector>
 #include <string>
 #include <string_view>
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+
+using namespace ve;
 
 namespace helper
 {
@@ -72,6 +75,8 @@ namespace helper
                         continue;
                     else if (std::isalpha(*it))
                         continue;
+                    else if (std::isdigit(*it))
+                        continue;
                     else
                         return it-str.begin();
                     break;
@@ -106,13 +111,7 @@ namespace helper
 } //namespace helper
 
 
-int main()
+std::vector<std::string_view> ve::tokenize(const std::string_view& code)
 {
-    std::cout << "Hello" << std::endl;
-    auto tokens = helper::whitespaceSeparatedTokens("gl_Position = 10.0;");
-    for(const auto& token: tokens)
-    {
-        std::cout << "Token: '" << token << "'" << std::endl;
-    }
-    return 0;
+    return helper::whitespaceSeparatedTokens(code);
 }

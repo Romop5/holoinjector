@@ -225,6 +225,7 @@ TEST(ShaderInspector, VSUniforms) {
 
         uniform mat4 projection;
         uniform mat4 view;
+        uniform mat4 MVP_P  ;
 
         void main()
         {
@@ -234,6 +235,23 @@ TEST(ShaderInspector, VSUniforms) {
         }        
         )";
     auto inspector = ve::ShaderInspector(shader);
-    inspector.getListOfUniforms();
+    auto uniforms = inspector.getListOfUniforms();
+    for(auto& def: uniforms)
+    {
+        std::cout << "Def: " << def.first << " - " << def.second << std::endl;
+    }
+    ASSERT_EQ(uniforms.size(),3);
+    ASSERT_EQ(uniforms[0].first, "mat4");
+    ASSERT_EQ(uniforms[1].first, "mat4");
+    ASSERT_EQ(uniforms[2].first, "mat4");
+    ASSERT_EQ(uniforms[0].second, "projection");
+    ASSERT_EQ(uniforms[1].second, "view");
+    ASSERT_EQ(uniforms[2].second, "MVP_P");
+
+
+    auto inputs = inspector.getListOfInputs();
+    ASSERT_EQ(inputs.size(), 1);
+    ASSERT_EQ(inputs[0].first, "vec3");
+    ASSERT_EQ(inputs[0].second, "aPos");
 }
 }

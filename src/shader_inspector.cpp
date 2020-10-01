@@ -7,6 +7,8 @@
 #include <cctype>
 #include <iostream>
 
+#include "shader_parser.hpp"
+
 using namespace ve;
 
 namespace helper {
@@ -43,55 +45,6 @@ namespace helper {
         auto semicolon = output.rfind(";");
         output.insert(semicolon, std::string(")"));
         return output;
-    }
-
-    size_t findFirstNonwhitespaceCharacter(const std::string_view& str)
-    {
-        auto result = std::find_if(str.begin(),str.end(), [](char c)->bool{ return std::isspace(c);} );
-        if(result == str.end())
-            return std::string::npos;
-        return (result-str.begin());
-    }
-    size_t findEndOfToken(const std::string_view& str)
-    {
-        enum TokenType
-        {
-            IDENDIFIER, // [a-zA-Z0-9]
-            OPERATOR, // * - + /
-            SEMICOLON, // ;
-            BRACE, // { } [ ] ( )
-            DOT, // .
-            LITERAL // [0-9]\+(.[0-9]*(f)?)?
-        };
-        size_t endPosition = str.size();
-        for(auto it = str.begin();  it < str.end(); it++)
-        {
-            if(std::isspace(*it))
-                break;
-        }
-        // TODO
-        return 0;
-    }
-    std::vector<std::string_view> whitespaceSeparatedTokens(const std::string& code)
-    {
-        auto remainingString = code;
-        auto startingPosition = 0;
-        while((startingPosition = helper::findFirstNonwhitespaceCharacter(remainingString))
-                != std::string::npos)
-        {
-            enum TokenType
-            {
-
-            };
-
-            auto tokenStartPosition = startingPosition;
-            for(auto it = code.begin()+startingPosition;  it < code.end(); it++)
-            {
-                if(std::isspace(*it))
-                    break;
-            }
-        }
-        return {};
     }
 } // namespace helper
 
@@ -273,16 +226,35 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfU
     {
         auto positionSemicolon = sourceCode.find_first_of(";",position+1);
         auto uniformDefinition = sourceCode.substr(position, positionSemicolon-position);
-        auto lastSpace = uniformDefinition.find_last_of(" \f\n\r\t\v");
-        auto lastlastSpace = uniformDefinition.find_last_of(" \f\n\r\t\v", lastSpace-2);
+        auto definitionTokens = ve::tokenize(uniformDefinition);
+        const auto& type = definitionTokens[definitionTokens.size()-2];
+        const auto& name = definitionTokens[definitionTokens.size()-1];
 
-        auto uniformName = uniformDefinition.substr(lastSpace+1);
-        auto uniformType= uniformDefinition.substr(lastlastSpace+1, lastSpace-lastlastSpace-1);
-
-        result.emplace_back(std::make_pair(std::move(uniformType), std::move(uniformName)));
+        result.emplace_back(std::make_pair(type, name));
 
         position = sourceCode.find("uniform",position+1);
     } 
+    return result;
+}
+
+std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfInputs() const
+{
+    std::vector<std::pair<std::string, std::string>> result;
+
+    std::smatch m;
+    static auto inDefinition = std::regex("in[\f\n\r\t\v ][^;]+");
+    if(!std::regex_search(sourceCode, m, inDefinition))
+        return result;
+
+    for(auto& match: m)
+    {
+        std::string s = match.str();
+        auto definitionTokens = ve::tokenize(s);
+        assert(definitionTokens.size() >= 2);
+        const auto& type = definitionTokens[definitionTokens.size()-2];
+        const auto& name = definitionTokens[definitionTokens.size()-1];
+        result.emplace_back(std::make_pair(type, name));
+    }
     return result;
 }
 
