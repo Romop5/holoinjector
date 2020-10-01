@@ -42,10 +42,7 @@ find_package(glm REQUIRED)
 # Create core library (enhancer)
 ###############################################################################
 
-add_library(enhancer_utils INTERFACE 
-)
-
-target_sources(enhancer_utils INTERFACE 
+add_library(enhancer_core 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/projection_estimator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/projection_estimator.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_inspector.hpp
@@ -64,13 +61,17 @@ target_sources(enhancer_utils INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/virtual_cameras.cpp
     )
 
-target_link_libraries(enhancer_utils INTERFACE glm)
-target_include_directories(enhancer_utils INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_compile_features(enhancer_utils INTERFACE cxx_std_17)
+# Hack: we would like a static library to be linked into shared library later
+# => Position Independent Code is thus required
+target_compile_options(enhancer_core PRIVATE "-fPIC")
+
+target_link_libraries(enhancer_core PUBLIC glm)
+target_include_directories(enhancer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(enhancer_core PUBLIC cxx_std_17)
 
 
 ###############################################################################
-# Create utils library (enhancer_utils)
+# Create utils library (enhancer_core)
 ###############################################################################
 add_library(${ENHANCER_PROJECT_NAME} INTERFACE 
 )
@@ -80,7 +81,7 @@ target_sources(${ENHANCER_PROJECT_NAME} INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/startup_enhancer.cpp
     )
 
-target_link_libraries(${ENHANCER_PROJECT_NAME} INTERFACE ${SUBHOOK_SO} dl X11 glm enhancer_utils)
+target_link_libraries(${ENHANCER_PROJECT_NAME} INTERFACE ${SUBHOOK_SO} dl X11 glm enhancer_core)
 
 
 ###############################################################################
@@ -104,7 +105,7 @@ endmacro()
 # Create apps
 ###############################################################################
 createEnhancerApplication(repeater src/startup_repeater.cpp src/repeater.cpp)
-createEnhancerApplication(shaderDumper src/startup_dumper.cpp src/shader_dumper.cpp)
+#createEnhancerApplication(shaderDumper src/startup_dumper.cpp src/shader_dumper.cpp)
 
 ###############################################################################
 # Create test app
@@ -127,13 +128,13 @@ if(${ENHANCER_BUILD_TESTS})
 
     set(GTEST_ROOT "${CMAKE_BINARY_DIR}/")
 
-    #TODO: reorganize unit_test hierarchy later. Tip: have a look at Dormon's repos :D 
     add_executable(unit_tests 
         tests/unittests/projection_estimator_test.cpp
         tests/unittests/shader_inspector_test.cpp
+        tests/unittests/shader_parser_test.cpp
     )
     find_package(Threads)
-    target_link_libraries(unit_tests ${GTEST_BOTH_LIBRARIES} enhancer_utils Threads::Threads)
+    target_link_libraries(unit_tests ${GTEST_BOTH_LIBRARIES} enhancer_core Threads::Threads)
     set(TARGET unit_tests PROPERTY CXX_STANDARD 17)
 
     add_test(NAME AllTests COMMAND "$<TARGET_FILE:unit_tests>")
