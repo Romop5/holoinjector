@@ -272,7 +272,10 @@ TEST(ShaderInspector, Experimental) {
             TexCoords = aPos;
             vec4 pos = projection * view * vec4(aPos, 1.0);
             gl_Position = vec4(aPos, 1.0);
-            gl_Position = ftransformation();
+            vec4 tmp = projection * aPos;
+            gl_Position = vec4(tmp);
+            gl_Position = tmp.xyww;
+            gl_Position = ftransform();
             gl_Position = vec4(projection*aPos);
         }        
         )";
@@ -282,6 +285,12 @@ TEST(ShaderInspector, Experimental) {
     {
         auto result = inspector.analyzeGLPositionAssignment(assignment);
         std::cout << "ID: " << result.foundIdentifier << " - " << result.type << std::endl;
+
+        if(result.type == ve::ShaderInspector::AnalysisType::POSSIBLE_TEMPORARY_VARIABLE)
+        {
+            auto finalUniform = inspector.recursivelySearchUniformFromTemporaryVariable(result.foundIdentifier);
+            std::cout << "Final uniform: " << finalUniform << std::endl;
+        }
     }
     }
 }

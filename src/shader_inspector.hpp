@@ -56,6 +56,7 @@ namespace ve
             INPUT,
             FUNCTION,
             GLPOSITION,
+            POSSIBLE_TEMPORARY_VARIABLE,
             CONSTANT_ASSIGNMENT
         };
         struct Analysis
@@ -64,6 +65,9 @@ namespace ve
             AnalysisType type;
         };
         Analysis analyzeGLPositionAssignment(VertextAssignment assignment);
+        std::string replaceGLPositionAssignment(VertextAssignment assignment,Analysis analysis);
+
+        std::string recursivelySearchUniformFromTemporaryVariable(std::string tmpName);
 
     };
 } //namespace ve

@@ -291,14 +291,58 @@ ShaderInspector::Analysis ve::ShaderInspector::analyzeGLPositionAssignment(Verte
     ana.foundIdentifier = (firstIdentifier == tokens.end())?"":*firstIdentifier;
     if(isUniform)
         ana.type = AnalysisType::UNIFORM;
-    if(isInput)
+    else if(isInput)
         ana.type = AnalysisType::INPUT;
-    if(isFunction)
+    else if(isFunction)
         ana.type = AnalysisType::FUNCTION;
-    if(isGLPosition)
+    else if(isGLPosition)
         ana.type = AnalysisType::GLPOSITION;
-    if(isConstantAssignment)
+    else if(isConstantAssignment)
         ana.type = AnalysisType::CONSTANT_ASSIGNMENT;
+    else 
+        ana.type = AnalysisType::POSSIBLE_TEMPORARY_VARIABLE;
     return ana;
 }
 
+std::string ve::ShaderInspector::replaceGLPositionAssignment(VertextAssignment assignment,Analysis analysis)
+{
+    switch(analysis.type)
+    {
+        case POSSIBLE_TEMPORARY_VARIABLE:
+        case UNIFORM:
+            return helper::wrapAssignmentExpresion(assignment.statementRawText, "enhancer_transform");
+        case INPUT:
+            return helper::wrapAssignmentExpresion(assignment.statementRawText, "enhancer_transform_HUD");
+        case GLPOSITION:
+        case FUNCTION:
+            // Identity, TODO: this would require more robust analysis
+            return assignment.statementRawText;
+    }
+    return assignment.statementRawText;
+}
+
+
+std::string ShaderInspector::recursivelySearchUniformFromTemporaryVariable(std::string tmpName)
+{
+    auto firstTokenPattern = std::regex(tmpName+"[\f\n\r\t\v ]*=[^;]*");
+    std::smatch m;
+    while(std::regex_search(sourceCode, m, firstTokenPattern))
+    {
+        std::string foundStr = m.str();
+        auto tokens = ve::tokenize(foundStr);
+
+        auto firstIdentifier = std::find_if(tokens.begin()+1, tokens.end(), [&](const auto token)->bool {
+            return isIdentifier(token) && !ve::isBuiltinGLSLType(token);});
+
+        if(firstIdentifier != tokens.end())
+        {
+            const auto& name = std::string(*firstIdentifier);
+            if(name == tmpName)
+                continue;
+            if(isUniformVariable(name))
+                return name;
+            return recursivelySearchUniformFromTemporaryVariable(name);
+        }
+    }
+    return "";
+}
