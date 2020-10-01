@@ -48,12 +48,12 @@ namespace helper {
     }
 } // namespace helper
 
-
-
-bool ve::ShaderInspector::isBuiltinGLSLType(const std::string& token)
+bool ve::ShaderInspector::isIdentifier(const std::string_view& token)
 {
-    static const auto builtinTypes = std::unordered_set<std::string>{ "vec3", "vec4", "mat3", "mat4", "float", "double"};
-    return (builtinTypes.count(token) > 0);
+    auto tk = std::string(token);
+    std::smatch m;
+    static auto identifier = std::regex("[a-zA-Z][a-zA-Z0-9_]*");
+    return std::regex_match(tk, m, identifier);
 }
 
 bool ve::ShaderInspector::isUniformVariableInInterfaceBlock(const std::string& identifier) const
@@ -102,6 +102,7 @@ std::vector<ShaderInspector::VertextAssignment> ve::ShaderInspector::findAllOutV
     {
         std::string foundText = assignments.str();
         VertextAssignment outputAssignment;
+        outputAssignment.positionInCode = assignments.position();
         outputAssignment.statementRawText = foundText;
         outputAssignment.firstTokenFromLeft = helper::getFirstTokenAfterEq(foundText);
         results.push_back(outputAssignment);
@@ -256,5 +257,48 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfI
         result.emplace_back(std::make_pair(type, name));
     }
     return result;
+}
+
+ShaderInspector::Analysis ve::ShaderInspector::analyzeGLPositionAssignment(VertextAssignment assignment)
+{
+    auto tokens = ve::tokenize(assignment.statementRawText);
+
+    auto firstIdentifier = std::find_if(tokens.begin()+1, tokens.end(), [&](const auto token)->bool {
+            return isIdentifier(token) && !ve::isBuiltinGLSLType(token);});
+
+    const auto uniforms = getListOfUniforms();
+    const auto inputs = getListOfInputs();
+
+    auto uniformPosition = std::find_if(uniforms.begin(),uniforms.end(), [&](auto variable)->bool { return variable.second == *firstIdentifier;});
+
+    auto inputPosition = std::find_if(inputs.begin(),inputs.end(), [&](auto variable)->bool { return variable.second == *firstIdentifier;});
+
+    bool isUniform = (uniformPosition != uniforms.end());
+    bool isInput = (inputPosition != inputs.end());
+    bool isFunction = (*(firstIdentifier+1)== "(");
+    bool isGLPosition = (*(firstIdentifier)== "gl_Position");
+    bool isConstantAssignment = firstIdentifier == tokens.end();
+    bool couldBeVariable = (!isUniform && !isInput && !isFunction && !isGLPosition && !isConstantAssignment);
+
+    /*std::cout << "IsUniform " << isUniform << std::endl;
+    std::cout << "IsInput " << isInput<< std::endl;
+    std::cout << "IsFunction " << isFunction << std::endl;
+    std::cout << "IsGLPosition" << isGLPosition<< std::endl;
+    std::cout << "IsConstantAssignment" << isConstantAssignment << std::endl;
+    std::cout << "MightBeAVariable" << couldBeVariable << std::endl;
+    */
+    Analysis ana;
+    ana.foundIdentifier = (firstIdentifier == tokens.end())?"":*firstIdentifier;
+    if(isUniform)
+        ana.type = AnalysisType::UNIFORM;
+    if(isInput)
+        ana.type = AnalysisType::INPUT;
+    if(isFunction)
+        ana.type = AnalysisType::FUNCTION;
+    if(isGLPosition)
+        ana.type = AnalysisType::GLPOSITION;
+    if(isConstantAssignment)
+        ana.type = AnalysisType::CONSTANT_ASSIGNMENT;
+    return ana;
 }
 

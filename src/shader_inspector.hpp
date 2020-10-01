@@ -15,16 +15,15 @@ namespace ve
 
         struct VertextAssignment
         {
+            size_t positionInCode;
             std::string statementRawText;
             std::string firstTokenFromLeft;
         };
 
-        /// Verifies if 'token' names a GLSL builtin type
-        static bool isBuiltinGLSLType(const std::string& token);
-
         /// Get string repr. from declaration or empty string if variable is not declared
         std::string getVariableType(const std::string& variable) const;
 
+        bool isIdentifier(const std::string_view& token);
 
         /// Verifies if identifier is an uniform in any interface block
         bool isUniformVariableInInterfaceBlock(const std::string& identifier) const;
@@ -34,6 +33,9 @@ namespace ve
 
         /// Finds all assigment to gl_Position, and returns text string, representing such statment
         std::vector<VertextAssignment> findAllOutVertexAssignments() const;
+
+        /// Compute final statement 
+        std::string replaceGLAssignement(VertextAssignment originalStatement);
 
         /// Injects Enhancer-specific transformation into shader and returns modified code
         std::string injectShader(const std::vector<VertextAssignment>& assignments);
@@ -47,6 +49,22 @@ namespace ve
         /// List uniforms pairs <type, name>
         std::vector<std::pair<std::string, std::string>>getListOfUniforms() const;
         std::vector<std::pair<std::string, std::string>>getListOfInputs() const;
+
+        enum AnalysisType
+        {
+            UNIFORM,
+            INPUT,
+            FUNCTION,
+            GLPOSITION,
+            CONSTANT_ASSIGNMENT
+        };
+        struct Analysis
+        {
+            std::string foundIdentifier;
+            AnalysisType type;
+        };
+        Analysis analyzeGLPositionAssignment(VertextAssignment assignment);
+
     };
 } //namespace ve
 

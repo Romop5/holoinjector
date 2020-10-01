@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "shader_inspector.hpp"
+#include "shader_parser.hpp"
 
 namespace {
 TEST(ShaderInspector, Basics) {
@@ -36,8 +37,8 @@ TEST(ShaderInspector, TextVS) {
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 1);
     ASSERT_EQ(assignments[0].firstTokenFromLeft, "vec4");
-    ASSERT_TRUE(inspector.isBuiltinGLSLType("vec4"));
-    ASSERT_TRUE(inspector.isBuiltinGLSLType("vec3"));
+    ASSERT_TRUE(ve::isBuiltinGLSLType("vec4"));
+    ASSERT_TRUE(ve::isBuiltinGLSLType("vec3"));
     ASSERT_EQ(inspector.getTransformationUniformName(assignments), "");
 }
 
@@ -254,4 +255,33 @@ TEST(ShaderInspector, VSUniforms) {
     ASSERT_EQ(inputs[0].first, "vec3");
     ASSERT_EQ(inputs[0].second, "aPos");
 }
+
+TEST(ShaderInspector, Experimental) {
+    std::string shader = R"(
+        #version 330 core
+        layout (location = 0) in vec3 aPos;
+
+        out vec3 TexCoords;
+
+        uniform mat4 projection;
+        uniform mat4 view;
+        uniform mat4 MVP_P  ;
+
+        void main()
+        {
+            TexCoords = aPos;
+            vec4 pos = projection * view * vec4(aPos, 1.0);
+            gl_Position = vec4(aPos, 1.0);
+            gl_Position = ftransformation();
+            gl_Position = vec4(projection*aPos);
+        }        
+        )";
+    auto inspector = ve::ShaderInspector(shader);
+    auto assignments = inspector.findAllOutVertexAssignments();
+    for(auto& assignment: assignments)
+    {
+        auto result = inspector.analyzeGLPositionAssignment(assignment);
+        std::cout << "ID: " << result.foundIdentifier << " - " << result.type << std::endl;
+    }
+    }
 }

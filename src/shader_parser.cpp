@@ -1,11 +1,13 @@
 #include "shader_parser.hpp"
 
+#include <regex>
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <unordered_set>
 
 using namespace ve;
 
@@ -115,3 +117,11 @@ std::vector<std::string_view> ve::tokenize(const std::string_view& code)
 {
     return helper::whitespaceSeparatedTokens(code);
 }
+
+bool ve::isBuiltinGLSLType(const std::string_view& token)
+{
+    std::string key = std::string(token);
+    static const auto builtinTypes = std::unordered_set<std::string>{ "vec3", "vec4", "mat3", "mat4", "float", "double"};
+    return (builtinTypes.count(key) > 0);
+}
+
