@@ -13,17 +13,33 @@ namespace ve
         public:
         ShaderInspector(std::string code): sourceCode(std::move(code)) {}
 
+        enum AnalysisType
+        {
+            UNIFORM,
+            INPUT,
+            FUNCTION,
+            GLPOSITION,
+            POSSIBLE_TEMPORARY_VARIABLE,
+            CONSTANT_ASSIGNMENT
+        };
+        struct Analysis
+        {
+            std::string foundIdentifier;
+            AnalysisType type;
+        };
+
         struct VertextAssignment
         {
             size_t positionInCode;
             std::string statementRawText;
-            std::string firstTokenFromLeft;
+            std::string transformName;
+            Analysis analysis;
         };
 
         /// Get string repr. from declaration or empty string if variable is not declared
         std::string getVariableType(const std::string& variable) const;
 
-        bool isIdentifier(const std::string_view& token);
+        bool isIdentifier(const std::string_view& token) const;
 
         /// Verifies if identifier is an uniform in any interface block
         bool isUniformVariableInInterfaceBlock(const std::string& identifier) const;
@@ -50,24 +66,10 @@ namespace ve
         std::vector<std::pair<std::string, std::string>>getListOfUniforms() const;
         std::vector<std::pair<std::string, std::string>>getListOfInputs() const;
 
-        enum AnalysisType
-        {
-            UNIFORM,
-            INPUT,
-            FUNCTION,
-            GLPOSITION,
-            POSSIBLE_TEMPORARY_VARIABLE,
-            CONSTANT_ASSIGNMENT
-        };
-        struct Analysis
-        {
-            std::string foundIdentifier;
-            AnalysisType type;
-        };
-        Analysis analyzeGLPositionAssignment(VertextAssignment assignment);
-        std::string replaceGLPositionAssignment(VertextAssignment assignment,Analysis analysis);
+        Analysis analyzeGLPositionAssignment(std::string& assignment) const;
+        std::string replaceGLPositionAssignment(VertextAssignment assignment) const;
 
-        std::string recursivelySearchUniformFromTemporaryVariable(std::string tmpName);
+        std::string recursivelySearchUniformFromTemporaryVariable(std::string tmpName) const;
 
     };
 } //namespace ve

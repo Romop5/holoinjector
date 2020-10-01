@@ -48,7 +48,7 @@ namespace helper {
     }
 } // namespace helper
 
-bool ve::ShaderInspector::isIdentifier(const std::string_view& token)
+bool ve::ShaderInspector::isIdentifier(const std::string_view& token) const
 {
     auto tk = std::string(token);
     std::smatch m;
@@ -104,7 +104,16 @@ std::vector<ShaderInspector::VertextAssignment> ve::ShaderInspector::findAllOutV
         VertextAssignment outputAssignment;
         outputAssignment.positionInCode = assignments.position();
         outputAssignment.statementRawText = foundText;
-        outputAssignment.firstTokenFromLeft = helper::getFirstTokenAfterEq(foundText);
+        outputAssignment.analysis = analyzeGLPositionAssignment(foundText);
+        outputAssignment.transformName = "";
+        switch(outputAssignment.analysis.type)
+        {
+            case UNIFORM:
+                outputAssignment.transformName = outputAssignment.analysis.foundIdentifier;
+                break;
+            case POSSIBLE_TEMPORARY_VARIABLE:
+                outputAssignment.transformName = recursivelySearchUniformFromTemporaryVariable(outputAssignment.analysis.foundIdentifier);
+        }
         results.push_back(outputAssignment);
 
         toBeSearched = assignments.suffix();
@@ -118,12 +127,7 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
     std::string output = sourceCode;
     for(auto& statement: assignments)
     {
-        const auto isUniform = isUniformVariable(statement.firstTokenFromLeft);
-        const auto isBuiltin= isBuiltinGLSLType(statement.firstTokenFromLeft);
-        if(!isBuiltin && !isUniform)
-            continue;
-        const auto enhancerFunctionName = isBuiltinGLSLType(statement.firstTokenFromLeft)?"enhancer_transform_HUD": "enhancer_transform";
-        const auto newStatement = helper::wrapAssignmentExpresion(statement.statementRawText, enhancerFunctionName);
+        const auto newStatement = replaceGLPositionAssignment(statement);
         auto startPosition = output.find(statement.statementRawText);
         if(startPosition == std::string::npos)
             continue;
@@ -199,8 +203,8 @@ std::string ve::ShaderInspector::getTransformationUniformName(std::vector<Vertex
 {
     for(const auto& statement: assignments)
     {
-        if(isUniformVariable(statement.firstTokenFromLeft))
-            return statement.firstTokenFromLeft;
+        if(isUniformVariable(statement.transformName))
+            return statement.transformName;
     }
     return "";
 }
@@ -259,9 +263,9 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfI
     return result;
 }
 
-ShaderInspector::Analysis ve::ShaderInspector::analyzeGLPositionAssignment(VertextAssignment assignment)
+ShaderInspector::Analysis ve::ShaderInspector::analyzeGLPositionAssignment(std::string& assignment) const
 {
-    auto tokens = ve::tokenize(assignment.statementRawText);
+    auto tokens = ve::tokenize(assignment);
 
     auto firstIdentifier = std::find_if(tokens.begin()+1, tokens.end(), [&](const auto token)->bool {
             return isIdentifier(token) && !ve::isBuiltinGLSLType(token);});
@@ -304,9 +308,9 @@ ShaderInspector::Analysis ve::ShaderInspector::analyzeGLPositionAssignment(Verte
     return ana;
 }
 
-std::string ve::ShaderInspector::replaceGLPositionAssignment(VertextAssignment assignment,Analysis analysis)
+std::string ve::ShaderInspector::replaceGLPositionAssignment(VertextAssignment assignment) const
 {
-    switch(analysis.type)
+    switch(assignment.analysis.type)
     {
         case POSSIBLE_TEMPORARY_VARIABLE:
         case UNIFORM:
@@ -322,7 +326,7 @@ std::string ve::ShaderInspector::replaceGLPositionAssignment(VertextAssignment a
 }
 
 
-std::string ShaderInspector::recursivelySearchUniformFromTemporaryVariable(std::string tmpName)
+std::string ShaderInspector::recursivelySearchUniformFromTemporaryVariable(std::string tmpName) const
 {
     auto firstTokenPattern = std::regex(tmpName+"[\f\n\r\t\v ]*=[^;]*");
     std::smatch m;

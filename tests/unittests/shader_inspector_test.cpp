@@ -18,8 +18,8 @@ TEST(ShaderInspector, Basics) {
     auto inspector = ve::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 1);
-    ASSERT_EQ(assignments[0].firstTokenFromLeft, "P");
-    ASSERT_EQ(inspector.getVariableType(assignments[0].firstTokenFromLeft), "mat4");
+    ASSERT_EQ(assignments[0].transformName, "P");
+    ASSERT_EQ(inspector.getVariableType(assignments[0].transformName), "mat4");
     ASSERT_EQ(inspector.getVariableType("normal"), "vec3");
     ASSERT_EQ(inspector.getVariableType("MV"), "mat4");
     ASSERT_EQ(inspector.getTransformationUniformName(assignments), "P");
@@ -36,7 +36,7 @@ TEST(ShaderInspector, TextVS) {
     auto inspector = ve::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 1);
-    ASSERT_EQ(assignments[0].firstTokenFromLeft, "vec4");
+    ASSERT_EQ(assignments[0].transformName, "");
     ASSERT_TRUE(ve::isBuiltinGLSLType("vec4"));
     ASSERT_TRUE(ve::isBuiltinGLSLType("vec3"));
     ASSERT_EQ(inspector.getTransformationUniformName(assignments), "");
@@ -213,7 +213,7 @@ TEST(ShaderInspector, VSClipSpace) {
     ASSERT_EQ(assignments.size(), 1);
     ASSERT_EQ(assignments[0].statementRawText, "gl_Position = pos.xyww;");
 
-    ASSERT_EQ(inspector.getTransformationUniformName(assignments), "");
+    ASSERT_EQ(inspector.getTransformationUniformName(assignments), "projection");
     ASSERT_EQ(inspector.getCountOfUniforms(), 2);
 }
 
@@ -277,13 +277,17 @@ TEST(ShaderInspector, Experimental) {
             gl_Position = tmp.xyww;
             gl_Position = ftransform();
             gl_Position = vec4(projection*aPos);
+
+            vec4 a = projection*aPos;
+            vec4 b = a;
+            gl_Position = b;
         }        
         )";
     auto inspector = ve::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     for(auto& assignment: assignments)
     {
-        auto result = inspector.analyzeGLPositionAssignment(assignment);
+        auto result = inspector.analyzeGLPositionAssignment(assignment.statementRawText);
         std::cout << "ID: " << result.foundIdentifier << " - " << result.type << std::endl;
 
         if(result.type == ve::ShaderInspector::AnalysisType::POSSIBLE_TEMPORARY_VARIABLE)
