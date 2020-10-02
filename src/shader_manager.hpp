@@ -20,7 +20,10 @@ namespace ve
         {
             ShaderTypes m_Type;
             std::string m_TransformationMatrixName;
+            // Determines if any uniform is defined
             bool m_HasAnyUniform = false;
+            // Determines if skybox / clipspace rendering was detected
+            bool m_IsClipSpaceTransform = false;
         };
 
         bool hasShader(size_t ID) const;

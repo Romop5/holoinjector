@@ -11,6 +11,7 @@ namespace ve
         public:
         Camera(float initialAngle): m_angleY(initialAngle) {}
         const glm::mat4& getViewMatrix() const;
+        const glm::mat4& getViewMatrixRotational() const;
         const ViewportArea& getViewport() const;
         friend class VirtualCameras;
         protected:
@@ -18,6 +19,8 @@ namespace ve
         const float m_angleY;
         /// Cache: world-to-viewspace
         glm::mat4 m_viewMatrix;
+        /// Cache: world-to-viewspace rotation-only
+        glm::mat4 m_viewMatrixRotational;
         /// Cache: per-camera viewport
         ViewportArea m_viewport;
     };

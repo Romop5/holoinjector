@@ -8,10 +8,16 @@ const glm::mat4& Camera::getViewMatrix() const
     return m_viewMatrix;
 }
 
+const glm::mat4& Camera::getViewMatrixRotational() const
+{
+    return m_viewMatrixRotational;
+}
+
 const ViewportArea& Camera::getViewport() const
 {
     return m_viewport;
 }
+
 
 void VirtualCameras::setupWindows(size_t count, float windowsPerWidth)
 {
@@ -71,6 +77,7 @@ void VirtualCameras::recalculateTransformations()
         const auto T = glm::translate(glm::vec3(0.0f,0.0f,m_parameters.m_distance));
         const auto invT = glm::translate(glm::vec3(0.0f,0.0f,-m_parameters.m_distance));
         camera.m_viewMatrix = invT*rotationMatrix*T;
+        camera.m_viewMatrixRotational = rotationMatrix;
     }
 }
 

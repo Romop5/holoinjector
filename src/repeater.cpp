@@ -162,6 +162,7 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
                 auto& metadata = m_Manager.getShaderDescription(shader);
                 printf("[Repeater] found transformation name: %s\n",transformationName.c_str());
                 metadata.m_TransformationMatrixName = transformationName;
+                metadata.m_IsClipSpaceTransform = newShader.find(".xyww") != std::string::npos;
 
                 newShader = inspector.injectShader(statements);
                 auto & description = m_Manager.getShaderDescription(shader);
@@ -578,6 +579,8 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
             !m_IsDuplicationOn ||
             // don't duplicate while rendering light's point of view into shadow map
             m_FBOTracker.isFBOshadowMap() ||
+            // don't duplicate while there is no projection
+            (m_Manager.isAnyBound() && m_Manager.isVSBound() && m_Manager.getBoundedVS().m_TransformationMatrixName == "") ||
             // don't duplicate while rendering post-processing effect
             (m_Manager.isAnyBound() && m_Manager.isVSBound() && !m_Manager.getBoundedVS().m_HasAnyUniform));
 
@@ -610,9 +613,17 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         const auto scissorHeight = originalScissor.getHeight()/tilesPerY; 
         OpenglRedirectorBase::glScissor(currentStartX+scissorDiffX, currentStartY+scissorDiffY, scissorWidth, scissorHeight);
 
+        // Detect if VS renders into clip-space, thus if z is always 1.0
+        // => in such case, we don't want to translate the virtual camera
+        bool isClipSpaceRendering = false;
+        if(m_Manager.isAnyBound() && m_Manager.isVSBound())
+        {
+            isClipSpaceRendering = (m_Manager.getBoundedVS().m_IsClipSpaceTransform);
+        }
+        const auto& t = (isClipSpaceRendering)?camera.getViewMatrixRotational():camera.getViewMatrix();
         const auto& v = camera.getViewport();
         OpenglRedirectorBase::glViewport(v.getX(), v.getY(), v.getWidth(), v.getHeight());
-        setEnhancerShift(camera.getViewMatrix());
+        setEnhancerShift(t);
         code();
         resetEnhancerShift();
     }

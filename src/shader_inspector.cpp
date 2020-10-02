@@ -43,6 +43,11 @@ namespace helper {
         output.insert(equalSign, expression+std::string("("));
 
         auto semicolon = output.rfind(";");
+        if(assignment.find(".xyww") != std::string::npos)
+        {
+            semicolon = output.find(".xyww");
+        }
+
         output.insert(semicolon, std::string(")"));
         return output;
     }
