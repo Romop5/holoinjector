@@ -44,6 +44,9 @@ namespace ve
         /// Verifies if identifier is an uniform in any interface block
         bool isUniformVariableInInterfaceBlock(const std::string& identifier) const;
 
+        /// Get block name
+        std::string getUniformBlockName(const std::string& uniformName) const;
+
         /// Verifies if token 'identifier' is declared as uniform variable in source code
         bool isUniformVariable(const std::string& identifier) const;
 

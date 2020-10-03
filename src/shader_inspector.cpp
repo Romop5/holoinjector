@@ -70,6 +70,18 @@ bool ve::ShaderInspector::isUniformVariableInInterfaceBlock(const std::string& i
     return m.size() > 0;
 }
 
+std::string ve::ShaderInspector::getUniformBlockName(const std::string& uniformName) const
+{
+    std::string rgxLiteral = std::string("uniform[^;]*[\f\n\r\t\v ]([a-zA-Z][a-zA-Z0-9_]*)[^;]*\\{[^\\}]*[\f\n\r\t\v ]") + uniformName + std::string("[\f\n\r\t\v ]*;[^\\}]*\\}");
+    auto finalregex = std::regex(rgxLiteral,std::regex::extended);
+    std::smatch matches;
+
+    if(std::regex_search(sourceCode, matches, finalregex)) {
+        if(matches.size() > 1)
+            return matches[1];
+    }
+    return "";
+}
 
 bool ve::ShaderInspector::isUniformVariable(const std::string& identifier) const
 {

@@ -189,6 +189,7 @@ TEST(ShaderInspector, InterfaceBlockUniform) {
 
     ASSERT_EQ(inspector.getTransformationUniformName(assignments), "MVP");
     ASSERT_EQ(inspector.getCountOfUniforms(), 1);
+    ASSERT_EQ(inspector.getUniformBlockName("MVP"), "Hello");
 }
 
 TEST(ShaderInspector, VSClipSpace) {
