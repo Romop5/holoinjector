@@ -10,6 +10,9 @@
 #include "projection_estimator.hpp"
 #include "opengl_utils.hpp"
 
+#include "simplecpp.h"
+#include <sstream>
+
 using namespace ve;
 
 namespace helper
@@ -137,6 +140,37 @@ GLuint Repeater::glCreateShader(GLenum shaderType)
     return id;
 }
 
+namespace helper
+{
+    std::string wrapGLSLMacros(std::string code)
+    {
+        auto regV = std::regex("#version");
+        auto result = std::regex_replace (code,regV,"GLSL_VERSION",std::regex_constants::match_default);
+
+        auto regE = std::regex("#extension");
+        result = std::regex_replace (result,regE,"GLSL_EXTENSION",std::regex_constants::match_default);
+        return result;
+    }
+    std::string unwrapGLSLMacros(std::string code)
+    {
+        auto regV = std::regex("GLSL_VERSION");
+        auto result = std::regex_replace (code,regV,"#version",std::regex_constants::match_default);
+
+        auto regE = std::regex("GLSL_EXTENSION");
+        result = std::regex_replace (result,regE,"#extension",std::regex_constants::match_default);
+        return result;
+    }
+    std::string preprocessGLSLCode(std::string code)
+    {
+        std::stringstream ss;
+        ss << helper::wrapGLSLMacros(code);
+        return helper::unwrapGLSLMacros(simplecpp::preprocess_inmemory(ss));
+                
+    }
+
+
+};
+
 void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length)
 {
     printf("[Repeater] glShaderSource: [%d]\n",shader);
@@ -155,7 +189,9 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
                 newShader = string[cnt];
 
                 printf("[Repeater] inspecting shader '%s'\n",newShader.c_str());
-                ShaderInspector inspector(newShader);
+                auto preprocessedShader = helper::preprocessGLSLCode(newShader);
+                printf("[Repeater] preprocessed shader '%s'\n",preprocessedShader.c_str());
+                ShaderInspector inspector(preprocessedShader);
                 auto statements = inspector.findAllOutVertexAssignments();
                 auto transformationName = inspector.getTransformationUniformName(statements);
                 

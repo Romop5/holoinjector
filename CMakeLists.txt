@@ -33,6 +33,17 @@ find_file (SUBHOOK_H NAMES subhook.h REQUIRED)
 set(SUBHOOK_SO ${SUBHOOK_SO${ENHANCER_BITS}})
 
 get_filename_component(SUBHOOK_INCL ${SUBHOOK_H} DIRECTORY)
+
+find_file (SIMPLECPP_SO32 NAMES libsimplecpp.so PATHS /usr/local/lib/ REQUIRED)
+find_file (SIMPLECPP_SO64 NAMES libsimplecpp.so PATHS /usr/local/lib/ REQUIRED)
+find_file (SIMPLECPP_H NAMES simplecpp.h REQUIRED)
+
+set(SIMPLECPP_SO ${SIMPLECPP_SO${ENHANCER_BITS}})
+
+message("Found simplecpp.so: ${SIMPLECPP_SO}")
+
+get_filename_component(SIMPLECPP_INCL ${SIMPLECPP_H} DIRECTORY)
+
 ###############################################################################
 
 find_package(glm REQUIRED)
@@ -72,6 +83,7 @@ target_include_directories(enhancer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(enhancer_core PUBLIC cxx_std_17)
 
 
+
 ###############################################################################
 # Create utils library (enhancer_core)
 ###############################################################################
@@ -96,6 +108,7 @@ macro(createEnhancerApplication name)
         ${ARGN}
     )
     target_link_libraries(${APPLICATION_NAME} PRIVATE ${ENHANCER_PROJECT_NAME})
+    target_link_libraries(${APPLICATION_NAME} PUBLIC ${SIMPLECPP_SO})
 
     if(${ENHANCER_32})
         set_target_properties(${APPLICATION_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
@@ -119,6 +132,7 @@ if(${ENHANCER_32})
     set_target_properties(app PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
 endif()
 target_link_libraries(app PRIVATE repeater${PROJECT_SUFFIX} dl)
+target_link_libraries(enhancer_core PUBLIC ${SIMPLECPP_SO})
 
 ###############################################################################
 # Create tests
