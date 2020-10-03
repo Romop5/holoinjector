@@ -164,58 +164,50 @@ namespace helper
     {
         std::stringstream ss;
         ss << helper::wrapGLSLMacros(code);
-        return helper::unwrapGLSLMacros(simplecpp::preprocess_inmemory(ss));
-                
+        auto tmp = helper::unwrapGLSLMacros(simplecpp::preprocess_inmemory(ss));
+        return std::regex_replace(tmp, std::regex("^$"),"");
     }
-
-
+    
+    std::string joinGLSLshaders(GLsizei count, const GLchar* const*string, const GLint* length)
+    {
+        std::stringstream ss;
+        for(size_t i = 0; i < count; i++)
+        {
+            std::string_view file = length?std::string_view(string[i], length[i]):string[i];
+            ss << file << "\n";
+        }
+        return ss.str();
+    }
 };
 
 void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length)
 {
+    auto concatenatedShader = helper::joinGLSLshaders(count, string, length);
     printf("[Repeater] glShaderSource: [%d]\n",shader);
     if(m_Manager.hasShader(shader) && m_Manager.getShaderDescription(shader).m_Type == ShaderManager::ShaderTypes::VS)
     {
-        std::string newShader;
-        std::vector<const GLchar*> preparedShaders;
-        preparedShaders.reserve(count);
+        auto preprocessedShader = helper::preprocessGLSLCode(concatenatedShader);
+        printf("[Repeater] preprocessed shader '%s'\n",preprocessedShader.c_str());
 
-        std::vector<GLint> preparedShadersLengths;
-        preparedShadersLengths.reserve(count);
-        for(size_t cnt = 0; cnt < count; cnt++)
-        {
-            if(helper::containsMainFunction(string[cnt]))
-            {
-                newShader = string[cnt];
+        printf("[Repeater] continuing with shader\n");
+        ShaderInspector inspector(preprocessedShader);
+        auto statements = inspector.findAllOutVertexAssignments();
+        auto transformationName = inspector.getTransformationUniformName(statements);
+        
+        auto& metadata = m_Manager.getShaderDescription(shader);
+        printf("[Repeater] found transformation name: %s\n",transformationName.c_str());
+        metadata.m_TransformationMatrixName = transformationName;
+        metadata.m_IsClipSpaceTransform = preprocessedShader.find(".xyww") != std::string::npos;
 
-                printf("[Repeater] inspecting shader '%s'\n",newShader.c_str());
-                auto preprocessedShader = helper::preprocessGLSLCode(newShader);
-                printf("[Repeater] preprocessed shader '%s'\n",preprocessedShader.c_str());
-                ShaderInspector inspector(preprocessedShader);
-                auto statements = inspector.findAllOutVertexAssignments();
-                auto transformationName = inspector.getTransformationUniformName(statements);
-                
-                auto& metadata = m_Manager.getShaderDescription(shader);
-                printf("[Repeater] found transformation name: %s\n",transformationName.c_str());
-                metadata.m_TransformationMatrixName = transformationName;
-                metadata.m_IsClipSpaceTransform = newShader.find(".xyww") != std::string::npos;
-
-                newShader = inspector.injectShader(statements);
-                auto & description = m_Manager.getShaderDescription(shader);
-                description.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
-                
-                printf("[Repeater] injecting shader shift\n");
-                preparedShaders.push_back(newShader.data());
-                preparedShadersLengths.push_back(newShader.size());
-            } else {
-                preparedShaders.push_back(string[cnt]);
-                auto shaderLength = (!length)?strlen(string[cnt]):length[cnt];
-                preparedShadersLengths.push_back(shaderLength);
-            }
-        }
-        helper::dumpShaderSources(preparedShaders.data(), count);
-        OpenglRedirectorBase::glShaderSource(shader,count,preparedShaders.data(),preparedShadersLengths.data());
+        auto finalShader = inspector.injectShader(statements);
+        auto & description = m_Manager.getShaderDescription(shader);
+        description.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
+        
+        printf("[Repeater] injecting shader shift\n");
+        std::vector<const char*> shaders = {finalShader.c_str(),};
+        OpenglRedirectorBase::glShaderSource(shader,1,shaders.data(),nullptr);
     } else {
+        printf("[Repeater] glShaderSource: %s\n",concatenatedShader.c_str());
         helper::dumpShaderSources(string, count);
         OpenglRedirectorBase::glShaderSource(shader,count,string,length);
     }
