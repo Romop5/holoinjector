@@ -197,13 +197,14 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
         auto& metadata = m_Manager.getShaderDescription(shader);
         printf("[Repeater] found transformation name: %s\n",transformationName.c_str());
         metadata.m_TransformationMatrixName = transformationName;
-        metadata.m_IsClipSpaceTransform = preprocessedShader.find(".xyww") != std::string::npos;
+        metadata.m_IsClipSpaceTransform = preprocessedShader.find(". xyww") != std::string::npos;
 
         auto finalShader = inspector.injectShader(statements);
         auto & description = m_Manager.getShaderDescription(shader);
         description.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
         
         printf("[Repeater] injecting shader shift\n");
+        printf("[Repeater] injected shader: %s\n",finalShader.c_str());
         std::vector<const char*> shaders = {finalShader.c_str(),};
         OpenglRedirectorBase::glShaderSource(shader,1,shaders.data(),nullptr);
     } else {
