@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include "shader_manager.hpp"
+#include "uniform_block_tracing.hpp"
 #include "framebuffer_tracker.hpp"
 #include "legacy_tracker.hpp"
 #include "viewport_area.hpp"
@@ -48,6 +49,25 @@ namespace ve
         virtual  void glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) override;
         virtual  void glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset) override;
         // Framebuffers end
+
+        
+        // Binding tracing
+        // Get Uniform Block location in shader program
+        virtual GLuint glGetUniformBlockIndex (GLuint program, const GLchar* uniformBlockName) override;
+        // Get binding slot for given block location
+        virtual void glUniformBlockBinding (GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding) override;
+
+        virtual void glBindBufferRange (GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size) override;
+        virtual void glBindBufferBase (GLenum target, GLuint index, GLuint buffer) override;
+
+        // Assign currently bind buffer to range of binding blocks
+        virtual void glBindBuffersBase (GLenum target, GLuint first, GLsizei count, const GLuint* buffers) override;
+        // Assign currently bind buffer to range of binding blocks
+        virtual void glBindBuffersRange (GLenum target, GLuint first, GLsizei count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes) override;
+
+        virtual void glBufferData (GLenum target, GLsizeiptr size, const void* data, GLenum usage) override;
+        virtual void glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size, const void* data) override;
+        // Binding end
 
         // Draw calls start
         virtual void glDrawArrays(GLenum mode,GLint first,GLsizei count) override;
@@ -105,6 +125,8 @@ namespace ve
         FramebufferTracker m_FBOTracker;
         /// Keeps track of OpenGL fixed-pipeline calls
         LegacyTracker m_LegacyTracker;
+
+        UniformBlockTracing m_UniformBlocks;
 
         CameraParameters m_cameraParameters;
         /// Store's repeating setup

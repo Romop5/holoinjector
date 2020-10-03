@@ -37,6 +37,11 @@ const ShaderManager::ShaderProgram& ShaderManager::getProgram(size_t ID) const
 {
     return m_programDatabase.at(ID);
 }
+ShaderManager::ShaderProgram& ShaderManager::getMutableProgram(size_t ID)
+{
+    return m_programDatabase.at(ID);
+}
+
 
 void ShaderManager::attachShaderToProgram(size_t shaderID, size_t programID)
 {
@@ -79,4 +84,9 @@ ShaderManager::ShaderMetadata& ShaderManager::getBoundedVS()
     return getShaderDescription(VS);
 }
 
+
+const std::unordered_map<size_t, ShaderManager::ShaderProgram>& ShaderManager::getPrograms() const
+{
+    return m_programDatabase;
+}
 

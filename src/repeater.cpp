@@ -198,6 +198,8 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
         printf("[Repeater] found transformation name: %s\n",transformationName.c_str());
         metadata.m_TransformationMatrixName = transformationName;
         metadata.m_IsClipSpaceTransform = preprocessedShader.find(". xyww") != std::string::npos;
+        metadata.m_InterfaceBlockName = inspector.getUniformBlockName(metadata.m_TransformationMatrixName);
+        printf("[Repeater] found interface block: %s\n",metadata.m_InterfaceBlockName.c_str());
 
         auto finalShader = inspector.injectShader(statements);
         auto & description = m_Manager.getShaderDescription(shader);
@@ -327,6 +329,8 @@ void Repeater::glDrawRangeElements (GLenum mode, GLuint start, GLuint end, GLsiz
         OpenglRedirectorBase::glDrawRangeElements(mode,start,end,count,type,indices);
     });
 }
+//
+// ----------------------------------------------------------------------------
 
 void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
 {
@@ -365,6 +369,107 @@ void Repeater::glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum 
     m_FBOTracker.attach(attachment, texture);
 }
 
+// ----------------------------------------------------------------------------
+GLuint Repeater::glGetUniformBlockIndex (GLuint program, const GLchar* uniformBlockName)
+{
+    auto result = OpenglRedirectorBase::glGetUniformBlockIndex(program, uniformBlockName);
+    if(!m_Manager.hasProgram(program))
+        return result;
+    auto& record = m_Manager.getMutableProgram(program);
+    if(record.m_UniformBlocks.count(uniformBlockName) == 0)
+    {
+        ShaderManager::ShaderProgram::UniformBlock block;
+        block.location = result;
+        record.m_UniformBlocks[std::string(uniformBlockName)] = block;
+    }
+    return result;
+}
+
+void Repeater::glUniformBlockBinding (GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding) 
+{
+    OpenglRedirectorBase::glUniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding);
+    if(!m_Manager.hasProgram(program))
+        return;
+
+    auto& record = m_Manager.getMutableProgram(program);
+    auto blockReference = std::find_if(record.m_UniformBlocks.begin(), record.m_UniformBlocks.end(),[&](const auto& block)->bool
+    {
+        return block.second.location == uniformBlockIndex;    
+    });
+    if(blockReference != record.m_UniformBlocks.end())
+    {
+        (*blockReference).second.bindingIndex = uniformBlockBinding;
+    }
+}
+
+void Repeater::glBindBufferRange (GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
+{
+    OpenglRedirectorBase::glBindBufferRange(target, index, buffer, offset, size);
+    if(target == GL_UNIFORM_BUFFER)
+        m_UniformBlocks.setUniformBinding(buffer,index);
+}
+void Repeater::glBindBufferBase (GLenum target, GLuint index, GLuint buffer)
+{
+    OpenglRedirectorBase::glBindBufferBase(target, index, buffer);
+    if(target == GL_UNIFORM_BUFFER)
+        m_UniformBlocks.setUniformBinding(buffer,index);
+}
+
+void Repeater::glBindBuffersBase (GLenum target, GLuint first, GLsizei count, const GLuint* buffers)
+{
+    OpenglRedirectorBase::glBindBuffersBase(target,first, count, buffers);
+
+    if(target == GL_UNIFORM_BUFFER)
+    {
+        for(size_t i = 0; i < count; i++)
+        {
+            m_UniformBlocks.setUniformBinding(buffers[i],first+i);
+        }
+    }
+}
+
+void Repeater::glBindBuffersRange (GLenum target, GLuint first, GLsizei count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes) 
+{
+    OpenglRedirectorBase::glBindBuffersRange(target,first,count, buffers, offsets, sizes);
+
+    if(target == GL_UNIFORM_BUFFER)
+    {
+        for(size_t i = 0; i < count; i++)
+        {
+            m_UniformBlocks.setUniformBinding(buffers[i],first+i);
+        }
+    }
+}
+
+
+void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, GLenum usage)
+{
+    OpenglRedirectorBase::glBufferData(target,size,data,usage);
+
+    if(target != GL_UNIFORM_BUFFER)
+        return;
+
+    GLint bufferID = 0;
+    glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
+    if(!m_UniformBlocks.hasBuffer(bufferID))
+        return;
+    auto& metadata = m_UniformBlocks.getBuffer(bufferID);
+}
+void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size, const void* data)
+{
+    OpenglRedirectorBase::glBufferSubData(target,offset,size,data);
+
+    if(target != GL_UNIFORM_BUFFER)
+        return;
+
+    GLint bufferID = 0;
+    glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
+    if(!m_UniformBlocks.hasBuffer(bufferID))
+        return;
+    auto& metadata = m_UniformBlocks.getBuffer(bufferID);
+}
+
+// ----------------------------------------------------------------------------
 void Repeater::glMatrixMode(GLenum mode)
 {
     OpenglRedirectorBase::glMatrixMode(mode);

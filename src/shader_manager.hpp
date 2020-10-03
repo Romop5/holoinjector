@@ -15,15 +15,32 @@ namespace ve
         struct ShaderProgram
         {
             size_t m_VertexShader;
+
+            struct UniformBlock
+            {
+                size_t location = -1;
+                size_t transformationOffset = -1;
+                size_t bindingIndex = -1;
+            };
+            std::unordered_map<std::string, UniformBlock> m_UniformBlocks;
         };
         struct ShaderMetadata
         {
             ShaderTypes m_Type;
+
+            bool m_IsUniformInInterfaceBlock = false;
+            /// If transformation is in block, stores block name
+            std::string m_InterfaceBlockName;
+            /// Offset from the start of block
+            size_t m_TransformationByteOffset;
+
+            /// Name of projection matrix or MVP
             std::string m_TransformationMatrixName;
             // Determines if any uniform is defined
             bool m_HasAnyUniform = false;
             // Determines if skybox / clipspace rendering was detected
             bool m_IsClipSpaceTransform = false;
+
         };
 
         bool hasShader(size_t ID) const;
@@ -33,6 +50,7 @@ namespace ve
         bool hasProgram(size_t ID) const;
         void addProgram(size_t ID);
         const ShaderProgram& getProgram(size_t ID) const;
+        ShaderProgram& getMutableProgram(size_t ID);
 
         void attachShaderToProgram(size_t shaderID, size_t programID);
 
@@ -48,6 +66,7 @@ namespace ve
         /// Get metadata for currently bounded program
         ShaderMetadata& getBoundedVS();
 
+        const std::unordered_map<size_t, ShaderProgram>& getPrograms() const;
         private:
         /// Maps shader ID to metadata structure
         std::unordered_map<size_t, ShaderMetadata> m_shaderDatabase;
