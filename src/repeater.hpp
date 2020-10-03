@@ -65,20 +65,20 @@ namespace ve
         virtual  void glMatrixMode(GLenum mode) override;
         virtual  void glLoadMatrixd(const GLdouble* m) override;
         virtual  void glLoadMatrixf(const GLfloat* m) override;
-        virtual void glLoadIdentity(void);
-        virtual void glMultMatrixd(const GLdouble* m);
-        virtual void glMultMatrixf(const GLfloat* m);
+        virtual void glLoadIdentity(void) override;
+        virtual void glMultMatrixd(const GLdouble* m) override;
+        virtual void glMultMatrixf(const GLfloat* m) override;
 
-        virtual void glOrtho(GLdouble left,GLdouble right,GLdouble bottom,GLdouble top,GLdouble near_val,GLdouble far_val);
-        virtual void glFrustum(GLdouble left,GLdouble right,GLdouble bottom,GLdouble top,GLdouble near_val,GLdouble far_val);
-        virtual void glCallList(GLuint list);
-        virtual void glCallLists(GLsizei n,GLenum type,const GLvoid* lists);
+        virtual void glOrtho(GLdouble left,GLdouble right,GLdouble bottom,GLdouble top,GLdouble near_val,GLdouble far_val) override;
+        virtual void glFrustum(GLdouble left,GLdouble right,GLdouble bottom,GLdouble top,GLdouble near_val,GLdouble far_val) override;
+        virtual void glCallList(GLuint list) override;
+        virtual void glCallLists(GLsizei n,GLenum type,const GLvoid* lists) override;
         
         virtual  int XNextEvent(Display *display, XEvent *event_return) override;
 
         // Legacy OpenGL fixed-pipeline wihout VBO and VAO
-        virtual void glBegin(GLenum mode);
-        virtual void glEnd();
+        virtual void glBegin(GLenum mode) override;
+        virtual void glEnd() override;
         // Legacy end
 
         private:

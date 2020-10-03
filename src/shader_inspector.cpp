@@ -110,7 +110,6 @@ std::vector<ShaderInspector::VertextAssignment> ve::ShaderInspector::findAllOutV
         outputAssignment.positionInCode = assignments.position();
         outputAssignment.statementRawText = foundText;
         outputAssignment.analysis = analyzeGLPositionAssignment(foundText);
-        outputAssignment.transformName = "";
         switch(outputAssignment.analysis.type)
         {
             case UNIFORM:
@@ -118,6 +117,10 @@ std::vector<ShaderInspector::VertextAssignment> ve::ShaderInspector::findAllOutV
                 break;
             case POSSIBLE_TEMPORARY_VARIABLE:
                 outputAssignment.transformName = recursivelySearchUniformFromTemporaryVariable(outputAssignment.analysis.foundIdentifier);
+                break;
+            default:
+                outputAssignment.transformName = "";
+                break;
         }
         results.push_back(outputAssignment);
 
@@ -324,6 +327,7 @@ std::string ve::ShaderInspector::replaceGLPositionAssignment(VertextAssignment a
             return helper::wrapAssignmentExpresion(assignment.statementRawText, "enhancer_transform_HUD");
         case GLPOSITION:
         case FUNCTION:
+        default:
             // Identity, TODO: this would require more robust analysis
             return assignment.statementRawText;
     }

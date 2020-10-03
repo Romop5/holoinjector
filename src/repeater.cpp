@@ -29,7 +29,7 @@ namespace helper
     {
         for(size_t i = 0;i < count;i++)
         {
-            printf("Dumping shader source i: %d\n", i);
+            printf("Dumping shader source i: %zu\n", i);
             puts(strings[i]);
             printf("---\n");
         }

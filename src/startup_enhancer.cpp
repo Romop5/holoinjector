@@ -85,7 +85,7 @@ namespace helper
     template<typename DICT>
     void dumpRedirections(DICT dict)
     {
-        printf("Dumping redirected functions (%d):\n", dict.size());
+        printf("Dumping redirected functions (%lu):\n", dict.size());
         for(const auto& keyValue: dict)
         {
             puts(keyValue.first.c_str());

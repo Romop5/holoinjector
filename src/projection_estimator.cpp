@@ -17,7 +17,7 @@ namespace helper
     bool isMVPwithoutScale(const glm::mat4& mvp)
     {
         // a scale-less MVP has norm(a[3][0:3]) equal 1
-        return (abs(glm::length(glm::vec3(glm::row(mvp,3))))-1.0) < glm::epsilon<float>();
+        return (std::abs(glm::length(glm::vec3(glm::row(mvp,3))))-1.0) < glm::epsilon<float>();
     }
 
     /// Given A and B of perspective projection, estimate far/near plane distances
