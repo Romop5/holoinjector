@@ -217,6 +217,19 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
     }
 }
 
+void Repeater::glCompileShader (GLuint shader)
+{
+    printf("[Repeater] glCompileShader\n");
+    OpenglRedirectorBase::glCompileShader(shader);
+    GLint status;
+    OpenglRedirectorBase::glGetShaderiv(shader, GL_COMPILE_STATUS,&status);
+    if(status == GL_FALSE)
+    {
+        printf("[Repeater] Error while comping shader [%d]\n", shader);
+    }
+    
+}
+
 void Repeater::glAttachShader (GLuint program, GLuint shader)
 {
     printf("[Repeater] attaching shader [%d] to program [%d] \n", shader, program);
@@ -257,7 +270,7 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     auto estimatedParameters = estimatePerspectiveProjection(mat);
 
     printf("[Repeater] estimating parameters from uniform matrix\n");
-    printf("[Repeater] parameters: fx(%f) fy(%f) near (%f) near(%f) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane);
+    printf("[Repeater] parameters: fx(%f) fy(%f) near (%f) near(%f) isPerspective (%d) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane, estimatedParameters.isPerspective);
 
     setEnhancerDecodedProjection(program, !estimatedParameters.isPerspective, estimatedParameters.asVector());
 }
@@ -333,6 +346,33 @@ void Repeater::glDrawRangeElements (GLenum mode, GLuint start, GLuint end, GLsiz
         OpenglRedirectorBase::glDrawRangeElements(mode,start,end,count,type,indices);
     });
 }
+
+void Repeater::glDrawElementsBaseVertex (GLenum mode, GLsizei count, GLenum type, const void* indices, GLint basevertex)
+{
+    Repeater::duplicateCode([&]() {
+        OpenglRedirectorBase::glDrawElementsBaseVertex(mode,count,type,indices, basevertex);
+    });
+}
+void Repeater::glDrawRangeElementsBaseVertex (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices, GLint basevertex)
+{
+    Repeater::duplicateCode([&]() {
+        OpenglRedirectorBase::glDrawRangeElementsBaseVertex(mode,start,end,count,type,indices,basevertex);
+    });
+}
+void Repeater::glDrawElementsInstancedBaseVertex (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount, GLint basevertex) 
+{
+    Repeater::duplicateCode([&]() {
+        OpenglRedirectorBase::glDrawElementsInstancedBaseVertex(mode,count,type,indices, instancecount, basevertex);
+    });
+}
+
+void Repeater::glMultiDrawElementsBaseVertex (GLenum mode, const GLsizei* count, GLenum type, const void* const*indices, GLsizei drawcount, const GLint* basevertex)
+{
+    Repeater::duplicateCode([&]() {
+        OpenglRedirectorBase::glMultiDrawElementsBaseVertex(mode,count,type,indices, drawcount, basevertex);
+    });
+}
+
 //
 // ----------------------------------------------------------------------------
 
@@ -482,6 +522,43 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
         return;
     auto index = m_UniformBlocks.getBufferBindingIndex(bufferID);
     auto& metadata = m_UniformBlocks.getBindingIndex(index);
+    if(metadata.transformationOffset == -1)
+    {
+        // Find a program whose uniform iterface contains transformation matrix
+        for(auto& [programID, program]: m_Manager.getMutablePrograms())
+        {
+            auto& blocks = program.m_UniformBlocks;
+            
+            // Determine fi shader program contains a block, whose binding index is same as
+            // currently bound GL_UNIFORM_BUFFER
+            auto result = std::find_if(blocks.begin(), blocks.end(), [&](const auto& block)->bool
+            {
+                return (block.second.bindingIndex == index);
+            });
+            // If index is 0, than any block would do
+            if(result == blocks.end() && index != 0)
+                continue;
+            // Determine if program's VS has transformation in interface block
+            const auto VS = program.m_VertexShader;
+            if(!m_Manager.hasShader(VS))
+                continue;
+            const auto& shader = m_Manager.getShaderDescription(VS);
+            if(shader.m_TransformationMatrixName.empty() || shader.m_InterfaceBlockName.empty())
+                continue;
+
+            std::array<const GLchar*, 1> uniformList = {shader.m_TransformationMatrixName.c_str()};
+            std::array<GLuint, 1> resultIndex;
+            std::array<GLint, 1> params;
+            OpenglRedirectorBase::glGetUniformIndices(programID, 1, uniformList.data(), resultIndex.data());
+            OpenglRedirectorBase::glGetActiveUniformsiv(programID, 1, resultIndex.data(), GL_UNIFORM_OFFSET, params.data());
+
+            // Store offset of uniform in block
+            metadata.transformationOffset = params[0];
+
+            // Re-store bindingIndex if needed
+            blocks[shader.m_InterfaceBlockName].bindingIndex = index;
+        }
+    }
     if(metadata.transformationOffset != -1)
     {
         if(size >= metadata.transformationOffset+sizeof(float)*16)
@@ -490,7 +567,7 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
             auto estimatedParameters = estimatePerspectiveProjection(metadata.transformation);
 
             printf("[Repeater] estimating parameters from UBO\n");
-            printf("[Repeater] parameters: fx(%f) fy(%f) near (%f) near(%f) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane);
+            printf("[Repeater] parameters: fx(%f) fy(%f) near (%f) near(%f) isPerspective (%d) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane, estimatedParameters.isPerspective);
 
             // TODO: refactor into class method of Binding index structure
             metadata.isOrthogonal = !estimatedParameters.isPerspective;
@@ -788,13 +865,14 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     {
         const auto& blockName = m_Manager.getBoundedVS().m_InterfaceBlockName;
         auto index = m_Manager.getBoundedProgram().m_UniformBlocks[blockName].bindingIndex;
-        if(index != -1)
+        const auto& indexStructure = m_UniformBlocks.getBindingIndex(index);
+        if(indexStructure.hasTransformation)
         {
-            const auto& indexStructure = m_UniformBlocks.getBindingIndex(index);
-            if(indexStructure.hasTransformation)
-            {
-                setEnhancerDecodedProjection(getCurrentProgram(),indexStructure.isOrthogonal, indexStructure.decodedParams);
-            }
+            setEnhancerDecodedProjection(getCurrentProgram(),indexStructure.isOrthogonal, indexStructure.decodedParams);
+        } else {
+            printf("[Repeater] Unexpected state. Expected UBO, but not found. Falling\
+                    back to identity\n");
+            setEnhancerIdentity();
         }
     }
     // Get original viewport

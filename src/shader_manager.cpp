@@ -54,17 +54,25 @@ void ShaderManager::attachShaderToProgram(ShaderTypes type, size_t shaderID, siz
     assert(hasShader(shaderID));
     assert(hasProgram(programID));
 
+    auto& program = getMutableProgram(programID);
     switch(type)
     {
         case GEOMETRY:
-            m_programDatabase[programID].m_GeometryShader = shaderID; 
+            program.m_GeometryShader = shaderID; 
             break;
         case VS:
-            m_programDatabase[programID].m_VertexShader = shaderID; 
+            program.m_VertexShader = shaderID; 
             break;
         default:
             break;
     }
+
+    auto& description = getShaderDescription(shaderID);
+    if(description.m_TransformationMatrixName.empty() || description.m_InterfaceBlockName.empty())
+        return;
+    if(program.m_UniformBlocks.count(description.m_InterfaceBlockName) > 0)
+        return;
+    program.m_UniformBlocks[description.m_InterfaceBlockName].bindingIndex = 0;
 }
 
 
@@ -111,4 +119,10 @@ const std::unordered_map<size_t, ShaderManager::ShaderProgram>& ShaderManager::g
 {
     return m_programDatabase;
 }
+
+std::unordered_map<size_t, ShaderManager::ShaderProgram>& ShaderManager::getMutablePrograms() 
+{
+    return m_programDatabase;
+}
+
 

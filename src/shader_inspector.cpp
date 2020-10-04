@@ -179,7 +179,8 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
             continue;
         output.replace(startPosition,statement.statementRawText.length(),newStatement);
     }
-    auto startOfFunction = output.find("main");
+    // Find first new line (typically, after #version tag)
+    auto startOfFunction = output.find("\n");
     assert(startOfFunction != std::string::npos);
     startOfFunction = output.rfind("\n", startOfFunction);
 
@@ -198,6 +199,8 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
         // Reversts original projection and apple per-view transformation & projection
         vec4 enhancer_transform(vec4 clipSpace)
         {
+            if(enhancer_isOrthogonal)
+                return clipSpace;
             if(enhancer_identity)
                 return clipSpace;
             float fx = enhancer_estimatedParameters[0];

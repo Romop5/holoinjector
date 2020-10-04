@@ -22,7 +22,8 @@ namespace ve
             struct UniformBlock
             {
                 size_t location = -1;
-                size_t bindingIndex = -1;
+                // by default, each uniform block is binded to 0
+                size_t bindingIndex = 0;
             };
             std::unordered_map<std::string, UniformBlock> m_UniformBlocks;
         };
@@ -79,6 +80,7 @@ namespace ve
         ShaderProgram& getBoundedProgram();
 
         const std::unordered_map<size_t, ShaderProgram>& getPrograms() const;
+        std::unordered_map<size_t, ShaderProgram>& getMutablePrograms();
         private:
         /// Maps shader ID to metadata structure
         std::unordered_map<size_t, ShaderMetadata> m_shaderDatabase;
