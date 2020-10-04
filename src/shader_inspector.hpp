@@ -73,6 +73,9 @@ namespace ve
         Analysis analyzeGLPositionAssignment(std::string& assignment) const;
         std::string replaceGLPositionAssignment(VertextAssignment assignment) const;
 
+        // Attempts to choose one of uniforms based on heuristic
+        std::string getFallbackUniformViaHeuristic() const;
+
         std::string recursivelySearchUniformFromTemporaryVariable(std::string tmpName, size_t remainingDepth = 10) const;
 
     };

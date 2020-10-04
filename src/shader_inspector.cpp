@@ -143,10 +143,19 @@ std::vector<ShaderInspector::VertextAssignment> ve::ShaderInspector::findAllOutV
                 outputAssignment.transformName = recursivelySearchUniformFromTemporaryVariable(outputAssignment.analysis.foundIdentifier);
                 break;
             case FUNCTION:
+            {
                 if(outputAssignment.analysis.foundIdentifier == "ftransform")
                 {
                     outputAssignment.isFixedPipelineUsed = true;
                 }
+                auto fallback = getFallbackUniformViaHeuristic();
+                if(!fallback.empty())
+                {
+                    outputAssignment.analysis.type = UNIFORM;
+                    outputAssignment.transformName = fallback;
+                }
+            }
+            break;
             default:
                 outputAssignment.transformName = "";
                 break;
@@ -409,6 +418,25 @@ std::string ShaderInspector::recursivelySearchUniformFromTemporaryVariable(std::
                 return name;
             return recursivelySearchUniformFromTemporaryVariable(name,level-1);
         }
+    }
+    return "";
+}
+
+
+std::string ShaderInspector::getFallbackUniformViaHeuristic() const
+{
+    const auto& list = getListOfUniforms();
+
+    const std::vector<std::string> heuristicHints = {"proj", "MVP", "VP"};
+    for(const auto& hint: heuristicHints)
+    {
+        auto result = std::find_if(list.begin(),list.end(), [&](const auto pair)->bool
+        {
+            // if uniform contains part of hint
+            return (pair.first == "mat4" && pair.second.find(hint) != std::string::npos);
+        });
+        if(result != list.end())
+            return (*result).second;
     }
     return "";
 }
