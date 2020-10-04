@@ -72,6 +72,8 @@ bool ve::ShaderInspector::isUniformVariableInInterfaceBlock(const std::string& i
 
 std::string ve::ShaderInspector::getUniformBlockName(const std::string& uniformName) const
 {
+    if(uniformName.empty())
+        return "";
     std::string rgxLiteral = std::string("uniform[^;]*[\f\n\r\t\v ]([a-zA-Z][a-zA-Z0-9_]*)[^;]*\\{[^\\}]*[\f\n\r\t\v ]") + uniformName + std::string("[\f\n\r\t\v ]*;[^\\}]*\\}");
     auto finalregex = std::regex(rgxLiteral,std::regex::extended);
     std::smatch matches;
@@ -85,6 +87,9 @@ std::string ve::ShaderInspector::getUniformBlockName(const std::string& uniformN
 
 bool ve::ShaderInspector::isUniformVariable(const std::string& identifier) const
 {
+    if(identifier.empty())
+        return false;
+
     if(isUniformVariableInInterfaceBlock(identifier))
             return true;
     std::string regexLiteral = std::string("uniform[^;]*[\f\n\r\t\v ]") + identifier + std::string("[\f\n\r\t\v ]*;");
@@ -347,11 +352,12 @@ std::string ve::ShaderInspector::replaceGLPositionAssignment(VertextAssignment a
 
     switch(assignment.analysis.type)
     {
-        case POSSIBLE_TEMPORARY_VARIABLE:
         case UNIFORM:
             return helper::wrapAssignmentExpresion(assignment.statementRawText, "enhancer_transform");
+        case POSSIBLE_TEMPORARY_VARIABLE:
         case INPUT:
-            return helper::wrapAssignmentExpresion(assignment.statementRawText, "enhancer_transform_HUD");
+            break;
+            ///return helper::wrapAssignmentExpresion(assignment.statementRawText, "enhancer_transform_HUD");
         case GLPOSITION:
         case FUNCTION:
         default:

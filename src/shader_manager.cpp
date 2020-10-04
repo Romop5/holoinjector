@@ -22,6 +22,12 @@ ShaderManager::ShaderMetadata& ShaderManager::getShaderDescription(size_t ID)
     return m_shaderDatabase[ID];
 }
 
+bool ShaderManager::isShaderOneOf(size_t ID, const std::unordered_set<ShaderTypes>& allowedTypes)
+{
+    auto& meta = getShaderDescription(ID);
+    return (allowedTypes.count(meta.m_Type) > 0);
+}
+
 bool ShaderManager::hasProgram(size_t ID) const
 {
     return m_programDatabase.count(ID) > 0;
@@ -43,12 +49,22 @@ ShaderManager::ShaderProgram& ShaderManager::getMutableProgram(size_t ID)
 }
 
 
-void ShaderManager::attachShaderToProgram(size_t shaderID, size_t programID)
+void ShaderManager::attachShaderToProgram(ShaderTypes type, size_t shaderID, size_t programID)
 {
     assert(hasShader(shaderID));
     assert(hasProgram(programID));
 
-    m_programDatabase[programID].m_VertexShader = shaderID; 
+    switch(type)
+    {
+        case GEOMETRY:
+            m_programDatabase[programID].m_GeometryShader = shaderID; 
+            break;
+        case VS:
+            m_programDatabase[programID].m_VertexShader = shaderID; 
+            break;
+        default:
+            break;
+    }
 }
 
 

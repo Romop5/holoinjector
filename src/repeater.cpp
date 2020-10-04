@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cassert>
 #include <regex>
+#include <unordered_set>
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
@@ -184,10 +185,10 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
 {
     auto concatenatedShader = helper::joinGLSLshaders(count, string, length);
     printf("[Repeater] glShaderSource: [%d]\n",shader);
-    if(m_Manager.hasShader(shader) && m_Manager.getShaderDescription(shader).m_Type == ShaderManager::ShaderTypes::VS)
+    if(m_Manager.hasShader(shader) && m_Manager.isShaderOneOf(shader, {ShaderManager::ShaderTypes::VS, ShaderManager::ShaderTypes::GEOMETRY}))
     {
         auto preprocessedShader = helper::preprocessGLSLCode(concatenatedShader);
-        printf("[Repeater] preprocessed shader '%s'\n",preprocessedShader.c_str());
+        printf("[Repeater] preprocessed shader (type: %d) '%s'\n",m_Manager.getShaderDescription(shader).m_Type, preprocessedShader.c_str());
 
         printf("[Repeater] continuing with shader\n");
         ShaderInspector inspector(preprocessedShader);
@@ -195,8 +196,8 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
         auto transformationName = inspector.getTransformationUniformName(statements);
         
         auto& metadata = m_Manager.getShaderDescription(shader);
-        printf("[Repeater] found transformation name: %s\n",transformationName.c_str());
         metadata.m_TransformationMatrixName = transformationName;
+        printf("[Repeater] found transformation name: %s\n",transformationName.c_str());
         metadata.m_IsClipSpaceTransform = preprocessedShader.find(". xyww") != std::string::npos;
         metadata.m_InterfaceBlockName = inspector.getUniformBlockName(metadata.m_TransformationMatrixName);
         printf("[Repeater] found interface block: %s\n",metadata.m_InterfaceBlockName.c_str());
@@ -225,9 +226,7 @@ void Repeater::glAttachShader (GLuint program, GLuint shader)
         return;
     if(!m_Manager.hasShader(shader))
         return;
-    if(m_Manager.getShaderDescription(shader).m_Type != ShaderManager::ShaderTypes::VS)
-        return;
-    m_Manager.attachShaderToProgram(shader, program);
+    m_Manager.attachShaderToProgram(m_Manager.getShaderDescription(shader).m_Type,shader, program);
 }
 
 
@@ -836,6 +835,6 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     }
     // restore
     OpenglRedirectorBase::glViewport(originalViewport.getX(), originalViewport.getY(), originalViewport.getWidth(), originalViewport.getHeight());
-    OpenglRedirectorBase::glScissor(originalScissor.getX(), originalViewport.getY(), originalScissor.getWidth(), originalScissor.getHeight());
+    OpenglRedirectorBase::glScissor(originalScissor.getX(), originalScissor.getY(), originalScissor.getWidth(), originalScissor.getHeight());
 }
 

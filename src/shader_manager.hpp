@@ -1,5 +1,6 @@
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace ve
 {
@@ -10,11 +11,13 @@ namespace ve
         {
             GENERIC,
             VS,
+            GEOMETRY
         };
 
         struct ShaderProgram
         {
             size_t m_VertexShader = -1;
+            size_t m_GeometryShader = -1;
 
             struct UniformBlock
             {
@@ -51,13 +54,14 @@ namespace ve
         bool hasShader(size_t ID) const;
         void addShader(size_t ID, ShaderTypes type);
         ShaderMetadata& getShaderDescription(size_t ID);
+        bool isShaderOneOf(size_t ID, const std::unordered_set<ShaderTypes>& allowedTypes);
 
         bool hasProgram(size_t ID) const;
         void addProgram(size_t ID);
         const ShaderProgram& getProgram(size_t ID) const;
         ShaderProgram& getMutableProgram(size_t ID);
 
-        void attachShaderToProgram(size_t shaderID, size_t programID);
+        void attachShaderToProgram(ShaderTypes type, size_t shaderID, size_t programID);
 
         /// Track bounded programs
         void bind(size_t program);
