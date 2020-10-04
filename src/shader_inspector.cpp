@@ -128,8 +128,20 @@ std::vector<ShaderInspector::VertextAssignment> ve::ShaderInspector::findAllOutV
                 outputAssignment.transformName = outputAssignment.analysis.foundIdentifier;
                 break;
             case POSSIBLE_TEMPORARY_VARIABLE:
+                // Special case: legacy OpenGL
+                if(outputAssignment.analysis.foundIdentifier == "gl_ModelViewProjectionMatrix")
+                {
+                    outputAssignment.transformName = "";
+                    outputAssignment.isFixedPipelineUsed = true;
+                    break;
+                }
                 outputAssignment.transformName = recursivelySearchUniformFromTemporaryVariable(outputAssignment.analysis.foundIdentifier);
                 break;
+            case FUNCTION:
+                if(outputAssignment.analysis.foundIdentifier == "ftransform")
+                {
+                    outputAssignment.isFixedPipelineUsed = true;
+                }
             default:
                 outputAssignment.transformName = "";
                 break;
@@ -330,6 +342,9 @@ ShaderInspector::Analysis ve::ShaderInspector::analyzeGLPositionAssignment(std::
 
 std::string ve::ShaderInspector::replaceGLPositionAssignment(VertextAssignment assignment) const
 {
+    if(assignment.isFixedPipelineUsed)
+        return assignment.statementRawText;
+
     switch(assignment.analysis.type)
     {
         case POSSIBLE_TEMPORARY_VARIABLE:

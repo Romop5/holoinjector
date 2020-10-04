@@ -30,6 +30,7 @@ namespace ve
 
         struct VertextAssignment
         {
+            bool isFixedPipelineUsed = false;
             size_t positionInCode;
             std::string statementRawText;
             std::string transformName;
