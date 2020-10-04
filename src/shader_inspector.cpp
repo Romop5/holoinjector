@@ -179,8 +179,9 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
             continue;
         output.replace(startPosition,statement.statementRawText.length(),newStatement);
     }
-    // Find first new line (typically, after #version tag)
-    auto startOfFunction = output.find("\n");
+    // Find first new line (typically, after #version and after #extension tag)
+    auto lastMacroPosition = output.rfind("#");
+    auto startOfFunction = output.find("\n", lastMacroPosition == std::string::npos?0:lastMacroPosition);
     assert(startOfFunction != std::string::npos);
     startOfFunction = output.rfind("\n", startOfFunction);
 
