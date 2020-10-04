@@ -452,7 +452,7 @@ void Repeater::glUniformBlockBinding (GLuint program, GLuint uniformBlockIndex, 
         if(desc.m_InterfaceBlockName != ""  && record.m_UniformBlocks.count(desc.m_InterfaceBlockName))
         {
             auto& block = record.m_UniformBlocks[desc.m_InterfaceBlockName];
-            if(block.location == uniformBlockIndex)
+            if(OpenglRedirectorBase::glGetUniformBlockIndex(program,desc.m_InterfaceBlockName.c_str())  == uniformBlockIndex)
             {
                 auto& index = m_UniformBlocks.getBindingIndex(block.bindingIndex);
 
@@ -870,8 +870,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         {
             setEnhancerDecodedProjection(getCurrentProgram(),indexStructure.isOrthogonal, indexStructure.decodedParams);
         } else {
-            printf("[Repeater] Unexpected state. Expected UBO, but not found. Falling\
-                    back to identity\n");
+            printf("[Repeater] Unexpected state. Expected UBO, but not found. Falling back to identity\n");
             setEnhancerIdentity();
         }
     }
