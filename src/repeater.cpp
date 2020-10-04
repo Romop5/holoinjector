@@ -773,10 +773,9 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
             !m_IsDuplicationOn ||
             // don't duplicate while rendering light's point of view into shadow map
             m_FBOTracker.isFBOshadowMap() ||
-            // don't duplicate while there is no projection
-            (m_Manager.isAnyBound() && m_Manager.isVSBound() && m_Manager.getBoundedVS().m_TransformationMatrixName == "") ||
-            // don't duplicate while rendering post-processing effect
-            (m_Manager.isAnyBound() && m_Manager.isVSBound() && !m_Manager.getBoundedVS().m_HasAnyUniform));
+            // don't duplicate while there is no projection and its not legacy OpenGL at the same time
+            (m_Manager.isAnyBound() && m_Manager.isVSBound() && m_Manager.getBoundedVS().m_TransformationMatrixName == "" && !m_LegacyTracker.isLegacyNeeded())
+    );
 
     if(shouldNotDuplicate)
     {
@@ -786,7 +785,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     }
 
     /// If Uniform Buffer Object is used
-    if(m_Manager.getBoundedVS().isUBOused())
+    if(m_Manager.isAnyBound() && m_Manager.getBoundedVS().isUBOused())
     {
         const auto& blockName = m_Manager.getBoundedVS().m_InterfaceBlockName;
         auto index = m_Manager.getBoundedProgram().m_UniformBlocks[blockName].bindingIndex;

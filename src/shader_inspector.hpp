@@ -72,7 +72,7 @@ namespace ve
         Analysis analyzeGLPositionAssignment(std::string& assignment) const;
         std::string replaceGLPositionAssignment(VertextAssignment assignment) const;
 
-        std::string recursivelySearchUniformFromTemporaryVariable(std::string tmpName) const;
+        std::string recursivelySearchUniformFromTemporaryVariable(std::string tmpName, size_t remainingDepth = 10) const;
 
     };
 } //namespace ve

@@ -347,8 +347,10 @@ std::string ve::ShaderInspector::replaceGLPositionAssignment(VertextAssignment a
 }
 
 
-std::string ShaderInspector::recursivelySearchUniformFromTemporaryVariable(std::string tmpName) const
+std::string ShaderInspector::recursivelySearchUniformFromTemporaryVariable(std::string tmpName, size_t level) const
 {
+    if(level == 0)
+        return "";
     auto firstTokenPattern = std::regex(tmpName+"[\f\n\r\t\v ]*=[^;]*");
     std::smatch m;
     while(std::regex_search(sourceCode, m, firstTokenPattern))
@@ -366,7 +368,7 @@ std::string ShaderInspector::recursivelySearchUniformFromTemporaryVariable(std::
                 continue;
             if(isUniformVariable(name))
                 return name;
-            return recursivelySearchUniformFromTemporaryVariable(name);
+            return recursivelySearchUniformFromTemporaryVariable(name,level-1);
         }
     }
     return "";
