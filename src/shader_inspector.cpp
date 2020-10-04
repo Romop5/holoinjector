@@ -267,12 +267,30 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfU
     while(position != std::string::npos)
     {
         auto positionSemicolon = sourceCode.find_first_of(";",position+1);
-        auto uniformDefinition = sourceCode.substr(position, positionSemicolon-position);
-        auto definitionTokens = ve::tokenize(uniformDefinition);
-        const auto& type = definitionTokens[definitionTokens.size()-2];
-        const auto& name = definitionTokens[definitionTokens.size()-1];
+        auto positionBracket = sourceCode.find_first_of("{",position+1);
 
-        result.emplace_back(std::make_pair(type, name));
+        if(positionBracket < positionSemicolon)
+        {
+            // parser shader block
+            auto positionBracketEnd = sourceCode.find_first_of("}",position+1);
+            auto uniformDefinition = sourceCode.substr(position, positionBracketEnd-position);
+            auto tokens = ve::tokenize(uniformDefinition);
+            decltype(tokens)::iterator semicolon = tokens.begin();
+            while((semicolon = std::find(semicolon, tokens.end(), ";")) != tokens.end())
+            {
+                result.emplace_back(std::make_pair(*(semicolon-2), *(semicolon-1)));
+                semicolon += 1;
+            }
+
+        } else {
+            // parse scalar uniform definition
+            auto uniformDefinition = sourceCode.substr(position, positionSemicolon-position);
+            auto definitionTokens = ve::tokenize(uniformDefinition);
+            const auto& type = definitionTokens[definitionTokens.size()-2];
+            const auto& name = definitionTokens[definitionTokens.size()-1];
+
+            result.emplace_back(std::make_pair(type, name));
+        }
 
         position = sourceCode.find("uniform",position+1);
     } 
