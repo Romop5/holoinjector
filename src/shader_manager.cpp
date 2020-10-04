@@ -84,6 +84,12 @@ ShaderManager::ShaderMetadata& ShaderManager::getBoundedVS()
     return getShaderDescription(VS);
 }
 
+ShaderManager::ShaderProgram& ShaderManager::getBoundedProgram()
+{
+    assert(m_BoundProgram != 0);
+    return  getMutableProgram(m_BoundProgram);
+}
+
 
 const std::unordered_map<size_t, ShaderManager::ShaderProgram>& ShaderManager::getPrograms() const
 {

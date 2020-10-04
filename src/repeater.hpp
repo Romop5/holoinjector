@@ -110,6 +110,8 @@ namespace ve
         void resetEnhancerShift();
         void setEnhancerIdentity();
 
+        void setEnhancerDecodedProjection(GLuint program, bool isOrthogonal, glm::vec4 params);
+
         void duplicateCode(const std::function<void(void)>& code);
 
         /// Options
