@@ -114,7 +114,7 @@ bool ShaderManager::isVSBound() const
     if(!isAnyBound())
         return false;
     const auto VS = getProgram(m_BoundProgram).m_VertexShader;
-    return (VS != 1) && hasShader(VS);
+    return (VS != -1) && hasShader(VS);
 }
 
 /// Get metadata for currently bounded program
@@ -133,6 +133,10 @@ ShaderManager::ShaderProgram& ShaderManager::getBoundedProgram()
     return  getMutableProgram(m_BoundProgram);
 }
 
+size_t ShaderManager::getBoundedProgramID() const
+{
+    return m_BoundProgram;
+}
 
 const std::unordered_map<size_t, ShaderManager::ShaderProgram>& ShaderManager::getPrograms() const
 {

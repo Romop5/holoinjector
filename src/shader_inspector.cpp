@@ -444,3 +444,10 @@ std::string ShaderInspector::getFallbackUniformViaHeuristic() const
     }
     return "";
 }
+
+bool ShaderInspector::isClipSpaceShader() const
+{
+    static auto clipAssign = std::regex(".[\f\n\r\t\v ]*xyww");
+    std::smatch m;
+    return std::regex_search(sourceCode, m, clipAssign); 
+}

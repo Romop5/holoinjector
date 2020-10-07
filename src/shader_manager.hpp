@@ -88,6 +88,9 @@ namespace ve
         /// Get metadata for currently bounded program
         ShaderProgram& getBoundedProgram();
 
+        /// Get current program ID 
+        size_t getBoundedProgramID() const;
+
         const std::unordered_map<size_t, ShaderProgram>& getPrograms() const;
         std::unordered_map<size_t, ShaderProgram>& getMutablePrograms();
         private:

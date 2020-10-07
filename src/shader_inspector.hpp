@@ -78,6 +78,8 @@ namespace ve
 
         std::string recursivelySearchUniformFromTemporaryVariable(std::string tmpName, size_t remainingDepth = 10) const;
 
+        /// Is clip-space shader
+        bool isClipSpaceShader() const;
     };
 } //namespace ve
 

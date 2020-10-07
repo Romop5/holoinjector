@@ -100,7 +100,6 @@ void Repeater::registerCallbacks()
     registerOpenGLSymbols();
 }
 
-
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
     OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
@@ -171,30 +170,24 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
         auto preprocessedShader = helper::preprocessGLSLCode(concatenatedShader);
         printf("[Repeater] preprocessed shader (type: %d) '%s'\n",m_Manager.getShaderDescription(shader).m_Type, preprocessedShader.c_str());
 
-        printf("[Repeater] continuing with shader\n");
         ShaderInspector inspector(preprocessedShader);
         auto statements = inspector.findAllOutVertexAssignments();
         auto transformationName = inspector.getTransformationUniformName(statements);
         
         auto& metadata = m_Manager.getShaderDescription(shader);
         metadata.m_TransformationMatrixName = transformationName;
-        printf("[Repeater] found transformation name: %s\n",transformationName.c_str());
-        metadata.m_IsClipSpaceTransform = preprocessedShader.find(". xyww") != std::string::npos;
+        metadata.m_IsClipSpaceTransform = inspector.isClipSpaceShader(); 
         metadata.m_InterfaceBlockName = inspector.getUniformBlockName(metadata.m_TransformationMatrixName);
-        printf("[Repeater] found interface block: %s\n",metadata.m_InterfaceBlockName.c_str());
+        metadata.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
 
         auto finalShader = inspector.injectShader(statements);
-        auto & description = m_Manager.getShaderDescription(shader);
-        description.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
-        
-        printf("[Repeater] injecting shader shift\n");
+        printf("[Repeater] found transformation name: %s\n",metadata.m_TransformationMatrixName.c_str());
+        printf("[Repeater] found interface block: %s\n",metadata.m_InterfaceBlockName.c_str());
         printf("[Repeater] injected shader: %s\n",finalShader.c_str());
-        std::vector<const char*> shaders = {finalShader.c_str(),};
-        OpenglRedirectorBase::glShaderSource(shader,1,shaders.data(),nullptr);
-    } else {
-        printf("[Repeater] glShaderSource: %s\n",concatenatedShader.c_str());
-        OpenglRedirectorBase::glShaderSource(shader,count,string,length);
+        concatenatedShader = std::move(finalShader);
     }
+    std::vector<const char*> shaders = {concatenatedShader.c_str(),};
+    OpenglRedirectorBase::glShaderSource(shader,1,shaders.data(),nullptr);
 }
 
 void Repeater::glCompileShader (GLuint shader)
@@ -207,7 +200,6 @@ void Repeater::glCompileShader (GLuint shader)
     {
         printf("[Repeater] Error while comping shader [%d]\n", shader);
     }
-    
 }
 
 void Repeater::glAttachShader (GLuint program, GLuint shader)
@@ -228,18 +220,15 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     OpenglRedirectorBase::glUniformMatrix4fv (location, count, transpose, value);
 
     // get current's program transformation matrix name
-    auto program = getCurrentProgram();
-    if(!m_Manager.hasProgram(program))
+    if(!m_Manager.isVSBound())
         return;
-    const auto vertexShaderID = m_Manager.getProgram(program).m_VertexShader;
-    if(vertexShaderID == -1 || !m_Manager.hasShader(vertexShaderID))
-        return;
-    auto shaderMetaData = m_Manager.getShaderDescription(vertexShaderID);
+    auto& shaderMetaData = m_Manager.getBoundedVS();
     if(!shaderMetaData.hasDetectedTransformation())
         return;
 
+    auto programID = m_Manager.getBoundedProgramID();
     // get original MVP matrix location
-    auto originalLocation = OpenglRedirectorBase::glGetUniformLocation(program, shaderMetaData.m_TransformationMatrixName.c_str());
+    auto originalLocation = OpenglRedirectorBase::glGetUniformLocation(programID, shaderMetaData.m_TransformationMatrixName.c_str());
     
     // if the matrix being uploaded isn't detected MVP, then continue
     if(originalLocation != location)
@@ -252,17 +241,17 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     printf("[Repeater] estimating parameters from uniform matrix\n");
     printf("[Repeater] parameters: fx(%f) fy(%f) near (%f) near(%f) isPerspective (%d) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane, estimatedParameters.isPerspective);
 
-    setEnhancerDecodedProjection(program, !estimatedParameters.isPerspective, estimatedParameters.asVector());
+    setEnhancerDecodedProjection(programID, estimatedParameters);
 }
 
-void Repeater::setEnhancerDecodedProjection(GLuint program, bool isOrthogonal, glm::vec4 params)
+void Repeater::setEnhancerDecodedProjection(GLuint program, const PerspectiveProjectionParameters& projection)
 {
     // upload parameters to GPU's program
     auto parametersLocation = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_estimatedParameters");
-    OpenglRedirectorBase::glUniform4fv(parametersLocation,1,glm::value_ptr(params));
+    OpenglRedirectorBase::glUniform4fv(parametersLocation,1,glm::value_ptr(projection.asVector()));
 
     auto typeLocation= OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_isOrthogonal");
-    OpenglRedirectorBase::glUniform1i(typeLocation,isOrthogonal);
+    OpenglRedirectorBase::glUniform1i(typeLocation,!projection.isPerspective);
 
 }
 
@@ -543,8 +532,7 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
             printf("[Repeater] parameters: fx(%f) fy(%f) near (%f) near(%f) isPerspective (%d) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane, estimatedParameters.isPerspective);
 
             // TODO: refactor into class method of Binding index structure
-            metadata.isOrthogonal = !estimatedParameters.isPerspective;
-            metadata.decodedParams = estimatedParameters.asVector();
+            metadata.projection = estimatedParameters;
             metadata.hasTransformation = true;
         }
     }
@@ -571,8 +559,7 @@ void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size,
             printf("[Repeater] estimating parameters from UBO\n");
             printf("[Repeater] parameters: fx(%f) fy(%f) near (%f) near(%f) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane);
 
-            metadata.isOrthogonal = !estimatedParameters.isPerspective;
-            metadata.decodedParams = estimatedParameters.asVector();
+            metadata.projection = estimatedParameters;
             metadata.hasTransformation = true;
         }
     }
@@ -841,7 +828,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         const auto& indexStructure = m_UniformBlocksTracker.getBindingIndex(index);
         if(indexStructure.hasTransformation)
         {
-            setEnhancerDecodedProjection(getCurrentProgram(),indexStructure.isOrthogonal, indexStructure.decodedParams);
+            setEnhancerDecodedProjection(getCurrentProgram(),indexStructure.projection);
         } else {
             printf("[Repeater] Unexpected state. Expected UBO, but not found. Falling back to identity\n");
             setEnhancerIdentity();

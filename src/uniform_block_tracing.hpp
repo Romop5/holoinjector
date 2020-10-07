@@ -1,5 +1,7 @@
 #include <glm/glm.hpp>
 #include <unordered_map>
+#include "projection_estimator.hpp"
+
 namespace ve
 {
     /// Should be filled by shader program during glUniformBlockBinding
@@ -8,8 +10,7 @@ namespace ve
         bool hasTransformation = false;
         size_t transformationOffset = -1;
         glm::mat4 transformation;
-        bool isOrthogonal;
-        glm::vec4 decodedParams;
+        PerspectiveProjectionParameters projection; 
     };
 
     class UniformBlockTracing
