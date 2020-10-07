@@ -3,12 +3,16 @@
 #include <GL/gl.h>
 namespace ve
 {
-struct ViewportArea 
+/**
+ * @brief Utility for storing & accessing OpenGL's viewport structure with more comfort
+ */
+class ViewportArea 
 {
-    GLint data[4];
-
+    public:
     ViewportArea();
+    ViewportArea(GLint x, GLint y, GLsizei width, GLsizei height);
 
+    /// Get pointer to underlying data
     GLint* getDataPtr();
 
     void set(GLint x, GLint y, GLsizei width, GLsizei height);
@@ -18,7 +22,14 @@ struct ViewportArea
     GLint getWidth() const;
     GLint getHeight() const;
 
-    bool operator==(const ViewportArea& area);
+    /// Are two areas equal?
+    bool operator==(const ViewportArea& area) const;
+
+    /// Get size, UB for index > 3
+    GLint operator[](GLsizei index) const;
+
+    private:
+    GLint data[4];
 }; 
 } //namespace ve
 #endif

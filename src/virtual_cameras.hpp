@@ -14,6 +14,8 @@ namespace ve
         const glm::mat4& getViewMatrixRotational() const;
         const ViewportArea& getViewport() const;
         friend class VirtualCameras;
+
+
         protected:
         /// Constant, defining initial angle around axis Y
         const float m_angleY;
@@ -64,11 +66,15 @@ namespace ve
         
         /// Returns (per-width,per-height) camera counts
         std::pair<size_t, size_t> getCameraGridSetup() const;
+
+
         protected:
         void recalculateTransformations();
         void recalculateViewports();
         private:
+        // Cache last viewport
         ViewportArea m_viewport;
+        // Cache last parameters
         CameraParameters m_parameters;
         /// Stores cameras in STL container
         StorageContainer m_cameras;

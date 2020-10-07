@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 project(enhancer)
 
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
+
+###############################################################################
+# Get options from user
+###############################################################################
 option(ENHANCER_BUILD_TESTS "Should also build unittests?" ON)
-###############################################################################
-# Decide bits (32 or 64)?
-###############################################################################
+option(ENHANCER_BUILD_TESTS_COVERAGE "Should also enable code coverage?" OFF)
 option(ENHANCER_32 "Force 32-bit compilation" OFF)
 
 # Stores 32 or 64 into ENHANCER_BITS
@@ -139,20 +142,28 @@ target_link_libraries(enhancer_core PUBLIC ${SIMPLECPP_SO})
 ###############################################################################
 
 if(${ENHANCER_BUILD_TESTS})
+
+    if(${ENHANCER_BUILD_TESTS_COVERAGE})
+        include(CodeCoverage)
+        append_coverage_compiler_flags()
+    endif()
+
     enable_testing()
     find_package(GTest REQUIRED)
 
     set(GTEST_ROOT "${CMAKE_BINARY_DIR}/")
 
+    file(GLOB UNITTEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/*.cpp)
     add_executable(unit_tests 
-        tests/unittests/projection_estimator_test.cpp
-        tests/unittests/shader_inspector_test.cpp
-        tests/unittests/shader_parser_test.cpp
+        ${UNITTEST_FILES}
     )
     find_package(Threads)
     target_link_libraries(unit_tests ${GTEST_BOTH_LIBRARIES} enhancer_core Threads::Threads)
     set(TARGET unit_tests PROPERTY CXX_STANDARD 17)
 
     add_test(NAME AllTests COMMAND "$<TARGET_FILE:unit_tests>")
+
+    setup_target_for_coverage_lcov(NAME unittest-cc EXECUTABLE unit_tests DEPENDENCIES unit_tests
+        EXCLUDE /usr/*)
 
 endif()
