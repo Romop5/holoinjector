@@ -142,8 +142,6 @@ std::vector<ShaderInspector::VertextAssignment> ve::ShaderInspector::findAllOutV
                 }
                 outputAssignment.transformName = recursivelySearchUniformFromTemporaryVariable(outputAssignment.analysis.foundIdentifier);
 
-                if(outputAssignment.transformName.empty())
-                    outputAssignment.transformName = getFallbackUniformViaHeuristic();
                 if(!outputAssignment.transformName.empty())
                     outputAssignment.analysis.type = UNIFORM;
                 break;

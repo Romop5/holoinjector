@@ -506,7 +506,7 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
                 continue;
             const auto& shader = m_Manager.getShaderDescription(VS);
             if(!shader.isUBOused())
-                return;
+                continue;
 
             std::array<const GLchar*, 1> uniformList = {shader.m_TransformationMatrixName.c_str()};
             std::array<GLuint, 1> resultIndex;
