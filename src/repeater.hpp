@@ -135,7 +135,7 @@ namespace ve
         /// Keeps track of OpenGL fixed-pipeline calls
         LegacyTracker m_LegacyTracker;
 
-        UniformBlockTracing m_UniformBlocks;
+        UniformBlockTracing m_UniformBlocksTracker;
 
         CameraParameters m_cameraParameters;
         /// Store's repeating setup

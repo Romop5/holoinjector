@@ -26,6 +26,11 @@ namespace ve
                 size_t bindingIndex = 0;
             };
             std::unordered_map<std::string, UniformBlock> m_UniformBlocks;
+
+            /// Set binding index of Uniform Block with location
+            void updateUniformBlock(size_t location, size_t bindingIndex);
+
+            bool hasUniformBlock(const std::string& name) const;
         };
         struct ShaderMetadata
         {
@@ -49,6 +54,10 @@ namespace ve
             bool isUBOused() const
             {
                 return !m_TransformationMatrixName.empty() && !m_InterfaceBlockName.empty();
+            }
+            bool hasDetectedTransformation() const
+            {
+                return !m_TransformationMatrixName.empty();
             }
         };
 

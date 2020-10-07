@@ -1,8 +1,27 @@
 #include "shader_manager.hpp"
+#include <algorithm>
 
 #include <cassert>
 
 using namespace ve;
+
+
+void ShaderManager::ShaderProgram::updateUniformBlock(size_t location, size_t bindingIndex)
+{
+    auto blockReference = std::find_if(m_UniformBlocks.begin(), m_UniformBlocks.end(),[&](const auto& block)->bool
+    {
+        return block.second.location == location;    
+    });
+    if(blockReference != m_UniformBlocks.end())
+    {
+        (*blockReference).second.bindingIndex = bindingIndex;
+    }
+}
+
+bool ShaderManager::ShaderProgram::hasUniformBlock(const std::string& name) const
+{
+    return m_UniformBlocks.count(name) > 0;
+}
 
 bool ShaderManager::hasShader(size_t ID) const
 {

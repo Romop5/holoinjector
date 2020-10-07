@@ -18,24 +18,6 @@ using namespace ve;
 
 namespace helper
 {
-    bool containsMainFunction(const std::string& shader)
-    {
-        // Search for vector assignment to gl_Position
-        static std::regex glPositionRegex("gl_Position *=",
-                std::regex_constants::ECMAScript | std::regex_constants::icase);
-        return (std::regex_search(shader, glPositionRegex));
-    }
-
-    void dumpShaderSources(const GLchar* const* strings, GLsizei count)
-    {
-        for(size_t i = 0;i < count;i++)
-        {
-            printf("Dumping shader source i: %zu\n", i);
-            puts(strings[i]);
-            printf("---\n");
-        }
-    }
-
     float getEnviromentValue(const std::string& variable, float defaultValue = 0.0f)
     {
         auto envStringRaw = getenv(variable.c_str());
@@ -116,7 +98,6 @@ void Repeater::glClear(GLbitfield mask)
 void Repeater::registerCallbacks() 
 {
     registerOpenGLSymbols();
-
 }
 
 
@@ -212,7 +193,6 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
         OpenglRedirectorBase::glShaderSource(shader,1,shaders.data(),nullptr);
     } else {
         printf("[Repeater] glShaderSource: %s\n",concatenatedShader.c_str());
-        helper::dumpShaderSources(string, count);
         OpenglRedirectorBase::glShaderSource(shader,count,string,length);
     }
 }
@@ -255,7 +235,7 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     if(vertexShaderID == -1 || !m_Manager.hasShader(vertexShaderID))
         return;
     auto shaderMetaData = m_Manager.getShaderDescription(vertexShaderID);
-    if(shaderMetaData.m_TransformationMatrixName == "")
+    if(!shaderMetaData.hasDetectedTransformation())
         return;
 
     // get original MVP matrix location
@@ -436,25 +416,18 @@ void Repeater::glUniformBlockBinding (GLuint program, GLuint uniformBlockIndex, 
         return;
 
     auto& record = m_Manager.getMutableProgram(program);
-    auto blockReference = std::find_if(record.m_UniformBlocks.begin(), record.m_UniformBlocks.end(),[&](const auto& block)->bool
-    {
-        return block.second.location == uniformBlockIndex;    
-    });
-    if(blockReference != record.m_UniformBlocks.end())
-    {
-        (*blockReference).second.bindingIndex = uniformBlockBinding;
-    }
+    record.updateUniformBlock(uniformBlockIndex, uniformBlockBinding);
 
     // Add binding index's transformation metadata
     if(record.m_VertexShader != -1)
     {
         const auto& desc = m_Manager.getShaderDescription(record.m_VertexShader);
-        if(desc.m_InterfaceBlockName != ""  && record.m_UniformBlocks.count(desc.m_InterfaceBlockName))
+        if(desc.isUBOused() && record.hasUniformBlock(desc.m_InterfaceBlockName))
         {
             auto& block = record.m_UniformBlocks[desc.m_InterfaceBlockName];
             if(OpenglRedirectorBase::glGetUniformBlockIndex(program,desc.m_InterfaceBlockName.c_str())  == uniformBlockIndex)
             {
-                auto& index = m_UniformBlocks.getBindingIndex(block.bindingIndex);
+                auto& index = m_UniformBlocksTracker.getBindingIndex(block.bindingIndex);
 
                 std::array<const GLchar*, 1> uniformList = {desc.m_TransformationMatrixName.c_str()};
                 std::array<GLuint, 1> resultIndex;
@@ -473,13 +446,13 @@ void Repeater::glBindBufferRange (GLenum target, GLuint index, GLuint buffer, GL
 {
     OpenglRedirectorBase::glBindBufferRange(target, index, buffer, offset, size);
     if(target == GL_UNIFORM_BUFFER)
-        m_UniformBlocks.setUniformBinding(buffer,index);
+        m_UniformBlocksTracker.setUniformBinding(buffer,index);
 }
 void Repeater::glBindBufferBase (GLenum target, GLuint index, GLuint buffer)
 {
     OpenglRedirectorBase::glBindBufferBase(target, index, buffer);
     if(target == GL_UNIFORM_BUFFER)
-        m_UniformBlocks.setUniformBinding(buffer,index);
+        m_UniformBlocksTracker.setUniformBinding(buffer,index);
 }
 
 void Repeater::glBindBuffersBase (GLenum target, GLuint first, GLsizei count, const GLuint* buffers)
@@ -490,7 +463,7 @@ void Repeater::glBindBuffersBase (GLenum target, GLuint first, GLsizei count, co
     {
         for(size_t i = 0; i < count; i++)
         {
-            m_UniformBlocks.setUniformBinding(buffers[i],first+i);
+            m_UniformBlocksTracker.setUniformBinding(buffers[i],first+i);
         }
     }
 }
@@ -503,7 +476,7 @@ void Repeater::glBindBuffersRange (GLenum target, GLuint first, GLsizei count, c
     {
         for(size_t i = 0; i < count; i++)
         {
-            m_UniformBlocks.setUniformBinding(buffers[i],first+i);
+            m_UniformBlocksTracker.setUniformBinding(buffers[i],first+i);
         }
     }
 }
@@ -518,10 +491,10 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
 
     GLint bufferID = 0;
     glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
-    if(!m_UniformBlocks.hasBufferBindingIndex(bufferID))
+    if(!m_UniformBlocksTracker.hasBufferBindingIndex(bufferID))
         return;
-    auto index = m_UniformBlocks.getBufferBindingIndex(bufferID);
-    auto& metadata = m_UniformBlocks.getBindingIndex(index);
+    auto index = m_UniformBlocksTracker.getBufferBindingIndex(bufferID);
+    auto& metadata = m_UniformBlocksTracker.getBindingIndex(index);
     if(metadata.transformationOffset == -1)
     {
         // Find a program whose uniform iterface contains transformation matrix
@@ -543,8 +516,8 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
             if(!m_Manager.hasShader(VS))
                 continue;
             const auto& shader = m_Manager.getShaderDescription(VS);
-            if(shader.m_TransformationMatrixName.empty() || shader.m_InterfaceBlockName.empty())
-                continue;
+            if(!shader.isUBOused())
+                return;
 
             std::array<const GLchar*, 1> uniformList = {shader.m_TransformationMatrixName.c_str()};
             std::array<GLuint, 1> resultIndex;
@@ -585,10 +558,10 @@ void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size,
 
     GLint bufferID = 0;
     glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
-    if(!m_UniformBlocks.hasBufferBindingIndex(bufferID))
+    if(!m_UniformBlocksTracker.hasBufferBindingIndex(bufferID))
         return;
-    auto index = m_UniformBlocks.getBufferBindingIndex(bufferID);
-    auto& metadata = m_UniformBlocks.getBindingIndex(index);
+    auto index = m_UniformBlocksTracker.getBufferBindingIndex(bufferID);
+    auto& metadata = m_UniformBlocksTracker.getBindingIndex(index);
     if(metadata.transformationOffset != -1 && offset <= metadata.transformationOffset)
     {
         if(offset+size >= metadata.transformationOffset+sizeof(float)*16)
@@ -850,7 +823,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
             // don't duplicate while rendering light's point of view into shadow map
             m_FBOTracker.isFBOshadowMap() ||
             // don't duplicate while there is no projection and its not legacy OpenGL at the same time
-            (m_Manager.isAnyBound() && m_Manager.isVSBound() && m_Manager.getBoundedVS().m_TransformationMatrixName == "" && !m_LegacyTracker.isLegacyNeeded())
+            (m_Manager.isAnyBound() && m_Manager.isVSBound() && !m_Manager.getBoundedVS().hasDetectedTransformation() && !m_LegacyTracker.isLegacyNeeded())
     );
 
     if(shouldNotDuplicate)
@@ -865,7 +838,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     {
         const auto& blockName = m_Manager.getBoundedVS().m_InterfaceBlockName;
         auto index = m_Manager.getBoundedProgram().m_UniformBlocks[blockName].bindingIndex;
-        const auto& indexStructure = m_UniformBlocks.getBindingIndex(index);
+        const auto& indexStructure = m_UniformBlocksTracker.getBindingIndex(index);
         if(indexStructure.hasTransformation)
         {
             setEnhancerDecodedProjection(getCurrentProgram(),indexStructure.isOrthogonal, indexStructure.decodedParams);
@@ -875,8 +848,6 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         }
     }
     // Get original viewport
-    //glGetIntegerv(GL_VIEWPORT, currentViewport.getDataPtr());
-    //glGetIntegerv(GL_SCISSOR_BOX, currentScissorArea.getDataPtr());
     auto originalViewport = currentViewport;
     auto originalScissor = currentScissorArea;
 
