@@ -1,3 +1,5 @@
+#ifndef VE_UNIFORM_BLOCK_TRACING_HPP
+#define VE_UNIFORM_BLOCK_TRACING_HPP
 #include <glm/glm.hpp>
 #include <unordered_map>
 #include "projection_estimator.hpp"
@@ -16,23 +18,11 @@ namespace ve
     class UniformBlockTracing
     {
         public:
-        bool hasBufferBindingIndex(size_t buffer) const
-        {
-            return m_UniformBindingMap.count(buffer) > 0;
-        }
-        size_t& getBufferBindingIndex(size_t buffer)
-        {
-            return m_UniformBindingMap.at(buffer);
-        }
-        void setUniformBinding(size_t buffer, size_t bindingIndex)
-        {
-            m_UniformBindingMap[buffer] = bindingIndex;
-        }
+        bool hasBufferBindingIndex(size_t buffer) const;
+        size_t& getBufferBindingIndex(size_t buffer);
+        void setUniformBinding(size_t buffer, size_t bindingIndex);
 
-        UniformBinding& getBindingIndex(size_t index)
-        {
-            return m_UniformBindings[index];
-        }
+        UniformBinding& getBindingIndex(size_t index);
         private:
             // buffer object to uniform binding index
             std::unordered_map<size_t, size_t> m_UniformBindingMap;
@@ -41,3 +31,4 @@ namespace ve
             std::unordered_map<size_t, UniformBinding> m_UniformBindings;
     };
 } //namespace ve
+#endif

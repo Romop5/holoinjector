@@ -79,6 +79,17 @@ glm::mat4 TRANSL(float x,float y, float z){ return glm::translate(glm::vec3(x,y,
 glm::mat4 SCALE(float s) { return glm::scale(glm::vec3(s)); }
 
 namespace {
+TEST(ProjectionEstimator, AsVector) {
+    MAKE_PERSPECTIVE(90.0, 2.0, 0.1,100.0);
+    auto params = ve::estimatePerspectiveProjection(projection);
+
+    auto paramsVec = params.asVector();
+    ASSERT_NEAR_RELATIVE(paramsVec[1], calculateFX(90.0),1e-3);
+    ASSERT_NEAR_RELATIVE(paramsVec[0], calculateFX(90.0, 2.0),1e-3);
+    ASSERT_NEAR_RELATIVE(paramsVec[2], 0.1,1e-3);
+    ASSERT_NEAR_RELATIVE(paramsVec[3], 100,1e-3);
+
+}
 TEST(ProjectionEstimator, Identity) {
     const auto IDENTITY = glm::identity<glm::mat4>();
 
