@@ -12,8 +12,11 @@ bool ve::FramebufferTracker::hasFramebuffer(size_t id) const
     return m_buffers.count(id) > 0;
 }
 
-void ve::FramebufferTracker::deteteFramebuffer(size_t id)
+void ve::FramebufferTracker::deleteFramebuffer(size_t id)
 {
+    // Bind default buffer, otherwise it doesnt make sense
+    if(getCurrentFrameBuffer() == id)
+        bind(0);
     m_buffers.erase(id);
 }
 
@@ -24,10 +27,22 @@ void ve::FramebufferTracker::attach(GLenum attachment, GLuint texture)
         case GL_DEPTH_ATTACHMENT:
             attachDepth(m_currentFramebuffer);
             break;
-        case GL_STENCIL_CLEAR_VALUE:
+        case GL_STENCIL_ATTACHMENT:
+            attachStencil(m_currentFramebuffer);
+            break;
+        case GL_DEPTH_STENCIL_ATTACHMENT:
+            attachDepth(m_currentFramebuffer);
             attachStencil(m_currentFramebuffer);
             break;
         case GL_COLOR_ATTACHMENT0:
+        case GL_COLOR_ATTACHMENT1:
+        case GL_COLOR_ATTACHMENT2:
+        case GL_COLOR_ATTACHMENT3:
+        case GL_COLOR_ATTACHMENT4:
+        case GL_COLOR_ATTACHMENT5:
+        case GL_COLOR_ATTACHMENT6:
+        case GL_COLOR_ATTACHMENT7:
+        case GL_COLOR_ATTACHMENT8:
             attachColor(m_currentFramebuffer);
             break;
     }

@@ -82,8 +82,14 @@ namespace ve
         /// Is VS bound
         bool isVSBound() const;
 
+        /// Is GS bound
+        bool isGSBound() const;
+
         /// Get metadata for currently bounded program
         ShaderMetadata& getBoundedVS();
+
+        /// Get metadata for currently bounded program
+        ShaderMetadata& getBoundedGS();
 
         /// Get metadata for currently bounded program
         ShaderProgram& getBoundedProgram();
@@ -93,6 +99,8 @@ namespace ve
 
         const std::unordered_map<size_t, ShaderProgram>& getPrograms() const;
         std::unordered_map<size_t, ShaderProgram>& getMutablePrograms();
+
+
         private:
         /// Maps shader ID to metadata structure
         std::unordered_map<size_t, ShaderMetadata> m_shaderDatabase;
@@ -101,7 +109,7 @@ namespace ve
         std::unordered_map<size_t, ShaderProgram> m_programDatabase;
 
         /// last glUseProgram
-        size_t m_BoundProgram;
+        size_t m_BoundProgram = 0;
     };
 } // namespace ve
 

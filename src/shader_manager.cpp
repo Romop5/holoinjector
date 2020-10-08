@@ -117,6 +117,14 @@ bool ShaderManager::isVSBound() const
     return (VS != -1) && hasShader(VS);
 }
 
+bool ShaderManager::isGSBound() const
+{
+    if(!isAnyBound())
+        return false;
+    const auto GS = getProgram(m_BoundProgram).m_GeometryShader;
+    return (GS != -1) && hasShader(GS);
+}
+
 /// Get metadata for currently bounded program
 ShaderManager::ShaderMetadata& ShaderManager::getBoundedVS()
 {
@@ -126,6 +134,16 @@ ShaderManager::ShaderMetadata& ShaderManager::getBoundedVS()
     assert(hasShader(VS));
     return getShaderDescription(VS);
 }
+
+ShaderManager::ShaderMetadata& ShaderManager::getBoundedGS()
+{
+    assert(m_BoundProgram != 0);
+    const auto GS = getProgram(m_BoundProgram).m_GeometryShader;
+    assert(GS != -1);
+    assert(hasShader(GS));
+    return getShaderDescription(GS);
+}
+
 
 ShaderManager::ShaderProgram& ShaderManager::getBoundedProgram()
 {

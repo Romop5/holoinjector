@@ -791,7 +791,7 @@ void Repeater::resetEnhancerShift()
     if(m_LegacyTracker.isLegacyNeeded())
     {
         OpenglRedirectorBase::glLoadMatrixf(glm::value_ptr(m_LegacyTracker.getProjection()));
-        OpenglRedirectorBase::glMatrixMode(m_LegacyTracker.getCurrentMode());
+        OpenglRedirectorBase::glMatrixMode(m_LegacyTracker.getMatrixMode());
     }
 }
 

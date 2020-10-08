@@ -18,7 +18,7 @@ namespace ve
 
         void addFramebuffer(size_t id);
         bool hasFramebuffer(size_t id) const;
-        void deteteFramebuffer(size_t id);
+        void deleteFramebuffer(size_t id);
 
         void attach(GLenum attachment, GLuint texture);
         void attachDepth(size_t frameBuffer);
@@ -31,9 +31,10 @@ namespace ve
         // Heuristics
         bool isFBODefault() const;
         bool isFBOshadowMap() const;
+
         private:
         std::unordered_map<size_t, FramebufferMetadata> m_buffers;
-        size_t m_currentFramebuffer;
+        size_t m_currentFramebuffer = 0;
     };
 } // namespace ve
 #endif

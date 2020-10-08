@@ -143,27 +143,30 @@ target_link_libraries(enhancer_core PUBLIC ${SIMPLECPP_SO})
 
 if(${ENHANCER_BUILD_TESTS})
 
-    if(${ENHANCER_BUILD_TESTS_COVERAGE})
-        include(CodeCoverage)
-        append_coverage_compiler_flags()
-    endif()
-
+    
     enable_testing()
     find_package(GTest REQUIRED)
 
     set(GTEST_ROOT "${CMAKE_BINARY_DIR}/")
 
     file(GLOB UNITTEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/*.cpp)
-    add_executable(unit_tests 
+    add_executable(unittests 
         ${UNITTEST_FILES}
     )
     find_package(Threads)
-    target_link_libraries(unit_tests ${GTEST_BOTH_LIBRARIES} enhancer_core Threads::Threads)
-    set(TARGET unit_tests PROPERTY CXX_STANDARD 17)
+    target_link_libraries(unittests ${GTEST_BOTH_LIBRARIES} enhancer_core Threads::Threads)
+    set(TARGET unittests PROPERTY CXX_STANDARD 17)
 
-    add_test(NAME AllTests COMMAND "$<TARGET_FILE:unit_tests>")
+    add_test(NAME AllTests COMMAND "$<TARGET_FILE:unittests>")
 
-    setup_target_for_coverage_lcov(NAME unittest-cc EXECUTABLE unit_tests DEPENDENCIES unit_tests
-        EXCLUDE /usr/*)
+
+    if(${ENHANCER_BUILD_TESTS_COVERAGE})
+        include(CodeCoverage)
+        append_coverage_compiler_flags()
+
+        setup_target_for_coverage_lcov(NAME unittest-cc EXECUTABLE unittests DEPENDENCIES unittests
+            EXCLUDE "/usr/*" "${CMAKE_CURRENT_SOURCE_DIR}/src/opengl_redirector*")
+    endif()
+
 
 endif()
