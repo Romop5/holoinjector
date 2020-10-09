@@ -50,7 +50,7 @@ namespace ve
         size_t m_ActivatedCameraID = -1;
 
         /// Don't affect shaders, push transforms, etc.
-        bool m_shouldNotBeIntrusive;
+        bool m_shouldNotBeIntrusive = false;
     };
 } // namespace ve
 #endif

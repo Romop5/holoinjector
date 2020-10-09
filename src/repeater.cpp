@@ -25,22 +25,20 @@ namespace helper
         auto envStringRaw = getenv(variable.c_str());
         if(!envStringRaw)
             return defaultValue;
-        float resultValue;
+        float resultValue = defaultValue;
         try {
             resultValue = std::stof(envStringRaw);
-        } catch(...)
-        {
-            return defaultValue;
-        }
+        } catch(...) {};
+        printf("[Enhancer] Getting env value of %s => %f\n", variable.c_str(),resultValue);
         return resultValue;
     }
 
     std::string getEnviromentValueStr(const std::string& variable, std::string defaultValue = "")
     {
         auto envStringRaw = getenv(variable.c_str());
-        if(!envStringRaw)
-            return defaultValue;
-        return envStringRaw;
+        auto result = (envStringRaw)?envStringRaw:defaultValue;
+        printf("[Enhancer] Getting env value of %s => %s\n", variable.c_str(),result.c_str());
+        return result;
     }
 
 
@@ -219,7 +217,7 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
 
         auto finalShader = preprocessedShader; 
         if(!m_diagnostics.shouldNotBeIntrusive())
-            inspector.injectShader(statements);
+            finalShader = inspector.injectShader(statements);
         printf("[Repeater] found transformation name: %s\n",metadata.m_TransformationMatrixName.c_str());
         printf("[Repeater] found interface block: %s\n",metadata.m_InterfaceBlockName.c_str());
         printf("[Repeater] injected shader: %s\n",finalShader.c_str());
@@ -848,9 +846,8 @@ void Repeater::takeScreenshot(const std::string filename)
     FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF, 0xFF00, 0xFF0000, false);
     if(!FreeImage_Save(FIF_BMP, image, filename.c_str(), 0))
     {
-        printf("[Repeater] Failed to save screenshot %s\n", filename);
+        printf("[Repeater] Failed to save screenshot %s\n", filename.c_str());
     }
-
     // Free resources
     FreeImage_Unload(image);
     delete [] pixels;
