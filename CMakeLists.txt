@@ -50,6 +50,7 @@ get_filename_component(SIMPLECPP_INCL ${SIMPLECPP_H} DIRECTORY)
 ###############################################################################
 
 find_package(glm REQUIRED)
+find_package(FreeImage REQUIRED)
 ###############################################################################
 
 ###############################################################################
@@ -77,14 +78,17 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/uniform_block_tracing.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/uniform_block_tracing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.cpp
     )
 
 # Hack: we would like a static library to be linked into shared library later
 # => Position Independent Code is thus required
 target_compile_options(enhancer_core PRIVATE "-fPIC")
 
-target_link_libraries(enhancer_core PUBLIC glm)
-target_include_directories(enhancer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(enhancer_core PUBLIC glm ${FREEIMAGE_LIBRARIES})
+target_include_directories(enhancer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${FREEIMAGE_INCLUDE_DIR})
 target_compile_features(enhancer_core PUBLIC cxx_std_17)
 
 

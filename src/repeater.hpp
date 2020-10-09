@@ -11,14 +11,10 @@
 #include "legacy_tracker.hpp"
 #include "viewport_area.hpp"
 #include "virtual_cameras.hpp"
+#include "diagnostics.hpp"
 
 namespace ve
 {
-    struct Viewport
-    {
-        GLint size[4];
-    };
-
     class Repeater: public OpenglRedirectorBase
     {
         public:
@@ -108,43 +104,56 @@ namespace ve
         virtual void glEnd() override;
         // Legacy end
 
+        ///////////////////////////////////////////////////////////////////////
+        // Internal routines
+        ///////////////////////////////////////////////////////////////////////
         private:
-        /// Build cache structures
+        /// Initialize parameters, caches etc
         void initialize();
 
-        GLint getCurrentProgram();
         void setEnhancerShift(const glm::mat4& viewSpaceTransform);
         void resetEnhancerShift();
         void setEnhancerIdentity();
 
         void setEnhancerDecodedProjection(GLuint program, const PerspectiveProjectionParameters& projection);
 
+        void takeScreenshot(const std::string filename);
+
         void duplicateCode(const std::function<void(void)>& code);
 
-        /// Options
-        bool m_IsDuplicationOn = false;
+        
+        ///////////////////////////////////////////////////////////////////////
+        // OPTIONS
+        ///////////////////////////////////////////////////////////////////////
 
-        /// Debug option: count rendered frames
-        size_t m_ElapsedFrames = 0;
+        /// Is repeater rendering scene into multiple virtual screens
+        bool m_IsMultiviewActivated = false;
+        
+        /// Determines how virtual views are placed in view-space
+        CameraParameters m_cameraParameters;
 
-        /// Debug option: terminate process after N frames (or go for infty in case of 0)
-        size_t m_ExitAfterFrames = 0;
+        /// Store's repeating setup
+        VirtualCameras m_cameras;
 
+        /// Provides interface for system testing
+        Diagnostics m_diagnostics;
+
+        ///////////////////////////////////////////////////////////////////////
+        // OpenGL hooking structures
+        ///////////////////////////////////////////////////////////////////////
+
+        /// Store metadata about application's shaders and programs
         ShaderManager m_Manager;
+        /// Store metadata about create Frame Buffer Objects
         FramebufferTracker m_FBOTracker;
         /// Keeps track of OpenGL fixed-pipeline calls
         LegacyTracker m_LegacyTracker;
 
+        /// Store metadata and bindings for UBO
         UniformBlockTracing m_UniformBlocksTracker;
 
-        CameraParameters m_cameraParameters;
-        /// Store's repeating setup
-        VirtualCameras m_cameras;
-
+        /// Caches current viewport/scissor area
         ViewportArea currentViewport, currentScissorArea;
-        /// Is scissor region different 
-        bool m_isScissorRegionActive = false;
-        
         /* 
          * Global glCallList for legacy OpenGL primitives
          * - record everything between glBegin()/glEnd() 

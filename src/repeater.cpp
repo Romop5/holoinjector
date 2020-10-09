@@ -3,16 +3,18 @@
 #include <cassert>
 #include <regex>
 #include <unordered_set>
+#include <sstream>
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
+#include "FreeImage.h" // FreeImage image storing
+#include "simplecpp.h" // CPP preprocessor
 
 #include "shader_inspector.hpp"
 #include "projection_estimator.hpp"
 #include "opengl_utils.hpp"
 
-#include "simplecpp.h"
-#include <sstream>
+
 
 using namespace ve;
 
@@ -71,10 +73,22 @@ namespace helper
 
 void Repeater::initialize()
 {
-    // Get parameters from enviroment
-    helper::getEnviromentValue("ENHANCER_ANGLE", m_cameraParameters.m_angleMultiplier); 
-    helper::getEnviromentValue("ENHANCER_DISTANCE", m_cameraParameters.m_distance); 
-    m_ExitAfterFrames = helper::getEnviromentValue("ENHANCER_EXIT_AFTER", 0); 
+    // Override default angle
+    helper::getEnviroment("ENHANCER_ANGLE", m_cameraParameters.m_angleMultiplier); 
+    // Override default center of rotation
+    helper::getEnviroment("ENHANCER_DISTANCE", m_cameraParameters.m_distance); 
+    // if ENHANCER_NOW is provided, then start with multiple views right now
+    if(helper::getEnviromentValue("ENHANCER_NOW", 0))
+    {
+        m_IsMultiviewActivated = true;
+    }
+    m_diagnostics.setTerminationAfterFrame(helper::getEnviromentValue("ENHANCER_EXIT_AFTER", 0)); 
+
+    auto onlyCamera = helper::getEnviromentValue("ENHANCER_CAMERAID", -1);
+    if(onlyCamera != -1)
+    {
+        m_diagnostics.setOnlyVirtualCamera(onlyCamera);
+    }
 
     /// Fill viewports
     glGetIntegerv(GL_VIEWPORT, currentViewport.getDataPtr());
@@ -103,10 +117,11 @@ void Repeater::registerCallbacks()
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
     OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
-    m_ElapsedFrames++; 
-    if(m_ExitAfterFrames && m_ExitAfterFrames <= m_ElapsedFrames)
+    m_diagnostics.incrementFrameCount(); 
+    if(m_diagnostics.hasReachedLastFrame())
     {
         // Note: this is debug only, leaves mem. leaks and uncleaned objects
+        takeScreenshot(std::string(m_diagnostics.getScreenshotName()));
         exit(5);
     }
 }
@@ -732,7 +747,7 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
             case XK_F12:
             case XK_F11:
             {
-                m_IsDuplicationOn = !m_IsDuplicationOn;
+                m_IsMultiviewActivated = !m_IsMultiviewActivated;
                 puts("[Repeater] Setting: F11 pressed - toggle");
             }
             break;
@@ -748,17 +763,10 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
 // Utils
 //-----------------------------------------------------------------------------
 
-GLint Repeater::getCurrentProgram()
-{
-    GLint id;
-    OpenglRedirectorBase::glGetIntegerv(GL_CURRENT_PROGRAM,&id);
-    return id;
-}
-
 void Repeater::setEnhancerShift(const glm::mat4& viewSpaceTransform)
 {
     const auto& resultMat = viewSpaceTransform;
-    auto program = getCurrentProgram();
+    auto program = m_Manager.getBoundedProgramID();
     if(program)
     {
         auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
@@ -798,15 +806,36 @@ void Repeater::resetEnhancerShift()
 void Repeater::setEnhancerIdentity()
 {
     const auto identity = glm::mat4(1.0);
-    auto program = getCurrentProgram();
+    auto program = m_Manager.getBoundedProgramID();
     auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
     OpenglRedirectorBase::glUniform1i(location, GL_TRUE);
+}
+
+void Repeater::takeScreenshot(const std::string filename)
+{
+    const auto width = currentViewport.getWidth();
+    const auto height = currentViewport.getHeight();
+    // Make the BYTE array, factor of 3 because it's RBG.
+    BYTE* pixels = new BYTE[3 * width * height];
+
+    glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, pixels);
+
+    // Convert to FreeImage format & save to file
+    FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF, 0xFF00, 0xFF0000, false);
+    if(!FreeImage_Save(FIF_BMP, image, filename.c_str(), 0))
+    {
+        printf("[Repeater] Failed to save screenshot %s\n", filename);
+    }
+
+    // Free resources
+    FreeImage_Unload(image);
+    delete [] pixels;
 }
 
 void Repeater::duplicateCode(const std::function<void(void)>& code)
 {
     bool shouldNotDuplicate = (
-            !m_IsDuplicationOn ||
+            !m_IsMultiviewActivated ||
             // don't duplicate while rendering light's point of view into shadow map
             m_FBOTracker.isFBOshadowMap() ||
             // don't duplicate while there is no projection and its not legacy OpenGL at the same time
@@ -828,7 +857,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         const auto& indexStructure = m_UniformBlocksTracker.getBindingIndex(index);
         if(indexStructure.hasTransformation)
         {
-            setEnhancerDecodedProjection(getCurrentProgram(),indexStructure.projection);
+            setEnhancerDecodedProjection(m_Manager.getBoundedProgramID(),indexStructure.projection);
         } else {
             printf("[Repeater] Unexpected state. Expected UBO, but not found. Falling back to identity\n");
             setEnhancerIdentity();
@@ -843,8 +872,14 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     const auto& tilesPerY = setup.second;
     // for each virtual camera, create a subview (subviewport)
     // and render draw call using its transformation into this subview
+
+    size_t cameraID = 0;
     for(const auto& camera: m_cameras.getCameras())
     {
+        // If only-camera mode is active && ID does not match
+        if(m_diagnostics.shouldShowOnlySpecificVirtualCamera() &&
+                cameraID++ != m_diagnostics.getOnlyCameraID())
+            continue;
         const auto& currentStartX = camera.getViewport().getX();
         const auto& currentStartY = camera.getViewport().getY();
 
@@ -852,7 +887,10 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         const auto scissorDiffY = (originalScissor.getY()-originalViewport.getY())/tilesPerY;
         const auto scissorWidth = originalScissor.getWidth()/tilesPerX; 
         const auto scissorHeight = originalScissor.getHeight()/tilesPerY; 
-        OpenglRedirectorBase::glScissor(currentStartX+scissorDiffX, currentStartY+scissorDiffY, scissorWidth, scissorHeight);
+        if(!m_diagnostics.shouldShowOnlySpecificVirtualCamera())
+        {
+            OpenglRedirectorBase::glScissor(currentStartX+scissorDiffX, currentStartY+scissorDiffY, scissorWidth, scissorHeight);
+        }
 
         // Detect if VS renders into clip-space, thus if z is always 1.0
         // => in such case, we don't want to translate the virtual camera
@@ -863,7 +901,10 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         }
         const auto& t = (isClipSpaceRendering)?camera.getViewMatrixRotational():camera.getViewMatrix();
         const auto& v = camera.getViewport();
-        OpenglRedirectorBase::glViewport(v.getX(), v.getY(), v.getWidth(), v.getHeight());
+        if(!m_diagnostics.shouldShowOnlySpecificVirtualCamera())
+        {
+            OpenglRedirectorBase::glViewport(v.getX(), v.getY(), v.getWidth(), v.getHeight());
+        }
         setEnhancerShift(t);
         code();
         resetEnhancerShift();
