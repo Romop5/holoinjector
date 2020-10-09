@@ -18,6 +18,8 @@ namespace ve
         /// Screnshot format
         void setScreenshotFormat(const std::string& format);
 
+        /// Get screenshot name
+        const std::string getScreenshotName() const;
 
         /// If ExitAfterFrames is set, determines if we reached the limit
         bool hasReachedLastFrame() const;
@@ -31,8 +33,9 @@ namespace ve
         /// Override default multiple camera grid with a single camera
         void setOnlyVirtualCamera(size_t cameraID);
 
-        /// Get screenshot name
-        const std::string getScreenshotName() const;
+        bool shouldNotBeIntrusive() const;
+        void setNonIntrusiveness(bool shouldBeNonIntrusive);
+
         private:
         /// Debug option: count rendered frames
         size_t m_ElapsedFrames = 0;
@@ -45,6 +48,9 @@ namespace ve
 
         /// Is specific camera activated
         size_t m_ActivatedCameraID = -1;
+
+        /// Don't affect shaders, push transforms, etc.
+        bool m_shouldNotBeIntrusive;
     };
 } // namespace ve
 #endif

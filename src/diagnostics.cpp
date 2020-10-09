@@ -47,4 +47,13 @@ size_t Diagnostics::getOnlyCameraID() const
     return m_ActivatedCameraID;
 }
 
+bool Diagnostics::shouldNotBeIntrusive() const
+{
+    return m_shouldNotBeIntrusive;
+}
+
+void Diagnostics::setNonIntrusiveness(bool shouldBeNonIntrusive)
+{
+    m_shouldNotBeIntrusive = shouldBeNonIntrusive;
+}
 

@@ -35,6 +35,15 @@ namespace helper
         return resultValue;
     }
 
+    std::string getEnviromentValueStr(const std::string& variable, std::string defaultValue = "")
+    {
+        auto envStringRaw = getenv(variable.c_str());
+        if(!envStringRaw)
+            return defaultValue;
+        return envStringRaw;
+    }
+
+
     void getEnviroment(const std::string& variable, float& storage)
     {
         storage = getEnviromentValue(variable, storage);
@@ -89,6 +98,19 @@ void Repeater::initialize()
     {
         m_diagnostics.setOnlyVirtualCamera(onlyCamera);
     }
+
+    auto screenshotFormat = helper::getEnviromentValueStr("ENHANCER_SCREENSHOT");
+    if(!screenshotFormat.empty())
+    {
+        m_diagnostics.setScreenshotFormat(screenshotFormat);
+    }
+
+    auto shouldNotBeIntrusive= helper::getEnviromentValue("ENHANCER_NONINTRUSIVE");
+    if(shouldNotBeIntrusive)
+    {
+        m_diagnostics.setNonIntrusiveness(shouldNotBeIntrusive);
+    }
+
 
     /// Fill viewports
     glGetIntegerv(GL_VIEWPORT, currentViewport.getDataPtr());
@@ -195,7 +217,9 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
         metadata.m_InterfaceBlockName = inspector.getUniformBlockName(metadata.m_TransformationMatrixName);
         metadata.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
 
-        auto finalShader = inspector.injectShader(statements);
+        auto finalShader = preprocessedShader; 
+        if(!m_diagnostics.shouldNotBeIntrusive())
+            inspector.injectShader(statements);
         printf("[Repeater] found transformation name: %s\n",metadata.m_TransformationMatrixName.c_str());
         printf("[Repeater] found interface block: %s\n",metadata.m_InterfaceBlockName.c_str());
         printf("[Repeater] injected shader: %s\n",finalShader.c_str());
