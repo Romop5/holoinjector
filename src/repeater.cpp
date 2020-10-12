@@ -760,8 +760,7 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
 
             case XK_F5:
             {
-                m_cameraParameters.m_distance = 1.0;
-                m_cameraParameters.m_angleMultiplier = 0.0;
+                m_cameraParameters = CameraParameters();
                 puts("[Repeater] Setting: F5 pressed - reset");
                 break;
             }
@@ -785,7 +784,7 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
 // Utils
 //-----------------------------------------------------------------------------
 
-void Repeater::setEnhancerShift(const glm::mat4& viewSpaceTransform)
+void Repeater::setEnhancerShift(const glm::mat4& viewSpaceTransform, float projectionAdjust)
 {
     const auto& resultMat = viewSpaceTransform;
     auto program = m_Manager.getBoundedProgramID();
@@ -796,6 +795,9 @@ void Repeater::setEnhancerShift(const glm::mat4& viewSpaceTransform)
 
         location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
         OpenglRedirectorBase::glUniform1i(location, GL_FALSE);
+
+        location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_projection_adjust");
+        OpenglRedirectorBase::glUniform1f(location, projectionAdjust);
     }
 
     // Legacy support
@@ -810,7 +812,9 @@ void Repeater::setEnhancerShift(const glm::mat4& viewSpaceTransform)
     if(m_LegacyTracker.isLegacyNeeded())
     {
         OpenglRedirectorBase::glMatrixMode(GL_PROJECTION);
-        const auto newProjection = m_LegacyTracker.getProjection()*resultMat;
+        auto oldProjection = m_LegacyTracker.getProjection();
+        oldProjection[2][0] = projectionAdjust;
+        const auto newProjection = oldProjection*resultMat;
         if(!m_LegacyTracker.isOrthogonalProjection())
             OpenglRedirectorBase::glLoadMatrixf(glm::value_ptr(newProjection));
     }
@@ -926,7 +930,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         {
             OpenglRedirectorBase::glViewport(v.getX(), v.getY(), v.getWidth(), v.getHeight());
         }
-        setEnhancerShift(t);
+        setEnhancerShift(t,camera.getAngle()*m_cameraParameters.m_angleMultiplier);
         code();
         resetEnhancerShift();
     }

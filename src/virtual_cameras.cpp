@@ -13,6 +13,12 @@ const glm::mat4& Camera::getViewMatrixRotational() const
     return m_viewMatrixRotational;
 }
 
+
+const float Camera::getAngle() const
+{
+    return m_angleY;
+}
+
 const ViewportArea& Camera::getViewport() const
 {
     return m_viewport;
@@ -30,7 +36,7 @@ void VirtualCameras::setupWindows(size_t count, float windowsPerWidth)
     for(size_t i = 0; i < count; i++)
     {
         int multiple = i-middle;
-        const auto angle = step*multiple;
+        const auto angle = -step*multiple;
         m_cameras.push_back(Camera(angle));
     }
     recalculateViewports();
@@ -72,12 +78,23 @@ void VirtualCameras::recalculateTransformations()
     for(auto& camera: m_cameras)
     {
         // Calculate paramaters
-        const auto finalCameraAngleRadians = camera.m_angleY*m_parameters.m_angleMultiplier;
+        /*const auto finalCameraAngleRadians = camera.m_angleY*m_parameters.m_angleMultiplier;
         const auto rotationMatrix = glm::rotate(finalCameraAngleRadians, glm::vec3(0,1,0));
         const auto T = glm::translate(glm::vec3(0.0f,0.0f,m_parameters.m_distance));
         const auto invT = glm::translate(glm::vec3(0.0f,0.0f,-m_parameters.m_distance));
-        camera.m_viewMatrix = invT*rotationMatrix*T;
-        camera.m_viewMatrixRotational = rotationMatrix;
+        */
+
+        /*
+         * Holo display expects translated cameras along X axis
+         * + changed optical axis towards a single point in front of the original camera
+         */
+        const auto horizontalShift = camera.m_angleY*m_parameters.m_distance;
+        const auto T = glm::translate(glm::vec3(horizontalShift, 0.0f,0.0f));
+
+        // Shift camera along X
+        camera.m_viewMatrix = T;
+        // Set identity in case of skybox
+        camera.m_viewMatrixRotational = glm::mat4(1.0);
     }
 }
 

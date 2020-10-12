@@ -111,7 +111,7 @@ namespace ve
         /// Initialize parameters, caches etc
         void initialize();
 
-        void setEnhancerShift(const glm::mat4& viewSpaceTransform);
+        void setEnhancerShift(const glm::mat4& viewSpaceTransform, float projectionAdjust = 0.0);
         void resetEnhancerShift();
         void setEnhancerIdentity();
 

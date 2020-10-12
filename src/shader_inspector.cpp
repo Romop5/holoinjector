@@ -191,61 +191,56 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
     // At this point, caller must have verified that this is a VS, containing void main() method
     assert(startOfFunction != std::string::npos);
     static std::string code = R"(
-        uniform bool enhancer_isOrthogonal; 
-        // when true, keeps original transformation flowing => used for shadow maps
-        uniform bool enhancer_identity; 
-        // Contains PROJ*VIEW per-view camera
-        uniform mat4 enhancer_view_transform; 
+    uniform bool enhancer_isOrthogonal; 
+    // when true, keeps original transformation flowing => used for shadow maps
+    uniform bool enhancer_identity; 
+    // Contains VIEW per-view camera
+    uniform mat4 enhancer_view_transform; 
+    // Contains projection
+    uniform float enhancer_projection_adjust; 
 
-        // Contains (fx,fy, near,far), estimated from original projection
-        uniform vec4 enhancer_estimatedParameters;
+    // Contains (fx,fy, near,far), estimated from original projection
+    uniform vec4 enhancer_estimatedParameters;
 
-        // Reversts original projection and apple per-view transformation & projection
-        vec4 enhancer_transform(vec4 clipSpace)
+    // Reversts original projection and apple per-view transformation & projection
+    vec4 enhancer_transform(vec4 clipSpace)
+    {
+        if(enhancer_isOrthogonal)
+            return clipSpace;
+        if(enhancer_identity)
+            return clipSpace;
+        float fx = enhancer_estimatedParameters[0];
+        float fy = enhancer_estimatedParameters[1];
+        float near = enhancer_estimatedParameters[2];
+        float far = enhancer_estimatedParameters[3];
+        // Revert clip-space to view-space
+        vec4 viewSpace = vec4(clipSpace.x/fx, clipSpace.y/fy, -clipSpace.w,1.0);
+
+        if(enhancer_isOrthogonal)
         {
-            if(enhancer_isOrthogonal)
-                return clipSpace;
-            if(enhancer_identity)
-                return clipSpace;
-            float fx = enhancer_estimatedParameters[0];
-            float fy = enhancer_estimatedParameters[1];
-            float near = enhancer_estimatedParameters[2];
-            float far = enhancer_estimatedParameters[3];
-            // Revert clip-space to view-space
-            vec4 viewSpace = vec4(clipSpace.x/fx, clipSpace.y/fy, -clipSpace.w,1.0);
-
-            if(enhancer_isOrthogonal)
-            {
-                viewSpace[2] = 0;
-            }
-
-            float A = -2.0/(far-near);
-            float B = -(far+near)/(far-near);
-            if(enhancer_isOrthogonal)
-            {
-                A = 1.0;
-                B = 0.0;
-            }
-            mat4 projection = mat4(vec4(fx,0.0f,0.0f,0.0), vec4(0.0f,fy,0.0f,0.0), vec4(0.0f,0.0f,A,-1.0), vec4(0.0f,0.0f,B,0.0));
-            if(enhancer_isOrthogonal)
-            {
-                projection[3][3] = 1.0;
-                projection[2][3] = 0.0;
-            }
-
-            // Do per-view transformation
-            vec4 viewSpaceTransformed = projection*enhancer_view_transform * viewSpace;
-            return viewSpaceTransformed;
+            viewSpace[2] = 0;
         }
 
-        // Transform without deprojecting
-        vec4 enhancer_transform_HUD(vec4 clipSpace)
+        float A = -2.0/(far-near);
+        float B = -(far+near)/(far-near);
+        if(enhancer_isOrthogonal)
         {
-            if(enhancer_identity)
-                return clipSpace;
-            // Revert clip-space to view-space
-            return enhancer_view_transform*clipSpace;
+            A = 1.0;
+            B = 0.0;
         }
+        mat4 projection = mat4(vec4(fx,0.0f,0.0f,0.0), vec4(0.0f,fy,0.0f,0.0), vec4(0.0f,0.0f,A,-1.0), vec4(0.0f,0.0f,B,0.0));
+        if(enhancer_isOrthogonal)
+        {
+            projection[3][3] = 1.0;
+            projection[2][3] = 0.0;
+        } else {
+            projection[2][0] = enhancer_projection_adjust;
+        }
+
+        // Do per-view transformation
+        vec4 viewSpaceTransformed = projection*enhancer_view_transform * viewSpace;
+        return viewSpaceTransformed;
+    }
     )";
 
     output.insert(startOfFunction, code);

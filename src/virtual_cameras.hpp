@@ -13,6 +13,8 @@ namespace ve
         const glm::mat4& getViewMatrix() const;
         const glm::mat4& getViewMatrixRotational() const;
         const ViewportArea& getViewport() const;
+
+        const float getAngle() const;
         friend class VirtualCameras;
 
 
@@ -31,7 +33,7 @@ namespace ve
     struct CameraParameters
     {
         float m_angleMultiplier = 0.0;
-        float m_distance = 1.0;
+        float m_distance = 0.0;
         /// Default constructor
         CameraParameters() = default;
         /// Copy-constructor
