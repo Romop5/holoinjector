@@ -78,17 +78,17 @@ void VirtualCameras::recalculateTransformations()
     for(auto& camera: m_cameras)
     {
         // Calculate paramaters
-        /*const auto finalCameraAngleRadians = camera.m_angleY*m_parameters.m_angleMultiplier;
+        /*const auto finalCameraAngleRadians = camera.m_angleY*m_parameters.m_XShiftMultiplier;
         const auto rotationMatrix = glm::rotate(finalCameraAngleRadians, glm::vec3(0,1,0));
-        const auto T = glm::translate(glm::vec3(0.0f,0.0f,m_parameters.m_distance));
-        const auto invT = glm::translate(glm::vec3(0.0f,0.0f,-m_parameters.m_distance));
+        const auto T = glm::translate(glm::vec3(0.0f,0.0f,m_parameters.m_frontOpticalAxisCentreDistance));
+        const auto invT = glm::translate(glm::vec3(0.0f,0.0f,-m_parameters.m_frontOpticalAxisCentreDistance));
         */
 
         /*
          * Holo display expects translated cameras along X axis
          * + changed optical axis towards a single point in front of the original camera
          */
-        const auto horizontalShift = camera.m_angleY*m_parameters.m_distance;
+        const auto horizontalShift = camera.m_angleY*m_parameters.m_XShiftMultiplier;
         const auto T = glm::translate(glm::vec3(horizontalShift, 0.0f,0.0f));
 
         // Shift camera along X

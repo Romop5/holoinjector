@@ -81,9 +81,9 @@ namespace helper
 void Repeater::initialize()
 {
     // Override default angle
-    helper::getEnviroment("ENHANCER_ANGLE", m_cameraParameters.m_angleMultiplier); 
+    helper::getEnviroment("ENHANCER_XMULTIPLIER", m_cameraParameters.m_XShiftMultiplier); 
     // Override default center of rotation
-    helper::getEnviroment("ENHANCER_DISTANCE", m_cameraParameters.m_distance); 
+    helper::getEnviroment("ENHANCER_DISTANCE", m_cameraParameters.m_frontOpticalAxisCentreDistance); 
     // if ENHANCER_NOW is provided, then start with multiple views right now
     if(helper::getEnviromentValue("ENHANCER_NOW", 0))
     {
@@ -733,27 +733,27 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
         {
             case XK_F1:
             {
-                m_cameraParameters.m_angleMultiplier += increment;
+                m_cameraParameters.m_XShiftMultiplier += increment;
                 puts("[Repeater] Setting: F1 pressed - increase angle");
             }
             break;
             case XK_F2:
             {
-                m_cameraParameters.m_angleMultiplier -= increment;
+                m_cameraParameters.m_XShiftMultiplier -= increment;
                 puts("[Repeater] Setting: F2 pressed - decrease angle");
             }
             break;
 
             case XK_F3:
             {
-                m_cameraParameters.m_distance += 0.5;
+                m_cameraParameters.m_frontOpticalAxisCentreDistance += 0.5;
                 puts("[Repeater] Setting: F3 pressed increase dist");
             }
             break;
 
             case XK_F4:
             {
-                m_cameraParameters.m_distance -= 0.5;
+                m_cameraParameters.m_frontOpticalAxisCentreDistance -= 0.5;
                 puts("[Repeater] Setting: F4 pressed decrease dist");
             }
             break;
@@ -773,8 +773,8 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
             }
             break;
         }
-        printf("[Repeater] Setting: dist (%f), angle (%f)\n", 
-                m_cameraParameters.m_distance, m_cameraParameters.m_angleMultiplier);
+        printf("[Repeater] Setting: frontDistance (%f), X multiplier(%f)\n", 
+                m_cameraParameters.m_frontOpticalAxisCentreDistance, m_cameraParameters.m_XShiftMultiplier);
         m_cameras.updateParamaters(m_cameraParameters);
     }
     return returnVal;
@@ -930,7 +930,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         {
             OpenglRedirectorBase::glViewport(v.getX(), v.getY(), v.getWidth(), v.getHeight());
         }
-        setEnhancerShift(t,camera.getAngle()*m_cameraParameters.m_angleMultiplier);
+        setEnhancerShift(t,camera.getAngle()*m_cameraParameters.m_XShiftMultiplier/m_cameraParameters.m_frontOpticalAxisCentreDistance);
         code();
         resetEnhancerShift();
     }

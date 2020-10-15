@@ -35,7 +35,7 @@ TEST(VirtualCameras, MultipleCameras) {
      * Use zero angle, which implies that all cameras will have same matrix
      */
     CameraParameters params;
-    params.m_angleMultiplier = 0.0;
+    params.m_XShiftMultiplier = 0.0;
     cameras.updateParamaters(params);
 
     /*

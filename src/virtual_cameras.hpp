@@ -32,16 +32,19 @@ namespace ve
     /// Groups parameters
     struct CameraParameters
     {
-        float m_angleMultiplier = 0.0;
-        float m_distance = 0.0;
+        /// Multiplies camera's shift in X
+        float m_XShiftMultiplier = 0.0;
+        /// Distance in view-space of the centrum where all optical axis points at
+        float m_frontOpticalAxisCentreDistance = 1.0;
+        
         /// Default constructor
         CameraParameters() = default;
         /// Copy-constructor
         CameraParameters(CameraParameters&) = default;
         bool operator==(const CameraParameters& p)
         {
-            return (m_angleMultiplier == p.m_angleMultiplier
-                    && m_distance == p.m_distance);
+            return (m_XShiftMultiplier == p.m_XShiftMultiplier
+                    && m_frontOpticalAxisCentreDistance == p.m_frontOpticalAxisCentreDistance);
         }
     };
 
