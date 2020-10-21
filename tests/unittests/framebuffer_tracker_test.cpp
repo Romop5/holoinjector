@@ -9,21 +9,21 @@ TEST(FramebufferTracker, Basic) {
     /*
      * By default, default program should be bounded
      */
-    ASSERT_EQ(ft.getCurrentFrameBuffer(),0);
+    ASSERT_EQ(ft.getBoundId(),0);
     ASSERT_TRUE(ft.isFBODefault());
     ASSERT_FALSE(ft.isFBOshadowMap());
 
-    ASSERT_FALSE(ft.hasFramebuffer(1));
+    ASSERT_FALSE(ft.has(1));
 
     /*
      * Create new FBO and only attach depth buffer
      */
-    ft.addFramebuffer(1);
+    ft.add(1, std::make_shared<FramebufferMetadata>());
     // Not binded yet, still default
     ASSERT_TRUE(ft.isFBODefault());
     // Bind new FBO
     ft.bind(1);
-    ASSERT_EQ(ft.getCurrentFrameBuffer(),1);
+    ASSERT_EQ(ft.getBoundId(),1);
     ASSERT_TRUE(!ft.isFBODefault());
     ft.attach(GL_DEPTH_ATTACHMENT, 0);
     /*
@@ -37,7 +37,7 @@ TEST(FramebufferTracker, Basic) {
      * Rebind default (unbind)
      */
     ft.bind(0);
-    ASSERT_EQ(ft.getCurrentFrameBuffer(),0);
+    ASSERT_EQ(ft.getBoundId(),0);
 
     ASSERT_TRUE(ft.isFBODefault());
     ASSERT_FALSE(ft.isFBOshadowMap());
@@ -47,10 +47,10 @@ TEST(FramebufferTracker, NonDefaultAttachment) {
     FramebufferTracker ft;
     for(size_t i = 0; i < 8; i++)
     {
-        ft.addFramebuffer(i+1);
-        ASSERT_EQ(ft.getCurrentFrameBuffer(),i);
+        ft.add(i+1, std::make_shared<FramebufferMetadata>());
+        ASSERT_EQ(ft.getBoundId(),i);
         ft.bind(i+1);
-        ASSERT_EQ(ft.getCurrentFrameBuffer(),i+1);
+        ASSERT_EQ(ft.getBoundId(),i+1);
         ft.attach(GL_DEPTH_ATTACHMENT, 0);
         ASSERT_TRUE(ft.isFBOshadowMap());
         ft.attach(GL_COLOR_ATTACHMENT0+i, i+1);
@@ -59,14 +59,14 @@ TEST(FramebufferTracker, NonDefaultAttachment) {
 }
 TEST(FramebufferTracker, Stencil) {
     FramebufferTracker ft;
-    ft.addFramebuffer(1);
+    ft.add(1, std::make_shared<FramebufferMetadata>());
     ft.bind(1);
     ft.attach(GL_STENCIL_ATTACHMENT, 0);
     ASSERT_FALSE(ft.isFBOshadowMap());
 }
 TEST(FramebufferTracker, DepthStencil) {
     FramebufferTracker ft;
-    ft.addFramebuffer(1);
+    ft.add(1, std::make_shared<FramebufferMetadata>());
     ft.bind(1);
     ft.attach(GL_DEPTH_STENCIL_ATTACHMENT, 0);
     ASSERT_TRUE(ft.isFBOshadowMap());
@@ -74,15 +74,15 @@ TEST(FramebufferTracker, DepthStencil) {
 
 TEST(FramebufferTracker, DeleteFBO) {
     FramebufferTracker ft;
-    ft.addFramebuffer(1);
+    ft.add(1, std::make_shared<FramebufferMetadata>());
     ft.bind(1);
     ft.attach(GL_DEPTH_ATTACHMENT, 0);
     ASSERT_TRUE(ft.isFBOshadowMap());
-    ASSERT_TRUE(ft.hasFramebuffer(1));
+    ASSERT_TRUE(ft.has(1));
 
-    ft.deleteFramebuffer(1);
-    ASSERT_FALSE(ft.hasFramebuffer(1));
-    ASSERT_EQ(ft.getCurrentFrameBuffer(),0);
+    ft.remove(1);
+    ASSERT_FALSE(ft.has(1));
+    ASSERT_EQ(ft.getBoundId(),0);
     ASSERT_FALSE(ft.isFBOshadowMap());
 }
 }

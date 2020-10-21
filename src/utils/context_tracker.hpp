@@ -44,6 +44,9 @@ class BindableContextTracker: public ContextTracker<T>
 
     size_t getBoundId() const;
 
+    // Overrides
+    void remove(size_t id);
+
     protected:
     size_t m_currentlyBoundObjectId = 0;
 };
@@ -81,7 +84,7 @@ void ContextTracker<T>::add(size_t id,T object)
 template<typename T>
 void ContextTracker<T>::remove(size_t id)
 {
-    m_storage[id].remove(id);
+    m_storage.erase(id);
 }
 
 template<typename T>
@@ -129,5 +132,17 @@ size_t BindableContextTracker<T>::getBoundId() const
 {
     return m_currentlyBoundObjectId;
 }
+
+template<typename T>
+void BindableContextTracker<T>::remove(size_t id)
+{
+    if(m_currentlyBoundObjectId == id)
+    {
+        m_currentlyBoundObjectId = 0;
+    }
+
+    ContextTracker<T>::remove(id);
+}
+
 
 #endif

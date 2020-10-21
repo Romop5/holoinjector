@@ -9,76 +9,82 @@ namespace {
 TEST(ShaderManager, Basic) 
 {
     ShaderManager m;
-    ASSERT_EQ(m.getBoundedProgramID(), 0);
-    ASSERT_FALSE(m.isAnyBound());
+    ASSERT_EQ(m.getBoundId(), 0);
+    ASSERT_FALSE(m.hasBounded());
     ASSERT_FALSE(m.isVSBound());
     ASSERT_FALSE(m.isGSBound());
 
-    m.addProgram(1);
-    ASSERT_TRUE(m.hasProgram(1));
+    m.add(1,std::make_shared<ve::ShaderProgram>());
+    ASSERT_TRUE(m.has(1));
 
     m.bind(1);
-    ASSERT_TRUE(m.isAnyBound());
+    ASSERT_TRUE(m.hasBounded());
     ASSERT_FALSE(m.isVSBound());
 
-    auto& program = m.getBoundedProgram();
-    ASSERT_EQ(program.m_VertexShader, -1);
-    ASSERT_EQ(program.m_GeometryShader, -1);
+    auto program = m.getBound();
+    ASSERT_EQ(program->m_VertexShader, nullptr);
+    ASSERT_EQ(program->m_GeometryShader, nullptr);
 }
 
 TEST(ShaderManager, VertexShaderCreation) 
 {
     ShaderManager m;
-    m.addProgram(1);
+    m.add(1,std::make_shared<ve::ShaderProgram>());
     m.bind(1);
-    ASSERT_EQ(m.getBoundedProgramID(), 1);
+    ASSERT_EQ(m.getBoundId(), 1);
 
-    m.addShader(2,ve::ShaderManager::ShaderTypes::VS);
-    m.attachShaderToProgram(ve::ShaderManager::ShaderTypes::VS, 2,1);
+    auto newTest = std::make_shared<ve::ShaderMetadata>();
+    newTest->m_Type = GL_VERTEX_SHADER;
+    m.shaders.add(2,newTest);
+    m.get(1)->attachShaderToProgram(m.shaders.get(2));
 
-    ASSERT_TRUE(m.isAnyBound());
+    ASSERT_TRUE(m.hasBounded());
     ASSERT_TRUE(m.isVSBound());
     ASSERT_FALSE(m.isGSBound());
-    auto& shader = m.getBoundedVS();
-    ASSERT_EQ(shader.m_Type, ve::ShaderManager::ShaderTypes::VS);
-    ASSERT_FALSE(shader.hasDetectedTransformation());
-    ASSERT_FALSE(shader.isUBOused());
+    auto shader = m.getBoundVS();
+    ASSERT_EQ(shader->m_Type, GL_VERTEX_SHADER);
+    ASSERT_FALSE(shader->hasDetectedTransformation());
+    ASSERT_FALSE(shader->isUBOused());
 }
 
 TEST(ShaderManager, GeometryShader) 
 {
     ShaderManager m;
-    m.addProgram(1);
+    m.add(1,std::make_shared<ve::ShaderProgram>());
     m.bind(1);
 
-    m.addShader(2,ve::ShaderManager::ShaderTypes::GEOMETRY);
-    m.attachShaderToProgram(ve::ShaderManager::ShaderTypes::GEOMETRY, 2,1);
+    auto shader = std::make_shared<ve::ShaderMetadata>();
+    shader->m_Type = GL_GEOMETRY_SHADER;
+    m.shaders.add(2,shader);
+    m.get(1)->attachShaderToProgram(shader);
 
-    ASSERT_TRUE(m.isAnyBound());
+    ASSERT_TRUE(m.hasBounded());
     ASSERT_FALSE(m.isVSBound());
     ASSERT_TRUE(m.isGSBound());
-    auto& shader = m.getBoundedGS();
-    ASSERT_EQ(shader.m_Type, ve::ShaderManager::ShaderTypes::GEOMETRY);
-    ASSERT_FALSE(shader.isUBOused());
+    shader = m.getBoundGS();
+    ASSERT_EQ(shader->m_Type, GL_GEOMETRY_SHADER);
+    ASSERT_FALSE(shader->isUBOused());
 }
 
 TEST(ShaderManager, IsShaderOneOf) 
 {
     ShaderManager m;
 
-    std::unordered_set<ShaderManager::ShaderTypes> types =
+    std::unordered_set<GLenum> types =
     {
-        ShaderManager::ShaderTypes::GEOMETRY,
-        ShaderManager::ShaderTypes::VS,
+        GL_GEOMETRY_SHADER,
+        GL_VERTEX_SHADER,
     };
     size_t shaderID = 1;
     for(const auto& type: types)
     {
-        m.addShader(shaderID,type);
-        ASSERT_TRUE(m.hasShader(shaderID));
-        auto& shader = m.getShaderDescription(shaderID);
-        ASSERT_EQ(shader.m_Type, type);
-        ASSERT_TRUE(m.isShaderOneOf(shaderID, types));
+        auto newShader = std::make_shared<ve::ShaderMetadata>();
+        newShader->m_Type = type;
+        m.shaders.add(shaderID,newShader);
+        ASSERT_TRUE(m.shaders.has(shaderID));
+        auto shader = m.shaders.get(shaderID);
+        ASSERT_EQ(shader->m_Type, type);
+        ASSERT_TRUE(m.shaders.get(shaderID)->isShaderOneOf(types));
         shaderID++;
     }
 }
@@ -87,13 +93,15 @@ TEST(ShaderManager, IsShaderOneOf)
 TEST(ShaderManager, GenericShaderCreation) 
 {
     ShaderManager m;
-    m.addProgram(1);
+    m.add(1,std::make_shared<ve::ShaderProgram>());
     m.bind(1);
 
-    m.addShader(2,ve::ShaderManager::ShaderTypes::GENERIC);
-    m.attachShaderToProgram(ve::ShaderManager::ShaderTypes::GENERIC, 2,1);
+    auto shader = std::make_shared<ve::ShaderMetadata>();
+    shader->m_Type = GL_FRAGMENT_SHADER;
+    m.shaders.add(2,shader);
+    m.get(1)->attachShaderToProgram(shader);
 
-    ASSERT_TRUE(m.isAnyBound());
+    ASSERT_TRUE(m.hasBounded());
     ASSERT_FALSE(m.isVSBound());
 }
 
@@ -101,19 +109,19 @@ TEST(ShaderManager, GenericShaderCreation)
 TEST(ShaderManager, ProgramEnumeration) 
 {
     ShaderManager m;
-    m.addProgram(1);
-    ASSERT_EQ(m.getPrograms().size(),1);
-    ASSERT_EQ(m.getMutablePrograms().size(),1);
-    m.addProgram(2);
-    ASSERT_EQ(m.getPrograms().size(),2);
-    ASSERT_EQ(m.getMutablePrograms().size(),2);
+    m.add(1,std::make_shared<ve::ShaderProgram>());
+    ASSERT_EQ(m.getMap().size(),1);
+    ASSERT_EQ(m.getMap().size(),1);
+    m.add(2,std::make_shared<ve::ShaderProgram>());
+    ASSERT_EQ(m.getMap().size(),2);
+    ASSERT_EQ(m.getMap().size(),2);
 
-    m.addShader(2, ve::ShaderManager::ShaderTypes::VS);
-    m.attachShaderToProgram(ve::ShaderManager::ShaderTypes::VS, 2, 2);
+    m.shaders.add(2, std::make_shared<ve::ShaderMetadata>());
+    m.get(2)->attachShaderToProgram(m.shaders.get(2));
 
     m.bind(2);
-    auto& shader2 = m.getBoundedProgram();
-    ASSERT_EQ(shader2.m_VertexShader, m.getPrograms().at(2).m_VertexShader);
+    auto shader2 = m.getBound();
+    ASSERT_EQ(shader2->m_VertexShader, m.getMap().at(2)->m_VertexShader);
 }
 
 }
