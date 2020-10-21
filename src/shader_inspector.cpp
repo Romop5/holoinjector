@@ -329,6 +329,27 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfI
     return result;
 }
 
+std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfOutputs() const
+{
+    std::vector<std::pair<std::string, std::string>> result;
+
+    std::smatch m;
+    static auto inDefinition = std::regex("out[\f\n\r\t\v ][^;]+");
+    if(!std::regex_search(sourceCode, m, inDefinition))
+        return result;
+
+    for(auto& match: m)
+    {
+        std::string s = match.str();
+        auto definitionTokens = ve::tokenize(s);
+        assert(definitionTokens.size() >= 2);
+        const auto& type = definitionTokens[definitionTokens.size()-2];
+        const auto& name = definitionTokens[definitionTokens.size()-1];
+        result.emplace_back(std::make_pair(type, name));
+    }
+    return result;
+}
+
 ShaderInspector::Analysis ve::ShaderInspector::analyzeGLPositionAssignment(std::string& assignment) const
 {
     auto tokens = ve::tokenize(assignment);

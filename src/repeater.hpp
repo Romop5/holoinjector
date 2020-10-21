@@ -38,6 +38,7 @@ namespace ve
 
         virtual  GLuint glCreateProgram (void) override;
         virtual  void glUseProgram (GLuint program) override;
+        virtual void glLinkProgram (GLuint program) override;
 
         // Framebuffers
         virtual  void glGenFramebuffers (GLsizei n, GLuint* framebuffers) override;

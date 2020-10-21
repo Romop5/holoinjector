@@ -11,7 +11,9 @@ namespace ve
 {
     struct ShaderMetadata
     {
-        GLenum m_Type;
+        GLenum m_Type = 0;
+
+        std::string preprocessedSourceCode;
 
         bool m_IsUniformInInterfaceBlock = false;
         /// If transformation is in block, stores block name
@@ -28,15 +30,8 @@ namespace ve
 
 
         // Queries
-        bool isUBOused() const
-        {
-            return !m_TransformationMatrixName.empty() && !m_InterfaceBlockName.empty();
-        }
-        bool hasDetectedTransformation() const
-        {
-            return !m_TransformationMatrixName.empty();
-        }
-
+        bool isUBOused() const;
+        bool hasDetectedTransformation() const;
         bool isShaderOneOf(const std::unordered_set<GLenum>& allowedTypes);
     };
 

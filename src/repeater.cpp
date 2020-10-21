@@ -198,20 +198,27 @@ namespace helper
     }
 };
 
-void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length)
+void Repeater::glShaderSource (GLuint shaderId, GLsizei count, const GLchar* const*string, const GLint* length)
 {
     auto concatenatedShader = helper::joinGLSLshaders(count, string, length);
-    printf("[Repeater] glShaderSource: [%d]\n",shader);
-    if(m_Manager.shaders.has(shader) && m_Manager.shaders.get(shader)->isShaderOneOf({GL_VERTEX_SHADER, GL_GEOMETRY_SHADER}))
+    printf("[Repeater] glShaderSource: [%d]\n",shaderId);
+    if(m_Manager.shaders.has(shaderId))
+    {
+        auto shader = m_Manager.shaders.get(shaderId);
+        auto preprocessedShader = helper::preprocessGLSLCode(concatenatedShader);
+        shader->preprocessedSourceCode = preprocessedShader;
+    }
+    /*
+    if(m_Manager.shaders.has(shaderId) && m_Manager.shaders.get(shaderId)->isShaderOneOf({GL_VERTEX_SHADER, GL_GEOMETRY_SHADER}))
     {
         auto preprocessedShader = helper::preprocessGLSLCode(concatenatedShader);
-        printf("[Repeater] preprocessed shader (type: %d) '%s'\n",m_Manager.shaders.get(shader)->m_Type, preprocessedShader.c_str());
+        printf("[Repeater] preprocessed shader (type: %d) '%s'\n",m_Manager.shaders.get(shaderId)->m_Type, preprocessedShader.c_str());
 
         ShaderInspector inspector(preprocessedShader);
         auto statements = inspector.findAllOutVertexAssignments();
         auto transformationName = inspector.getTransformationUniformName(statements);
         
-        auto metadata = m_Manager.shaders.get(shader);
+        auto metadata = m_Manager.shaders.get(shaderId);
         metadata->m_TransformationMatrixName = transformationName;
         metadata->m_IsClipSpaceTransform = inspector.isClipSpaceShader(); 
         metadata->m_InterfaceBlockName = inspector.getUniformBlockName(metadata->m_TransformationMatrixName);
@@ -225,8 +232,28 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
         printf("[Repeater] injected shader: %s\n",finalShader.c_str());
         concatenatedShader = std::move(finalShader);
     }
+    */
     std::vector<const char*> shaders = {concatenatedShader.c_str(),};
-    OpenglRedirectorBase::glShaderSource(shader,1,shaders.data(),nullptr);
+    OpenglRedirectorBase::glShaderSource(shaderId,1,shaders.data(),nullptr);
+}
+
+void Repeater::glLinkProgram (GLuint programId)
+{
+    // Link the program for 1st time
+    // => we can use native GLSL compiler to detect active uniforms
+    OpenglRedirectorBase::glLinkProgram(programId);
+
+    // Note: this should never happen
+    if(!m_Manager.has(programId))
+        return;
+
+    auto program = m_Manager.get(programId);
+    /*
+     * Inspect all shaders for two reasons
+     * 1. determine if there is transformation uniform
+     * 2. determine whether to keep original shader, or to alter it
+     */
+    bool hasGeometryShader = program->m_GeometryShader != nullptr;
 }
 
 void Repeater::glCompileShader (GLuint shader)

@@ -13,6 +13,18 @@ bool ShaderMetadata::isShaderOneOf(const std::unordered_set<GLenum>& allowedType
     return (allowedTypes.count(m_Type) > 0);
 }
 
+
+bool ShaderMetadata::isUBOused() const
+{
+    return !m_TransformationMatrixName.empty() && !m_InterfaceBlockName.empty();
+}
+
+bool ShaderMetadata::hasDetectedTransformation() const
+{
+    return !m_TransformationMatrixName.empty();
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // ShaderProgram
 ///////////////////////////////////////////////////////////////////////////////

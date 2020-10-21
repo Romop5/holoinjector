@@ -69,6 +69,7 @@ namespace ve
         /// List uniforms pairs <type, name>
         std::vector<std::pair<std::string, std::string>>getListOfUniforms() const;
         std::vector<std::pair<std::string, std::string>>getListOfInputs() const;
+        std::vector<std::pair<std::string, std::string>>getListOfOutputs() const;
 
         Analysis analyzeGLPositionAssignment(std::string& assignment) const;
         std::string replaceGLPositionAssignment(VertextAssignment assignment) const;
