@@ -152,7 +152,9 @@ GLuint Repeater::glCreateShader(GLenum shaderType)
     
     //printf("[Repeater] glCreateShader: %s\n",opengl_utils::getEnumStringRepresentation(shaderType).c_str());
     
-    m_Manager.addShader(id, (shaderType == GL_VERTEX_SHADER)?(ShaderManager::ShaderTypes::VS):(ShaderManager::ShaderTypes::GENERIC));
+    auto shaderDesc = std::make_shared<ShaderMetadata>();
+    shaderDesc->m_Type = shaderType;
+    m_Manager.shaders.add(id, shaderDesc);
     return id;
 }
 
@@ -200,26 +202,26 @@ void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const
 {
     auto concatenatedShader = helper::joinGLSLshaders(count, string, length);
     printf("[Repeater] glShaderSource: [%d]\n",shader);
-    if(m_Manager.hasShader(shader) && m_Manager.isShaderOneOf(shader, {ShaderManager::ShaderTypes::VS, ShaderManager::ShaderTypes::GEOMETRY}))
+    if(m_Manager.shaders.has(shader) && m_Manager.shaders.get(shader)->isShaderOneOf({GL_VERTEX_SHADER, GL_GEOMETRY_SHADER}))
     {
         auto preprocessedShader = helper::preprocessGLSLCode(concatenatedShader);
-        printf("[Repeater] preprocessed shader (type: %d) '%s'\n",m_Manager.getShaderDescription(shader).m_Type, preprocessedShader.c_str());
+        printf("[Repeater] preprocessed shader (type: %d) '%s'\n",m_Manager.shaders.get(shader)->m_Type, preprocessedShader.c_str());
 
         ShaderInspector inspector(preprocessedShader);
         auto statements = inspector.findAllOutVertexAssignments();
         auto transformationName = inspector.getTransformationUniformName(statements);
         
-        auto& metadata = m_Manager.getShaderDescription(shader);
-        metadata.m_TransformationMatrixName = transformationName;
-        metadata.m_IsClipSpaceTransform = inspector.isClipSpaceShader(); 
-        metadata.m_InterfaceBlockName = inspector.getUniformBlockName(metadata.m_TransformationMatrixName);
-        metadata.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
+        auto metadata = m_Manager.shaders.get(shader);
+        metadata->m_TransformationMatrixName = transformationName;
+        metadata->m_IsClipSpaceTransform = inspector.isClipSpaceShader(); 
+        metadata->m_InterfaceBlockName = inspector.getUniformBlockName(metadata->m_TransformationMatrixName);
+        metadata->m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
 
         auto finalShader = preprocessedShader; 
         if(!m_diagnostics.shouldNotBeIntrusive())
             finalShader = inspector.injectShader(statements);
-        printf("[Repeater] found transformation name: %s\n",metadata.m_TransformationMatrixName.c_str());
-        printf("[Repeater] found interface block: %s\n",metadata.m_InterfaceBlockName.c_str());
+        printf("[Repeater] found transformation name: %s\n",metadata->m_TransformationMatrixName.c_str());
+        printf("[Repeater] found interface block: %s\n",metadata->m_InterfaceBlockName.c_str());
         printf("[Repeater] injected shader: %s\n",finalShader.c_str());
         concatenatedShader = std::move(finalShader);
     }
@@ -244,11 +246,9 @@ void Repeater::glAttachShader (GLuint program, GLuint shader)
     printf("[Repeater] attaching shader [%d] to program [%d] \n", shader, program);
     OpenglRedirectorBase::glAttachShader(program,shader);
 
-    if(!m_Manager.hasProgram(program))
+    if(!m_Manager.has(program) || !m_Manager.shaders.has(shader))
         return;
-    if(!m_Manager.hasShader(shader))
-        return;
-    m_Manager.attachShaderToProgram(m_Manager.getShaderDescription(shader).m_Type,shader, program);
+    m_Manager.get(program)->attachShaderToProgram(m_Manager.shaders.get(shader));
 }
 
 
@@ -259,13 +259,13 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     // get current's program transformation matrix name
     if(!m_Manager.isVSBound())
         return;
-    auto& shaderMetaData = m_Manager.getBoundedVS();
-    if(!shaderMetaData.hasDetectedTransformation())
+    auto shaderMetaData = m_Manager.getBoundVS();
+    if(!shaderMetaData->hasDetectedTransformation())
         return;
 
-    auto programID = m_Manager.getBoundedProgramID();
+    auto programID = m_Manager.getBoundId();
     // get original MVP matrix location
-    auto originalLocation = OpenglRedirectorBase::glGetUniformLocation(programID, shaderMetaData.m_TransformationMatrixName.c_str());
+    auto originalLocation = OpenglRedirectorBase::glGetUniformLocation(programID, shaderMetaData->m_TransformationMatrixName.c_str());
     
     // if the matrix being uploaded isn't detected MVP, then continue
     if(originalLocation != location)
@@ -295,7 +295,9 @@ void Repeater::setEnhancerDecodedProjection(GLuint program, const PerspectivePro
 GLuint Repeater::glCreateProgram (void)
 {
     auto result = OpenglRedirectorBase::glCreateProgram();
-    m_Manager.addProgram(result);
+
+    auto program = std::make_shared<ShaderProgram>();
+    m_Manager.add(result, program);
     return result;
 }
 
@@ -423,14 +425,14 @@ void Repeater::glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum 
 GLuint Repeater::glGetUniformBlockIndex (GLuint program, const GLchar* uniformBlockName)
 {
     auto result = OpenglRedirectorBase::glGetUniformBlockIndex(program, uniformBlockName);
-    if(!m_Manager.hasProgram(program))
+    if(!m_Manager.has(program))
         return result;
-    auto& record = m_Manager.getMutableProgram(program);
-    if(record.m_UniformBlocks.count(uniformBlockName) == 0)
+    auto record = m_Manager.get(program);
+    if(record->m_UniformBlocks.count(uniformBlockName) == 0)
     {
-        ShaderManager::ShaderProgram::UniformBlock block;
+        ShaderProgram::UniformBlock block;
         block.location = result;
-        record.m_UniformBlocks[std::string(uniformBlockName)] = block;
+        record->m_UniformBlocks[std::string(uniformBlockName)] = block;
     }
     return result;
 }
@@ -438,24 +440,24 @@ GLuint Repeater::glGetUniformBlockIndex (GLuint program, const GLchar* uniformBl
 void Repeater::glUniformBlockBinding (GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding) 
 {
     OpenglRedirectorBase::glUniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding);
-    if(!m_Manager.hasProgram(program))
+    if(!m_Manager.has(program))
         return;
 
-    auto& record = m_Manager.getMutableProgram(program);
-    record.updateUniformBlock(uniformBlockIndex, uniformBlockBinding);
+    auto record = m_Manager.get(program);
+    record->updateUniformBlock(uniformBlockIndex, uniformBlockBinding);
 
     // Add binding index's transformation metadata
-    if(record.m_VertexShader != -1)
+    if(record->m_VertexShader)
     {
-        const auto& desc = m_Manager.getShaderDescription(record.m_VertexShader);
-        if(desc.isUBOused() && record.hasUniformBlock(desc.m_InterfaceBlockName))
+        const auto desc = record->m_VertexShader;
+        if(desc->isUBOused() && record->hasUniformBlock(desc->m_InterfaceBlockName))
         {
-            auto& block = record.m_UniformBlocks[desc.m_InterfaceBlockName];
-            if(OpenglRedirectorBase::glGetUniformBlockIndex(program,desc.m_InterfaceBlockName.c_str())  == uniformBlockIndex)
+            auto& block = record->m_UniformBlocks[desc->m_InterfaceBlockName];
+            if(OpenglRedirectorBase::glGetUniformBlockIndex(program,desc->m_InterfaceBlockName.c_str())  == uniformBlockIndex)
             {
                 auto& index = m_UniformBlocksTracker.getBindingIndex(block.bindingIndex);
 
-                std::array<const GLchar*, 1> uniformList = {desc.m_TransformationMatrixName.c_str()};
+                std::array<const GLchar*, 1> uniformList = {desc->m_TransformationMatrixName.c_str()};
                 std::array<GLuint, 1> resultIndex;
                 std::array<GLint, 1> params;
                 OpenglRedirectorBase::glGetUniformIndices(program, 1, uniformList.data(), resultIndex.data());
@@ -524,9 +526,9 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
     if(metadata.transformationOffset == -1)
     {
         // Find a program whose uniform iterface contains transformation matrix
-        for(auto& [programID, program]: m_Manager.getMutablePrograms())
+        for(auto& [programID, program]: m_Manager.getMap())
         {
-            auto& blocks = program.m_UniformBlocks;
+            auto& blocks = program->m_UniformBlocks;
             
             // Determine fi shader program contains a block, whose binding index is same as
             // currently bound GL_UNIFORM_BUFFER
@@ -538,14 +540,14 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
             if(result == blocks.end() && index != 0)
                 continue;
             // Determine if program's VS has transformation in interface block
-            const auto VS = program.m_VertexShader;
-            if(!m_Manager.hasShader(VS))
+            const auto VS = program->m_VertexShader;
+            if(!VS)
                 continue;
-            const auto& shader = m_Manager.getShaderDescription(VS);
-            if(!shader.isUBOused())
+            const auto& shader = VS;
+            if(!shader->isUBOused())
                 continue;
 
-            std::array<const GLchar*, 1> uniformList = {shader.m_TransformationMatrixName.c_str()};
+            std::array<const GLchar*, 1> uniformList = {shader->m_TransformationMatrixName.c_str()};
             std::array<GLuint, 1> resultIndex;
             std::array<GLint, 1> params;
             OpenglRedirectorBase::glGetUniformIndices(programID, 1, uniformList.data(), resultIndex.data());
@@ -555,7 +557,7 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
             metadata.transformationOffset = params[0];
 
             // Re-store bindingIndex if needed
-            blocks[shader.m_InterfaceBlockName].bindingIndex = index;
+            blocks[shader->m_InterfaceBlockName].bindingIndex = index;
         }
     }
     if(metadata.transformationOffset != -1)
@@ -787,7 +789,7 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
 void Repeater::setEnhancerShift(const glm::mat4& viewSpaceTransform, float projectionAdjust)
 {
     const auto& resultMat = viewSpaceTransform;
-    auto program = m_Manager.getBoundedProgramID();
+    auto program = m_Manager.getBoundId();
     if(program)
     {
         auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
@@ -832,7 +834,7 @@ void Repeater::resetEnhancerShift()
 void Repeater::setEnhancerIdentity()
 {
     const auto identity = glm::mat4(1.0);
-    auto program = m_Manager.getBoundedProgramID();
+    auto program = m_Manager.getBoundId();
     auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
     OpenglRedirectorBase::glUniform1i(location, GL_TRUE);
 }
@@ -864,7 +866,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
             // don't duplicate while rendering light's point of view into shadow map
             m_FBOTracker.isFBOshadowMap() ||
             // don't duplicate while there is no projection and its not legacy OpenGL at the same time
-            (m_Manager.isAnyBound() && m_Manager.isVSBound() && !m_Manager.getBoundedVS().hasDetectedTransformation() && !m_LegacyTracker.isLegacyNeeded())
+            (m_Manager.hasBounded() && m_Manager.isVSBound() && !m_Manager.getBoundVS()->hasDetectedTransformation() && !m_LegacyTracker.isLegacyNeeded())
     );
 
     if(shouldNotDuplicate)
@@ -875,14 +877,14 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     }
 
     /// If Uniform Buffer Object is used
-    if(m_Manager.isAnyBound() && m_Manager.getBoundedVS().isUBOused())
+    if(m_Manager.hasBounded() && m_Manager.getBoundVS()->isUBOused())
     {
-        const auto& blockName = m_Manager.getBoundedVS().m_InterfaceBlockName;
-        auto index = m_Manager.getBoundedProgram().m_UniformBlocks[blockName].bindingIndex;
+        const auto& blockName = m_Manager.getBoundVS()->m_InterfaceBlockName;
+        auto index = m_Manager.getBound()->m_UniformBlocks[blockName].bindingIndex;
         const auto& indexStructure = m_UniformBlocksTracker.getBindingIndex(index);
         if(indexStructure.hasTransformation)
         {
-            setEnhancerDecodedProjection(m_Manager.getBoundedProgramID(),indexStructure.projection);
+            setEnhancerDecodedProjection(m_Manager.getBoundId(),indexStructure.projection);
         } else {
             printf("[Repeater] Unexpected state. Expected UBO, but not found. Falling back to identity\n");
             setEnhancerIdentity();
@@ -920,9 +922,9 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         // Detect if VS renders into clip-space, thus if z is always 1.0
         // => in such case, we don't want to translate the virtual camera
         bool isClipSpaceRendering = false;
-        if(m_Manager.isAnyBound() && m_Manager.isVSBound())
+        if(m_Manager.hasBounded() && m_Manager.isVSBound())
         {
-            isClipSpaceRendering = (m_Manager.getBoundedVS().m_IsClipSpaceTransform);
+            isClipSpaceRendering = (m_Manager.getBoundVS()->m_IsClipSpaceTransform);
         }
         const auto& t = (isClipSpaceRendering)?camera.getViewMatrixRotational():camera.getViewMatrix();
         const auto& v = camera.getViewport();

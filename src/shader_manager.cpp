@@ -5,8 +5,18 @@
 
 using namespace ve;
 
+///////////////////////////////////////////////////////////////////////////////
+// ShaderMetadata
+///////////////////////////////////////////////////////////////////////////////
+bool ShaderMetadata::isShaderOneOf(const std::unordered_set<GLenum>& allowedTypes)
+{
+    return (allowedTypes.count(m_Type) > 0);
+}
 
-void ShaderManager::ShaderProgram::updateUniformBlock(size_t location, size_t bindingIndex)
+///////////////////////////////////////////////////////////////////////////////
+// ShaderProgram
+///////////////////////////////////////////////////////////////////////////////
+void ShaderProgram::updateUniformBlock(size_t location, size_t bindingIndex)
 {
     auto blockReference = std::find_if(m_UniformBlocks.begin(), m_UniformBlocks.end(),[&](const auto& block)->bool
     {
@@ -18,152 +28,65 @@ void ShaderManager::ShaderProgram::updateUniformBlock(size_t location, size_t bi
     }
 }
 
-bool ShaderManager::ShaderProgram::hasUniformBlock(const std::string& name) const
+bool ShaderProgram::hasUniformBlock(const std::string& name) const
 {
     return m_UniformBlocks.count(name) > 0;
 }
 
-bool ShaderManager::hasShader(size_t ID) const
+void ShaderProgram::attachShaderToProgram(std::shared_ptr<ShaderMetadata> shader)
 {
-    return m_shaderDatabase.count(ID) > 0;
-}
 
-void ShaderManager::addShader(size_t ID, ShaderTypes type)
-{
-    ShaderManager::ShaderMetadata meta;
-    meta.m_Type = type;
-    m_shaderDatabase[ID] = meta;
-}
-
-ShaderManager::ShaderMetadata& ShaderManager::getShaderDescription(size_t ID)
-{
-    assert(hasShader(ID));
-    return m_shaderDatabase[ID];
-}
-
-bool ShaderManager::isShaderOneOf(size_t ID, const std::unordered_set<ShaderTypes>& allowedTypes)
-{
-    auto& meta = getShaderDescription(ID);
-    return (allowedTypes.count(meta.m_Type) > 0);
-}
-
-bool ShaderManager::hasProgram(size_t ID) const
-{
-    return m_programDatabase.count(ID) > 0;
-}
-
-void ShaderManager::addProgram(size_t ID)
-{
-    ShaderProgram p;
-    m_programDatabase[ID] = p;
-}
-
-const ShaderManager::ShaderProgram& ShaderManager::getProgram(size_t ID) const
-{
-    return m_programDatabase.at(ID);
-}
-ShaderManager::ShaderProgram& ShaderManager::getMutableProgram(size_t ID)
-{
-    return m_programDatabase.at(ID);
-}
-
-
-void ShaderManager::attachShaderToProgram(ShaderTypes type, size_t shaderID, size_t programID)
-{
-    assert(hasShader(shaderID));
-    assert(hasProgram(programID));
-
-    auto& program = getMutableProgram(programID);
-    switch(type)
+    switch(shader->m_Type)
     {
-        case GEOMETRY:
-            program.m_GeometryShader = shaderID; 
+        case GL_GEOMETRY_SHADER:
+            m_GeometryShader = shader; 
             break;
-        case VS:
-            program.m_VertexShader = shaderID; 
+        case GL_VERTEX_SHADER:
+            m_VertexShader = shader; 
             break;
         default:
             break;
     }
 
-    auto& description = getShaderDescription(shaderID);
-    if(description.m_TransformationMatrixName.empty() || description.m_InterfaceBlockName.empty())
+    // TODO: remove/move somewhere else
+    if(shader->m_TransformationMatrixName.empty() || shader->m_InterfaceBlockName.empty())
         return;
-    if(program.m_UniformBlocks.count(description.m_InterfaceBlockName) > 0)
+    if(m_UniformBlocks.count(shader->m_InterfaceBlockName) > 0)
         return;
-    program.m_UniformBlocks[description.m_InterfaceBlockName].bindingIndex = 0;
+    m_UniformBlocks[shader->m_InterfaceBlockName].bindingIndex = 0;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// ShaderManager
+///////////////////////////////////////////////////////////////////////////////
 
-/// Track bounded programs
-void ShaderManager::bind(size_t program)
-{
-    m_BoundProgram = program;
-}
-
-/// Is any valid program bounded
-bool ShaderManager::isAnyBound() const
-{
-    return m_BoundProgram != 0;
-}
-
-
-/// Is VS bound
 bool ShaderManager::isVSBound() const
 {
-    if(!isAnyBound())
+    if(!hasBounded())
         return false;
-    const auto VS = getProgram(m_BoundProgram).m_VertexShader;
-    return (VS != -1) && hasShader(VS);
+    const auto& VS = getBoundConst()->m_VertexShader;
+    return VS != nullptr;
 }
 
 bool ShaderManager::isGSBound() const
 {
-    if(!isAnyBound())
+    if(!hasBounded())
         return false;
-    const auto GS = getProgram(m_BoundProgram).m_GeometryShader;
-    return (GS != -1) && hasShader(GS);
+    const auto& GS = getBoundConst()->m_GeometryShader;
+    return GS != nullptr;
 }
 
 /// Get metadata for currently bounded program
-ShaderManager::ShaderMetadata& ShaderManager::getBoundedVS()
+std::shared_ptr<ShaderMetadata> ShaderManager::getBoundVS()
 {
-    assert(m_BoundProgram != 0);
-    const auto VS = getProgram(m_BoundProgram).m_VertexShader;
-    assert(VS != -1);
-    assert(hasShader(VS));
-    return getShaderDescription(VS);
+    assert(hasBounded() != 0);
+    const auto& VS = getBound()->m_VertexShader;
+    return VS;
 }
 
-ShaderManager::ShaderMetadata& ShaderManager::getBoundedGS()
+std::shared_ptr<ShaderMetadata> ShaderManager::getBoundGS()
 {
-    assert(m_BoundProgram != 0);
-    const auto GS = getProgram(m_BoundProgram).m_GeometryShader;
-    assert(GS != -1);
-    assert(hasShader(GS));
-    return getShaderDescription(GS);
+    assert(hasBounded() != 0);
+    const auto GS = getBound()->m_GeometryShader;
+    return GS;
 }
-
-
-ShaderManager::ShaderProgram& ShaderManager::getBoundedProgram()
-{
-    assert(m_BoundProgram != 0);
-    return  getMutableProgram(m_BoundProgram);
-}
-
-size_t ShaderManager::getBoundedProgramID() const
-{
-    return m_BoundProgram;
-}
-
-const std::unordered_map<size_t, ShaderManager::ShaderProgram>& ShaderManager::getPrograms() const
-{
-    return m_programDatabase;
-}
-
-std::unordered_map<size_t, ShaderManager::ShaderProgram>& ShaderManager::getMutablePrograms() 
-{
-    return m_programDatabase;
-}
-
-
