@@ -42,7 +42,7 @@ class BindableContextTracker: public ContextTracker<T>
     T getBound();
     T const getBoundConst() const;
 
-    size_t getBoundId();
+    size_t getBoundId() const;
 
     protected:
     size_t m_currentlyBoundObjectId = 0;
@@ -125,7 +125,7 @@ T const BindableContextTracker<T>::getBoundConst() const
 }
 
 template<typename T>
-size_t BindableContextTracker<T>::getBoundId()
+size_t BindableContextTracker<T>::getBoundId() const
 {
     return m_currentlyBoundObjectId;
 }

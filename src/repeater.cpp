@@ -328,14 +328,14 @@ void Repeater::glScissor(GLint x,GLint y,GLsizei width,GLsizei height)
 
 void Repeater::glDrawArrays(GLenum mode,GLint first,GLsizei count) 
 {
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glDrawArrays(mode,first,count);
     });
 }
 
 void Repeater::glDrawElements(GLenum mode,GLsizei count,GLenum type,const GLvoid* indices) 
 {
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glDrawElements(mode,count,type,indices);
     });
 }
@@ -343,40 +343,40 @@ void Repeater::glDrawElements(GLenum mode,GLsizei count,GLenum type,const GLvoid
 
 void Repeater::glDrawElementsInstanced (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount)
 {
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glDrawElementsInstanced(mode,count,type,indices,instancecount);
     });
 }
 
 void Repeater::glDrawRangeElements (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices)
 {
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glDrawRangeElements(mode,start,end,count,type,indices);
     });
 }
 
 void Repeater::glDrawElementsBaseVertex (GLenum mode, GLsizei count, GLenum type, const void* indices, GLint basevertex)
 {
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glDrawElementsBaseVertex(mode,count,type,indices, basevertex);
     });
 }
 void Repeater::glDrawRangeElementsBaseVertex (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices, GLint basevertex)
 {
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glDrawRangeElementsBaseVertex(mode,start,end,count,type,indices,basevertex);
     });
 }
 void Repeater::glDrawElementsInstancedBaseVertex (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount, GLint basevertex) 
 {
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glDrawElementsInstancedBaseVertex(mode,count,type,indices, instancecount, basevertex);
     });
 }
 
 void Repeater::glMultiDrawElementsBaseVertex (GLenum mode, const GLsizei* count, GLenum type, const void* const*indices, GLsizei drawcount, const GLint* basevertex)
 {
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glMultiDrawElementsBaseVertex(mode,count,type,indices, drawcount, basevertex);
     });
 }
@@ -389,7 +389,8 @@ void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
     OpenglRedirectorBase::glGenFramebuffers(n, framebuffers);
     for(size_t i=0;i < n; i++)
     {
-        m_FBOTracker.addFramebuffer(framebuffers[i]);
+        auto fbo = std::make_shared<FramebufferMetadata>();
+        m_FBOTracker.add(framebuffers[i],fbo);
     }
 }
 
@@ -690,20 +691,20 @@ void Repeater::glEnd()
     OpenglRedirectorBase::glEnd();
     glEndList();
 
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glCallList(m_callList);
     });
 }
 
 void Repeater::glCallList(GLuint list)
 {
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glCallList(list);
     });
 }
 void Repeater::glCallLists(GLsizei n,GLenum type,const GLvoid* lists)
 {
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glCallLists(n,type, lists);
     });
 }
@@ -859,7 +860,7 @@ void Repeater::takeScreenshot(const std::string filename)
     delete [] pixels;
 }
 
-void Repeater::duplicateCode(const std::function<void(void)>& code)
+void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
 {
     bool shouldNotDuplicate = (
             !m_IsMultiviewActivated ||
@@ -872,7 +873,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
     if(shouldNotDuplicate)
     {
         setEnhancerIdentity();
-        code();
+        drawCallLambda();
         return;
     }
 
@@ -933,7 +934,7 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
             OpenglRedirectorBase::glViewport(v.getX(), v.getY(), v.getWidth(), v.getHeight());
         }
         setEnhancerShift(t,camera.getAngle()*m_cameraParameters.m_XShiftMultiplier/m_cameraParameters.m_frontOpticalAxisCentreDistance);
-        code();
+        drawCallLambda();
         resetEnhancerShift();
     }
     // restore

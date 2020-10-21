@@ -119,7 +119,7 @@ namespace ve
 
         void takeScreenshot(const std::string filename);
 
-        void duplicateCode(const std::function<void(void)>& code);
+        void drawMultiviewed(const std::function<void(void)>& code);
 
         
         ///////////////////////////////////////////////////////////////////////
