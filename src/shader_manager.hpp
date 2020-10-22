@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "utils/context_tracker.hpp"
+#include "program_metadata.hpp"
 
 #include <GL/gl.h>
 
@@ -14,24 +15,6 @@ namespace ve
         GLenum m_Type = 0;
 
         std::string preprocessedSourceCode;
-
-        bool m_IsUniformInInterfaceBlock = false;
-        /// If transformation is in block, stores block name
-        std::string m_InterfaceBlockName;
-        /// Offset from the start of block
-        size_t m_TransformationByteOffset;
-
-        /// Name of projection matrix or MVP
-        std::string m_TransformationMatrixName;
-        // Determines if any uniform is defined
-        bool m_HasAnyUniform = false;
-        // Determines if skybox / clipspace rendering was detected
-        bool m_IsClipSpaceTransform = false;
-
-
-        // Queries
-        bool isUBOused() const;
-        bool hasDetectedTransformation() const;
         bool isShaderOneOf(const std::unordered_set<GLenum>& allowedTypes);
     };
 
@@ -40,6 +23,8 @@ namespace ve
     {
         std::shared_ptr<ShaderMetadata> m_VertexShader;
         std::shared_ptr<ShaderMetadata> m_GeometryShader;
+
+        ProgramMetadata m_Metadata;
 
         struct UniformBlock
         {

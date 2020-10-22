@@ -82,6 +82,8 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline_injector.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline_injector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/program_metadata.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/program_metadata.cpp
     )
 
 # Hack: we would like a static library to be linked into shared library later

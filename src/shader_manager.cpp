@@ -13,18 +13,6 @@ bool ShaderMetadata::isShaderOneOf(const std::unordered_set<GLenum>& allowedType
     return (allowedTypes.count(m_Type) > 0);
 }
 
-
-bool ShaderMetadata::isUBOused() const
-{
-    return !m_TransformationMatrixName.empty() && !m_InterfaceBlockName.empty();
-}
-
-bool ShaderMetadata::hasDetectedTransformation() const
-{
-    return !m_TransformationMatrixName.empty();
-}
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // ShaderProgram
 ///////////////////////////////////////////////////////////////////////////////
@@ -61,11 +49,12 @@ void ShaderProgram::attachShaderToProgram(std::shared_ptr<ShaderMetadata> shader
     }
 
     // TODO: remove/move somewhere else
-    if(shader->m_TransformationMatrixName.empty() || shader->m_InterfaceBlockName.empty())
+    /*if(shader->m_TransformationMatrixName.empty() || shader->m_InterfaceBlockName.empty())
         return;
     if(m_UniformBlocks.count(shader->m_InterfaceBlockName) > 0)
         return;
     m_UniformBlocks[shader->m_InterfaceBlockName].bindingIndex = 0;
+    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -43,8 +43,11 @@ TEST(ShaderManager, VertexShaderCreation)
     ASSERT_FALSE(m.isGSBound());
     auto shader = m.getBoundVS();
     ASSERT_EQ(shader->m_Type, GL_VERTEX_SHADER);
-    ASSERT_FALSE(shader->hasDetectedTransformation());
-    ASSERT_FALSE(shader->isUBOused());
+
+
+    auto program = m.get(1);
+    ASSERT_FALSE(program->m_Metadata.hasDetectedTransformation());
+    ASSERT_FALSE(program->m_Metadata.isUBOused());
 }
 
 TEST(ShaderManager, GeometryShader) 
@@ -63,7 +66,9 @@ TEST(ShaderManager, GeometryShader)
     ASSERT_TRUE(m.isGSBound());
     shader = m.getBoundGS();
     ASSERT_EQ(shader->m_Type, GL_GEOMETRY_SHADER);
-    ASSERT_FALSE(shader->isUBOused());
+
+
+    ASSERT_FALSE(m.get(1)->m_Metadata.isUBOused());
 }
 
 TEST(ShaderManager, IsShaderOneOf) 
