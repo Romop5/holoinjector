@@ -12,6 +12,14 @@ namespace helper
             std::cout << "END" << std::endl;
         }
     }
+
+    static void printMetadata(const ProgramMetadata& metadata)
+    {
+        printf("[Metadata] found transformation name: %s\n",metadata.m_TransformationMatrixName.c_str());
+        printf("[Metadata] found interface block: %s\n",metadata.m_InterfaceBlockName.c_str());
+        printf("[Metadata] is clip space: %d\n",metadata.m_IsClipSpaceTransform);
+ 
+    }
 } // helper
 namespace {
 TEST(PipelineInjector, Insertion) {
@@ -25,10 +33,12 @@ TEST(PipelineInjector, Insertion) {
             in vec3 vertex;
 
             out vec2 normal;
+
+            uniform mat4 insertUniform;
             void main()
             {
                 normal = vertex.xy;
-                gl_Position = vec4(vertex, 0.0);
+                gl_Position = vec4(insertUniform*vertex, 0.0);
             }
         )"},
         {GL_FRAGMENT_SHADER, R"(
@@ -44,7 +54,9 @@ TEST(PipelineInjector, Insertion) {
     };
 
     auto result = injector.process(input);
-    helper::printPipeline(result);
+    helper::printPipeline(result.pipeline);
+    if(result.metadata)
+        helper::printMetadata(*result.metadata);
 }
 TEST(PipelineInjector, Injection) {
 
@@ -95,6 +107,8 @@ TEST(PipelineInjector, Injection) {
     };
 
     auto result = injector.process(input);
-    helper::printPipeline(result);
+    helper::printPipeline(result.pipeline);
+    if(result.metadata)
+        helper::printMetadata(*result.metadata);
 }
 }

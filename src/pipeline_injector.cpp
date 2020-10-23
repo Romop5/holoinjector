@@ -6,18 +6,48 @@
 
 using namespace ve;
 
-PipelineInjector::PipelineType PipelineInjector::process(PipelineType input)
+PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType input, const PipelineParams& params)
 {
-    PipelineType output;
+    auto metadata = std::make_unique<ProgramMetadata>();
+    bool hasFilledMetadata = false;
+
+    assert(output.count(GL_FRAGMENT_SHADER) > 0);
+    assert(output.count(GL_VERTEX_SHADER) > 0);
+
+    PipelineType output = input;
+    /*
+     * Inspect original shader program and search for transformation
+     */
+    if(output.count(GL_GEOMETRY_SHADER) > 0)
+    {   // Try Geometry shader at first
+        auto GS = output.at(GL_GEOMETRY_SHADER);
+        if(injectShader(GS, *metadata))
+        {
+            hasFilledMetadata = true;
+            output[GL_GEOMETRY_SHADER] = GS;
+        }
+    }
+
+    auto VS = output.at(GL_VERTEX_SHADER);
+    if(!hasFilledMetadata && injectShader(VS, *metadata))
+    {   // try VS if GS does not exists or does not contain transformation
+        hasFilledMetadata = true; 
+        output[GL_FRAGMENT_SHADER] = VS;
+    }
+
+    /*
+     * In any case, inject geometry shader
+     */
+    
     // Inject new GS if none is provided
     if(input.count(GL_GEOMETRY_SHADER) == 0)
-        output = insertGeometryShader(input,GSInsertionParams{});
+        output = insertGeometryShader(output,params);
     else 
-        output = injectGeometryShader(input,GSInjectionParams{});
-    return output;
+        output = injectGeometryShader(output,params);
+    return {output, (hasFilledMetadata)?std::move(metadata):nullptr};
 }
 
-PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const PipelineType& pipeline, const GSInsertionParams params)
+PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const PipelineType& pipeline, const PipelineParams params)
 {
     // Verify that pipeline has FS and does not have GS
     assert(pipeline.count(GL_FRAGMENT_SHADER) == 1);
@@ -116,7 +146,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
 }
 
 
-PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const PipelineType& pipeline, const GSInjectionParams params)
+PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const PipelineType& pipeline, const PipelineParams params)
 {
     /*
      * TODO: following code does not expect output streams (as used by TransformFeedback mechanism)
@@ -172,4 +202,22 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     auto output = pipeline;
     output[GL_GEOMETRY_SHADER] = geometryShader;
     return output;
+}
+
+
+bool PipelineInjector::injectShader(std::string& sourceCode, ProgramMetadata& outMetadata)
+{
+    ShaderInspector inspector(sourceCode);
+    auto statements = inspector.findAllOutVertexAssignments();
+    auto transformationName = inspector.getTransformationUniformName(statements);
+    if(transformationName.empty())
+        return false;
+    
+    outMetadata.m_TransformationMatrixName = transformationName;
+    outMetadata.m_IsClipSpaceTransform = inspector.isClipSpaceShader(); 
+    outMetadata.m_InterfaceBlockName = inspector.getUniformBlockName(outMetadata.m_TransformationMatrixName);
+    outMetadata.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
+
+    sourceCode = inspector.injectShader(statements);
+    return true;
 }

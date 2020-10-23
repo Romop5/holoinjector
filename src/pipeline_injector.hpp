@@ -2,19 +2,19 @@
 #define PIPELINE_INJECTOR_HPP
 
 #include <unordered_map>
+#include <memory>
 #include <string>
 #include <GL/gl.h>
 
+#include "program_metadata.hpp"
+
 namespace ve
 {
-    struct GSInsertionParams
+    struct PipelineParams
     {
         // True when original VS was dividing by 1.0
         bool shouldRenderToClipspace = false;
-    };
 
-    struct GSInjectionParams
-    {
         size_t countOfPrimitivesDuplicates = 1;
         size_t countOfInvocations = 1;
     };
@@ -23,7 +23,19 @@ namespace ve
     {
         public:
             using PipelineType = std::unordered_map<GLenum, std::string>;
-            PipelineType process(PipelineType inputPipeline);
+            struct PipelineProcessResult
+            {
+                PipelineType pipeline;
+                std::unique_ptr<ProgramMetadata> metadata;
+            };
+            /**
+             * @brief 
+             *
+             * @param inputPipeline
+             *
+             * @return 
+             */
+            PipelineProcessResult process(PipelineType inputPipeline, const PipelineParams& params = PipelineParams());
         private:
             /**
              * @brief Insert new geometry shader 
@@ -31,7 +43,7 @@ namespace ve
              * @param pipeline
              * @return alterned pipeline with correct in/out attributes passing
              */
-            PipelineType insertGeometryShader(const PipelineType& pipeline, const GSInsertionParams params);
+            PipelineType insertGeometryShader(const PipelineType& pipeline, const PipelineParams params);
             /**
              * @brief Inject the old GS
              *
@@ -40,7 +52,10 @@ namespace ve
              *
              * @return 
              */
-            PipelineType injectGeometryShader(const PipelineType& pipeline, const GSInjectionParams params);
+            PipelineType injectGeometryShader(const PipelineType& pipeline, const PipelineParams params);
+
+
+            bool injectShader(std::string& sourceCode, ProgramMetadata& outMetadata);
     };
 } //namespace ve
 #endif
