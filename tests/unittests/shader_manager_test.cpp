@@ -22,8 +22,8 @@ TEST(ShaderManager, Basic)
     ASSERT_FALSE(m.isVSBound());
 
     auto program = m.getBound();
-    ASSERT_EQ(program->m_VertexShader, nullptr);
-    ASSERT_EQ(program->m_GeometryShader, nullptr);
+    ASSERT_FALSE(program->shaders.has(GL_VERTEX_SHADER));
+    ASSERT_FALSE(program->shaders.has(GL_GEOMETRY_SHADER));
 }
 
 TEST(ShaderManager, VertexShaderCreation) 
@@ -46,8 +46,7 @@ TEST(ShaderManager, VertexShaderCreation)
 
 
     auto program = m.get(1);
-    ASSERT_FALSE(program->m_Metadata.hasDetectedTransformation());
-    ASSERT_FALSE(program->m_Metadata.isUBOused());
+    ASSERT_FALSE(program->m_Metadata);
 }
 
 TEST(ShaderManager, GeometryShader) 
@@ -68,7 +67,7 @@ TEST(ShaderManager, GeometryShader)
     ASSERT_EQ(shader->m_Type, GL_GEOMETRY_SHADER);
 
 
-    ASSERT_FALSE(m.get(1)->m_Metadata.isUBOused());
+    ASSERT_FALSE(m.get(1)->m_Metadata);
 }
 
 TEST(ShaderManager, IsShaderOneOf) 
@@ -121,12 +120,12 @@ TEST(ShaderManager, ProgramEnumeration)
     ASSERT_EQ(m.getMap().size(),2);
     ASSERT_EQ(m.getMap().size(),2);
 
-    m.shaders.add(2, std::make_shared<ve::ShaderMetadata>());
+    m.shaders.add(2, std::make_shared<ve::ShaderMetadata>(2, GL_VERTEX_SHADER));
     m.get(2)->attachShaderToProgram(m.shaders.get(2));
 
     m.bind(2);
     auto shader2 = m.getBound();
-    ASSERT_EQ(shader2->m_VertexShader, m.getMap().at(2)->m_VertexShader);
+    ASSERT_EQ(shader2->shaders.get(GL_VERTEX_SHADER), m.getMap().at(2)->shaders.get(GL_VERTEX_SHADER));
 }
 
 }

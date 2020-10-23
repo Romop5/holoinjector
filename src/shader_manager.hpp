@@ -12,6 +12,13 @@ namespace ve
 {
     struct ShaderMetadata
     {
+        ShaderMetadata() = default;
+        ShaderMetadata(size_t id, GLenum type)
+        {
+            m_Id = id;
+            m_Type = type;
+        }
+        size_t m_Id = 0;
         GLenum m_Type = 0;
 
         std::string preprocessedSourceCode;
@@ -21,10 +28,9 @@ namespace ve
 
     struct ShaderProgram
     {
-        std::shared_ptr<ShaderMetadata> m_VertexShader;
-        std::shared_ptr<ShaderMetadata> m_GeometryShader;
+        BindableContextTracker<std::shared_ptr<ShaderMetadata>> shaders;
 
-        ProgramMetadata m_Metadata;
+        std::unique_ptr<ProgramMetadata> m_Metadata;
 
         struct UniformBlock
         {

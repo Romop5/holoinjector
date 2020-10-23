@@ -35,7 +35,8 @@ bool ShaderProgram::hasUniformBlock(const std::string& name) const
 
 void ShaderProgram::attachShaderToProgram(std::shared_ptr<ShaderMetadata> shader)
 {
-
+    shaders.add(shader->m_Type, shader);
+    /*
     switch(shader->m_Type)
     {
         case GL_GEOMETRY_SHADER:
@@ -47,6 +48,7 @@ void ShaderProgram::attachShaderToProgram(std::shared_ptr<ShaderMetadata> shader
         default:
             break;
     }
+    */
 
     // TODO: remove/move somewhere else
     /*if(shader->m_TransformationMatrixName.empty() || shader->m_InterfaceBlockName.empty())
@@ -65,29 +67,25 @@ bool ShaderManager::isVSBound() const
 {
     if(!hasBounded())
         return false;
-    const auto& VS = getBoundConst()->m_VertexShader;
-    return VS != nullptr;
+    return getBoundConst()->shaders.has(GL_VERTEX_SHADER);
 }
 
 bool ShaderManager::isGSBound() const
 {
     if(!hasBounded())
         return false;
-    const auto& GS = getBoundConst()->m_GeometryShader;
-    return GS != nullptr;
+    return getBoundConst()->shaders.has(GL_GEOMETRY_SHADER);
 }
 
 /// Get metadata for currently bounded program
 std::shared_ptr<ShaderMetadata> ShaderManager::getBoundVS()
 {
     assert(hasBounded() != 0);
-    const auto& VS = getBound()->m_VertexShader;
-    return VS;
+    return getBound()->shaders.get(GL_VERTEX_SHADER);
 }
 
 std::shared_ptr<ShaderMetadata> ShaderManager::getBoundGS()
 {
     assert(hasBounded() != 0);
-    const auto GS = getBound()->m_GeometryShader;
-    return GS;
+    return getBound()->shaders.get(GL_GEOMETRY_SHADER);
 }

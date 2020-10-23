@@ -8,13 +8,13 @@ using namespace ve;
 
 PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType input, const PipelineParams& params)
 {
+    PipelineType output = input;
     auto metadata = std::make_unique<ProgramMetadata>();
     bool hasFilledMetadata = false;
 
     assert(output.count(GL_FRAGMENT_SHADER) > 0);
     assert(output.count(GL_VERTEX_SHADER) > 0);
 
-    PipelineType output = input;
     /*
      * Inspect original shader program and search for transformation
      */
@@ -32,7 +32,7 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
     if(!hasFilledMetadata && injectShader(VS, *metadata))
     {   // try VS if GS does not exists or does not contain transformation
         hasFilledMetadata = true; 
-        output[GL_FRAGMENT_SHADER] = VS;
+        output[GL_VERTEX_SHADER] = VS;
     }
 
     /*
@@ -57,13 +57,16 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
     auto result = pipeline;
     std::stringstream geometryShaderStream;
     geometryShaderStream <<  R"(
-        #version 430 compatible 
+        #version 440 core 
         layout (triangles) in;
-        layout (triangles, max_vertices = 2*3) out;
+        layout (triangle_strip, max_vertices = 2*3) out;
 
         )";
-    geometryShaderStream << "const bool enhancer_geometry_isClipSpace = " << params.shouldRenderToClipspace <<";\n";
+    geometryShaderStream << "const bool enhancer_geometry_isClipSpace = " 
+        << (params.shouldRenderToClipspace?"true":"false") <<";\n";
     geometryShaderStream << "uniform int enhancer_max_invocations;\n";
+    geometryShaderStream << "uniform int enhancer_max_views;\n";
+    geometryShaderStream << "uniform int enhancer_duplications;\n";
     geometryShaderStream << R"(
         void identity_main(int layer)
         {
@@ -77,10 +80,11 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
                 gl_Layer = layer;
                 if(enhancer_geometry_isClipSpace)
                 {
-                    gl_position = vec4(gl_Position.xy, 1.0, 1.0);
+                    gl_Position = vec4(gl_Position.xy, 1.0, 1.0);
                 }
                 EmitVertex();
             }
+            EndPrimitive();
         }
 
         void main()
@@ -89,7 +93,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
             if(gl_InvocationID >= enhancer_max_invocations)
                 return;
             int layer = gl_InvocationID*2;
-            for(int i = 0; i < duplications; i++)
+            for(int i = 0; i < enhancer_duplications; i++)
             {
                 if(layer+i >= enhancer_max_views)
                     return;
@@ -157,7 +161,7 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     auto geometryShader = pipeline.at(GL_GEOMETRY_SHADER);
 
     // TODO: code is not ready for output streams
-    assert(pipeline.find("EmitStream") == std::string::npos);
+    assert(geometryShader.find("EmitStream") == std::string::npos);
 
     // 1. rename void main() to void old_main()
     assert(geometryShader.find("void main") != std::string::npos);
@@ -197,6 +201,8 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     // Place new main() into the end of shader
     geometryShader.insert(geometryShader.size()-1, newMainFunction);
 
+    // Replace version with GLSL 4.6
+    geometryShader = std::regex_replace(geometryShader, std::regex("#version[^\n]\n"),"#version 440 core\n");  
 
     // Return new pipeline
     auto output = pipeline;
