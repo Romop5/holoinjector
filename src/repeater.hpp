@@ -161,5 +161,17 @@ namespace ve
          *   and then, duplicate it
          */
         GLint m_callList = 0;
+
+
+        void initializeLayeredBackBuffer();
+        struct LayeredBackBuffer
+        {
+            GLuint m_FBOId;
+            GLuint  m_LayeredColorBuffer;
+            GLuint  m_LayeredDepthStencilBuffer;
+
+            /// Shader program for displaying layared color buffers
+            GLuint  m_ViewerProgram;
+        } m_LayeredBackBuffer;
     };
 }

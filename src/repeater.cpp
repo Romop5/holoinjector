@@ -1029,3 +1029,51 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
     OpenglRedirectorBase::glScissor(originalScissor.getX(), originalScissor.getY(), originalScissor.getWidth(), originalScissor.getHeight());
 }
 
+void Repeater::initializeLayeredBackBuffer()
+{
+    auto& bb = m_LayeredBackBuffer;
+    OpenglRedirectorBase::glGenFramebuffers(1, &bb.m_FBOId); 
+    OpenglRedirectorBase::glBindFramebuffer(bb.m_FBOId);
+
+    OpenglRedirectorBase::glGenTextures(1, &bb.m_LayeredColorBuffer);
+    OpenglRedirectorBase::glGenTextures(1, &bb.m_LayeredDepthStencilBuffer);
+
+
+    OpenglRedirectorBase::glBindTexture(GL_TEXTURE_2D_ARRAY, bb.m_LayeredColorBuffer);
+    OpenglRedirectorBase::glTextureStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 400,300, 9);
+    OpenglRedirectorBase::glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_ARRAY, bb.m_LayeredColorBuffer, 0,0);
+
+    OpenglRedirectorBase::glBindTexture(GL_TEXTURE_2D_ARRAY, bb.m_LayeredDepthStencilBuffer);
+    OpenglRedirectorBase::glTextureStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, 400,300, 9);
+    OpenglRedirectorBase::glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_ARRAY, bb.m_LayeredDepthStencilBuffer, 0,0);
+    OpenglRedirectorBase::glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+    OpenglRedirectorBase::glBindFramebuffer(0);
+
+
+    /*
+     * Create shader program for displaying layered color buffer
+     */
+
+    auto VS = std::string(R"(
+        layout (location = 0) vec3 position;
+
+        out vec2 uv;
+        void main()
+        {
+            gl_Position = position;
+            uv = (position.xy+vec2(1.0))/2.0f;
+        }
+    )";
+
+    auto FS = std::string(R"(
+        sampler3D enhancer_layeredScreen = 0;
+        in vec2 uv;
+        out vec4 color;
+        void main()
+        {
+            color 
+        }
+    )";
+}
+
