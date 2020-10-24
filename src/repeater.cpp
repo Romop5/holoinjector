@@ -263,6 +263,7 @@ void Repeater::glLinkProgram (GLuint programId)
         OpenglRedirectorBase::glDetachShader(programId, shader->m_Id);
         // store source code for given shader type
         pipeline[shader->m_Type] = shader->preprocessedSourceCode;
+        printf("[Repeater] Detaching: %d %zu\n", shader->m_Type, shader->m_Id);
     }
 
     /*
@@ -277,6 +278,7 @@ void Repeater::glLinkProgram (GLuint programId)
         auto newShader = OpenglRedirectorBase::glCreateShader(type);
         const GLchar* sources[1] = {reinterpret_cast<const GLchar*>(sourceCode.data())}; 
         OpenglRedirectorBase::glShaderSource(newShader, 1, sources , nullptr);
+	printf("[Repeater] Compiling shader: \n %s\n", sourceCode.c_str());
         OpenglRedirectorBase::glCompileShader(newShader);
         GLint status;
         OpenglRedirectorBase::glGetShaderiv(newShader,GL_COMPILE_STATUS, &status);
@@ -295,7 +297,7 @@ void Repeater::glLinkProgram (GLuint programId)
         OpenglRedirectorBase::glAttachShader(programId, newShader);
         newShaders.push_back(newShader);
     }
-    printf("[Repeater] Relink program with new shaders %s", log);
+    printf("[Repeater] Relink program with new shaders\n");
     OpenglRedirectorBase::glLinkProgram(programId);
     GLint linkStatus = 0;
     OpenglRedirectorBase::glGetProgramiv(programId, GL_LINK_STATUS, &linkStatus);

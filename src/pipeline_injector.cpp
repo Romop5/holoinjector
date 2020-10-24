@@ -64,9 +64,9 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
         )";
     geometryShaderStream << "const bool enhancer_geometry_isClipSpace = " 
         << (params.shouldRenderToClipspace?"true":"false") <<";\n";
-    geometryShaderStream << "uniform int enhancer_max_invocations;\n";
-    geometryShaderStream << "uniform int enhancer_max_views;\n";
-    geometryShaderStream << "uniform int enhancer_duplications;\n";
+    geometryShaderStream << "uniform int enhancer_max_invocations = 1;\n";
+    geometryShaderStream << "uniform int enhancer_max_views = 1;\n";
+    geometryShaderStream << "uniform int enhancer_duplications = 1;\n";
     geometryShaderStream << R"(
         void identity_main(int layer)
         {
