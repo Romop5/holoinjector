@@ -11,6 +11,8 @@
 #include "trackers/legacy_tracker.hpp"
 #include "pipeline/viewport_area.hpp"
 #include "pipeline/virtual_cameras.hpp"
+#include "pipeline/output_fbo.hpp"
+
 #include "diagnostics.hpp"
 
 namespace ve
@@ -162,23 +164,7 @@ namespace ve
          */
         GLint m_callList = 0;
 
-
-        // TODO: separate into separate class
-        // => sort out calls OpenGL
-        void initializeLayeredBackBuffer();
-
-        void renderLayersToFrontbuffer();
-        struct LayeredBackBuffer
-        {
-            GLuint  m_FBOId;
-            GLuint  m_LayeredColorBuffer;
-            GLuint  m_LayeredDepthStencilBuffer;
-
-            /// Shader program for displaying layared color buffers
-            GLuint  m_ViewerProgram;
-
-            // Full screen quad
-            GLuint  m_VAO;
-        } m_LayeredBackBuffer;
+	/// FBO with all raw virtual cameras
+	OutputFBO m_OutputFBO;
     };
 }

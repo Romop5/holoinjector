@@ -84,13 +84,15 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/pipeline_injector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/program_metadata.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/program_metadata.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/output_fbo.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/output_fbo.cpp
     )
 
 # Hack: we would like a static library to be linked into shared library later
 # => Position Independent Code is thus required
 target_compile_options(enhancer_core PRIVATE "-fPIC")
 
-target_link_libraries(enhancer_core PUBLIC glm ${FREEIMAGE_LIBRARIES})
+target_link_libraries(enhancer_core PUBLIC GL glm ${FREEIMAGE_LIBRARIES})
 target_include_directories(enhancer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${FREEIMAGE_INCLUDE_DIR})
 target_compile_features(enhancer_core PUBLIC cxx_std_17)
