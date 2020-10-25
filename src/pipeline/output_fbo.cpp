@@ -113,7 +113,7 @@ void OutputFBO::initialize()
     glGetIntegerv(GL_CURRENT_PROGRAM, &oldProgram);
 
     auto program = glCreateProgram();
-    glUseProgram(program);
+    //glUseProgram(program);
     glAttachShader(program, fsId);
     glAttachShader(program, vsId);
 
@@ -122,7 +122,7 @@ void OutputFBO::initialize()
     glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
 
 
-    glUseProgram(oldProgram);
+    //glUseProgram(oldProgram);
 
     assert(linkStatus == GL_TRUE);
     m_ViewerProgram = program;
@@ -146,7 +146,8 @@ void OutputFBO::initialize()
 
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
-    glNamedBufferData(vertexBuffer, sizeof(float)*5*4, vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*5*4, vertices, GL_STATIC_DRAW);
 
     GLint oldVao;
     glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&oldVao);

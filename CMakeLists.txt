@@ -155,24 +155,30 @@ target_link_libraries(enhancer_core PUBLIC ${SIMPLECPP_SO})
 ###############################################################################
 
 if(${ENHANCER_BUILD_TESTS})
-
-    
     enable_testing()
     find_package(GTest REQUIRED)
+    find_package(Threads)
 
+    #===========================================================================
     set(GTEST_ROOT "${CMAKE_BINARY_DIR}/")
-
+    #===========================================================================
     file(GLOB UNITTEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/*.cpp)
     add_executable(unittests 
         ${UNITTEST_FILES}
     )
-    find_package(Threads)
     target_link_libraries(unittests ${GTEST_BOTH_LIBRARIES} enhancer_core Threads::Threads)
     set(TARGET unittests PROPERTY CXX_STANDARD 17)
 
+    #===========================================================================
+    add_executable(opengl-unittest
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/opengl/opengl_test_context.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/opengl/output_fbo_test.cpp
+    )
+    target_link_libraries(opengl-unittest ${GTEST_BOTH_LIBRARIES} enhancer_core GL X11)
+    set(TARGET opengl-unittest PROPERTY CXX_STANDARD 17)
+
+    #===========================================================================
     add_test(NAME AllTests COMMAND "$<TARGET_FILE:unittests>")
-
-
     if(${ENHANCER_BUILD_TESTS_COVERAGE})
         include(CodeCoverage)
         append_coverage_compiler_flags()
