@@ -112,11 +112,13 @@ void Repeater::initialize()
 
 
     /// Fill viewports
-    glGetIntegerv(GL_VIEWPORT, currentViewport.getDataPtr());
-    glGetIntegerv(GL_SCISSOR_BOX, currentScissorArea.getDataPtr());
+    OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, currentViewport.getDataPtr());
+    OpenglRedirectorBase::glGetIntegerv(GL_SCISSOR_BOX, currentScissorArea.getDataPtr());
     m_cameras.setupWindows(9,3);
     m_cameras.updateViewports(currentViewport);
     m_cameras.updateParamaters(m_cameraParameters);
+
+    initializeLayeredBackBuffer();
 }
 
 void Repeater::glClear(GLbitfield mask) 
@@ -127,8 +129,15 @@ void Repeater::glClear(GLbitfield mask)
         initialize();
         isInitialized = true;
     }
+
+    if(!m_FBOTracker.hasBounded())
+    {
+        OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_LayeredBackBuffer.m_FBOId);
+        OpenglRedirectorBase::glClear(mask);
+        OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER,0);
+    }
     OpenglRedirectorBase::glClear(mask);
-    
+        
 }
 void Repeater::registerCallbacks() 
 {
@@ -137,6 +146,7 @@ void Repeater::registerCallbacks()
 
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
+    renderLayersToFrontbuffer();
     OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
     m_diagnostics.incrementFrameCount(); 
     if(m_diagnostics.hasReachedLastFrame())
@@ -607,7 +617,7 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
         return;
 
     GLint bufferID = 0;
-    glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
+    OpenglRedirectorBase::glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
     if(!m_UniformBlocksTracker.hasBufferBindingIndex(bufferID))
         return;
     auto index = m_UniformBlocksTracker.getBufferBindingIndex(bufferID);
@@ -672,7 +682,7 @@ void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size,
         return;
 
     GLint bufferID = 0;
-    glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
+    OpenglRedirectorBase::glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
     if(!m_UniformBlocksTracker.hasBufferBindingIndex(bufferID))
         return;
     auto index = m_UniformBlocksTracker.getBufferBindingIndex(bufferID);
@@ -767,16 +777,16 @@ void Repeater::glBegin(GLenum mode)
 {
     if(m_callList == 0)
     {
-        m_callList = glGenLists(1);
+        m_callList = OpenglRedirectorBase::glGenLists(1);
     }
-    glNewList(m_callList, GL_COMPILE);
+    OpenglRedirectorBase::glNewList(m_callList, GL_COMPILE);
     OpenglRedirectorBase::glBegin(mode);
 }
 
 void Repeater::glEnd()
 {
     OpenglRedirectorBase::glEnd();
-    glEndList();
+    OpenglRedirectorBase::glEndList();
 
     Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glCallList(m_callList);
@@ -934,7 +944,7 @@ void Repeater::takeScreenshot(const std::string filename)
     // Make the BYTE array, factor of 3 because it's RBG.
     BYTE* pixels = new BYTE[3 * width * height];
 
-    glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, pixels);
+    OpenglRedirectorBase::glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, pixels);
 
     // Convert to FreeImage format & save to file
     FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF, 0xFF00, 0xFF0000, false);
@@ -949,12 +959,19 @@ void Repeater::takeScreenshot(const std::string filename)
 
 void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
 {
+    if(!m_FBOTracker.hasBounded())
+    {
+        OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_LayeredBackBuffer.m_FBOId);
+    }
+
     bool shouldNotDuplicate = (
             !m_IsMultiviewActivated ||
             // don't duplicate while rendering light's point of view into shadow map
             m_FBOTracker.isFBOshadowMap() ||
             // don't duplicate while there is no projection and its not legacy OpenGL at the same time
-            (m_Manager.hasBounded() && m_Manager.getBound()->m_Metadata && !m_Manager.getBound()->m_Metadata->hasDetectedTransformation() && !m_LegacyTracker.isLegacyNeeded())
+            (m_Manager.hasBounded() && m_Manager.getBound()->m_Metadata && !m_Manager.getBound()->m_Metadata->hasDetectedTransformation() && !m_LegacyTracker.isLegacyNeeded()) ||
+            // don't duplicate if we don't have any metadata
+            !m_Manager.getBound()->m_Metadata
     );
 
     if(shouldNotDuplicate)
@@ -965,7 +982,7 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
     }
 
     /// If Uniform Buffer Object is used
-    if(m_Manager.hasBounded() && m_Manager.getBound()->m_Metadata->isUBOused())
+    if(m_Manager.hasBounded() && m_Manager.getBound()->m_Metadata && m_Manager.getBound()->m_Metadata->isUBOused())
     {
         const auto& blockName = m_Manager.getBound()->m_Metadata->m_InterfaceBlockName;
         auto index = m_Manager.getBound()->m_UniformBlocks[blockName].bindingIndex;
@@ -1033,22 +1050,42 @@ void Repeater::initializeLayeredBackBuffer()
 {
     auto& bb = m_LayeredBackBuffer;
     OpenglRedirectorBase::glGenFramebuffers(1, &bb.m_FBOId); 
-    OpenglRedirectorBase::glBindFramebuffer(bb.m_FBOId);
+    assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
+    OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER,bb.m_FBOId);
+    assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
 
     OpenglRedirectorBase::glGenTextures(1, &bb.m_LayeredColorBuffer);
+    assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
     OpenglRedirectorBase::glGenTextures(1, &bb.m_LayeredDepthStencilBuffer);
+    assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
 
 
     OpenglRedirectorBase::glBindTexture(GL_TEXTURE_2D_ARRAY, bb.m_LayeredColorBuffer);
-    OpenglRedirectorBase::glTextureStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 400,300, 9);
-    OpenglRedirectorBase::glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_ARRAY, bb.m_LayeredColorBuffer, 0,0);
+    assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
+    OpenglRedirectorBase::glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 512,512, 9);
+    assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
+    OpenglRedirectorBase::glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_ARRAY, bb.m_LayeredColorBuffer, 0);
+    auto error = OpenglRedirectorBase::glGetError();
+    if(error != GL_NO_ERROR)
+    {
+        printf("[Repeater] error: %d\n", error);
+    }
+    assert(error == GL_NO_ERROR);
 
     OpenglRedirectorBase::glBindTexture(GL_TEXTURE_2D_ARRAY, bb.m_LayeredDepthStencilBuffer);
-    OpenglRedirectorBase::glTextureStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, 400,300, 9);
-    OpenglRedirectorBase::glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_ARRAY, bb.m_LayeredDepthStencilBuffer, 0,0);
+    OpenglRedirectorBase::glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, 512,512, 9);
+    assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
+    OpenglRedirectorBase::glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_ARRAY, bb.m_LayeredDepthStencilBuffer, 0);
+    assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
     OpenglRedirectorBase::glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 
-    OpenglRedirectorBase::glBindFramebuffer(0);
+    auto status = OpenglRedirectorBase::glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        printf("[Repeater] Failed to create FBO for layered rendering: Status: glEnum %d\n", status);
+    }
+    assert(status == GL_FRAMEBUFFER_COMPLETE);
+    OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER,0);
 
 
     /*
@@ -1056,24 +1093,128 @@ void Repeater::initializeLayeredBackBuffer()
      */
 
     auto VS = std::string(R"(
-        layout (location = 0) vec3 position;
+        #version 440 core
+        layout (location = 0) in vec3 position;
 
         out vec2 uv;
         void main()
         {
-            gl_Position = position;
+            gl_Position = vec4(position,1.0);
             uv = (position.xy+vec2(1.0))/2.0f;
         }
-    )";
+    )");
 
     auto FS = std::string(R"(
-        sampler3D enhancer_layeredScreen = 0;
+        #version 440 core
+        uniform int enhancer_max_layers = 1;
+        uniform sampler2DArray enhancer_layeredScreen;
         in vec2 uv;
         out vec4 color;
         void main()
         {
-            color 
+            vec2 newUv = mod(3.0*uv, 1.0);
+            ivec2 indices = ivec2(int(newUv.x*3.0),int(newUv.y*3.0));
+            int layer = indices.y*3+indices.x;
+            color = 0.5*texture(enhancer_layeredScreen, vec3(newUv, layer)) + 0.5*vec4(newUv, 0.0,1.0);
+            color.w = 1.0;
         }
-    )";
+    )");
+
+    auto compileShader = [&](GLenum type,const std::string& sourceCode)->GLuint
+    {
+        auto shaderId = OpenglRedirectorBase::glCreateShader(type);
+        const GLchar* const sources[1] = {sourceCode.c_str(),};
+        OpenglRedirectorBase::glShaderSource(shaderId, 1, sources,nullptr);
+        OpenglRedirectorBase::glCompileShader(shaderId);
+        GLint compileStatus;
+        OpenglRedirectorBase::glGetShaderiv(shaderId, GL_COMPILE_STATUS, &compileStatus);
+        if(compileStatus != GL_TRUE)
+        {
+            GLint logSize = 0;
+            OpenglRedirectorBase::glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &logSize);
+            
+            GLsizei realLogLength = 0;
+            GLchar log[5120] = {0,};
+            OpenglRedirectorBase::glGetShaderInfoLog(shaderId, logSize, &realLogLength, log);
+            std::printf("[Repeater] Failed to compile %s\n", log);
+            std::printf("[Repeater] code %s\n", sourceCode.c_str());
+            std::fflush(stdout);
+        }
+        assert(compileStatus == GL_TRUE);
+        return shaderId;
+    };
+
+    auto fsId = compileShader(GL_FRAGMENT_SHADER, FS);
+    auto vsId = compileShader(GL_VERTEX_SHADER, VS);
+
+    auto program = OpenglRedirectorBase::glCreateProgram();
+    OpenglRedirectorBase::glUseProgram(program);
+    OpenglRedirectorBase::glAttachShader(program, fsId);
+    OpenglRedirectorBase::glAttachShader(program, vsId);
+
+    OpenglRedirectorBase::glLinkProgram(program);
+    GLint linkStatus;
+    OpenglRedirectorBase::glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
+    OpenglRedirectorBase::glUseProgram(m_Manager.getBoundId());
+
+    assert(linkStatus == GL_TRUE);
+    m_LayeredBackBuffer.m_ViewerProgram = program;
+
+    /*
+     * Create VAO for full screen quad
+     */
+
+    struct VertexData
+    {
+        float position[3];
+        float uv[2];
+    };
+    VertexData vertices[] = 
+    {
+        {-1.0, -1.0, 0.0, 0.0,0.0},
+        {1.0, -1.0, 0.0, 1.0,0.0},
+        {-1.0, 1.0, 0.0, -1.0,0.0},
+        {1.0, 1.0, 0.0, 1.0,1.0},
+    };
+
+    GLuint vertexBuffer;
+    OpenglRedirectorBase::glGenBuffers(1, &vertexBuffer);
+    OpenglRedirectorBase::glNamedBufferData(vertexBuffer, sizeof(float)*5*4, vertices, GL_STATIC_DRAW);
+
+    GLint oldVao;
+    OpenglRedirectorBase::glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&oldVao);
+    GLint oldVBO;
+    OpenglRedirectorBase::glGetIntegerv(GL_ARRAY_BUFFER_BINDING,&oldVBO);
+
+    OpenglRedirectorBase::glGenVertexArrays(1, &m_LayeredBackBuffer.m_VAO);
+    OpenglRedirectorBase::glBindVertexArray(m_LayeredBackBuffer.m_VAO);
+    OpenglRedirectorBase::glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    // Enable coords
+    OpenglRedirectorBase::glVertexAttribPointer(0, 3, GL_FLOAT, false, 5*sizeof(float),0);
+    OpenglRedirectorBase::glEnableVertexAttribArray(0);
+    // Enable UV
+    OpenglRedirectorBase::glVertexAttribPointer(1, 2, GL_FLOAT, false, 5*sizeof(float),reinterpret_cast<void*>(2*sizeof(float)));
+    OpenglRedirectorBase::glEnableVertexAttribArray(1);
+
+    OpenglRedirectorBase::glBindBuffer(GL_ARRAY_BUFFER, oldVBO);
+    OpenglRedirectorBase::glBindVertexArray(oldVao);
 }
 
+void Repeater::renderLayersToFrontbuffer()
+{
+    GLint oldVao;
+    OpenglRedirectorBase::glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&oldVao);
+
+    OpenglRedirectorBase::glUseProgram(m_LayeredBackBuffer.m_ViewerProgram);
+    OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    OpenglRedirectorBase::glBindVertexArray(m_LayeredBackBuffer.m_VAO);   
+    OpenglRedirectorBase::glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredBackBuffer.m_LayeredColorBuffer);
+    OpenglRedirectorBase::glActiveTexture(GL_TEXTURE0);
+    OpenglRedirectorBase::glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER,m_LayeredBackBuffer.m_FBOId);
+
+    // Use original program
+    OpenglRedirectorBase::glUseProgram(m_Manager.getBoundId());
+
+    OpenglRedirectorBase::glBindVertexArray(oldVao);
+}

@@ -313,7 +313,7 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfI
     std::vector<std::pair<std::string, std::string>> result;
 
     std::smatch m;
-    static auto inDefinition = std::regex("in[\f\n\r\t\v ][^;]+");
+    static auto inDefinition = std::regex("[\f\n\r\t\v ]in[\f\n\r\t\v ][^;]+");
     if(!std::regex_search(sourceCode, m, inDefinition))
         return result;
 
@@ -324,6 +324,9 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfI
         assert(definitionTokens.size() >= 2);
         const auto& type = definitionTokens[definitionTokens.size()-2];
         const auto& name = definitionTokens[definitionTokens.size()-1];
+
+        assert(type.find_first_of(")(,;") == std::string::npos);
+        assert(name.find_first_of(")(,;") == std::string::npos);
         result.emplace_back(std::make_pair(type, name));
     }
     return result;
@@ -334,7 +337,7 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfO
     std::vector<std::pair<std::string, std::string>> result;
 
     std::smatch m;
-    static auto inDefinition = std::regex("out[\f\n\r\t\v ][^;]+");
+    static auto inDefinition = std::regex("[\f\n\r\t\v ]out[\f\n\r\t\v ][^;]+");
     if(!std::regex_search(sourceCode, m, inDefinition))
         return result;
 
@@ -345,6 +348,9 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfO
         assert(definitionTokens.size() >= 2);
         const auto& type = definitionTokens[definitionTokens.size()-2];
         const auto& name = definitionTokens[definitionTokens.size()-1];
+
+        assert(type.find_first_of(")(,;") == std::string::npos);
+        assert(name.find_first_of(")(,;") == std::string::npos);
         result.emplace_back(std::make_pair(type, name));
     }
     return result;
