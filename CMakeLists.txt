@@ -58,32 +58,32 @@ find_package(FreeImage REQUIRED)
 ###############################################################################
 
 add_library(enhancer_core 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/projection_estimator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/projection_estimator.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_inspector.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_inspector.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_manager.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_manager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/framebuffer_tracker.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/framebuffer_tracker.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/opengl_utils.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/opengl_utils.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/legacy_tracker.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/legacy_tracker.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/viewport_area.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/viewport_area.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/virtual_cameras.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/virtual_cameras.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_parser.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_parser.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/uniform_block_tracing.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/uniform_block_tracing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/projection_estimator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/projection_estimator.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_inspector.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_inspector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_manager.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/framebuffer_tracker.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/framebuffer_tracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/legacy_tracker.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/legacy_tracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/viewport_area.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/viewport_area.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/virtual_cameras.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/virtual_cameras.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_parser.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_parser.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/uniform_block_tracing.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/uniform_block_tracing.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline_injector.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline_injector.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/program_metadata.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/program_metadata.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/pipeline_injector.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/pipeline_injector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/program_metadata.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/program_metadata.cpp
     )
 
 # Hack: we would like a static library to be linked into shared library later
@@ -104,7 +104,8 @@ add_library(${ENHANCER_PROJECT_NAME} INTERFACE
 )
 
 target_sources(${ENHANCER_PROJECT_NAME} INTERFACE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/opengl_redirector_base.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/hooking/opengl_redirector_base.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/hooking/opengl_redirector_base.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/startup_enhancer.cpp
     )
 

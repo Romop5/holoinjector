@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "shader_parser.hpp"
+#include "pipeline/shader_parser.hpp"
 
 #include <iostream>
 #include <functional>

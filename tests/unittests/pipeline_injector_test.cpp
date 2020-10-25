@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "pipeline_injector.hpp"
+#include "pipeline/pipeline_injector.hpp"
 using namespace ve;
 namespace helper
 {

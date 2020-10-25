@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "legacy_tracker.hpp"
+#include "trackers/legacy_tracker.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp>

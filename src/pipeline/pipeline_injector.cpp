@@ -1,5 +1,5 @@
-#include "pipeline_injector.hpp"
-#include "shader_inspector.hpp"
+#include "pipeline/pipeline_injector.hpp"
+#include "pipeline/shader_inspector.hpp"
 
 #include <regex>
 #include <cassert>

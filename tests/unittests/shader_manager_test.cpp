@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "shader_manager.hpp"
+#include "trackers/shader_manager.hpp"
 
 #include <unordered_set>
 

@@ -1,16 +1,16 @@
 #include <functional>
-#include "opengl_redirector_base.hpp"
+#include "hooking/opengl_redirector_base.hpp"
 #include <unordered_map>
 
 #include <GL/gl.h>
 #include <glm/glm.hpp>
 
-#include "shader_manager.hpp"
-#include "uniform_block_tracing.hpp"
-#include "framebuffer_tracker.hpp"
-#include "legacy_tracker.hpp"
-#include "viewport_area.hpp"
-#include "virtual_cameras.hpp"
+#include "trackers/shader_manager.hpp"
+#include "trackers/uniform_block_tracing.hpp"
+#include "trackers/framebuffer_tracker.hpp"
+#include "trackers/legacy_tracker.hpp"
+#include "pipeline/viewport_area.hpp"
+#include "pipeline/virtual_cameras.hpp"
 #include "diagnostics.hpp"
 
 namespace ve

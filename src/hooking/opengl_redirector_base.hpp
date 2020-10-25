@@ -1,7 +1,7 @@
 #include <GL/gl.h>
 #include <GL/glx.h>
 
-#include "redirector_base.hpp"
+#include "hooking/redirector_base.hpp"
 #include <vector>
 #include <string>
 

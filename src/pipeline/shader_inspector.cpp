@@ -1,4 +1,4 @@
-#include "shader_inspector.hpp"
+#include "pipeline/shader_inspector.hpp"
 #include <regex>
 #include <unordered_set>
 #include <cassert>
@@ -7,7 +7,7 @@
 #include <cctype>
 #include <iostream>
 
-#include "shader_parser.hpp"
+#include "pipeline/shader_parser.hpp"
 
 using namespace ve;
 

@@ -2,7 +2,7 @@
 #define VE_UNIFORM_BLOCK_TRACING_HPP
 #include <glm/glm.hpp>
 #include <unordered_map>
-#include "projection_estimator.hpp"
+#include "pipeline/projection_estimator.hpp"
 
 namespace ve
 {

@@ -12,9 +12,9 @@
 #include <sstream>
 #include <type_traits>
 
-#include "opengl_redirector_base.hpp"
-#include "opengl_redirector_impl_macros.hpp"
-#include "opengl_utils.hpp"
+#include "hooking/opengl_redirector_base.hpp"
+#include "hooking/opengl_redirector_impl_macros.hpp"
+#include "utils/opengl_utils.hpp"
 
 /*
  * To redirect API call to our class method, a static method with same type must be

@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "virtual_cameras.hpp"
+#include "pipeline/virtual_cameras.hpp"
 
 using namespace ve;
 

@@ -10,10 +10,10 @@
 #include "FreeImage.h" // FreeImage image storing
 #include "simplecpp.h" // CPP preprocessor
 
-#include "shader_inspector.hpp"
-#include "projection_estimator.hpp"
-#include "opengl_utils.hpp"
-#include "pipeline_injector.hpp"
+#include "pipeline/shader_inspector.hpp"
+#include "pipeline/projection_estimator.hpp"
+#include "utils/opengl_utils.hpp"
+#include "pipeline/pipeline_injector.hpp"
 
 
 

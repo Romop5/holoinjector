@@ -6,7 +6,7 @@
 #include <string>
 #include <GL/gl.h>
 
-#include "program_metadata.hpp"
+#include "pipeline/program_metadata.hpp"
 
 namespace ve
 {

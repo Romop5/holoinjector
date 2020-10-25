@@ -1,4 +1,4 @@
-#include "shader_manager.hpp"
+#include "trackers/shader_manager.hpp"
 #include <algorithm>
 
 #include <cassert>

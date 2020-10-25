@@ -8,7 +8,7 @@
 #include <mutex>
 #include <memory>
 
-#include "redirector_base.hpp"
+#include "hooking/redirector_base.hpp"
 
 #include <unistd.h>
 #include <cassert>

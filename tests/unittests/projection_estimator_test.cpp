@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include <glm/gtx/transform.hpp>  // glm::translate etc.
 #include <glm/glm.hpp>
-#include "projection_estimator.hpp"
+#include "pipeline/projection_estimator.hpp"
 #include <glm/gtx/string_cast.hpp>
 
 // Uncomment to get more information about transformations being processed

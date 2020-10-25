@@ -1,7 +1,7 @@
 #ifndef __REDIRECTOR_BASE_HPP
 #define __REDIRECTOR_BASE_HPP
 #include <functional>
-#include "symbol_redirection.hpp"
+#include "hooking/symbol_redirection.hpp"
 
 /// Original symbol getter type
 using original_symbol_getter = std::function<void*(const char* symbolName)>;

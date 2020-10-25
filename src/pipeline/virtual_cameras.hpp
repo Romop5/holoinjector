@@ -2,7 +2,7 @@
 #define ENHANCER_VIRTUAL_CAMERAS_HPP
 #include <vector>
 #include <glm/glm.hpp>
-#include "viewport_area.hpp"
+#include "pipeline/viewport_area.hpp"
 
 namespace ve
 {

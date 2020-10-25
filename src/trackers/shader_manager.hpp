@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "utils/context_tracker.hpp"
-#include "program_metadata.hpp"
+#include "pipeline/program_metadata.hpp"
 
 #include <GL/gl.h>
 

@@ -1,4 +1,4 @@
-#include "opengl_utils.hpp"
+#include "utils/opengl_utils.hpp"
 #include <string>
 #include <unordered_map>
 
