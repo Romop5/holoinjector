@@ -26,7 +26,7 @@ void OutputFBO::initialize()
     assert(glGetError() == GL_NO_ERROR);
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, fbo_pixels_width,fbo_pixels_height, 9);
     assert(glGetError() == GL_NO_ERROR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_LayeredColorBuffer, 0);
     auto error = glGetError();
     if(error != GL_NO_ERROR)
     {
@@ -37,7 +37,7 @@ void OutputFBO::initialize()
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredDepthStencilBuffer);
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, fbo_pixels_width,fbo_pixels_height, 9);
     assert(glGetError() == GL_NO_ERROR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_ARRAY, m_LayeredDepthStencilBuffer, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, m_LayeredDepthStencilBuffer, 0);
     assert(glGetError() == GL_NO_ERROR);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 
@@ -74,11 +74,15 @@ void OutputFBO::initialize()
         out vec4 color;
         void main()
         {
+            // debug only
+            //if(uv.x > 0.5)
+            //    discard;
             vec2 newUv = mod(3.0*uv, 1.0);
-            ivec2 indices = ivec2(int(newUv.x*3.0),int(newUv.y*3.0));
+            ivec2 indices = ivec2(int(uv.x*3.0),int(uv.y*3.0));
             int layer = indices.y*3+indices.x;
             color = 0.5*texture(enhancer_layeredScreen, vec3(newUv, layer)) + 0.5*vec4(newUv, 0.0,1.0);
             color.w = 1.0;
+            color.z = float(layer)/9.0;
         }
     )");
 

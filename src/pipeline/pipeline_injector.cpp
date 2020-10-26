@@ -59,14 +59,16 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
     geometryShaderStream <<  R"(
         #version 440 core 
         layout (triangles) in;
-        layout (triangle_strip, max_vertices = 2*3) out;
+        layout (triangle_strip, max_vertices = 3) out;
+
+        layout (invocations=9) in;
 
         )";
     geometryShaderStream << "const bool enhancer_geometry_isClipSpace = " 
         << (params.shouldRenderToClipspace?"true":"false") <<";\n";
-    geometryShaderStream << "uniform int enhancer_max_invocations = 5;\n";
+    geometryShaderStream << "uniform int enhancer_max_invocations = 9;\n";
     geometryShaderStream << "uniform int enhancer_max_views = 9;\n";
-    geometryShaderStream << "uniform int enhancer_duplications = 2;\n";
+    geometryShaderStream << "uniform int enhancer_duplications = 1;\n";
     geometryShaderStream << R"(
         void identity_main(int layer)
         {
@@ -92,7 +94,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
             // Allows to override max_invocations using uniform
             if(gl_InvocationID >= enhancer_max_invocations)
                 return;
-            int layer = gl_InvocationID*2;
+            int layer = gl_InvocationID*enhancer_duplications;
             for(int i = 0; i < enhancer_duplications; i++)
             {
                 if(layer+i >= enhancer_max_views)

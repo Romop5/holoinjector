@@ -12,10 +12,8 @@
 
 #include "pipeline/shader_inspector.hpp"
 #include "pipeline/projection_estimator.hpp"
-#include "utils/opengl_utils.hpp"
 #include "pipeline/pipeline_injector.hpp"
-
-
+#include "utils/opengl_utils.hpp"
 
 using namespace ve;
 
@@ -134,7 +132,7 @@ void Repeater::glClear(GLbitfield mask)
     if(!m_FBOTracker.hasBounded())
     {
         OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_OutputFBO.getFBOId());
-        OpenglRedirectorBase::glClear(mask);
+        OpenglRedirectorBase::glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
         OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER,0);
     }
     OpenglRedirectorBase::glClear(mask);
@@ -162,11 +160,7 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 GLuint Repeater::glCreateShader(GLenum shaderType)
 {
     auto id = OpenglRedirectorBase::glCreateShader(shaderType);
-    
-    //printf("[Repeater] glCreateShader: %s\n",opengl_utils::getEnumStringRepresentation(shaderType).c_str());
-    
     auto shaderDesc = std::make_shared<ShaderMetadata>(id,shaderType);
-    shaderDesc->m_Type = shaderType;
     m_Manager.shaders.add(id, shaderDesc);
     return id;
 }
@@ -221,31 +215,6 @@ void Repeater::glShaderSource (GLuint shaderId, GLsizei count, const GLchar* con
         auto preprocessedShader = helper::preprocessGLSLCode(concatenatedShader);
         shader->preprocessedSourceCode = preprocessedShader;
     }
-    /*
-    if(m_Manager.shaders.has(shaderId) && m_Manager.shaders.get(shaderId)->isShaderOneOf({GL_VERTEX_SHADER, GL_GEOMETRY_SHADER}))
-    {
-        auto preprocessedShader = helper::preprocessGLSLCode(concatenatedShader);
-        printf("[Repeater] preprocessed shader (type: %d) '%s'\n",m_Manager.shaders.get(shaderId)->m_Type, preprocessedShader.c_str());
-
-        ShaderInspector inspector(preprocessedShader);
-        auto statements = inspector.findAllOutVertexAssignments();
-        auto transformationName = inspector.getTransformationUniformName(statements);
-        
-        auto metadata = m_Manager.shaders.get(shaderId);
-        metadata->m_TransformationMatrixName = transformationName;
-        metadata->m_IsClipSpaceTransform = inspector.isClipSpaceShader(); 
-        metadata->m_InterfaceBlockName = inspector.getUniformBlockName(metadata->m_TransformationMatrixName);
-        metadata->m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
-
-        auto finalShader = preprocessedShader; 
-        if(!m_diagnostics.shouldNotBeIntrusive())
-            finalShader = inspector.injectShader(statements);
-        printf("[Repeater] found transformation name: %s\n",metadata->m_TransformationMatrixName.c_str());
-        printf("[Repeater] found interface block: %s\n",metadata->m_InterfaceBlockName.c_str());
-        printf("[Repeater] injected shader: %s\n",finalShader.c_str());
-        concatenatedShader = std::move(finalShader);
-    }
-    */
     std::vector<const char*> shaders = {concatenatedShader.c_str(),};
     OpenglRedirectorBase::glShaderSource(shaderId,1,shaders.data(),nullptr);
 }
@@ -254,7 +223,7 @@ void Repeater::glLinkProgram (GLuint programId)
 {
     // Link the program for 1st time
     // => we can use native GLSL compiler to detect active uniforms
-    OpenglRedirectorBase::glLinkProgram(programId);
+    //OpenglRedirectorBase::glLinkProgram(programId);
 
     // Note: this should never happen (if we handle all glCreateProgram/Shader)
     if(!m_Manager.has(programId))
@@ -284,7 +253,6 @@ void Repeater::glLinkProgram (GLuint programId)
     auto resultPipeline = plInjector.process(pipeline);
     program->m_Metadata = std::move(resultPipeline.metadata);
 
-    std::vector<size_t> newShaders;
     for(auto& [type, sourceCode]: resultPipeline.pipeline)
     {
         auto newShader = OpenglRedirectorBase::glCreateShader(type);
@@ -307,7 +275,6 @@ void Repeater::glLinkProgram (GLuint programId)
             return;
         }
         OpenglRedirectorBase::glAttachShader(programId, newShader);
-        newShaders.push_back(newShader);
     }
     printf("[Repeater] Relink program with new shaders\n");
     OpenglRedirectorBase::glLinkProgram(programId);
@@ -323,6 +290,7 @@ void Repeater::glLinkProgram (GLuint programId)
         OpenglRedirectorBase::glGetProgramInfoLog(programId, logSize, &realLogLength, log);
         printf("[Repeater] Link failed with log: %s\n",log);
     }
+    assert(linkStatus == GL_TRUE);
 }
 
 void Repeater::glCompileShader (GLuint shader)
@@ -481,7 +449,6 @@ void Repeater::glMultiDrawElementsBaseVertex (GLenum mode, const GLsizei* count,
     });
 }
 
-//
 // ----------------------------------------------------------------------------
 
 void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
