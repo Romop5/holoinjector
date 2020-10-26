@@ -145,9 +145,12 @@ void Repeater::registerCallbacks()
 
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
-    OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),
-                currentViewport.getWidth(), currentViewport.getHeight());
-    m_OutputFBO.renderToBackbuffer();
+    if(m_IsMultiviewActivated)
+    {
+        OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),
+                    currentViewport.getWidth(), currentViewport.getHeight());
+        m_OutputFBO.renderToBackbuffer();
+    }
 
     OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
     m_diagnostics.incrementFrameCount(); 
@@ -938,14 +941,14 @@ void Repeater::takeScreenshot(const std::string filename)
 
 void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
 {
-    if(!m_FBOTracker.hasBounded())
+    if(!m_IsMultiviewActivated)
     {
-        OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_OutputFBO.getFBOId());
-        OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getTextureWidth(),m_OutputFBO.getTextureHeight());
+        setEnhancerIdentity();
+        drawCallLambda();
+        return;
     }
 
     bool shouldNotDuplicate = (
-            !m_IsMultiviewActivated ||
             // don't duplicate while rendering light's point of view into shadow map
             m_FBOTracker.isFBOshadowMap() ||
             // don't duplicate while there is no projection and its not legacy OpenGL at the same time
@@ -976,6 +979,11 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
         }
     }
 
+    if(!m_FBOTracker.hasBounded())
+    {
+        OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_OutputFBO.getFBOId());
+        OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getTextureWidth(),m_OutputFBO.getTextureHeight());
+    }
 
     auto loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_XShiftMultiplier");
     OpenglRedirectorBase::glUniform1f(loc, m_cameraParameters.m_XShiftMultiplier);

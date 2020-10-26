@@ -35,15 +35,20 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
         output[GL_VERTEX_SHADER] = VS;
     }
 
+    auto updatedParams = params;
+    if(metadata)
+    {
+        updatedParams.shouldRenderToClipspace = metadata->m_IsClipSpaceTransform; 
+    }
     /*
      * In any case, inject geometry shader
      */
     
     // Inject new GS if none is provided
     if(input.count(GL_GEOMETRY_SHADER) == 0)
-        output = insertGeometryShader(output,params);
+        output = insertGeometryShader(output,updatedParams);
     else 
-        output = injectGeometryShader(output,params);
+        output = injectGeometryShader(output,updatedParams);
     return {output, (hasFilledMetadata)?std::move(metadata):nullptr};
 }
 
@@ -79,11 +84,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
             {
                 gl_Position = gl_in[i].gl_Position;
                 gl_Layer = layer;
-		gl_Position = enhancer_transform(layer,gl_Position);
-                if(enhancer_geometry_isClipSpace)
-                {
-                    gl_Position = vec4(gl_Position.xy, 1.0, 1.0);
-                }
+		gl_Position = enhancer_transform(enhancer_geometry_isClipSpace,layer,gl_Position);
                 EmitVertex();
             }
             EndPrimitive();

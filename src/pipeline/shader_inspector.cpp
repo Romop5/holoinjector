@@ -475,7 +475,7 @@ std::string ShaderInspector::getCommonTransformationShader()
         vec4 viewSpace = vec4(clipSpace.x/fx, clipSpace.y/fy, -clipSpace.w,1.0);
 	return viewSpace;
     }
-    vec4 enhancer_transform(int camera, vec4 clipSpace)
+    vec4 enhancer_transform(bool isClipSpace, int camera, vec4 clipSpace)
     {
         if(enhancer_isOrthogonal || enhancer_identity)
             return clipSpace;
@@ -494,17 +494,21 @@ std::string ShaderInspector::getCommonTransformationShader()
 
         // Do per-view transformation
         vec4 viewSpace = enhancer_extractViewSpace(clipSpace);
-        viewSpace.x += enhancer_getCenterShift(camera);
+        if(!isClipSpace)
+            viewSpace.x += enhancer_getCenterShift(camera);
         vec4 viewSpaceTransformed = projection*viewSpace;
+        if(isClipSpace)
+            return viewSpaceTransformed.xyww;
         return viewSpaceTransformed;
     }
 
     vec4 enhancer_VStransform(vec4 clipSpace)
     {
         return clipSpace;
-        //return enhancer_extractViewSpace(clipSpace);
-        //return enhancer_transform(enhancer_cameraId, clipSpace);
     }
     )";
+
+    // Hack: remove clip space
+    code= std::regex_replace(code, std::regex(". xyww"),"");  
     return code;
 }
