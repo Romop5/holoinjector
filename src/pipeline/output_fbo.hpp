@@ -8,19 +8,20 @@ namespace ve
     struct OutputFBOParameters
     {
         OutputFBOParameters() = default;
-        size_t gridSize = 10;
+        size_t gridSize = 3;
+        size_t pixels_width = 256;
+        size_t pixels_height = 256;
     };
     struct OutputFBO 
     {
-        
-        static constexpr size_t fbo_pixels_width = 128;
-        static constexpr size_t fbo_pixels_height = 128;
-
         public:
         /// Creates OpenGL objects
         void initialize(OutputFBOParameters params = OutputFBOParameters());
         /// Blits all cameras to back buffer (as a grid)
         void renderToBackbuffer();
+
+	size_t getTextureWidth() const;
+	size_t getTextureHeight() const;
 
         GLuint getFBOId();
         private:

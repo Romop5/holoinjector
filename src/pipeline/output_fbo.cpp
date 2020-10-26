@@ -29,7 +29,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
     assert(glGetError() == GL_NO_ERROR);
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, fbo_pixels_width,fbo_pixels_height, countOfLayers);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, params.pixels_width,params.pixels_height, countOfLayers);
     assert(glGetError() == GL_NO_ERROR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -42,7 +42,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
     assert(error == GL_NO_ERROR);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredDepthStencilBuffer);
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, fbo_pixels_width,fbo_pixels_height, countOfLayers);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, params.pixels_width,params.pixels_height, countOfLayers);
     assert(glGetError() == GL_NO_ERROR);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, m_LayeredDepthStencilBuffer, 0);
     assert(glGetError() == GL_NO_ERROR);
@@ -87,8 +87,8 @@ void OutputFBO::initialize(OutputFBOParameters params)
             //    discard;
             vec2 newUv = mod(float(gridSize)*uv, 1.0);
             ivec2 indices = ivec2(int(uv.x*float(gridSize)),int(uv.y*float(gridSize)));
-            int layer = indices.y*gridSize+indices.x;
-            color = 0.5*texture(enhancer_layeredScreen, vec3(newUv, layer)) + 0.5*vec4(newUv, 0.0,1.0);
+            int layer = (gridSize-indices.y-1)*gridSize+indices.x;
+            color = texture(enhancer_layeredScreen, vec3(newUv, layer));
             color.w = 1.0;
             color.z = float(layer)/float(gridSize*gridSize);
         }
@@ -206,4 +206,14 @@ void OutputFBO::renderToBackbuffer()
 GLuint OutputFBO::getFBOId()
 {
     return m_FBOId;
+}
+
+
+size_t OutputFBO::getTextureWidth() const
+{
+    return m_Params.pixels_width;
+}
+size_t OutputFBO::getTextureHeight() const
+{
+    return m_Params.pixels_height;
 }

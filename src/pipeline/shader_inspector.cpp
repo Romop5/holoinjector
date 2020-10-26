@@ -190,59 +190,8 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
 
     // At this point, caller must have verified that this is a VS, containing void main() method
     assert(startOfFunction != std::string::npos);
-    static std::string code = R"(
-    uniform bool enhancer_isOrthogonal; 
-    // when true, keeps original transformation flowing => used for shadow maps
-    uniform bool enhancer_identity; 
-    // Contains VIEW per-view camera
-    uniform mat4 enhancer_view_transform; 
-    // Contains projection
-    uniform float enhancer_projection_adjust; 
 
-    // Contains (fx,fy, near,far), estimated from original projection
-    uniform vec4 enhancer_estimatedParameters;
-
-    // Reversts original projection and apple per-view transformation & projection
-    vec4 enhancer_transform(vec4 clipSpace)
-    {
-        if(enhancer_isOrthogonal)
-            return clipSpace;
-        if(enhancer_identity)
-            return clipSpace;
-        float fx = enhancer_estimatedParameters[0];
-        float fy = enhancer_estimatedParameters[1];
-        float near = enhancer_estimatedParameters[2];
-        float far = enhancer_estimatedParameters[3];
-        // Revert clip-space to view-space
-        vec4 viewSpace = vec4(clipSpace.x/fx, clipSpace.y/fy, -clipSpace.w,1.0);
-
-        if(enhancer_isOrthogonal)
-        {
-            viewSpace[2] = 0;
-        }
-
-        float A = -2.0/(far-near);
-        float B = -(far+near)/(far-near);
-        if(enhancer_isOrthogonal)
-        {
-            A = 1.0;
-            B = 0.0;
-        }
-        mat4 projection = mat4(vec4(fx,0.0f,0.0f,0.0), vec4(0.0f,fy,0.0f,0.0), vec4(0.0f,0.0f,A,-1.0), vec4(0.0f,0.0f,B,0.0));
-        if(enhancer_isOrthogonal)
-        {
-            projection[3][3] = 1.0;
-            projection[2][3] = 0.0;
-        } else {
-            projection[2][0] = enhancer_projection_adjust;
-        }
-
-        // Do per-view transformation
-        vec4 viewSpaceTransformed = projection*enhancer_view_transform * viewSpace;
-        return viewSpaceTransformed;
-    }
-    )";
-
+    auto code = getCommonTransformationShader();
     output.insert(startOfFunction, code);
     return output;
 }
@@ -415,7 +364,7 @@ std::string ve::ShaderInspector::replaceGLPositionAssignment(VertextAssignment a
     switch(assignment.analysis.type)
     {
         case UNIFORM:
-            return helper::wrapAssignmentExpresion(assignment.statementRawText, "enhancer_transform");
+            return helper::wrapAssignmentExpresion(assignment.statementRawText, "enhancer_VStransform");
         case POSSIBLE_TEMPORARY_VARIABLE:
         case INPUT:
             break;
@@ -481,4 +430,81 @@ bool ShaderInspector::isClipSpaceShader() const
     static auto clipAssign = std::regex(".[\f\n\r\t\v ]*xyww");
     std::smatch m;
     return std::regex_search(sourceCode, m, clipAssign); 
+}
+
+
+std::string ShaderInspector::getCommonTransformationShader()
+{   
+    static std::string code = R"(
+    uniform int enhancer_cameraId = 0; 
+    uniform int enhancer_max_views = 9; 
+
+    uniform float enhancer_XShiftMultiplier = 5.0;
+    uniform float enhancer_FrontalDistance = 5.0;
+
+    uniform bool enhancer_isOrthogonal = false; 
+    // when true, keeps original transformation flowing => used for shadow maps
+    uniform bool enhancer_identity = false; 
+
+    // Contains (fx,fy, near,far), estimated from original projection
+    uniform vec4 enhancer_estimatedParameters;
+
+    float enhancer_getProjectionShift(int cameraId)
+    {
+        float normalizedDistance = 1.0-2.0*float(cameraId)/float(enhancer_max_views);
+        return normalizedDistance*enhancer_XShiftMultiplier/enhancer_FrontalDistance;
+    }
+
+    float enhancer_getCenterShift(int cameraId)
+    {
+        float normalizedDistance = 1.0- 2.0*float(cameraId)/float(enhancer_max_views);
+        return normalizedDistance*enhancer_XShiftMultiplier;
+    }
+
+    // Reversts original projection and apple per-view transformation & projection
+    vec4 enhancer_extractViewSpace(vec4 clipSpace)
+    {
+	if(enhancer_isOrthogonal || enhancer_identity)
+            return clipSpace;
+
+	float fx = enhancer_estimatedParameters[0];
+        float fy = enhancer_estimatedParameters[1];
+        float near = enhancer_estimatedParameters[2];
+        float far = enhancer_estimatedParameters[3];
+        // Revert clip-space to view-space
+        vec4 viewSpace = vec4(clipSpace.x/fx, clipSpace.y/fy, -clipSpace.w,1.0);
+	return viewSpace;
+    }
+    vec4 enhancer_transform(int camera, vec4 clipSpace)
+    {
+        if(enhancer_isOrthogonal || enhancer_identity)
+            return clipSpace;
+
+        float near = enhancer_estimatedParameters[2];
+        float far = enhancer_estimatedParameters[3];
+        
+        float A = -2.0/(far-near);
+        float B = -(far+near)/(far-near);
+        
+        mat4 projection = mat4(
+            vec4(enhancer_estimatedParameters[0],0.0f,0.0,0.0),
+            vec4(0.0f,enhancer_estimatedParameters[1],0.0f,0.0), 
+            vec4(enhancer_getProjectionShift(camera),0.0f,A,-1.0), 
+            vec4(0.0f,0.0f,B,0.0));
+
+        // Do per-view transformation
+        vec4 viewSpace = enhancer_extractViewSpace(clipSpace);
+        viewSpace.x += enhancer_getCenterShift(camera);
+        vec4 viewSpaceTransformed = projection*viewSpace;
+        return viewSpaceTransformed;
+    }
+
+    vec4 enhancer_VStransform(vec4 clipSpace)
+    {
+        return clipSpace;
+        //return enhancer_extractViewSpace(clipSpace);
+        //return enhancer_transform(enhancer_cameraId, clipSpace);
+    }
+    )";
+    return code;
 }

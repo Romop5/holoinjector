@@ -60,13 +60,14 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
         #version 440 core 
         layout (triangles) in;
         )";
+
+    geometryShaderStream << ShaderInspector::getCommonTransformationShader() << "\n";
     geometryShaderStream << "layout (triangle_strip, max_vertices = " << 3*params.countOfInvocations <<  ") out;\n";
     geometryShaderStream << "layout (invocations= " << params.countOfInvocations <<  ") in;\n";
     geometryShaderStream << "const bool enhancer_geometry_isClipSpace = " 
         << (params.shouldRenderToClipspace?"true":"false") <<";\n";
     geometryShaderStream << "const int enhancer_max_invocations = " << params.countOfInvocations << ";\n";
     geometryShaderStream << "const int enhancer_duplications = "<< params.countOfPrimitivesDuplicates << ";\n";
-    geometryShaderStream << "uniform int enhancer_max_views = 9*9;\n";
     geometryShaderStream << R"(
         void identity_main(int layer)
         {
@@ -78,6 +79,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
             {
                 gl_Position = gl_in[i].gl_Position;
                 gl_Layer = layer;
+		gl_Position = enhancer_transform(layer,gl_Position);
                 if(enhancer_geometry_isClipSpace)
                 {
                     gl_Position = vec4(gl_Position.xy, 1.0, 1.0);

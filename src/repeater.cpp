@@ -468,7 +468,7 @@ void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
     if(framebuffer == 0)
     {
         OpenglRedirectorBase::glBindFramebuffer(target, m_OutputFBO.getFBOId());
-        OpenglRedirectorBase::glViewport(0,0,OutputFBO::fbo_pixels_width,OutputFBO::fbo_pixels_height);
+        OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getTextureWidth(), m_OutputFBO.getTextureHeight());
     } else {
         OpenglRedirectorBase::glBindFramebuffer(target,framebuffer);
         OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),
@@ -941,7 +941,7 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
     if(!m_FBOTracker.hasBounded())
     {
         OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_OutputFBO.getFBOId());
-        OpenglRedirectorBase::glViewport(0,0,OutputFBO::fbo_pixels_width,OutputFBO::fbo_pixels_height);
+        OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getTextureWidth(),m_OutputFBO.getTextureHeight());
     }
 
     bool shouldNotDuplicate = (
@@ -975,6 +975,21 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
             setEnhancerIdentity();
         }
     }
+
+
+    auto loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_XShiftMultiplier");
+    OpenglRedirectorBase::glUniform1f(loc, m_cameraParameters.m_XShiftMultiplier);
+
+    loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_FrontalDistance");
+    OpenglRedirectorBase::glUniform1f(loc, m_cameraParameters.m_frontOpticalAxisCentreDistance);
+
+    setEnhancerShift(glm::mat4(1.0),0.0);
+
+    loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_identity");
+    OpenglRedirectorBase::glUniform1i(loc, false);
+    drawCallLambda();
+    resetEnhancerShift();
+    return;
     // Get original viewport
     auto originalViewport = currentViewport;
     auto originalScissor = currentScissorArea;

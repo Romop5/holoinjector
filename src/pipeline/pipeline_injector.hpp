@@ -16,7 +16,7 @@ namespace ve
         bool shouldRenderToClipspace = false;
 
         size_t countOfPrimitivesDuplicates = 3;
-        size_t countOfInvocations = 30;
+        size_t countOfInvocations = 3;
     };
 
     /*
