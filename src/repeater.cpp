@@ -145,6 +145,8 @@ void Repeater::registerCallbacks()
 
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
+    OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),
+                currentViewport.getWidth(), currentViewport.getHeight());
     m_OutputFBO.renderToBackbuffer();
 
     OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
@@ -463,7 +465,15 @@ void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
 
 void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
 {
-    OpenglRedirectorBase::glBindFramebuffer(target,framebuffer);
+    if(framebuffer == 0)
+    {
+        OpenglRedirectorBase::glBindFramebuffer(target, m_OutputFBO.getFBOId());
+        OpenglRedirectorBase::glViewport(0,0,OutputFBO::fbo_pixels_width,OutputFBO::fbo_pixels_height);
+    } else {
+        OpenglRedirectorBase::glBindFramebuffer(target,framebuffer);
+        OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),
+                currentViewport.getWidth(), currentViewport.getHeight());
+    }
     m_FBOTracker.bind(framebuffer);
 }
 
@@ -931,6 +941,7 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
     if(!m_FBOTracker.hasBounded())
     {
         OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_OutputFBO.getFBOId());
+        OpenglRedirectorBase::glViewport(0,0,OutputFBO::fbo_pixels_width,OutputFBO::fbo_pixels_height);
     }
 
     bool shouldNotDuplicate = (

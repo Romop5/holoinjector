@@ -59,16 +59,14 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
     geometryShaderStream <<  R"(
         #version 440 core 
         layout (triangles) in;
-        layout (triangle_strip, max_vertices = 3) out;
-
-        layout (invocations=9) in;
-
         )";
+    geometryShaderStream << "layout (triangle_strip, max_vertices = " << 3*params.countOfInvocations <<  ") out;\n";
+    geometryShaderStream << "layout (invocations= " << params.countOfInvocations <<  ") in;\n";
     geometryShaderStream << "const bool enhancer_geometry_isClipSpace = " 
         << (params.shouldRenderToClipspace?"true":"false") <<";\n";
-    geometryShaderStream << "uniform int enhancer_max_invocations = 9;\n";
-    geometryShaderStream << "uniform int enhancer_max_views = 9;\n";
-    geometryShaderStream << "uniform int enhancer_duplications = 1;\n";
+    geometryShaderStream << "const int enhancer_max_invocations = " << params.countOfInvocations << ";\n";
+    geometryShaderStream << "const int enhancer_duplications = "<< params.countOfPrimitivesDuplicates << ";\n";
+    geometryShaderStream << "uniform int enhancer_max_views = 9*9;\n";
     geometryShaderStream << R"(
         void identity_main(int layer)
         {
@@ -187,14 +185,16 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     // 5. Insert new main() function, calling original main() for invocation*duplicate-times, setting correct
     // layer for each of call
     
-    std::string newMainFunction =  R"(
+    std::string newMainFunction =  
+    std::string("const int maxDuplications = ") + std::to_string(params.countOfPrimitivesDuplicates) + ";\n" +
+    R"(
     void main()
     {
         int duplicationId = 0;
-        for(duplicationId = 0; duplicationId < 2; duplicationId++)
+        for(duplicationId = 0; duplicationId < maxDuplications; duplicationId++)
         {
             // TODO: layer not bound
-            int layer = gl_InstanceID*duplicationId;
+            int layer = gl_InvocationID*maxDuplications+duplicationId;
             old_main(layer);
         }
     }

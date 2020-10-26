@@ -314,20 +314,23 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfI
 
     std::smatch m;
     static auto inDefinition = std::regex("[\f\n\r\t\v ]in[\f\n\r\t\v ][^;]+");
-    if(!std::regex_search(sourceCode, m, inDefinition))
-        return result;
 
-    for(auto& match: m)
+    auto searchIn = sourceCode;
+    while(std::regex_search(searchIn, m, inDefinition))
     {
-        std::string s = match.str();
-        auto definitionTokens = ve::tokenize(s);
-        assert(definitionTokens.size() >= 2);
-        const auto& type = definitionTokens[definitionTokens.size()-2];
-        const auto& name = definitionTokens[definitionTokens.size()-1];
+        for(auto& match: m)
+        {
+            std::string s = match.str();
+            auto definitionTokens = ve::tokenize(s);
+            assert(definitionTokens.size() >= 2);
+            const auto& type = definitionTokens[definitionTokens.size()-2];
+            const auto& name = definitionTokens[definitionTokens.size()-1];
 
-        assert(type.find_first_of(")(,;") == std::string::npos);
-        assert(name.find_first_of(")(,;") == std::string::npos);
-        result.emplace_back(std::make_pair(type, name));
+            assert(type.find_first_of(")(,;") == std::string::npos);
+            assert(name.find_first_of(")(,;") == std::string::npos);
+            result.emplace_back(std::make_pair(type, name));
+        }
+        searchIn = m.suffix();
     }
     return result;
 }
@@ -338,20 +341,23 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfO
 
     std::smatch m;
     static auto inDefinition = std::regex("[\f\n\r\t\v ]out[\f\n\r\t\v ][^;]+");
-    if(!std::regex_search(sourceCode, m, inDefinition))
-        return result;
 
-    for(auto& match: m)
+    auto searchIn = sourceCode;
+    while(std::regex_search(searchIn, m, inDefinition))
     {
-        std::string s = match.str();
-        auto definitionTokens = ve::tokenize(s);
-        assert(definitionTokens.size() >= 2);
-        const auto& type = definitionTokens[definitionTokens.size()-2];
-        const auto& name = definitionTokens[definitionTokens.size()-1];
+        for(auto& match: m)
+        {
+            std::string s = match.str();
+            auto definitionTokens = ve::tokenize(s);
+            assert(definitionTokens.size() >= 2);
+            const auto& type = definitionTokens[definitionTokens.size()-2];
+            const auto& name = definitionTokens[definitionTokens.size()-1];
 
-        assert(type.find_first_of(")(,;") == std::string::npos);
-        assert(name.find_first_of(")(,;") == std::string::npos);
-        result.emplace_back(std::make_pair(type, name));
+            assert(type.find_first_of(")(,;") == std::string::npos);
+            assert(name.find_first_of(")(,;") == std::string::npos);
+            result.emplace_back(std::make_pair(type, name));
+        }
+        searchIn = m.suffix();
     }
     return result;
 }

@@ -9,8 +9,13 @@
 
 using namespace ve;
 
-void OutputFBO::initialize()
+void OutputFBO::initialize(OutputFBOParameters params)
 {
+    // store params
+    m_Params = params;
+
+    auto countOfLayers = params.gridSize*params.gridSize;
+
     glGenFramebuffers(1, &m_FBOId); 
     assert(glGetError() == GL_NO_ERROR);
     glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
@@ -24,8 +29,10 @@ void OutputFBO::initialize()
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
     assert(glGetError() == GL_NO_ERROR);
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, fbo_pixels_width,fbo_pixels_height, 9);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, fbo_pixels_width,fbo_pixels_height, countOfLayers);
     assert(glGetError() == GL_NO_ERROR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_LayeredColorBuffer, 0);
     auto error = glGetError();
     if(error != GL_NO_ERROR)
@@ -35,7 +42,7 @@ void OutputFBO::initialize()
     assert(error == GL_NO_ERROR);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredDepthStencilBuffer);
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, fbo_pixels_width,fbo_pixels_height, 9);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, fbo_pixels_width,fbo_pixels_height, countOfLayers);
     assert(glGetError() == GL_NO_ERROR);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, m_LayeredDepthStencilBuffer, 0);
     assert(glGetError() == GL_NO_ERROR);
@@ -68,21 +75,22 @@ void OutputFBO::initialize()
 
     auto FS = std::string(R"(
         #version 440 core
-        uniform int enhancer_max_layers = 1;
         uniform sampler2DArray enhancer_layeredScreen;
+        uniform int gridSize = 3;
         in vec2 uv;
         out vec4 color;
+
         void main()
         {
             // debug only
             //if(uv.x > 0.5)
             //    discard;
-            vec2 newUv = mod(3.0*uv, 1.0);
-            ivec2 indices = ivec2(int(uv.x*3.0),int(uv.y*3.0));
-            int layer = indices.y*3+indices.x;
+            vec2 newUv = mod(float(gridSize)*uv, 1.0);
+            ivec2 indices = ivec2(int(uv.x*float(gridSize)),int(uv.y*float(gridSize)));
+            int layer = indices.y*gridSize+indices.x;
             color = 0.5*texture(enhancer_layeredScreen, vec3(newUv, layer)) + 0.5*vec4(newUv, 0.0,1.0);
             color.w = 1.0;
-            color.z = float(layer)/9.0;
+            color.z = float(layer)/float(gridSize*gridSize);
         }
     )");
 
@@ -181,6 +189,9 @@ void OutputFBO::renderToBackbuffer()
     glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&oldVao);
 
     glUseProgram(m_ViewerProgram);
+    auto gridLocation = glGetUniformLocation(m_ViewerProgram, "gridSize");
+    glUniform1i(gridLocation, m_Params.gridSize);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindVertexArray(m_VAO);   
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);

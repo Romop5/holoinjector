@@ -15,10 +15,20 @@ namespace ve
         // True when original VS was dividing by 1.0
         bool shouldRenderToClipspace = false;
 
-        size_t countOfPrimitivesDuplicates = 1;
-        size_t countOfInvocations = 1;
+        size_t countOfPrimitivesDuplicates = 3;
+        size_t countOfInvocations = 30;
     };
 
+    /*
+     * @brief Alterns original shaders to achieve multiple views
+     *
+     * PipelineInjector is used to centrally defined processing of shaders.
+     * The PipelineInjector can:
+     * - insert Geometry shader to force multiple invocations for multi-layered
+     *   rendering (@see insertGeometryShader)
+     * - inject application's Geometry shader
+     * - inspect both GS & Vertex Shader's transformation (@see process)
+     */
     class PipelineInjector
     {
         public:
