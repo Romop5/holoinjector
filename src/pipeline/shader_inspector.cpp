@@ -447,7 +447,10 @@ std::string ShaderInspector::getCommonTransformationShader()
     uniform bool enhancer_identity = false; 
 
     // Contains (fx,fy, near,far), estimated from original projection
-    uniform vec4 enhancer_estimatedParameters;
+    uniform vec4 enhancer_deprojection;
+
+    // 1/fx, etc...
+    uniform vec4 enhancer_deprojection_inv;
 
     float enhancer_getProjectionShift(int cameraId)
     {
@@ -467,12 +470,8 @@ std::string ShaderInspector::getCommonTransformationShader()
 	if(enhancer_isOrthogonal || enhancer_identity)
             return clipSpace;
 
-	float fx = enhancer_estimatedParameters[0];
-        float fy = enhancer_estimatedParameters[1];
-        float near = enhancer_estimatedParameters[2];
-        float far = enhancer_estimatedParameters[3];
         // Revert clip-space to view-space
-        vec4 viewSpace = vec4(clipSpace.x/fx, clipSpace.y/fy, -clipSpace.w,1.0);
+        vec4 viewSpace = vec4(clipSpace.x*enhancer_deprojection_inv[0], clipSpace.y*enhancer_deprojection_inv[1], -clipSpace.w,1.0);
 	return viewSpace;
     }
     vec4 enhancer_transform(bool isClipSpace, int camera, vec4 clipSpace)
@@ -480,15 +479,15 @@ std::string ShaderInspector::getCommonTransformationShader()
         if(enhancer_isOrthogonal || enhancer_identity)
             return clipSpace;
 
-        float near = enhancer_estimatedParameters[2];
-        float far = enhancer_estimatedParameters[3];
+        float near = enhancer_deprojection[2];
+        float far = enhancer_deprojection[3];
         
         float A = -2.0/(far-near);
         float B = -(far+near)/(far-near);
         
         mat4 projection = mat4(
-            vec4(enhancer_estimatedParameters[0],0.0f,0.0,0.0),
-            vec4(0.0f,enhancer_estimatedParameters[1],0.0f,0.0), 
+            vec4(enhancer_deprojection[0],0.0f,0.0,0.0),
+            vec4(0.0f,enhancer_deprojection[1],0.0f,0.0), 
             vec4(enhancer_getProjectionShift(camera),0.0f,A,-1.0), 
             vec4(0.0f,0.0f,B,0.0));
 

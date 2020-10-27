@@ -357,8 +357,12 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
 void Repeater::setEnhancerDecodedProjection(GLuint program, const PerspectiveProjectionParameters& projection)
 {
     // upload parameters to GPU's program
-    auto parametersLocation = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_estimatedParameters");
+    auto parametersLocation = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_deprojection");
     OpenglRedirectorBase::glUniform4fv(parametersLocation,1,glm::value_ptr(projection.asVector()));
+
+    parametersLocation = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_deprojection_inv");
+    glm::vec4 inverted = glm::vec4(1.0)/projection.asVector();
+    OpenglRedirectorBase::glUniform4fv(parametersLocation,1,glm::value_ptr(inverted));
 
     auto typeLocation= OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_isOrthogonal");
     OpenglRedirectorBase::glUniform1i(typeLocation,!projection.isPerspective);
@@ -872,14 +876,14 @@ void Repeater::setEnhancerShift(const glm::mat4& viewSpaceTransform, float proje
     auto program = m_Manager.getBoundId();
     if(program)
     {
-        auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
-        OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
+        //auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
+        //OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
 
-        location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
+        auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
         OpenglRedirectorBase::glUniform1i(location, GL_FALSE);
 
-        location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_projection_adjust");
-        OpenglRedirectorBase::glUniform1f(location, projectionAdjust);
+        //location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_projection_adjust");
+        //OpenglRedirectorBase::glUniform1f(location, projectionAdjust);
     }
 
     // Legacy support
@@ -917,6 +921,11 @@ void Repeater::setEnhancerIdentity()
     auto program = m_Manager.getBoundId();
     auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
     OpenglRedirectorBase::glUniform1i(location, GL_TRUE);
+
+    location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_max_views");
+    OpenglRedirectorBase::glUniform1i(location, 1);
+    location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_max_invocations");
+    OpenglRedirectorBase::glUniform1i(location, 1);
 }
 
 void Repeater::takeScreenshot(const std::string filename)
@@ -991,12 +1000,18 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
     loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_FrontalDistance");
     OpenglRedirectorBase::glUniform1f(loc, m_cameraParameters.m_frontOpticalAxisCentreDistance);
 
-    setEnhancerShift(glm::mat4(1.0),0.0);
+    auto location = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_max_views");
+    OpenglRedirectorBase::glUniform1i(location, 3*3);
+
+    location = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_max_invocations");
+    OpenglRedirectorBase::glUniform1i(location, 3*3);
+
+    //setEnhancerShift(glm::mat4(1.0),0.0);
 
     loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_identity");
     OpenglRedirectorBase::glUniform1i(loc, false);
     drawCallLambda();
-    resetEnhancerShift();
+    //resetEnhancerShift();
     return;
     // Get original viewport
     auto originalViewport = currentViewport;

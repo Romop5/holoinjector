@@ -15,8 +15,8 @@ namespace ve
         // True when original VS was dividing by 1.0
         bool shouldRenderToClipspace = false;
 
-        size_t countOfPrimitivesDuplicates = 3;
-        size_t countOfInvocations = 3;
+        size_t countOfPrimitivesDuplicates = 1;
+        size_t countOfInvocations = 9;
     };
 
     /*

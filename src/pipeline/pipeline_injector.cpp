@@ -67,7 +67,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
         )";
 
     geometryShaderStream << ShaderInspector::getCommonTransformationShader() << "\n";
-    geometryShaderStream << "layout (triangle_strip, max_vertices = " << 3*params.countOfInvocations <<  ") out;\n";
+    geometryShaderStream << "layout (triangle_strip, max_vertices = " << 3*params.countOfPrimitivesDuplicates<<  ") out;\n";
     geometryShaderStream << "layout (invocations= " << params.countOfInvocations <<  ") in;\n";
     geometryShaderStream << "const bool enhancer_geometry_isClipSpace = " 
         << (params.shouldRenderToClipspace?"true":"false") <<";\n";
@@ -76,11 +76,8 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
     geometryShaderStream << R"(
         void identity_main(int layer)
         {
-            int enhancer_camera_id = 0;
-            
             // identity shader
-            int i = 0;
-            for(i = 0; i < 3; i++)
+            for(int i = 0; i < 3; i++)
             {
                 gl_Position = gl_in[i].gl_Position;
                 gl_Layer = layer;
@@ -93,12 +90,12 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
         void main()
         {
             // Allows to override max_invocations using uniform
-            if(gl_InvocationID >= enhancer_max_invocations)
-                return;
+            //if(gl_InvocationID >= enhancer_max_invocations)
+            //    return;
             int layer = gl_InvocationID*enhancer_duplications;
             for(int i = 0; i < enhancer_duplications; i++)
             {
-                if(layer+i >= enhancer_max_views)
+                if((layer+i) >= enhancer_max_views)
                     return;
                 identity_main(layer+i);
             }
@@ -172,6 +169,8 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     
     // 2. Add gl_Layer = enhancer_layer; before each EmitVertex
     geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"),"gl_Layer = enhancer_layer; \nEmitVertex");  
+    geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"),"gl_Position = enhancer_transform(enhancer_geometry_isClipSpace, enhancer_layer, gl_Position); \nEmitVertex");  
+    // 3. insert double the 'max_vertices' count
     // 3. insert double the 'max_vertices' count
     auto maxVerticesPosition = geometryShader.find("max_vertices");
     assert(maxVerticesPosition != std::string::npos);
