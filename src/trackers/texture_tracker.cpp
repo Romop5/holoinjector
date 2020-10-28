@@ -1,3 +1,7 @@
+#define GL_GLEXT_PROTOTYPES 1
+#include <GL/gl.h>
+#include <GL/glext.h>
+
 #include "texture_tracker.hpp"
 #include <cassert>
 
@@ -37,6 +41,26 @@ GLenum TextureMetadata::getType()
 GLenum TextureMetadata::getFormat()
 {
     return m_Format;
+}
+
+
+bool TextureMetadata::hasShadowTexture() const
+{
+    return m_shadowedLayerVersionId != 0;
+}
+size_t TextureMetadata::getShadowedTextureId() const
+{
+    return m_shadowedLayerVersionId;
+}
+void TextureMetadata::createShadowedTexture(size_t numOfLayers)
+{
+    GLuint texture;
+    glGenTextures(1, &texture);
+    assert(getType() == GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, getLevels(), getFormat(), getWidth(),getHeight(), numOfLayers);
+    m_shadowedLayerVersionId = texture;
 }
 
 //-----------------------------------------------------------------------------

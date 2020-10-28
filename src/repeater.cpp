@@ -535,23 +535,25 @@ void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
 void Repeater::glFramebufferTexture (GLenum target, GLenum attachment, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture(target,attachment, texture,level);
-    m_FBOTracker.attach(attachment, texture);
+
+    assert(m_TextureTracker.has(texture));
+    m_FBOTracker.getBound()->attach(attachment, m_TextureTracker.get(texture));
 }
 
 void Repeater::glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture1D(target,attachment,textarget, texture,level);
-    m_FBOTracker.attach(attachment, texture);
+    m_FBOTracker.getBound()->attach(attachment, m_TextureTracker.get(texture),FramebufferAttachment::ATTACHMENT_1D);
 }
 void Repeater::glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture2D(target,attachment,textarget, texture,level);
-    m_FBOTracker.attach(attachment, texture);
+    m_FBOTracker.getBound()->attach(attachment, m_TextureTracker.get(texture),FramebufferAttachment::ATTACHMENT_2D);
 }
 void Repeater::glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset)
 {
     OpenglRedirectorBase::glFramebufferTexture3D(target,attachment,textarget, texture,level,zoffset);
-    m_FBOTracker.attach(attachment, texture);
+    m_FBOTracker.getBound()->attach(attachment, m_TextureTracker.get(texture),FramebufferAttachment::ATTACHMENT_3D);
 }
 
 // ----------------------------------------------------------------------------
@@ -998,7 +1000,7 @@ void Repeater::takeScreenshot(const std::string filename)
 
 void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
 {
-    if(!m_IsMultiviewActivated || m_FBOTracker.isFBOshadowMap() )
+    if(!m_IsMultiviewActivated || !m_FBOTracker.isSuitableForRepeating() )
     {
         setEnhancerIdentity();
         drawCallLambda();

@@ -19,6 +19,13 @@ namespace ve
 
         GLenum getType();
         GLenum getFormat();
+
+        /*
+         * Shadowing facility
+         */
+        bool hasShadowTexture() const;
+        size_t getShadowedTextureId() const;
+        void createShadowedTexture(size_t numOfLayers = 9);
         private:
         size_t m_Id = 0;
 
@@ -26,8 +33,13 @@ namespace ve
         GLenum m_Format;
         size_t m_Width = 0;
         size_t m_Height = 0;
-        size_t m_Levels =0;
+        size_t m_Levels = 0;
         size_t m_Layers = 0;
+
+        /*
+         * Extras
+         */
+        size_t m_shadowedLayerVersionId = 0;
     };
     class TextureTracker: public ContextTracker<std::shared_ptr<TextureMetadata>>
     {

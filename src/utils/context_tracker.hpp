@@ -20,6 +20,7 @@ class ContextTracker
     T const getConst(size_t id) const;
     void add(size_t id, T object);
     void remove(size_t id);
+    size_t size() const;
 
     // TODO: replace with something that can iterate
     MapType& getMap();
@@ -85,6 +86,12 @@ template<typename T>
 void ContextTracker<T>::remove(size_t id)
 {
     m_storage.erase(id);
+}
+
+template<typename T>
+size_t ContextTracker<T>::size() const
+{
+    return m_storage.size();
 }
 
 template<typename T>
