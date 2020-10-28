@@ -193,9 +193,16 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     // TODO: code is not ready for output streams
     assert(geometryShader.find("EmitStream") == std::string::npos);
 
+    // 0. insert common shader functions / uniforms
+    assert(geometryShader.find("void main") != std::string::npos);
+    auto mainPosition = geometryShader.find("void main");
+    geometryShader.insert(mainPosition, ShaderInspector::getCommonTransformationShader());
+
     // 1. rename void main() to void old_main()
     assert(geometryShader.find("void main") != std::string::npos);
-    geometryShader = std::regex_replace(geometryShader, std::regex("void main()"),"void old_main(int enhancer_layer)");  
+    geometryShader = std::regex_replace(geometryShader, std::regex("void[\f\n\r\t\v ]+main[\f\n\r\t\v ]*\\([\f\n\r\t\v ]*\\)"),"void old_main(int enhancer_layer)");  
+
+
     
     // 2. Add gl_Layer = enhancer_layer; before each EmitVertex
     geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"),"gl_Layer = enhancer_layer; \nEmitVertex");  
@@ -210,9 +217,12 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     geometryShader.insert(eqPosition+1, std::string(" ")+std::to_string(params.countOfPrimitivesDuplicates)+" *"); 
     // 4. insert invocations
     // finds the old main() function
-    auto beforeMainFunctionPosition = geometryShader.find("void");
-    geometryShader.insert(beforeMainFunctionPosition, std::string("layout(invocations = ")+std::to_string(params.countOfInvocations)+") in\n");
+    std::stringstream beforeMainCodeChunk;
+    beforeMainCodeChunk << "layout(invocations = " << params.countOfInvocations << ") in;\n";
+    beforeMainCodeChunk << "const bool enhancer_geometry_isClipSpace = " << (params.shouldRenderToClipspace?"true":"false") <<";\n";
 
+    auto beforeMainFunctionPosition = geometryShader.find("void");
+    geometryShader.insert(beforeMainFunctionPosition, beforeMainCodeChunk.str());
 
     // 5. Insert new main() function, calling original main() for invocation*duplicate-times, setting correct
     // layer for each of call
@@ -225,15 +235,16 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
         int duplicationId = 0;
         for(duplicationId = 0; duplicationId < maxDuplications; duplicationId++)
         {
-            // TODO: layer not bound
             int layer = gl_InvocationID*maxDuplications+duplicationId;
+            if(layer >= enhancer_max_views)
+                return;
             old_main(layer);
         }
     }
     )";
 
     // Place new main() into the end of shader
-    geometryShader.insert(geometryShader.size()-1, newMainFunction);
+    geometryShader.insert(geometryShader.size(), newMainFunction);
 
 
     // Return new pipeline
