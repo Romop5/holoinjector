@@ -466,7 +466,7 @@ std::string ShaderInspector::getCommonTransformationShader()
 
     uniform bool enhancer_isOrthogonal = false; 
     // when true, keeps original transformation flowing => used for shadow maps
-    uniform bool enhancer_identity = false; 
+    uniform bool enhancer_identity = true; 
 
     // Contains (fx,fy, near,far), estimated from original projection
     uniform vec4 enhancer_deprojection;

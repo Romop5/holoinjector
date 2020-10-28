@@ -458,57 +458,45 @@ void Repeater::glScissor(GLint x,GLint y,GLsizei width,GLsizei height)
 
 void Repeater::glDrawArrays(GLenum mode,GLint first,GLsizei count) 
 {
-    Repeater::drawMultiviewed([&]() {
-        OpenglRedirectorBase::glDrawArrays(mode,first,count);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawArrays(mode,first,count); });
+}
+
+void Repeater::glDrawArraysInstanced (GLenum mode, GLint first, GLsizei count, GLsizei instancecount)
+{
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawArraysInstanced(mode,first,count,instancecount); });
 }
 
 void Repeater::glDrawElements(GLenum mode,GLsizei count,GLenum type,const GLvoid* indices) 
 {
-    Repeater::drawMultiviewed([&]() {
-        OpenglRedirectorBase::glDrawElements(mode,count,type,indices);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawElements(mode,count,type,indices); });
 }
-
 
 void Repeater::glDrawElementsInstanced (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount)
 {
-    Repeater::drawMultiviewed([&]() {
-        OpenglRedirectorBase::glDrawElementsInstanced(mode,count,type,indices,instancecount);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawElementsInstanced(mode,count,type,indices,instancecount); });
 }
 
 void Repeater::glDrawRangeElements (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices)
 {
-    Repeater::drawMultiviewed([&]() {
-        OpenglRedirectorBase::glDrawRangeElements(mode,start,end,count,type,indices);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawRangeElements(mode,start,end,count,type,indices);});
 }
 
 void Repeater::glDrawElementsBaseVertex (GLenum mode, GLsizei count, GLenum type, const void* indices, GLint basevertex)
 {
-    Repeater::drawMultiviewed([&]() {
-        OpenglRedirectorBase::glDrawElementsBaseVertex(mode,count,type,indices, basevertex);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawElementsBaseVertex(mode,count,type,indices, basevertex); });
 }
 void Repeater::glDrawRangeElementsBaseVertex (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices, GLint basevertex)
 {
-    Repeater::drawMultiviewed([&]() {
-        OpenglRedirectorBase::glDrawRangeElementsBaseVertex(mode,start,end,count,type,indices,basevertex);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawRangeElementsBaseVertex(mode,start,end,count,type,indices,basevertex); });
 }
 void Repeater::glDrawElementsInstancedBaseVertex (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount, GLint basevertex) 
 {
-    Repeater::drawMultiviewed([&]() {
-        OpenglRedirectorBase::glDrawElementsInstancedBaseVertex(mode,count,type,indices, instancecount, basevertex);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawElementsInstancedBaseVertex(mode,count,type,indices, instancecount, basevertex); });
 }
 
 void Repeater::glMultiDrawElementsBaseVertex (GLenum mode, const GLsizei* count, GLenum type, const void* const*indices, GLsizei drawcount, const GLint* basevertex)
 {
-    Repeater::drawMultiviewed([&]() {
-        OpenglRedirectorBase::glMultiDrawElementsBaseVertex(mode,count,type,indices, drawcount, basevertex);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glMultiDrawElementsBaseVertex(mode,count,type,indices, drawcount, basevertex); });
 }
 
 // ----------------------------------------------------------------------------
@@ -527,8 +515,15 @@ void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
 {
     if(framebuffer == 0)
     {
-        OpenglRedirectorBase::glBindFramebuffer(target, m_OutputFBO.getFBOId());
-        OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getTextureWidth(), m_OutputFBO.getTextureHeight());
+        if(m_IsMultiviewActivated)
+        {
+            OpenglRedirectorBase::glBindFramebuffer(target, m_OutputFBO.getFBOId());
+            OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getTextureWidth(), m_OutputFBO.getTextureHeight());
+        } else {
+            OpenglRedirectorBase::glBindFramebuffer(target, 0);
+            OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),
+                    currentViewport.getWidth(), currentViewport.getHeight());
+        }
     } else {
         OpenglRedirectorBase::glBindFramebuffer(target,framebuffer);
         OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),

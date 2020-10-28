@@ -86,6 +86,8 @@ namespace ve
 
         // Draw calls start
         virtual void glDrawArrays(GLenum mode,GLint first,GLsizei count) override;
+        virtual void glDrawArraysInstanced (GLenum mode, GLint first, GLsizei count, GLsizei instancecount) override;
+
         virtual void glDrawElements(GLenum mode,GLsizei count,GLenum type,const GLvoid* indices) override;
         virtual  void glDrawElementsInstanced (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount) override;
         virtual  void glDrawRangeElements (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices) override;
