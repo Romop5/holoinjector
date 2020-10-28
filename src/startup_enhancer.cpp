@@ -35,6 +35,20 @@ namespace ve
 
     void* original_dlsym(void* params, const char* symbol)
     {
+        typedef void * (*PFN_DLSYM)(void* , const char*);
+        static PFN_DLSYM dlsym_sym = NULL;
+        if (!dlsym_sym) {
+            void *libdl_handle = __libc_dlopen_mode("libdl.so.2", RTLD_LOCAL | RTLD_NOW);
+            if (libdl_handle) {
+                dlsym_sym = (PFN_DLSYM)__libc_dlsym(libdl_handle, "dlsym");
+            }
+            if (!dlsym_sym) {
+                printf("[Enhancer] error: failed to look up real dlsym\n");
+                return NULL;
+            }
+        }
+        return dlsym_sym(params,symbol);
+
         void* original_dlsym = reinterpret_cast<void*>(&dlsym);
         /*
          * Prepare call to original dlsym code
@@ -74,6 +88,7 @@ namespace ve
             }
             return (void*) dlopen_sym;
         }
+        
 
         static std::mutex dlsym_mutex;
         auto lock = std::unique_lock<std::mutex>(dlsym_mutex);
@@ -111,7 +126,16 @@ namespace ve
         return addr;
     }
 
-    }
+} // namespace ve
+
+// Hooked
+void* dlsym(void* params, const char* symbol)
+{
+    if(context == nullptr)
+        return ve::original_dlsym(params,symbol);
+    return ve::hooked_dlsym(params,symbol);
+}
+
 
 namespace helper
 {
@@ -178,7 +202,8 @@ void enhancer_setup(std::unique_ptr<RedirectorBase> redirector)
     /*
      * Hook dlopen/dlsym functions and dispatch via our own function
      */
-    auto dlSymHookStatus = helper::hook_function(context->dlsymhook, reinterpret_cast<void *>(dlsym), reinterpret_cast<void *>(hooked_dlsym), hookTypeFlags);
+    //auto dlSymHookStatus = helper::hook_function(context->dlsymhook, reinterpret_cast<void *>(dlsym), reinterpret_cast<void *>(hooked_dlsym), hookTypeFlags);
+    auto dlSymHookStatus = true;
     
     /*
      * Set original symbol getter using trampolined dlsym()
