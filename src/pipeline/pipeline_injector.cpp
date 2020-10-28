@@ -1,5 +1,6 @@
 #include "pipeline/pipeline_injector.hpp"
 #include "pipeline/shader_inspector.hpp"
+#include "pipeline/shader_parser.hpp"
 
 #include <regex>
 #include <cassert>
@@ -49,6 +50,13 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
         output = insertGeometryShader(output,updatedParams);
     else 
         output = injectGeometryShader(output,updatedParams);
+
+    // Replace version with GLSL 4.6
+    for(auto& [_, shaderSourceCode]: output)
+    {
+        shaderSourceCode = std::regex_replace(shaderSourceCode, std::regex("version[\f\n\r\t\v ]*[0-9]*"), "version 450");
+    }
+
     return {output, (hasFilledMetadata)?std::move(metadata):nullptr};
 }
 
@@ -119,9 +127,29 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
         ioDefinitionString += "in " + type + " " + name + "[];\n";
         ioDefinitionString += "out " + type + " " + "enhancer_frag_"+name + ";\n";
 
-        ioRedirections += "enhancer_frag_"+name+" = " + name + "[i];\n";
+        
+        bool isInterfaceBlock = type.find_first_of("{}") != std::string::npos;
+        if(!isInterfaceBlock)
+        {
+            ioRedirections += "enhancer_frag_"+name+" = " + name + "[i];\n";
+        } else
+        {
+            /*
+             * Interface blocks must be copied per-partes
+             * => for each identifier, generate "out.id = in.id;" statement
+             */
+            auto interfaceBlockDefinitionTokens = ve::tokenize(type);
+            for(size_t i = 1; i < interfaceBlockDefinitionTokens.size(); i++)
+            {
+                if(interfaceBlockDefinitionTokens[i] != ";")
+                    continue;
+                std::stringstream ibRedirectionString;
+                ibRedirectionString << "enhancer_frag_" << name << "." << interfaceBlockDefinitionTokens[i-1] << 
+                    " = " << name <<  "[i]." << interfaceBlockDefinitionTokens[i-1] << ";\n";
+                ioRedirections += ibRedirectionString.str();
+            }
+        }
     }
-
 
     /*
      * Insert in/out redirection in Geometry Shader
@@ -136,9 +164,11 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
      * Replace all in attributes with prefixed version
      */
     auto fragmentShader = result[GL_FRAGMENT_SHADER]; 
-    for(auto& [_,name]: inputs)
+    for(auto& [type,name]: inputs)
     {
-        fragmentShader = std::regex_replace(fragmentShader, std::regex(name),"enhancer_frag_"+name);  
+        bool isInterfaceBlock = type.find_first_of("{}") != std::string::npos;
+        auto nameSuffix = (isInterfaceBlock?"_fs":"");
+        fragmentShader = std::regex_replace(fragmentShader, std::regex(name),"enhancer_frag_"+name+nameSuffix);  
     }
      
     /*
@@ -205,8 +235,6 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     // Place new main() into the end of shader
     geometryShader.insert(geometryShader.size()-1, newMainFunction);
 
-    // Replace version with GLSL 4.6
-    geometryShader = std::regex_replace(geometryShader, std::regex("#version[^\n]\n"),"#version 440 core\n");  
 
     // Return new pipeline
     auto output = pipeline;

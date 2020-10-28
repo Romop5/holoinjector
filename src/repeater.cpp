@@ -316,6 +316,7 @@ void Repeater::glLinkProgram (GLuint programId)
         const GLchar* sources[1] = {reinterpret_cast<const GLchar*>(sourceCode.data())}; 
         OpenglRedirectorBase::glShaderSource(newShader, 1, sources , nullptr);
 	printf("[Repeater] Compiling shader: \n %s\n", sourceCode.c_str());
+        fflush(stdout);
         OpenglRedirectorBase::glCompileShader(newShader);
         GLint status;
         OpenglRedirectorBase::glGetShaderiv(newShader,GL_COMPILE_STATUS, &status);

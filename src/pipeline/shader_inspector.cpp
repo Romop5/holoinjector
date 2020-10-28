@@ -270,6 +270,28 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfI
         for(auto& match: m)
         {
             std::string s = match.str();
+            if(s.find_first_of("{}") != std::string::npos)
+            {
+                auto start = sourceCode.find("in", m.position());
+                assert(start != std::string::npos);
+                // skip 'in'
+                start += 2;
+                auto end = sourceCode.find("}", m.position());
+                assert(end != std::string::npos);
+                end += 1;
+                auto idEnd = sourceCode.find(";", end);
+
+                auto snippet = sourceCode.substr(start, idEnd-start);
+                auto definitionTokens = ve::tokenize(snippet);
+
+                const auto type = sourceCode.substr(start, end-start);
+                const auto& name = definitionTokens[definitionTokens.size()-1];
+                assert(name.find_first_of(")(,;") == std::string::npos);
+                result.emplace_back(std::make_pair(type, name));
+                continue;
+            }
+
+            // is interface
             auto definitionTokens = ve::tokenize(s);
             assert(definitionTokens.size() >= 2);
             const auto& type = definitionTokens[definitionTokens.size()-2];
