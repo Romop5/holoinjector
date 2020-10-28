@@ -162,6 +162,58 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
     }
 }
 
+void Repeater::glGenTextures(GLsizei n,GLuint* textures)
+{
+    OpenglRedirectorBase::glGenTextures(n, textures);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        auto texture = std::make_shared<TextureMetadata>(textures[i]);
+	m_TextureTracker.add(textures[i], texture);
+    }
+}
+
+void Repeater::glTexStorage1D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
+{
+    OpenglRedirectorBase::glTexStorage1D(target,levels,internalformat,width);
+
+    GLint id;
+    glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    m_TextureTracker.get(id)->setStorage(width, 0, levels, 0, internalformat);
+}
+void Repeater::glTexStorage2D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
+{
+    OpenglRedirectorBase::glTexStorage2D(target,levels,internalformat,width,height);
+
+    GLint id;
+    glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    m_TextureTracker.get(id)->setStorage(width, height, levels, 0, internalformat);
+}
+void Repeater::glTexStorage3D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
+{
+    OpenglRedirectorBase::glTexStorage3D(target,levels,internalformat,width,height, depth);
+
+    GLint id;
+    glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    m_TextureTracker.get(id)->setStorage(width, height, levels, depth, internalformat);
+}
+
+void Repeater::glTextureStorage1D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width)
+{
+    OpenglRedirectorBase::glTextureStorage1D(texture,levels,internalformat,width);
+    m_TextureTracker.get(texture)->setStorage(width, 0, levels, 0, internalformat);
+}
+void Repeater::glTextureStorage2D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
+{
+    OpenglRedirectorBase::glTextureStorage2D(texture,levels,internalformat,width,height);
+    m_TextureTracker.get(texture)->setStorage(width, height, levels, 0, internalformat);
+}
+void Repeater::glTextureStorage3D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
+{
+    OpenglRedirectorBase::glTextureStorage3D(texture,levels,internalformat,width,height,depth);
+    m_TextureTracker.get(texture)->setStorage(width, height, levels, depth, internalformat);
+}
+
 GLuint Repeater::glCreateShader(GLenum shaderType)
 {
     auto id = OpenglRedirectorBase::glCreateShader(shaderType);

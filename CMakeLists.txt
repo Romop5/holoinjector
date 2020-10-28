@@ -58,35 +58,40 @@ find_package(FreeImage REQUIRED)
 ###############################################################################
 
 add_library(enhancer_core 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/projection_estimator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/projection_estimator.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_inspector.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_inspector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_manager.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/framebuffer_tracker.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/framebuffer_tracker.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/legacy_tracker.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/legacy_tracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/uniform_block_tracing.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/uniform_block_tracing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/texture_tracker.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/texture_tracker.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/projection_estimator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/projection_estimator.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_inspector.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_inspector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/viewport_area.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/viewport_area.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/virtual_cameras.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/virtual_cameras.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_parser.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_parser.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/uniform_block_tracing.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/uniform_block_tracing.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/pipeline_injector.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/pipeline_injector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/program_metadata.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/program_metadata.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/output_fbo.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/output_fbo.cpp
-    )
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.cpp
+)
 
 # Hack: we would like a static library to be linked into shared library later
 # => Position Independent Code is thus required
