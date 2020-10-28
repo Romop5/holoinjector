@@ -194,8 +194,8 @@ void OutputFBO::renderToBackbuffer()
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindVertexArray(m_VAO);   
-    glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
     glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
 

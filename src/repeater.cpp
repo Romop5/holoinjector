@@ -366,7 +366,7 @@ void Repeater::glCompileShader (GLuint shader)
 void Repeater::glAttachShader (GLuint program, GLuint shader)
 {
     printf("[Repeater] attaching shader [%d] to program [%d] \n", shader, program);
-    OpenglRedirectorBase::glAttachShader(program,shader);
+    //OpenglRedirectorBase::glAttachShader(program,shader);
 
     if(!m_Manager.has(program) || !m_Manager.shaders.has(shader))
         return;
@@ -1003,27 +1003,17 @@ void Repeater::takeScreenshot(const std::string filename)
 
 void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
 {
-    if(!m_IsMultiviewActivated)
+    if(!m_IsMultiviewActivated || m_FBOTracker.isFBOshadowMap() )
     {
         setEnhancerIdentity();
         drawCallLambda();
         return;
     }
 
-    bool shouldNotDuplicate = (
-            // don't duplicate while rendering light's point of view into shadow map
-            m_FBOTracker.isFBOshadowMap() ||
-            // don't duplicate while there is no projection and its not legacy OpenGL at the same time
-            (m_Manager.hasBounded() && m_Manager.getBound()->m_Metadata && !m_Manager.getBound()->m_Metadata->hasDetectedTransformation() && !m_LegacyTracker.isLegacyNeeded()) ||
-            // don't duplicate if we don't have any metadata
-            !m_Manager.getBound()->m_Metadata
-    );
-
-    if(shouldNotDuplicate)
+    if(!m_FBOTracker.hasBounded())
     {
-        setEnhancerIdentity();
-        drawCallLambda();
-        return;
+        OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_OutputFBO.getFBOId());
+        OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getTextureWidth(),m_OutputFBO.getTextureHeight());
     }
 
     /// If Uniform Buffer Object is used
@@ -1040,13 +1030,6 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
             setEnhancerIdentity();
         }
     }
-
-    if(!m_FBOTracker.hasBounded())
-    {
-        OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_OutputFBO.getFBOId());
-        OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getTextureWidth(),m_OutputFBO.getTextureHeight());
-    }
-
     auto loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_XShiftMultiplier");
     OpenglRedirectorBase::glUniform1f(loc, m_cameraParameters.m_XShiftMultiplier);
 
@@ -1062,7 +1045,9 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
     //setEnhancerShift(glm::mat4(1.0),0.0);
 
     loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_identity");
-    OpenglRedirectorBase::glUniform1i(loc, false);
+
+    bool shouldNotUseIdentity = (m_Manager.getBound()->m_Metadata && m_Manager.getBound()->m_Metadata->hasDetectedTransformation());
+    OpenglRedirectorBase::glUniform1i(loc, !shouldNotUseIdentity);
     drawCallLambda();
     //resetEnhancerShift();
     return;
