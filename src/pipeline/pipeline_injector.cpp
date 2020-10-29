@@ -74,6 +74,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
         layout (triangles) in;
         )";
 
+    geometryShaderStream << "//------------ Enhancer Insert Header start\n";
     geometryShaderStream << ShaderInspector::getCommonTransformationShader() << "\n";
     geometryShaderStream << "layout (triangle_strip, max_vertices = " << 3*params.countOfPrimitivesDuplicates<<  ") out;\n";
     geometryShaderStream << "layout (invocations= " << params.countOfInvocations <<  ") in;\n";
@@ -109,6 +110,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
             }
         }
     )";
+    geometryShaderStream << "//------------ Enhancer Insert Header end\n";
     auto geometryShader = std::move(geometryShaderStream.str());
 
     auto FS = pipeline.at(GL_FRAGMENT_SHADER);
@@ -194,9 +196,17 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     assert(geometryShader.find("EmitStream") == std::string::npos);
 
     // 0. insert common shader functions / uniforms
-    assert(geometryShader.find("void main") != std::string::npos);
-    auto mainPosition = geometryShader.find("void main");
-    geometryShader.insert(mainPosition, ShaderInspector::getCommonTransformationShader());
+    auto lastMacroDeclarationPosition = geometryShader.find_first_of("\n", geometryShader.find_last_of("#"));
+    assert(lastMacroDeclarationPosition != std::string::npos);
+    lastMacroDeclarationPosition += 1;
+
+    std::stringstream headerInclude;
+    headerInclude << "//------------ Enhancer Inject Header start\n";
+    headerInclude << "int enhancer_layer = 0; \n"; 
+    // Already injected by ShaderInspector::inject()
+    //headerInclude << ShaderInspector::getCommonTransformationShader() << "\n";
+    headerInclude << "//------------ Enhancer Inject Header end\n";
+    geometryShader.insert(lastMacroDeclarationPosition, headerInclude.str());
 
     // 1. rename void main() to void old_main()
     assert(geometryShader.find("void main") != std::string::npos);
@@ -218,8 +228,10 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     // 4. insert invocations
     // finds the old main() function
     std::stringstream beforeMainCodeChunk;
+    beforeMainCodeChunk << "//------------ Enhancer Inject Header start\n";
     beforeMainCodeChunk << "layout(invocations = " << params.countOfInvocations << ") in;\n";
     beforeMainCodeChunk << "const bool enhancer_geometry_isClipSpace = " << (params.shouldRenderToClipspace?"true":"false") <<";\n";
+    beforeMainCodeChunk << "//------------ Enhancer Inject Header end\n";
 
     auto beforeMainFunctionPosition = geometryShader.find("void");
     geometryShader.insert(beforeMainFunctionPosition, beforeMainCodeChunk.str());
@@ -235,10 +247,10 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
         int duplicationId = 0;
         for(duplicationId = 0; duplicationId < maxDuplications; duplicationId++)
         {
-            int layer = gl_InvocationID*maxDuplications+duplicationId;
-            if(layer >= enhancer_max_views)
+            enhancer_layer = gl_InvocationID*maxDuplications+duplicationId;
+            if(enhancer_layer>= enhancer_max_views)
                 return;
-            old_main(layer);
+            old_main(enhancer_layer);
         }
     }
     )";
