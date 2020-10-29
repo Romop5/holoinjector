@@ -82,6 +82,7 @@ namespace ve
         /// Is clip-space shader
         bool isClipSpaceShader() const;
 
+        static void injectCommonCode(std::string& sourceOriginal);
 	static std::string getCommonTransformationShader();
     };
 } //namespace ve

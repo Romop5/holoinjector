@@ -454,6 +454,13 @@ bool ShaderInspector::isClipSpaceShader() const
     return std::regex_search(sourceCode, m, clipAssign); 
 }
 
+void ShaderInspector::injectCommonCode(std::string& sourceOriginal)
+{
+    auto pos = sourceOriginal.find_first_of("\n", sourceOriginal.find_last_of("#"));
+    assert(pos != std::string::npos);
+    pos += 1;
+    sourceOriginal.insert(pos, getCommonTransformationShader());
+}
 
 std::string ShaderInspector::getCommonTransformationShader()
 {   

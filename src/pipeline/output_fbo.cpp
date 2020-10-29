@@ -90,7 +90,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
             int layer = (gridSize-indices.y-1)*gridSize+indices.x;
             color = texture(enhancer_layeredScreen, vec3(newUv, layer));
             color.w = 1.0;
-            color.z = float(layer)/float(gridSize*gridSize);
+            //color.z = float(layer)/float(gridSize*gridSize);
         }
     )");
 

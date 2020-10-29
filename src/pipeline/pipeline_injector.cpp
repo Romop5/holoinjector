@@ -26,6 +26,8 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
         {
             hasFilledMetadata = true;
             output[GL_GEOMETRY_SHADER] = GS;
+        } else {
+            ShaderInspector::injectCommonCode(output[GL_GEOMETRY_SHADER]);
         }
     }
 
