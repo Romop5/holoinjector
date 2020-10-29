@@ -43,6 +43,8 @@ void OutputFBO::initialize(OutputFBOParameters params)
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredDepthStencilBuffer);
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, params.pixels_width,params.pixels_height, countOfLayers);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     assert(glGetError() == GL_NO_ERROR);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, m_LayeredDepthStencilBuffer, 0);
     assert(glGetError() == GL_NO_ERROR);

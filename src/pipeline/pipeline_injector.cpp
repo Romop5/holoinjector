@@ -22,6 +22,12 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
     if(output.count(GL_GEOMETRY_SHADER) > 0)
     {   // Try Geometry shader at first
         auto GS = output.at(GL_GEOMETRY_SHADER);
+        auto isLayeredProgram = GS.find("gl_Layer");
+        if(isLayeredProgram)
+        {   // if original geometry shader already uses gl_Position, it's probably cube map rendering
+            // so we can't change the structure of program
+            return {input, nullptr};
+        }
         if(injectShader(GS, *metadata))
         {
             hasFilledMetadata = true;
