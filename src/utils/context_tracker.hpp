@@ -24,6 +24,7 @@ class ContextTracker
 
     // TODO: replace with something that can iterate
     MapType& getMap();
+    const MapType& getConstMap() const;
     protected:
     MapType m_storage;
 };
@@ -31,7 +32,7 @@ class ContextTracker
 /**
  * @brief Extends ContextTracker with binding functionality
  */
-template<typename T>
+template<typename T, bool IS_ZERO_RESERVED = true>
 class BindableContextTracker: public ContextTracker<T>
 {
     public:
@@ -99,49 +100,58 @@ typename ContextTracker<T>::MapType& ContextTracker<T>::getMap()
 {
     return m_storage;
 }
-///////////////////////////////////////////////////////////////////////////////
-// BindableContextTracker 
-///////////////////////////////////////////////////////////////////////////////
+
 template<typename T>
-void BindableContextTracker<T>::bind(size_t id)
+const typename ContextTracker<T>::MapType& ContextTracker<T>::getConstMap() const
+{
+    return m_storage;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// BindableContextTracker
+///////////////////////////////////////////////////////////////////////////////
+template<typename T, bool IS_ZERO_RESERVED>
+void BindableContextTracker<T,IS_ZERO_RESERVED>::bind(size_t id)
 {
     m_currentlyBoundObjectId = id;
 }
 
-template<typename T>
-void BindableContextTracker<T>::unbind()
+template<typename T, bool IS_ZERO_RESERVED>
+void BindableContextTracker<T,IS_ZERO_RESERVED>::unbind()
 {
     m_currentlyBoundObjectId = 0;
 }
 
-template<typename T>
-bool BindableContextTracker<T>::hasBounded() const
+template<typename T, bool IS_ZERO_RESERVED>
+bool BindableContextTracker<T,IS_ZERO_RESERVED>::hasBounded() const
 {
-    return m_currentlyBoundObjectId != 0;
+    // if !IS_ZERO_RESERVED, then 0 object is active by default 
+    // (e.g. texture unit)
+    return (IS_ZERO_RESERVED?m_currentlyBoundObjectId != 0:true);
 }
 
-template<typename T>
-T BindableContextTracker<T>::getBound()
+template<typename T, bool IS_ZERO_RESERVED>
+T BindableContextTracker<T,IS_ZERO_RESERVED>::getBound()
 {
     assert(this->has(m_currentlyBoundObjectId));
     return this->get(m_currentlyBoundObjectId);
 }
 
-template<typename T>
-T const BindableContextTracker<T>::getBoundConst() const
+template<typename T, bool IS_ZERO_RESERVED>
+T const BindableContextTracker<T,IS_ZERO_RESERVED>::getBoundConst() const
 {
     assert(this->has(m_currentlyBoundObjectId));
     return this->getConst(m_currentlyBoundObjectId);
 }
 
-template<typename T>
-size_t BindableContextTracker<T>::getBoundId() const
+template<typename T, bool IS_ZERO_RESERVED>
+size_t BindableContextTracker<T,IS_ZERO_RESERVED>::getBoundId() const
 {
     return m_currentlyBoundObjectId;
 }
 
-template<typename T>
-void BindableContextTracker<T>::remove(size_t id)
+template<typename T, bool IS_ZERO_RESERVED>
+void BindableContextTracker<T,IS_ZERO_RESERVED>::remove(size_t id)
 {
     if(m_currentlyBoundObjectId == id)
     {

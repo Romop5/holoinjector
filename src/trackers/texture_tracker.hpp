@@ -30,6 +30,7 @@ namespace ve
         size_t getShadowedTextureId() const;
         size_t getTextureViewIdOfShadowedTexture() const;
         virtual void createShadowedTexture(size_t numOfLayers = 9);
+        void setTextureViewToLayer(size_t layer);
         protected:
         size_t m_Id = 0;
 
@@ -46,11 +47,37 @@ namespace ve
         size_t m_shadowedLayerVersionId = 0;
         size_t m_shadowTextureViewId = 0;
     };
+
+    class TextureUnit: public ContextTracker<std::shared_ptr<TextureMetadata>>
+    {
+    };
+
+    // Forwarding due to friend class
+    class TextureTracker;
+
+    class TextureUnitTracker: private BindableContextTracker<std::shared_ptr<TextureUnit>,false>
+    {
+        public:
+        bool hasShadowedTextureBinded() const;
+        void bindShadowedTexturesToLayer(size_t layer);
+        protected:
+        void activate(size_t id);
+        void bind(size_t target, std::shared_ptr<TextureMetadata> texture);
+        MapType& getUnits();
+        friend class TextureTracker;
+        private:
+        using baseType = BindableContextTracker<std::shared_ptr<TextureUnit>,false>;
+    };
     class TextureTracker: public ContextTracker<std::shared_ptr<TextureMetadata>>
     {
         public:
 	static GLenum getParameterForType(GLenum type);
         static GLenum convertToSizedFormat(GLenum internalFormat, GLenum size);
+
+        void bind(GLenum target, size_t id);
+        TextureUnitTracker& getTextureUnits();
+        private:
+        TextureUnitTracker m_TextureUnits;
     };
 }
 #endif

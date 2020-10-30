@@ -78,6 +78,68 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
     m_shadowTextureViewId = textures[1];
 }
 
+void TextureMetadata::setTextureViewToLayer(size_t layer)
+{
+    GLuint viewId = m_shadowTextureViewId;
+    assert(m_shadowedLayerVersionId != 0);
+    if(m_shadowedLayerVersionId != 0)
+        glDeleteTextures(1, &viewId);
+    glGenTextures(1, &viewId);
+    glTextureView(viewId, GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, getLevels(), layer, 1);
+}
+
+//-----------------------------------------------------------------------------
+// TextureUnitTracker
+//-----------------------------------------------------------------------------
+bool TextureUnitTracker::hasShadowedTextureBinded() const
+{
+    for(auto& [id, unit]: getConstMap())
+    {
+        for(auto& [target, texture]: unit->getConstMap())
+        {
+            if(texture->hasShadowTexture())
+                return true;
+        }
+    }
+    return false;
+}
+
+void TextureUnitTracker::bindShadowedTexturesToLayer(size_t layer)
+{
+    for(auto& [id, unit]: getMap())
+    {
+        for(auto& [target, texture]: unit->getMap())
+        {
+            if(!texture->hasShadowTexture())
+                continue;
+            texture->setTextureViewToLayer(layer);
+            glBindTextureUnit(id, texture->getTextureViewIdOfShadowedTexture());
+        }
+    }
+}
+
+void TextureUnitTracker::activate(size_t id)
+{
+    baseType::bind(id);
+}
+
+void TextureUnitTracker::bind(size_t target, std::shared_ptr<TextureMetadata> texture)
+{
+    if(texture == nullptr)
+    {
+        if(!has(getBoundId()))
+            return;
+        get(getBoundId())->remove(target);
+    } else {
+        if(!has(getBoundId()))
+            add(getBoundId(), std::make_shared<TextureUnit>());
+        getBound()->add(target, texture);
+    }
+}
+TextureUnitTracker::MapType& TextureUnitTracker::getUnits()
+{
+    return getMap();
+}
 //-----------------------------------------------------------------------------
 // Texture Tracker
 //-----------------------------------------------------------------------------
@@ -130,4 +192,20 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
             return 0;
     }
     return 0;
+}
+
+void TextureTracker::bind(GLenum target, size_t id)
+{
+    if(id == 0)
+    {
+        m_TextureUnits.bind(target,nullptr);
+        return;
+    }
+    assert(has(id));
+    m_TextureUnits.bind(target,get(id));
+}
+
+TextureUnitTracker& TextureTracker::getTextureUnits()
+{
+    return m_TextureUnits;
 }
