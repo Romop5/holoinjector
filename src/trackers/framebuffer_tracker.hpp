@@ -33,8 +33,8 @@ namespace ve
         bool hasAttachment(GLenum attachmentType) const;
 
         bool hasShadowFBO() const;
+        size_t getShadowFBO() const;
         void createShadowedFBO();
-
         /*
          * Heuristics
          */

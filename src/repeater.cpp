@@ -132,8 +132,15 @@ void Repeater::glClear(GLbitfield mask)
     if(!m_FBOTracker.hasBounded())
     {
         OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_OutputFBO.getFBOId());
-        OpenglRedirectorBase::glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+        OpenglRedirectorBase::glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT | mask);
         OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER,0);
+    } else {
+        if(m_FBOTracker.getBound()->hasShadowFBO())
+        {
+            OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_FBOTracker.getBound()->getShadowFBO());
+            OpenglRedirectorBase::glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT | mask);
+            OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_FBOTracker.getBoundId());
+        }
     }
     OpenglRedirectorBase::glClear(mask);
         
@@ -173,13 +180,37 @@ void Repeater::glGenTextures(GLsizei n,GLuint* textures)
     }
 }
 
+
+void Repeater::glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLint border,GLenum format,GLenum type,const GLvoid* pixels) 
+{
+    OpenglRedirectorBase::glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
+    GLint id;
+    glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    m_TextureTracker.get(id)->setStorage(target,width, 0, level, 0, TextureTracker::convertToSizedFormat(format, type));
+}
+void Repeater::glTexImage2D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLsizei height,GLint border,GLenum format,GLenum type,const GLvoid* pixels)
+{
+    OpenglRedirectorBase::glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
+    GLint id;
+    glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    m_TextureTracker.get(id)->setStorage(target,width, height, level, 0, TextureTracker::convertToSizedFormat(format,type));
+}
+
+void Repeater::glTexImage3D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels)
+{
+    OpenglRedirectorBase::glTexImage3D(target, level, internalformat, width, height, depth, border, format, type, pixels);
+    GLint id;
+    glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    m_TextureTracker.get(id)->setStorage(target,width, height, level, 0, TextureTracker::convertToSizedFormat(format, type));
+}
+
 void Repeater::glTexStorage1D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
 {
     OpenglRedirectorBase::glTexStorage1D(target,levels,internalformat,width);
 
     GLint id;
     glGetIntegerv(TextureTracker::getParameterForType(target), &id);
-    m_TextureTracker.get(id)->setStorage(width, 0, levels, 0, internalformat);
+    m_TextureTracker.get(id)->setStorage(target,width, 0, levels, 0, internalformat);
 }
 void Repeater::glTexStorage2D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
 {
@@ -187,7 +218,7 @@ void Repeater::glTexStorage2D (GLenum target, GLsizei levels, GLenum internalfor
 
     GLint id;
     glGetIntegerv(TextureTracker::getParameterForType(target), &id);
-    m_TextureTracker.get(id)->setStorage(width, height, levels, 0, internalformat);
+    m_TextureTracker.get(id)->setStorage(target,width, height, levels, 0, internalformat);
 }
 void Repeater::glTexStorage3D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
 {
@@ -195,23 +226,34 @@ void Repeater::glTexStorage3D (GLenum target, GLsizei levels, GLenum internalfor
 
     GLint id;
     glGetIntegerv(TextureTracker::getParameterForType(target), &id);
-    m_TextureTracker.get(id)->setStorage(width, height, levels, depth, internalformat);
+    m_TextureTracker.get(id)->setStorage(target,width, height, levels, depth, internalformat);
 }
 
 void Repeater::glTextureStorage1D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width)
 {
     OpenglRedirectorBase::glTextureStorage1D(texture,levels,internalformat,width);
-    m_TextureTracker.get(texture)->setStorage(width, 0, levels, 0, internalformat);
+    m_TextureTracker.get(texture)->setStorage(GL_TEXTURE_1D,width, 0, levels, 0, internalformat);
 }
 void Repeater::glTextureStorage2D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
 {
     OpenglRedirectorBase::glTextureStorage2D(texture,levels,internalformat,width,height);
-    m_TextureTracker.get(texture)->setStorage(width, height, levels, 0, internalformat);
+    m_TextureTracker.get(texture)->setStorage(GL_TEXTURE_2D,width, height, levels, 0, internalformat);
 }
 void Repeater::glTextureStorage3D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
 {
     OpenglRedirectorBase::glTextureStorage3D(texture,levels,internalformat,width,height,depth);
-    m_TextureTracker.get(texture)->setStorage(width, height, levels, depth, internalformat);
+    m_TextureTracker.get(texture)->setStorage(GL_TEXTURE_3D,width, height, levels, depth, internalformat);
+}
+
+
+void Repeater::glBindTexture(GLenum target,GLuint texture)
+{
+    auto fakeTextureId = texture;
+    if(m_TextureTracker.has(texture) && m_TextureTracker.get(texture)->hasShadowTexture())
+    {
+        fakeTextureId = m_TextureTracker.get(texture)->getTextureViewIdOfShadowedTexture();
+    }
+    OpenglRedirectorBase::glBindTexture(target,fakeTextureId);
 }
 
 GLuint Repeater::glCreateShader(GLenum shaderType)
@@ -525,6 +567,7 @@ void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
                     currentViewport.getWidth(), currentViewport.getHeight());
         }
     } else {
+        auto id = framebuffer;
         OpenglRedirectorBase::glBindFramebuffer(target,framebuffer);
         OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),
                 currentViewport.getWidth(), currentViewport.getHeight());
@@ -1000,7 +1043,7 @@ void Repeater::takeScreenshot(const std::string filename)
 
 void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
 {
-    if(!m_IsMultiviewActivated || !m_FBOTracker.isSuitableForRepeating() )
+    if(!m_IsMultiviewActivated || (m_FBOTracker.hasBounded() && !m_FBOTracker.isSuitableForRepeating()) )
     {
         setEnhancerIdentity();
         drawCallLambda();
@@ -1011,6 +1054,16 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
     {
         OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_OutputFBO.getFBOId());
         OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getTextureWidth(),m_OutputFBO.getTextureHeight());
+    } else {
+        auto fbo = m_FBOTracker.getBound();
+        if(!fbo->hasShadowFBO() && m_FBOTracker.isSuitableForRepeating())
+        {
+            fbo->createShadowedFBO();
+        }
+        if(fbo->hasShadowFBO())
+        {
+            OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, fbo->getShadowFBO());
+        }
     }
 
     /// If Uniform Buffer Object is used

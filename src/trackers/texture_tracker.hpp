@@ -10,7 +10,7 @@ namespace ve
     {
         public:
         TextureMetadata(size_t id): m_Id(id) {}
-        void setStorage(size_t width, size_t height, size_t levels, size_t layers, GLenum internalFormat);
+        void setStorage(GLenum type, size_t width, size_t height, size_t levels, size_t layers, GLenum internalFormat);
 
         size_t getWidth() const;
         size_t getHeight() const;
@@ -25,12 +25,13 @@ namespace ve
          */
         bool hasShadowTexture() const;
         size_t getShadowedTextureId() const;
+        size_t getTextureViewIdOfShadowedTexture() const;
         void createShadowedTexture(size_t numOfLayers = 9);
         private:
         size_t m_Id = 0;
 
-        GLenum m_Type;
-        GLenum m_Format;
+        GLenum m_Type = 0;
+        GLenum m_Format = 0;
         size_t m_Width = 0;
         size_t m_Height = 0;
         size_t m_Levels = 0;
@@ -40,11 +41,12 @@ namespace ve
          * Extras
          */
         size_t m_shadowedLayerVersionId = 0;
+        size_t m_shadowTextureViewId = 0;
     };
     class TextureTracker: public ContextTracker<std::shared_ptr<TextureMetadata>>
     {
         public:
 	static GLenum getParameterForType(GLenum type);
-        private:
+        static GLenum convertToSizedFormat(GLenum internalFormat, GLenum size);
     };
 }

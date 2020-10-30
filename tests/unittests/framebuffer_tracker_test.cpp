@@ -30,7 +30,7 @@ TEST(FramebufferTracker, Basic) {
 
     TextureTracker tt;
     auto depthTexture = std::make_shared<TextureMetadata>(0);
-    depthTexture->setStorage(100,100,1,0, GL_DEPTH_COMPONENT24);
+    depthTexture->setStorage(GL_TEXTURE_2D,100,100,1,0, GL_DEPTH_COMPONENT24);
     tt.add(0, depthTexture);
 
     ft.get(1)->attach(GL_DEPTH_ATTACHMENT, depthTexture);
@@ -40,7 +40,7 @@ TEST(FramebufferTracker, Basic) {
     EXPECT_TRUE(ft.get(1)->isShadowMapFBO());
 
     auto colorTexture= std::make_shared<TextureMetadata>(1);
-    colorTexture->setStorage(100,100,1,0, GL_RGBA8);
+    colorTexture->setStorage(GL_TEXTURE_2D,100,100,1,0, GL_RGBA8);
     tt.add(1, colorTexture);
 
     ft.get(1)->attach(GL_COLOR_ATTACHMENT0, colorTexture);
@@ -61,11 +61,11 @@ TEST(FramebufferTracker, NonDefaultAttachment) {
     TextureTracker tt;
 
     auto depthTexture = std::make_shared<TextureMetadata>(1);
-    depthTexture->setStorage(100,100,1,0, GL_DEPTH_COMPONENT16); 
+    depthTexture->setStorage(GL_TEXTURE_2D,100,100,1,0, GL_DEPTH_COMPONENT16); 
     tt.add(1, depthTexture);
 
     auto colorTexture= std::make_shared<TextureMetadata>(2);
-    colorTexture->setStorage(100,100,1,0, GL_RGBA8); 
+    colorTexture->setStorage(GL_TEXTURE_2D,100,100,1,0, GL_RGBA8); 
     tt.add(2, colorTexture);
 
     for(size_t i = 0; i < 8; i++)

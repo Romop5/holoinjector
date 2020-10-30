@@ -31,10 +31,17 @@ bool ve::FramebufferMetadata::hasShadowFBO() const
 {
     return m_shadowFBOId;
 }
+
+size_t ve::FramebufferMetadata::getShadowFBO() const
+{
+    return m_shadowFBOId;
+}
 void ve::FramebufferMetadata::createShadowedFBO()
 {
     GLuint shadowFBO;
     glGenFramebuffers(1,&shadowFBO);
+    // Hack: OpenGL require at least one bind before attaching
+    glBindFramebuffer(GL_FRAMEBUFFER,shadowFBO);
     for(auto& [attachmentType, metadata]: m_attachments.getMap())
     {
         auto texture = metadata.texture;
@@ -49,6 +56,7 @@ void ve::FramebufferMetadata::createShadowedFBO()
     assert(status == GL_FRAMEBUFFER_COMPLETE);
     m_shadowFBOId = shadowFBO;
 }
+
 
 bool ve::FramebufferMetadata::isShadowMapFBO() const
 {
