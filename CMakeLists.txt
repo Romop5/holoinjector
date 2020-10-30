@@ -68,6 +68,8 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/uniform_block_tracing.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/texture_tracker.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/texture_tracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/renderbuffer_tracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/renderbuffer_tracker.hpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/projection_estimator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/projection_estimator.hpp

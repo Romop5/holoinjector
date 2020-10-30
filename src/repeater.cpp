@@ -185,14 +185,14 @@ void Repeater::glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsiz
 {
     OpenglRedirectorBase::glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
     GLint id;
-    glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
     m_TextureTracker.get(id)->setStorage(target,width, 0, level, 0, TextureTracker::convertToSizedFormat(format, type));
 }
 void Repeater::glTexImage2D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLsizei height,GLint border,GLenum format,GLenum type,const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
     GLint id;
-    glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
     m_TextureTracker.get(id)->setStorage(target,width, height, level, 0, TextureTracker::convertToSizedFormat(format,type));
 }
 
@@ -200,7 +200,7 @@ void Repeater::glTexImage3D (GLenum target, GLint level, GLint internalformat, G
 {
     OpenglRedirectorBase::glTexImage3D(target, level, internalformat, width, height, depth, border, format, type, pixels);
     GLint id;
-    glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
     m_TextureTracker.get(id)->setStorage(target,width, height, level, 0, TextureTracker::convertToSizedFormat(format, type));
 }
 
@@ -209,7 +209,7 @@ void Repeater::glTexStorage1D (GLenum target, GLsizei levels, GLenum internalfor
     OpenglRedirectorBase::glTexStorage1D(target,levels,internalformat,width);
 
     GLint id;
-    glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
     m_TextureTracker.get(id)->setStorage(target,width, 0, levels, 0, internalformat);
 }
 void Repeater::glTexStorage2D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
@@ -217,7 +217,7 @@ void Repeater::glTexStorage2D (GLenum target, GLsizei levels, GLenum internalfor
     OpenglRedirectorBase::glTexStorage2D(target,levels,internalformat,width,height);
 
     GLint id;
-    glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
     m_TextureTracker.get(id)->setStorage(target,width, height, levels, 0, internalformat);
 }
 void Repeater::glTexStorage3D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
@@ -225,7 +225,7 @@ void Repeater::glTexStorage3D (GLenum target, GLsizei levels, GLenum internalfor
     OpenglRedirectorBase::glTexStorage3D(target,levels,internalformat,width,height, depth);
 
     GLint id;
-    glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
     m_TextureTracker.get(id)->setStorage(target,width, height, levels, depth, internalformat);
 }
 
@@ -243,6 +243,23 @@ void Repeater::glTextureStorage3D (GLuint texture, GLsizei levels, GLenum intern
 {
     OpenglRedirectorBase::glTextureStorage3D(texture,levels,internalformat,width,height,depth);
     m_TextureTracker.get(texture)->setStorage(GL_TEXTURE_3D,width, height, levels, depth, internalformat);
+}
+
+void Repeater::glGenRenderbuffers (GLsizei n, GLuint* renderbuffers)
+{
+    OpenglRedirectorBase::glGenRenderbuffers(n,renderbuffers);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        m_RenderbufferTracker.add(renderbuffers[i],std::make_shared<RenderbufferMetadata>(renderbuffers[i]));
+    }
+}
+void Repeater::glRenderbufferStorage (GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
+{
+    OpenglRedirectorBase::glRenderbufferStorage(target,internalformat, width, height);
+    GLint id;
+    OpenglRedirectorBase::glGetIntegerv(GL_RENDERBUFFER_BINDING, &id);
+    m_RenderbufferTracker.get(id)->setStorage(target,width, height, 1, 0, internalformat);
 }
 
 
@@ -599,6 +616,11 @@ void Repeater::glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum 
     m_FBOTracker.getBound()->attach(attachment, m_TextureTracker.get(texture),FramebufferAttachment::ATTACHMENT_3D);
 }
 
+void Repeater::glFramebufferRenderbuffer (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
+{
+    OpenglRedirectorBase::glFramebufferRenderbuffer(target,attachment,renderbuffertarget, renderbuffer);
+    m_FBOTracker.getBound()->attach(attachment, m_RenderbufferTracker.get(renderbuffer),FramebufferAttachment::ATTACHMENT_2D);
+}
 // ----------------------------------------------------------------------------
 GLuint Repeater::glGetUniformBlockIndex (GLuint program, const GLchar* uniformBlockName)
 {

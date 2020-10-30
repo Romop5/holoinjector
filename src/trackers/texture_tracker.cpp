@@ -7,6 +7,9 @@
 
 using namespace ve;
 
+//-----------------------------------------------------------------------------
+// TextureMetadata
+//-----------------------------------------------------------------------------
 void TextureMetadata::setStorage(GLenum type, size_t width, size_t height, size_t levels, size_t layers, GLenum internalFormat)
 {
     m_Width = width;

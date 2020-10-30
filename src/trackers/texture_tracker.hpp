@@ -1,3 +1,5 @@
+#ifndef VE_TEXTURE_TRACKER_HPP
+#define VE_TEXTURE_TRACKER_HPP
 #include <memory>
 #include "GL/gl.h"
 
@@ -10,6 +12,7 @@ namespace ve
     {
         public:
         TextureMetadata(size_t id): m_Id(id) {}
+        ~TextureMetadata() {}
         void setStorage(GLenum type, size_t width, size_t height, size_t levels, size_t layers, GLenum internalFormat);
 
         size_t getWidth() const;
@@ -26,8 +29,8 @@ namespace ve
         bool hasShadowTexture() const;
         size_t getShadowedTextureId() const;
         size_t getTextureViewIdOfShadowedTexture() const;
-        void createShadowedTexture(size_t numOfLayers = 9);
-        private:
+        virtual void createShadowedTexture(size_t numOfLayers = 9);
+        protected:
         size_t m_Id = 0;
 
         GLenum m_Type = 0;
@@ -50,3 +53,4 @@ namespace ve
         static GLenum convertToSizedFormat(GLenum internalFormat, GLenum size);
     };
 }
+#endif

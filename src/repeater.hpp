@@ -10,6 +10,7 @@
 #include "trackers/framebuffer_tracker.hpp"
 #include "trackers/legacy_tracker.hpp"
 #include "trackers/texture_tracker.hpp"
+#include "trackers/renderbuffer_tracker.hpp"
 
 #include "pipeline/viewport_area.hpp"
 #include "pipeline/virtual_cameras.hpp"
@@ -44,6 +45,10 @@ namespace ve
         virtual void glTextureStorage3D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth) override;
  
         virtual void glBindTexture(GLenum target,GLuint texture) override;
+
+        // Renderbuffers
+        virtual void glGenRenderbuffers (GLsizei n, GLuint* renderbuffers) override;
+        virtual void glRenderbufferStorage (GLenum target, GLenum internalformat, GLsizei width, GLsizei height) override;
         
         // Swap buffers
         virtual  void glXSwapBuffers(	Display * dpy, GLXDrawable drawable) override;
@@ -69,6 +74,7 @@ namespace ve
         virtual  void glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) override;
         virtual  void glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) override;
         virtual  void glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset) override;
+        virtual void glFramebufferRenderbuffer (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer) override;
         // Framebuffers end
 
         
@@ -174,8 +180,11 @@ namespace ve
         /// Keeps track of OpenGL fixed-pipeline calls
         LegacyTracker m_LegacyTracker;
 
-        /// Keeps track of OpenGL fixed-pipeline calls
+        /// Keeps track of each GL_TEXTURE_XYZ
         TextureTracker m_TextureTracker;
+
+        /// Keeps track of GL_RENDERBUFFER objects
+        RenderbufferTracker m_RenderbufferTracker;
 
         /// Store metadata and bindings for UBO
         UniformBlockTracing m_UniformBlocksTracker;
