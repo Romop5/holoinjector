@@ -169,6 +169,14 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
     }
 }
 
+
+void Repeater::glXMakeCurrent(Display * dpy, GLXDrawable drawable,GLXContext context)
+{
+    if(drawable == None && context == nullptr)
+    { // release our resources
+    }
+}
+
 void Repeater::glGenTextures(GLsizei n,GLuint* textures)
 {
     OpenglRedirectorBase::glGenTextures(n, textures);
@@ -271,6 +279,12 @@ void Repeater::glBindTexture(GLenum target,GLuint texture)
         fakeTextureId = m_TextureTracker.get(texture)->getTextureViewIdOfShadowedTexture();
     }
     OpenglRedirectorBase::glBindTexture(target,fakeTextureId);
+}
+
+void Repeater::glActiveTexture (GLenum texture)
+{
+    OpenglRedirectorBase::glActiveTexture(texture);
+    m_TextureTracker.activate(texture);
 }
 
 GLuint Repeater::glCreateShader(GLenum shaderType)
@@ -577,7 +591,7 @@ void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
         if(m_IsMultiviewActivated)
         {
             OpenglRedirectorBase::glBindFramebuffer(target, m_OutputFBO.getFBOId());
-            OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getTextureWidth(), m_OutputFBO.getTextureHeight());
+            OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getParams().getTextureWidth(), m_OutputFBO.getParams().getTextureHeight());
         } else {
             OpenglRedirectorBase::glBindFramebuffer(target, 0);
             OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),
@@ -1065,17 +1079,43 @@ void Repeater::takeScreenshot(const std::string filename)
 
 void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
 {
+    //-------------------------------------------------------------------------
+    auto drawWrapper = [&]()
+    {
+
+        if(!m_TextureTracker.getTextureUnits().hasShadowedTextureBinded())
+        {
+            auto loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_isSingleViewActivated");
+            OpenglRedirectorBase::glUniform1i(loc, false);
+            drawCallLambda();
+            return;
+        }
+
+        const auto numOfLayers = m_OutputFBO.getParams().getLayers();
+        for(size_t l = 0; l < 1; l++)
+        {
+            //m_TextureTracker.getTextureUnits().bindShadowedTexturesToLayer(l);
+
+            auto loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_isSingleViewActivated");
+            OpenglRedirectorBase::glUniform1i(loc, true);
+
+            loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_isSingleViewActivated");
+            OpenglRedirectorBase::glUniform1i(loc, l);
+            drawCallLambda();
+        }
+    };
+    //-------------------------------------------------------------------------
     if(!m_IsMultiviewActivated || (m_FBOTracker.hasBounded() && !m_FBOTracker.isSuitableForRepeating()) )
     {
         setEnhancerIdentity();
-        drawCallLambda();
+        drawWrapper();
         return;
     }
 
     if(!m_FBOTracker.hasBounded())
     {
         OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_OutputFBO.getFBOId());
-        OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getTextureWidth(),m_OutputFBO.getTextureHeight());
+        OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getParams().getTextureWidth(),m_OutputFBO.getParams().getTextureHeight());
     } else {
         auto fbo = m_FBOTracker.getBound();
         if(!fbo->hasShadowFBO() && m_FBOTracker.isSuitableForRepeating())
@@ -1120,7 +1160,7 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
 
     bool shouldNotUseIdentity = (m_Manager.getBound()->m_Metadata && m_Manager.getBound()->m_Metadata->hasDetectedTransformation());
     OpenglRedirectorBase::glUniform1i(loc, !shouldNotUseIdentity);
-    drawCallLambda();
+    drawWrapper();
     //resetEnhancerShift();
     return;
     // Get original viewport
@@ -1166,7 +1206,7 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
             OpenglRedirectorBase::glViewport(v.getX(), v.getY(), v.getWidth(), v.getHeight());
         }
         setEnhancerShift(t,camera.getAngle()*m_cameraParameters.m_XShiftMultiplier/m_cameraParameters.m_frontOpticalAxisCentreDistance);
-        drawCallLambda();
+        drawWrapper();
         resetEnhancerShift();
     }
     // restore

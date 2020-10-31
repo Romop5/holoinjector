@@ -45,6 +45,7 @@ namespace ve
         virtual void glTextureStorage3D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth) override;
  
         virtual void glBindTexture(GLenum target,GLuint texture) override;
+        virtual void glActiveTexture (GLenum texture) override;
 
         // Renderbuffers
         virtual void glGenRenderbuffers (GLsizei n, GLuint* renderbuffers) override;
@@ -52,6 +53,7 @@ namespace ve
         
         // Swap buffers
         virtual  void glXSwapBuffers(	Display * dpy, GLXDrawable drawable) override;
+        virtual  void glXMakeCurrent(	Display * dpy, GLXDrawable drawable,GLXContext ctx) override;
 
         // Shader start
         virtual  GLuint glCreateShader(GLenum shaderType) override;

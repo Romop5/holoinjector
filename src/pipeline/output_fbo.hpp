@@ -5,35 +5,43 @@
 
 namespace ve
 {
-    struct OutputFBOParameters
+    class OutputFBOParameters
     {
+        public:
         OutputFBOParameters() = default;
+	size_t getTextureWidth() const;
+	size_t getTextureHeight() const;
+        size_t getLayers() const;
+        size_t getGridSizeX() const;
+
+        protected:
         size_t gridSize = 3;
         size_t pixels_width = 256;
         size_t pixels_height = 256;
     };
-    struct OutputFBO 
+    struct OutputFBO
     {
         public:
+        OutputFBO() = default;
+        ~OutputFBO();
         /// Creates OpenGL objects
         void initialize(OutputFBOParameters params = OutputFBOParameters());
         /// Blits all cameras to back buffer (as a grid)
         void renderToBackbuffer();
 
-	size_t getTextureWidth() const;
-	size_t getTextureHeight() const;
-
         GLuint getFBOId();
+
+        const OutputFBOParameters& getParams();
         private:
-        GLuint  m_FBOId;
-        GLuint  m_LayeredColorBuffer;
-        GLuint  m_LayeredDepthStencilBuffer;
+        GLuint  m_FBOId = 0;
+        GLuint  m_LayeredColorBuffer = 0;
+        GLuint  m_LayeredDepthStencilBuffer = 0;
 
         /// Shader program for displaying layared color buffers
-        GLuint  m_ViewerProgram;
+        GLuint  m_ViewerProgram = 0;
 
         // Full screen quad
-        GLuint  m_VAO;
+        GLuint  m_VAO = 0;
 
         // Parameters
         OutputFBOParameters m_Params;

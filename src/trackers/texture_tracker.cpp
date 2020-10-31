@@ -10,6 +10,17 @@ using namespace ve;
 //-----------------------------------------------------------------------------
 // TextureMetadata
 //-----------------------------------------------------------------------------
+TextureMetadata::~TextureMetadata()
+{
+    GLuint textures[2];
+    size_t numOfTextures = 0;
+    if(m_shadowedLayerVersionId)
+        textures[numOfTextures++] = m_shadowedLayerVersionId;
+    if(m_shadowTextureViewId)
+        textures[numOfTextures++] = m_shadowTextureViewId;
+    glDeleteTextures(numOfTextures,textures);
+}
+
 void TextureMetadata::setStorage(GLenum type, size_t width, size_t height, size_t levels, size_t layers, GLenum internalFormat)
 {
     m_Width = width;
@@ -86,6 +97,7 @@ void TextureMetadata::setTextureViewToLayer(size_t layer)
         glDeleteTextures(1, &viewId);
     glGenTextures(1, &viewId);
     glTextureView(viewId, GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, getLevels(), layer, 1);
+    m_shadowedLayerVersionId = viewId;
 }
 
 //-----------------------------------------------------------------------------
@@ -106,6 +118,8 @@ bool TextureUnitTracker::hasShadowedTextureBinded() const
 
 void TextureUnitTracker::bindShadowedTexturesToLayer(size_t layer)
 {
+    GLint id;
+    glGetIntegerv(GL_ACTIVE_TEXTURE, &id);
     for(auto& [id, unit]: getMap())
     {
         for(auto& [target, texture]: unit->getMap())
@@ -113,9 +127,12 @@ void TextureUnitTracker::bindShadowedTexturesToLayer(size_t layer)
             if(!texture->hasShadowTexture())
                 continue;
             texture->setTextureViewToLayer(layer);
-            glBindTextureUnit(id, texture->getTextureViewIdOfShadowedTexture());
+            //glBindTextureUnit(id, texture->getTextureViewIdOfShadowedTexture());
+            glActiveTexture(id);
+            glBindTexture(target, texture->getTextureViewIdOfShadowedTexture());
         }
     }
+    glActiveTexture(id);
 }
 
 void TextureUnitTracker::activate(size_t id)
@@ -203,6 +220,11 @@ void TextureTracker::bind(GLenum target, size_t id)
     }
     assert(has(id));
     m_TextureUnits.bind(target,get(id));
+}
+
+void TextureTracker::activate(size_t id)
+{
+    getTextureUnits().activate(id);
 }
 
 TextureUnitTracker& TextureTracker::getTextureUnits()

@@ -9,12 +9,60 @@
 
 using namespace ve;
 
+//-----------------------------------------------------------------------------
+// OutputFBOParameters
+//-----------------------------------------------------------------------------
+size_t OutputFBOParameters::getTextureWidth() const
+{
+    return pixels_width;
+}
+size_t OutputFBOParameters::getTextureHeight() const
+{
+    return pixels_height;
+}
+size_t OutputFBOParameters::getLayers() const
+{
+    return gridSize*gridSize;
+}
+size_t OutputFBOParameters::getGridSizeX() const
+{
+    return gridSize;
+}
+//-----------------------------------------------------------------------------
+// OutputFBO
+//-----------------------------------------------------------------------------
+OutputFBO::~OutputFBO()
+{
+    if(m_FBOId)
+    {
+        GLuint fbo = m_FBOId;
+        glDeleteFramebuffers(1,&fbo);
+    }
+    if(m_LayeredColorBuffer)
+    {
+        glDeleteTextures(1,&m_LayeredColorBuffer);
+    }
+
+    if(m_LayeredDepthStencilBuffer)
+    {
+        glDeleteTextures(1,&m_LayeredDepthStencilBuffer);
+    }
+
+    if(m_ViewerProgram)
+    {
+        glDeleteProgram(m_ViewerProgram);
+    }
+
+    if(m_VAO)
+        glDeleteVertexArrays(1,&m_VAO);
+}
+
 void OutputFBO::initialize(OutputFBOParameters params)
 {
     // store params
     m_Params = params;
 
-    auto countOfLayers = params.gridSize*params.gridSize;
+    auto countOfLayers = params.getLayers();
 
     glGenFramebuffers(1, &m_FBOId); 
     assert(glGetError() == GL_NO_ERROR);
@@ -29,7 +77,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
     assert(glGetError() == GL_NO_ERROR);
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, params.pixels_width,params.pixels_height, countOfLayers);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, params.getTextureWidth(),params.getTextureHeight(), countOfLayers);
     assert(glGetError() == GL_NO_ERROR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -42,7 +90,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
     assert(error == GL_NO_ERROR);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredDepthStencilBuffer);
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, params.pixels_width,params.pixels_height, countOfLayers);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, params.getTextureWidth(),params.getTextureHeight(), countOfLayers);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     assert(glGetError() == GL_NO_ERROR);
@@ -192,7 +240,7 @@ void OutputFBO::renderToBackbuffer()
 
     glUseProgram(m_ViewerProgram);
     auto gridLocation = glGetUniformLocation(m_ViewerProgram, "gridSize");
-    glUniform1i(gridLocation, m_Params.gridSize);
+    glUniform1i(gridLocation, m_Params.getGridSizeX());
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindVertexArray(m_VAO);   
@@ -211,11 +259,8 @@ GLuint OutputFBO::getFBOId()
 }
 
 
-size_t OutputFBO::getTextureWidth() const
+const OutputFBOParameters& OutputFBO::getParams()
 {
-    return m_Params.pixels_width;
+    return m_Params;
 }
-size_t OutputFBO::getTextureHeight() const
-{
-    return m_Params.pixels_height;
-}
+

@@ -12,7 +12,7 @@ namespace ve
     {
         public:
         TextureMetadata(size_t id): m_Id(id) {}
-        ~TextureMetadata() {}
+        virtual ~TextureMetadata();
         void setStorage(GLenum type, size_t width, size_t height, size_t levels, size_t layers, GLenum internalFormat);
 
         size_t getWidth() const;
@@ -75,6 +75,7 @@ namespace ve
         static GLenum convertToSizedFormat(GLenum internalFormat, GLenum size);
 
         void bind(GLenum target, size_t id);
+        void activate(size_t id);
         TextureUnitTracker& getTextureUnits();
         private:
         TextureUnitTracker m_TextureUnits;

@@ -9,5 +9,6 @@ __attribute((constructor)) void repeater_setup()
 
 __attribute((destructor)) void repeater_cleaner()
 {
+    puts("Repeater cleaning");
     enhancer_cleaner();
 }

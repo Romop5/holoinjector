@@ -28,6 +28,7 @@ namespace ve
     {
         protected:
         OpenglRedirectorBase();
+        ~OpenglRedirectorBase();
         /// Register subset of OpenGL API, specified in 'symbols'
         void registerOpenGLSymbols();
 
@@ -35,7 +36,8 @@ namespace ve
         /*
          * X Window methods
          */
-        virtual void glXSwapBuffers(	Display * dpy, GLXDrawable drawable);
+        virtual void glXSwapBuffers(Display * dpy, GLXDrawable drawable);
+        virtual bool glXMakeCurrent(Display * dpy, GLXDrawable drawable, GLXContext ctx);
         virtual void (*glXGetProcAddress(	const GLubyte * procName))(void);
         virtual void (*glXGetProcAddressARB(	const GLubyte * procName))(void);
 

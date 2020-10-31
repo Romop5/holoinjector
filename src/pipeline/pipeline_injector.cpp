@@ -97,7 +97,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
             for(int i = 0; i < 3; i++)
             {
                 gl_Position = gl_in[i].gl_Position;
-                gl_Layer = layer;
+                gl_Layer = (enhancer_isSingleViewActivated?enhancer_singleViewID:layer);
 		gl_Position = enhancer_transform(enhancer_geometry_isClipSpace,layer,gl_Position);
                 EmitVertex();
             }
@@ -223,7 +223,7 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
 
     
     // 2. Add gl_Layer = enhancer_layer; before each EmitVertex
-    geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"),"gl_Layer = enhancer_layer; \nEmitVertex");  
+    geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"),"gl_Layer = (enhancer_isSingleViewActivated?enhancer_singleViewID:enhancer_layer); \nEmitVertex");
     geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"),"gl_Position = enhancer_transform(enhancer_geometry_isClipSpace, enhancer_layer, gl_Position); \nEmitVertex");  
     // 3. insert double the 'max_vertices' count
     // 3. insert double the 'max_vertices' count
