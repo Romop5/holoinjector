@@ -26,6 +26,7 @@ namespace ve
         ~OutputFBO();
         /// Creates OpenGL objects
         void initialize(OutputFBOParameters params = OutputFBOParameters());
+        void deinitialize();
         /// Blits all cameras to back buffer (as a grid)
         void renderToBackbuffer();
 

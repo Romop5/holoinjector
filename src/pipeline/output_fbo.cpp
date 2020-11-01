@@ -33,28 +33,7 @@ size_t OutputFBOParameters::getGridSizeX() const
 //-----------------------------------------------------------------------------
 OutputFBO::~OutputFBO()
 {
-    if(m_FBOId)
-    {
-        GLuint fbo = m_FBOId;
-        glDeleteFramebuffers(1,&fbo);
-    }
-    if(m_LayeredColorBuffer)
-    {
-        glDeleteTextures(1,&m_LayeredColorBuffer);
-    }
-
-    if(m_LayeredDepthStencilBuffer)
-    {
-        glDeleteTextures(1,&m_LayeredDepthStencilBuffer);
-    }
-
-    if(m_ViewerProgram)
-    {
-        glDeleteProgram(m_ViewerProgram);
-    }
-
-    if(m_VAO)
-        glDeleteVertexArrays(1,&m_VAO);
+    deinitialize();
 }
 
 void OutputFBO::initialize(OutputFBOParameters params)
@@ -230,6 +209,37 @@ void OutputFBO::initialize(OutputFBOParameters params)
     glBindVertexArray(oldVao);
 }
 
+void OutputFBO::deinitialize()
+{
+    if(m_FBOId)
+    {
+        glDeleteFramebuffers(1,&m_FBOId);
+        m_FBOId = 0;
+    }
+    if(m_LayeredColorBuffer)
+    {
+        glDeleteTextures(1,&m_LayeredColorBuffer);
+        m_LayeredColorBuffer = 0;
+    }
+
+    if(m_LayeredDepthStencilBuffer)
+    {
+        glDeleteTextures(1,&m_LayeredDepthStencilBuffer);
+        m_LayeredDepthStencilBuffer = 0;
+    }
+
+    if(m_ViewerProgram)
+    {
+        glDeleteProgram(m_ViewerProgram);
+        m_ViewerProgram = 0;
+    }
+
+    if(m_VAO)
+    {
+        glDeleteVertexArrays(1,&m_VAO);
+        m_VAO = 0;
+    }
+}
 void OutputFBO::renderToBackbuffer()
 {
     GLint oldProgram;

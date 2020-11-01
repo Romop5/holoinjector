@@ -12,12 +12,23 @@ using namespace ve;
 //-----------------------------------------------------------------------------
 TextureMetadata::~TextureMetadata()
 {
+    deinitialize();
+}
+
+void TextureMetadata::deinitialize()
+{
     GLuint textures[2];
     size_t numOfTextures = 0;
     if(m_shadowedLayerVersionId)
+    {
         textures[numOfTextures++] = m_shadowedLayerVersionId;
+        m_shadowedLayerVersionId = 0;
+    }
     if(m_shadowTextureViewId)
+    {
         textures[numOfTextures++] = m_shadowTextureViewId;
+        m_shadowTextureViewId = 0;
+    }
     glDeleteTextures(numOfTextures,textures);
 }
 
@@ -160,6 +171,13 @@ TextureUnitTracker::MapType& TextureUnitTracker::getUnits()
 //-----------------------------------------------------------------------------
 // Texture Tracker
 //-----------------------------------------------------------------------------
+void TextureTracker::deinitialize()
+{
+    for(auto& [id,texture]: getMap())
+    {
+        texture->deinitialize();
+    }
+}
 
 GLenum TextureTracker::getParameterForType(GLenum type)
 {

@@ -53,7 +53,7 @@ namespace ve
         
         // Swap buffers
         virtual  void glXSwapBuffers(	Display * dpy, GLXDrawable drawable) override;
-        virtual  void glXMakeCurrent(	Display * dpy, GLXDrawable drawable,GLXContext ctx) override;
+        virtual  Bool glXMakeCurrent(	Display * dpy, GLXDrawable drawable,GLXContext ctx) override;
 
         // Shader start
         virtual  GLuint glCreateShader(GLenum shaderType) override;
@@ -143,6 +143,7 @@ namespace ve
         private:
         /// Initialize parameters, caches etc
         void initialize();
+        void deinitialize();
 
         void setEnhancerShift(const glm::mat4& viewSpaceTransform, float projectionAdjust = 0.0);
         void resetEnhancerShift();

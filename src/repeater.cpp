@@ -118,16 +118,30 @@ void Repeater::initialize()
 
     // Initialize oputput FBO
     m_OutputFBO.initialize();
+    assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
+}
+
+void Repeater::deinitialize()
+{
+    /*
+     * Clean up layered FBO & shaders
+     */
+    m_OutputFBO.deinitialize();
+    /*
+     * Clean up texture views & etc
+     */
+    m_TextureTracker.deinitialize();
 }
 
 void Repeater::glClear(GLbitfield mask) 
 {
-    static bool isInitialized = false;
+    /*static bool isInitialized = false;
     if(!isInitialized)
     {
         initialize();
         isInitialized = true;
     }
+    */
 
     if(!m_FBOTracker.hasBounded())
     {
@@ -170,10 +184,16 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 }
 
 
-void Repeater::glXMakeCurrent(Display * dpy, GLXDrawable drawable,GLXContext context)
+Bool Repeater::glXMakeCurrent(Display * dpy, GLXDrawable drawable,GLXContext context)
 {
     if(drawable == None && context == nullptr)
     { // release our resources
+        deinitialize();
+        return OpenglRedirectorBase::glXMakeCurrent(dpy,drawable,context);
+    } else {
+        auto result = OpenglRedirectorBase::glXMakeCurrent(dpy,drawable,context);
+        initialize();
+        return result;
     }
 }
 
