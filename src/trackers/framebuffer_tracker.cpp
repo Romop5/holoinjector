@@ -6,6 +6,7 @@
 #include "trackers/texture_tracker.hpp"
 
 #include <cassert>
+#include <unordered_set>
 
 using namespace ve;
 
@@ -66,8 +67,22 @@ bool ve::FramebufferMetadata::isShadowMapFBO() const
 }
 bool ve::FramebufferMetadata::isEnvironmentMapFBO() const
 {
-    return m_attachments.has(GL_DEPTH_ATTACHMENT) &&
-           m_attachments.getConst(GL_DEPTH_ATTACHMENT).texture->getType() == GL_TEXTURE_CUBE_MAP;
+    const static auto cubeMapTypes = std::unordered_set<GLenum>{GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BINDING_CUBE_MAP,GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_PROXY_TEXTURE_CUBE_MAP};
+
+    if(m_attachments.has(GL_DEPTH_ATTACHMENT))
+    {
+        auto type = m_attachments.getConst(GL_DEPTH_ATTACHMENT).texture->getType();
+        if(cubeMapTypes.count(type) > 0)
+            return true;
+    }
+
+    if(m_attachments.has(GL_COLOR_ATTACHMENT0))
+    {
+        auto type = m_attachments.getConst(GL_COLOR_ATTACHMENT0).texture->getType();
+        if(cubeMapTypes.count(type) > 0)
+            return true;
+    }
+    return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

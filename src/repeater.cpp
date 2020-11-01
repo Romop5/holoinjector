@@ -208,7 +208,6 @@ void Repeater::glGenTextures(GLsizei n,GLuint* textures)
     }
 }
 
-
 void Repeater::glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLint border,GLenum format,GLenum type,const GLvoid* pixels) 
 {
     OpenglRedirectorBase::glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
