@@ -138,8 +138,7 @@ void TextureUnitTracker::bindShadowedTexturesToLayer(size_t layer)
             if(!texture->hasShadowTexture())
                 continue;
             texture->setTextureViewToLayer(layer);
-            //glBindTextureUnit(id, texture->getTextureViewIdOfShadowedTexture());
-            glActiveTexture(id);
+            glActiveTexture(GL_TEXTURE0+id);
             glBindTexture(target, texture->getTextureViewIdOfShadowedTexture());
         }
     }

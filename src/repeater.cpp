@@ -292,6 +292,7 @@ void Repeater::glRenderbufferStorage (GLenum target, GLenum internalformat, GLsi
 
 void Repeater::glBindTexture(GLenum target,GLuint texture)
 {
+    m_TextureTracker.bind(target,texture);
     auto fakeTextureId = texture;
     if(m_TextureTracker.has(texture) && m_TextureTracker.get(texture)->hasShadowTexture())
     {
@@ -1113,7 +1114,7 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
         const auto numOfLayers = m_OutputFBO.getParams().getLayers();
         for(size_t l = 0; l < 1; l++)
         {
-            //m_TextureTracker.getTextureUnits().bindShadowedTexturesToLayer(l);
+            m_TextureTracker.getTextureUnits().bindShadowedTexturesToLayer(l);
 
             auto loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_isSingleViewActivated");
             OpenglRedirectorBase::glUniform1i(loc, true);
