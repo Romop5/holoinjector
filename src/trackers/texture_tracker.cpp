@@ -108,7 +108,7 @@ void TextureMetadata::setTextureViewToLayer(size_t layer)
         glDeleteTextures(1, &viewId);
     glGenTextures(1, &viewId);
     glTextureView(viewId, GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, getLevels(), layer, 1);
-    m_shadowedLayerVersionId = viewId;
+    m_shadowTextureViewId = viewId;
 }
 
 //-----------------------------------------------------------------------------
@@ -133,6 +133,7 @@ void TextureUnitTracker::bindShadowedTexturesToLayer(size_t layer)
     glGetIntegerv(GL_ACTIVE_TEXTURE, &id);
     for(auto& [id, unit]: getMap())
     {
+        assert(id <= 80);
         for(auto& [target, texture]: unit->getMap())
         {
             if(!texture->hasShadowTexture())
