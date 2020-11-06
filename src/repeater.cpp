@@ -1112,7 +1112,7 @@ void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
         }
 
         const auto numOfLayers = m_OutputFBO.getParams().getLayers();
-        for(size_t l = 0; l < 6; l++)
+        for(size_t l = 0; l < numOfLayers; l++)
         {
             m_TextureTracker.getTextureUnits().bindShadowedTexturesToLayer(l);
 

@@ -51,9 +51,10 @@ void ve::FramebufferMetadata::createShadowedFBO()
             texture->createShadowedTexture();
         }
         auto shadowedTexture = texture->getShadowedTextureId();
-        glNamedFramebufferTexture(shadowFBO, attachmentType, shadowedTexture,metadata.level);
+        glFramebufferTexture(GL_FRAMEBUFFER, attachmentType, shadowedTexture,metadata.level);
     }
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
     assert(status == GL_FRAMEBUFFER_COMPLETE);
     m_shadowFBOId = shadowFBO;
 }

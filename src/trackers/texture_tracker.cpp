@@ -90,23 +90,30 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
     assert(getType() == GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, textures[0]);
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, getLevels(), getFormat(), getWidth(),getHeight(), numOfLayers);
+    assert(getLevels() == 1);
+    //glTexStorage3D(GL_TEXTURE_2D_ARRAY, getLevels(), getFormat(), getWidth(),getHeight(), numOfLayers);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, getFormat(), 256,256, numOfLayers);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     m_shadowedLayerVersionId = textures[0];
 
     // set texture view as original texture
     // use layer 0 as default
-    glGenTextures(1, &textures[1]);
-    glTextureView(textures[1], GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, getLevels(), 0, 1);
-    m_shadowTextureViewId = textures[1];
+    //glGenTextures(1, &textures[1]);
+    //glTextureView(textures[1], GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, getLevels(), 0, 1);
+    //m_shadowTextureViewId = textures[1];
+    setTextureViewToLayer(0);
 }
 
 void TextureMetadata::setTextureViewToLayer(size_t layer)
 {
     GLuint viewId = m_shadowTextureViewId;
     assert(m_shadowedLayerVersionId != 0);
-    if(m_shadowedLayerVersionId != 0)
+    // If view already exists, delete it
+    if(m_shadowTextureViewId)
         glDeleteTextures(1, &viewId);
     glGenTextures(1, &viewId);
+    printf("[Repeater] viewID %d\n", viewId);
     glTextureView(viewId, GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, getLevels(), layer, 1);
     m_shadowTextureViewId = viewId;
 }
@@ -140,7 +147,9 @@ void TextureUnitTracker::bindShadowedTexturesToLayer(size_t layer)
                 continue;
             texture->setTextureViewToLayer(layer);
             glActiveTexture(GL_TEXTURE0+id);
-            glBindTexture(target, texture->getTextureViewIdOfShadowedTexture());
+            auto textureView = texture->getTextureViewIdOfShadowedTexture();
+            if(textureView)
+                glBindTexture(target, textureView);
         }
     }
     glActiveTexture(id);
