@@ -10,11 +10,10 @@
 #include "FreeImage.h" // FreeImage image storing
 #include "simplecpp.h" // CPP preprocessor
 
-#include "shader_inspector.hpp"
-#include "projection_estimator.hpp"
-#include "opengl_utils.hpp"
-
-
+#include "pipeline/shader_inspector.hpp"
+#include "pipeline/projection_estimator.hpp"
+#include "pipeline/pipeline_injector.hpp"
+#include "utils/opengl_utils.hpp"
 
 using namespace ve;
 
@@ -111,23 +110,54 @@ void Repeater::initialize()
 
 
     /// Fill viewports
-    glGetIntegerv(GL_VIEWPORT, currentViewport.getDataPtr());
-    glGetIntegerv(GL_SCISSOR_BOX, currentScissorArea.getDataPtr());
+    OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, currentViewport.getDataPtr());
+    OpenglRedirectorBase::glGetIntegerv(GL_SCISSOR_BOX, currentScissorArea.getDataPtr());
     m_cameras.setupWindows(9,3);
     m_cameras.updateViewports(currentViewport);
     m_cameras.updateParamaters(m_cameraParameters);
+
+    // Initialize oputput FBO
+    m_OutputFBO.initialize();
+    assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
+}
+
+void Repeater::deinitialize()
+{
+    /*
+     * Clean up layered FBO & shaders
+     */
+    m_OutputFBO.deinitialize();
+    /*
+     * Clean up texture views & etc
+     */
+    m_TextureTracker.deinitialize();
 }
 
 void Repeater::glClear(GLbitfield mask) 
 {
-    static bool isInitialized = false;
+    /*static bool isInitialized = false;
     if(!isInitialized)
     {
         initialize();
         isInitialized = true;
     }
+    */
+
+    if(!m_FBOTracker.hasBounded())
+    {
+        OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_OutputFBO.getFBOId());
+        OpenglRedirectorBase::glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT | mask);
+        OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER,0);
+    } else {
+        if(m_FBOTracker.getBound()->hasShadowFBO())
+        {
+            OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_FBOTracker.getBound()->getShadowFBO());
+            OpenglRedirectorBase::glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT | mask);
+            OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_FBOTracker.getBoundId());
+        }
+    }
     OpenglRedirectorBase::glClear(mask);
-    
+        
 }
 void Repeater::registerCallbacks() 
 {
@@ -136,6 +166,13 @@ void Repeater::registerCallbacks()
 
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
+    if(m_IsMultiviewActivated)
+    {
+        OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),
+                    currentViewport.getWidth(), currentViewport.getHeight());
+        m_OutputFBO.renderToBackbuffer();
+    }
+
     OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
     m_diagnostics.incrementFrameCount(); 
     if(m_diagnostics.hasReachedLastFrame())
@@ -146,13 +183,137 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
     }
 }
 
+
+Bool Repeater::glXMakeCurrent(Display * dpy, GLXDrawable drawable,GLXContext context)
+{
+    if(drawable == None && context == nullptr)
+    { // release our resources
+        deinitialize();
+        return OpenglRedirectorBase::glXMakeCurrent(dpy,drawable,context);
+    } else {
+        auto result = OpenglRedirectorBase::glXMakeCurrent(dpy,drawable,context);
+        initialize();
+        return result;
+    }
+}
+
+void Repeater::glGenTextures(GLsizei n,GLuint* textures)
+{
+    OpenglRedirectorBase::glGenTextures(n, textures);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        auto texture = std::make_shared<TextureMetadata>(textures[i]);
+	m_TextureTracker.add(textures[i], texture);
+    }
+}
+
+void Repeater::glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLint border,GLenum format,GLenum type,const GLvoid* pixels) 
+{
+    OpenglRedirectorBase::glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
+    GLint id;
+    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    m_TextureTracker.get(id)->setStorage(target,width, 0, level, 0, TextureTracker::convertToSizedFormat(format, type));
+}
+void Repeater::glTexImage2D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLsizei height,GLint border,GLenum format,GLenum type,const GLvoid* pixels)
+{
+    OpenglRedirectorBase::glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
+    GLint id;
+    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    m_TextureTracker.get(id)->setStorage(target,width, height, level, 0, TextureTracker::convertToSizedFormat(format,type));
+}
+
+void Repeater::glTexImage3D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels)
+{
+    OpenglRedirectorBase::glTexImage3D(target, level, internalformat, width, height, depth, border, format, type, pixels);
+    GLint id;
+    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    m_TextureTracker.get(id)->setStorage(target,width, height, level, 0, TextureTracker::convertToSizedFormat(format, type));
+}
+
+void Repeater::glTexStorage1D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
+{
+    OpenglRedirectorBase::glTexStorage1D(target,levels,internalformat,width);
+
+    GLint id;
+    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    m_TextureTracker.get(id)->setStorage(target,width, 0, levels, 0, internalformat);
+}
+void Repeater::glTexStorage2D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
+{
+    OpenglRedirectorBase::glTexStorage2D(target,levels,internalformat,width,height);
+
+    GLint id;
+    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    m_TextureTracker.get(id)->setStorage(target,width, height, levels, 0, internalformat);
+}
+void Repeater::glTexStorage3D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
+{
+    OpenglRedirectorBase::glTexStorage3D(target,levels,internalformat,width,height, depth);
+
+    GLint id;
+    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    m_TextureTracker.get(id)->setStorage(target,width, height, levels, depth, internalformat);
+}
+
+void Repeater::glTextureStorage1D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width)
+{
+    OpenglRedirectorBase::glTextureStorage1D(texture,levels,internalformat,width);
+    m_TextureTracker.get(texture)->setStorage(GL_TEXTURE_1D,width, 0, levels, 0, internalformat);
+}
+void Repeater::glTextureStorage2D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
+{
+    OpenglRedirectorBase::glTextureStorage2D(texture,levels,internalformat,width,height);
+    m_TextureTracker.get(texture)->setStorage(GL_TEXTURE_2D,width, height, levels, 0, internalformat);
+}
+void Repeater::glTextureStorage3D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
+{
+    OpenglRedirectorBase::glTextureStorage3D(texture,levels,internalformat,width,height,depth);
+    m_TextureTracker.get(texture)->setStorage(GL_TEXTURE_3D,width, height, levels, depth, internalformat);
+}
+
+void Repeater::glGenRenderbuffers (GLsizei n, GLuint* renderbuffers)
+{
+    OpenglRedirectorBase::glGenRenderbuffers(n,renderbuffers);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        m_RenderbufferTracker.add(renderbuffers[i],std::make_shared<RenderbufferMetadata>(renderbuffers[i]));
+    }
+}
+void Repeater::glRenderbufferStorage (GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
+{
+    OpenglRedirectorBase::glRenderbufferStorage(target,internalformat, width, height);
+    GLint id;
+    OpenglRedirectorBase::glGetIntegerv(GL_RENDERBUFFER_BINDING, &id);
+    // Fix internal format when transfering renderbuffer to texture
+    internalformat = (internalformat == GL_DEPTH_COMPONENT?GL_DEPTH_COMPONENT32:internalformat);
+    m_RenderbufferTracker.get(id)->setStorage(target,width, height, 1, 0, internalformat);
+}
+
+
+void Repeater::glBindTexture(GLenum target,GLuint texture)
+{
+    m_TextureTracker.bind(target,texture);
+    auto fakeTextureId = texture;
+    if(m_TextureTracker.has(texture) && m_TextureTracker.get(texture)->hasShadowTexture())
+    {
+        fakeTextureId = m_TextureTracker.get(texture)->getTextureViewIdOfShadowedTexture();
+    }
+    OpenglRedirectorBase::glBindTexture(target,fakeTextureId);
+}
+
+void Repeater::glActiveTexture (GLenum texture)
+{
+    OpenglRedirectorBase::glActiveTexture(texture);
+    m_TextureTracker.activate(texture-GL_TEXTURE0);
+}
+
 GLuint Repeater::glCreateShader(GLenum shaderType)
 {
     auto id = OpenglRedirectorBase::glCreateShader(shaderType);
-    
-    //printf("[Repeater] glCreateShader: %s\n",opengl_utils::getEnumStringRepresentation(shaderType).c_str());
-    
-    m_Manager.addShader(id, (shaderType == GL_VERTEX_SHADER)?(ShaderManager::ShaderTypes::VS):(ShaderManager::ShaderTypes::GENERIC));
+    auto shaderDesc = std::make_shared<ShaderMetadata>(id,shaderType);
+    m_Manager.shaders.add(id, shaderDesc);
     return id;
 }
 
@@ -196,35 +357,93 @@ namespace helper
     }
 };
 
-void Repeater::glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length)
+void Repeater::glShaderSource (GLuint shaderId, GLsizei count, const GLchar* const*string, const GLint* length)
 {
     auto concatenatedShader = helper::joinGLSLshaders(count, string, length);
-    printf("[Repeater] glShaderSource: [%d]\n",shader);
-    if(m_Manager.hasShader(shader) && m_Manager.isShaderOneOf(shader, {ShaderManager::ShaderTypes::VS, ShaderManager::ShaderTypes::GEOMETRY}))
+    printf("[Repeater] glShaderSource: [%d]\n",shaderId);
+    if(m_Manager.shaders.has(shaderId))
     {
+        auto shader = m_Manager.shaders.get(shaderId);
         auto preprocessedShader = helper::preprocessGLSLCode(concatenatedShader);
-        printf("[Repeater] preprocessed shader (type: %d) '%s'\n",m_Manager.getShaderDescription(shader).m_Type, preprocessedShader.c_str());
-
-        ShaderInspector inspector(preprocessedShader);
-        auto statements = inspector.findAllOutVertexAssignments();
-        auto transformationName = inspector.getTransformationUniformName(statements);
-        
-        auto& metadata = m_Manager.getShaderDescription(shader);
-        metadata.m_TransformationMatrixName = transformationName;
-        metadata.m_IsClipSpaceTransform = inspector.isClipSpaceShader(); 
-        metadata.m_InterfaceBlockName = inspector.getUniformBlockName(metadata.m_TransformationMatrixName);
-        metadata.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
-
-        auto finalShader = preprocessedShader; 
-        if(!m_diagnostics.shouldNotBeIntrusive())
-            finalShader = inspector.injectShader(statements);
-        printf("[Repeater] found transformation name: %s\n",metadata.m_TransformationMatrixName.c_str());
-        printf("[Repeater] found interface block: %s\n",metadata.m_InterfaceBlockName.c_str());
-        printf("[Repeater] injected shader: %s\n",finalShader.c_str());
-        concatenatedShader = std::move(finalShader);
+        shader->preprocessedSourceCode = preprocessedShader;
     }
     std::vector<const char*> shaders = {concatenatedShader.c_str(),};
-    OpenglRedirectorBase::glShaderSource(shader,1,shaders.data(),nullptr);
+    OpenglRedirectorBase::glShaderSource(shaderId,1,shaders.data(),nullptr);
+}
+
+void Repeater::glLinkProgram (GLuint programId)
+{
+    // Link the program for 1st time
+    // => we can use native GLSL compiler to detect active uniforms
+    //OpenglRedirectorBase::glLinkProgram(programId);
+
+    // Note: this should never happen (if we handle all glCreateProgram/Shader)
+    if(!m_Manager.has(programId))
+        return;
+
+    auto program = m_Manager.get(programId);
+
+    ve::PipelineInjector plInjector;
+    ve::PipelineInjector::PipelineType pipeline;
+
+    /*
+     * Deregister all attached shaders (they're going to be changed in any case)
+     * and fill pipeline structure out of them
+     */
+    for(auto [type,shader]: program->shaders.getMap())
+    {
+        // detach shader from program
+        OpenglRedirectorBase::glDetachShader(programId, shader->m_Id);
+        // store source code for given shader type
+        pipeline[shader->m_Type] = shader->preprocessedSourceCode;
+        printf("[Repeater] Detaching: %d %zu\n", shader->m_Type, shader->m_Id);
+    }
+
+    /*
+     * Inject pipeline
+     */
+    auto resultPipeline = plInjector.process(pipeline);
+    program->m_Metadata = std::move(resultPipeline.metadata);
+
+    for(auto& [type, sourceCode]: resultPipeline.pipeline)
+    {
+        auto newShader = OpenglRedirectorBase::glCreateShader(type);
+        const GLchar* sources[1] = {reinterpret_cast<const GLchar*>(sourceCode.data())}; 
+        OpenglRedirectorBase::glShaderSource(newShader, 1, sources , nullptr);
+	printf("[Repeater] Compiling shader: \n %s\n", sourceCode.c_str());
+        fflush(stdout);
+        OpenglRedirectorBase::glCompileShader(newShader);
+        GLint status;
+        OpenglRedirectorBase::glGetShaderiv(newShader,GL_COMPILE_STATUS, &status);
+        if(status == GL_FALSE)
+        {
+            GLint logSize = 0;
+            OpenglRedirectorBase::glGetShaderiv(newShader, GL_INFO_LOG_LENGTH, &logSize);
+            
+            GLsizei realLogLength = 0;
+            GLchar log[5120] = {0,};
+            OpenglRedirectorBase::glGetShaderInfoLog(newShader, logSize, &realLogLength, log);
+            printf("[Repeater] Error while compiling new shader type %u: %s\n", type,log);
+            printf("Shade source: %s\n", sourceCode.c_str());
+            return;
+        }
+        OpenglRedirectorBase::glAttachShader(programId, newShader);
+    }
+    printf("[Repeater] Relink program with new shaders\n");
+    OpenglRedirectorBase::glLinkProgram(programId);
+    GLint linkStatus = 0;
+    OpenglRedirectorBase::glGetProgramiv(programId, GL_LINK_STATUS, &linkStatus);
+    if(linkStatus == GL_FALSE)
+    {
+        GLint logSize = 0;
+        OpenglRedirectorBase::glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &logSize);
+
+        GLsizei realLogLength = 0;
+        GLchar log[5120] = {0,};
+        OpenglRedirectorBase::glGetProgramInfoLog(programId, logSize, &realLogLength, log);
+        printf("[Repeater] Link failed with log: %s\n",log);
+    }
+    assert(linkStatus == GL_TRUE);
 }
 
 void Repeater::glCompileShader (GLuint shader)
@@ -242,13 +461,11 @@ void Repeater::glCompileShader (GLuint shader)
 void Repeater::glAttachShader (GLuint program, GLuint shader)
 {
     printf("[Repeater] attaching shader [%d] to program [%d] \n", shader, program);
-    OpenglRedirectorBase::glAttachShader(program,shader);
+    //OpenglRedirectorBase::glAttachShader(program,shader);
 
-    if(!m_Manager.hasProgram(program))
+    if(!m_Manager.has(program) || !m_Manager.shaders.has(shader))
         return;
-    if(!m_Manager.hasShader(shader))
-        return;
-    m_Manager.attachShaderToProgram(m_Manager.getShaderDescription(shader).m_Type,shader, program);
+    m_Manager.get(program)->attachShaderToProgram(m_Manager.shaders.get(shader));
 }
 
 
@@ -257,15 +474,19 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     OpenglRedirectorBase::glUniformMatrix4fv (location, count, transpose, value);
 
     // get current's program transformation matrix name
-    if(!m_Manager.isVSBound())
+    if(!m_Manager.hasBounded())
         return;
-    auto& shaderMetaData = m_Manager.getBoundedVS();
-    if(!shaderMetaData.hasDetectedTransformation())
+    auto program = m_Manager.getBound();
+    if(!program->m_Metadata)
+        return;
+    auto metaData = program->m_Metadata.get();
+
+    if(!metaData->hasDetectedTransformation())
         return;
 
-    auto programID = m_Manager.getBoundedProgramID();
+    auto programID = m_Manager.getBoundId();
     // get original MVP matrix location
-    auto originalLocation = OpenglRedirectorBase::glGetUniformLocation(programID, shaderMetaData.m_TransformationMatrixName.c_str());
+    auto originalLocation = OpenglRedirectorBase::glGetUniformLocation(programID, metaData->m_TransformationMatrixName.c_str());
     
     // if the matrix being uploaded isn't detected MVP, then continue
     if(originalLocation != location)
@@ -284,8 +505,12 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
 void Repeater::setEnhancerDecodedProjection(GLuint program, const PerspectiveProjectionParameters& projection)
 {
     // upload parameters to GPU's program
-    auto parametersLocation = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_estimatedParameters");
+    auto parametersLocation = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_deprojection");
     OpenglRedirectorBase::glUniform4fv(parametersLocation,1,glm::value_ptr(projection.asVector()));
+
+    parametersLocation = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_deprojection_inv");
+    glm::vec4 inverted = glm::vec4(1.0)/projection.asVector();
+    OpenglRedirectorBase::glUniform4fv(parametersLocation,1,glm::value_ptr(inverted));
 
     auto typeLocation= OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_isOrthogonal");
     OpenglRedirectorBase::glUniform1i(typeLocation,!projection.isPerspective);
@@ -295,7 +520,9 @@ void Repeater::setEnhancerDecodedProjection(GLuint program, const PerspectivePro
 GLuint Repeater::glCreateProgram (void)
 {
     auto result = OpenglRedirectorBase::glCreateProgram();
-    m_Manager.addProgram(result);
+
+    auto program = std::make_shared<ShaderProgram>();
+    m_Manager.add(result, program);
     return result;
 }
 
@@ -326,60 +553,47 @@ void Repeater::glScissor(GLint x,GLint y,GLsizei width,GLsizei height)
 
 void Repeater::glDrawArrays(GLenum mode,GLint first,GLsizei count) 
 {
-    Repeater::duplicateCode([&]() {
-        OpenglRedirectorBase::glDrawArrays(mode,first,count);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawArrays(mode,first,count); });
+}
+
+void Repeater::glDrawArraysInstanced (GLenum mode, GLint first, GLsizei count, GLsizei instancecount)
+{
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawArraysInstanced(mode,first,count,instancecount); });
 }
 
 void Repeater::glDrawElements(GLenum mode,GLsizei count,GLenum type,const GLvoid* indices) 
 {
-    Repeater::duplicateCode([&]() {
-        OpenglRedirectorBase::glDrawElements(mode,count,type,indices);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawElements(mode,count,type,indices); });
 }
-
 
 void Repeater::glDrawElementsInstanced (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount)
 {
-    Repeater::duplicateCode([&]() {
-        OpenglRedirectorBase::glDrawElementsInstanced(mode,count,type,indices,instancecount);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawElementsInstanced(mode,count,type,indices,instancecount); });
 }
 
 void Repeater::glDrawRangeElements (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices)
 {
-    Repeater::duplicateCode([&]() {
-        OpenglRedirectorBase::glDrawRangeElements(mode,start,end,count,type,indices);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawRangeElements(mode,start,end,count,type,indices);});
 }
 
 void Repeater::glDrawElementsBaseVertex (GLenum mode, GLsizei count, GLenum type, const void* indices, GLint basevertex)
 {
-    Repeater::duplicateCode([&]() {
-        OpenglRedirectorBase::glDrawElementsBaseVertex(mode,count,type,indices, basevertex);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawElementsBaseVertex(mode,count,type,indices, basevertex); });
 }
 void Repeater::glDrawRangeElementsBaseVertex (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices, GLint basevertex)
 {
-    Repeater::duplicateCode([&]() {
-        OpenglRedirectorBase::glDrawRangeElementsBaseVertex(mode,start,end,count,type,indices,basevertex);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawRangeElementsBaseVertex(mode,start,end,count,type,indices,basevertex); });
 }
 void Repeater::glDrawElementsInstancedBaseVertex (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount, GLint basevertex) 
 {
-    Repeater::duplicateCode([&]() {
-        OpenglRedirectorBase::glDrawElementsInstancedBaseVertex(mode,count,type,indices, instancecount, basevertex);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glDrawElementsInstancedBaseVertex(mode,count,type,indices, instancecount, basevertex); });
 }
 
 void Repeater::glMultiDrawElementsBaseVertex (GLenum mode, const GLsizei* count, GLenum type, const void* const*indices, GLsizei drawcount, const GLint* basevertex)
 {
-    Repeater::duplicateCode([&]() {
-        OpenglRedirectorBase::glMultiDrawElementsBaseVertex(mode,count,type,indices, drawcount, basevertex);
-    });
+    Repeater::drawMultiviewed([&]() { OpenglRedirectorBase::glMultiDrawElementsBaseVertex(mode,count,type,indices, drawcount, basevertex); });
 }
 
-//
 // ----------------------------------------------------------------------------
 
 void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
@@ -387,50 +601,80 @@ void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
     OpenglRedirectorBase::glGenFramebuffers(n, framebuffers);
     for(size_t i=0;i < n; i++)
     {
-        m_FBOTracker.addFramebuffer(framebuffers[i]);
+        auto fbo = std::make_shared<FramebufferMetadata>();
+        m_FBOTracker.add(framebuffers[i],fbo);
     }
 }
 
 void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
 {
-    OpenglRedirectorBase::glBindFramebuffer(target,framebuffer);
+    if(framebuffer == 0)
+    {
+        if(m_IsMultiviewActivated)
+        {
+            OpenglRedirectorBase::glBindFramebuffer(target, m_OutputFBO.getFBOId());
+            OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getParams().getTextureWidth(), m_OutputFBO.getParams().getTextureHeight());
+        } else {
+            OpenglRedirectorBase::glBindFramebuffer(target, 0);
+            OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),
+                    currentViewport.getWidth(), currentViewport.getHeight());
+        }
+    } else {
+        auto id = framebuffer;
+        OpenglRedirectorBase::glBindFramebuffer(target,framebuffer);
+        OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),
+                currentViewport.getWidth(), currentViewport.getHeight());
+
+        // TODO: shadowed textures are the same size as OutputFBO
+        if(m_IsMultiviewActivated)
+        {
+            OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getParams().getTextureWidth(), m_OutputFBO.getParams().getTextureHeight());
+        }
+    }
     m_FBOTracker.bind(framebuffer);
 }
 
 void Repeater::glFramebufferTexture (GLenum target, GLenum attachment, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture(target,attachment, texture,level);
-    m_FBOTracker.attach(attachment, texture);
+
+    assert(m_TextureTracker.has(texture));
+    m_FBOTracker.getBound()->attach(attachment, m_TextureTracker.get(texture));
 }
 
 void Repeater::glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture1D(target,attachment,textarget, texture,level);
-    m_FBOTracker.attach(attachment, texture);
+    m_FBOTracker.getBound()->attach(attachment, m_TextureTracker.get(texture),FramebufferAttachment::ATTACHMENT_1D);
 }
 void Repeater::glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture2D(target,attachment,textarget, texture,level);
-    m_FBOTracker.attach(attachment, texture);
+    m_FBOTracker.getBound()->attach(attachment, m_TextureTracker.get(texture),FramebufferAttachment::ATTACHMENT_2D);
 }
 void Repeater::glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset)
 {
     OpenglRedirectorBase::glFramebufferTexture3D(target,attachment,textarget, texture,level,zoffset);
-    m_FBOTracker.attach(attachment, texture);
+    m_FBOTracker.getBound()->attach(attachment, m_TextureTracker.get(texture),FramebufferAttachment::ATTACHMENT_3D);
 }
 
+void Repeater::glFramebufferRenderbuffer (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
+{
+    OpenglRedirectorBase::glFramebufferRenderbuffer(target,attachment,renderbuffertarget, renderbuffer);
+    m_FBOTracker.getBound()->attach(attachment, m_RenderbufferTracker.get(renderbuffer),FramebufferAttachment::ATTACHMENT_2D);
+}
 // ----------------------------------------------------------------------------
 GLuint Repeater::glGetUniformBlockIndex (GLuint program, const GLchar* uniformBlockName)
 {
     auto result = OpenglRedirectorBase::glGetUniformBlockIndex(program, uniformBlockName);
-    if(!m_Manager.hasProgram(program))
+    if(!m_Manager.has(program))
         return result;
-    auto& record = m_Manager.getMutableProgram(program);
-    if(record.m_UniformBlocks.count(uniformBlockName) == 0)
+    auto record = m_Manager.get(program);
+    if(record->m_UniformBlocks.count(uniformBlockName) == 0)
     {
-        ShaderManager::ShaderProgram::UniformBlock block;
+        ShaderProgram::UniformBlock block;
         block.location = result;
-        record.m_UniformBlocks[std::string(uniformBlockName)] = block;
+        record->m_UniformBlocks[std::string(uniformBlockName)] = block;
     }
     return result;
 }
@@ -438,24 +682,24 @@ GLuint Repeater::glGetUniformBlockIndex (GLuint program, const GLchar* uniformBl
 void Repeater::glUniformBlockBinding (GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding) 
 {
     OpenglRedirectorBase::glUniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding);
-    if(!m_Manager.hasProgram(program))
+    if(!m_Manager.has(program))
         return;
 
-    auto& record = m_Manager.getMutableProgram(program);
-    record.updateUniformBlock(uniformBlockIndex, uniformBlockBinding);
+    auto record = m_Manager.get(program);
+    record->updateUniformBlock(uniformBlockIndex, uniformBlockBinding);
 
     // Add binding index's transformation metadata
-    if(record.m_VertexShader != -1)
+    if(record->m_Metadata)
     {
-        const auto& desc = m_Manager.getShaderDescription(record.m_VertexShader);
-        if(desc.isUBOused() && record.hasUniformBlock(desc.m_InterfaceBlockName))
+        const auto desc = record->m_Metadata.get();
+        if(desc->isUBOused() && record->hasUniformBlock(desc->m_InterfaceBlockName))
         {
-            auto& block = record.m_UniformBlocks[desc.m_InterfaceBlockName];
-            if(OpenglRedirectorBase::glGetUniformBlockIndex(program,desc.m_InterfaceBlockName.c_str())  == uniformBlockIndex)
+            auto& block = record->m_UniformBlocks[desc->m_InterfaceBlockName];
+            if(OpenglRedirectorBase::glGetUniformBlockIndex(program,desc->m_InterfaceBlockName.c_str())  == uniformBlockIndex)
             {
                 auto& index = m_UniformBlocksTracker.getBindingIndex(block.bindingIndex);
 
-                std::array<const GLchar*, 1> uniformList = {desc.m_TransformationMatrixName.c_str()};
+                std::array<const GLchar*, 1> uniformList = {desc->m_TransformationMatrixName.c_str()};
                 std::array<GLuint, 1> resultIndex;
                 std::array<GLint, 1> params;
                 OpenglRedirectorBase::glGetUniformIndices(program, 1, uniformList.data(), resultIndex.data());
@@ -516,7 +760,7 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
         return;
 
     GLint bufferID = 0;
-    glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
+    OpenglRedirectorBase::glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
     if(!m_UniformBlocksTracker.hasBufferBindingIndex(bufferID))
         return;
     auto index = m_UniformBlocksTracker.getBufferBindingIndex(bufferID);
@@ -524,9 +768,9 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
     if(metadata.transformationOffset == -1)
     {
         // Find a program whose uniform iterface contains transformation matrix
-        for(auto& [programID, program]: m_Manager.getMutablePrograms())
+        for(auto& [programID, program]: m_Manager.getMap())
         {
-            auto& blocks = program.m_UniformBlocks;
+            auto& blocks = program->m_UniformBlocks;
             
             // Determine fi shader program contains a block, whose binding index is same as
             // currently bound GL_UNIFORM_BUFFER
@@ -538,14 +782,13 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
             if(result == blocks.end() && index != 0)
                 continue;
             // Determine if program's VS has transformation in interface block
-            const auto VS = program.m_VertexShader;
-            if(!m_Manager.hasShader(VS))
+            if(!program->m_Metadata)
                 continue;
-            const auto& shader = m_Manager.getShaderDescription(VS);
-            if(!shader.isUBOused())
+            const auto programMetadata = program->m_Metadata.get();
+            if(!programMetadata->isUBOused())
                 continue;
 
-            std::array<const GLchar*, 1> uniformList = {shader.m_TransformationMatrixName.c_str()};
+            std::array<const GLchar*, 1> uniformList = {programMetadata->m_TransformationMatrixName.c_str()};
             std::array<GLuint, 1> resultIndex;
             std::array<GLint, 1> params;
             OpenglRedirectorBase::glGetUniformIndices(programID, 1, uniformList.data(), resultIndex.data());
@@ -555,7 +798,7 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
             metadata.transformationOffset = params[0];
 
             // Re-store bindingIndex if needed
-            blocks[shader.m_InterfaceBlockName].bindingIndex = index;
+            blocks[programMetadata->m_InterfaceBlockName].bindingIndex = index;
         }
     }
     if(metadata.transformationOffset != -1)
@@ -582,7 +825,7 @@ void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size,
         return;
 
     GLint bufferID = 0;
-    glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
+    OpenglRedirectorBase::glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
     if(!m_UniformBlocksTracker.hasBufferBindingIndex(bufferID))
         return;
     auto index = m_UniformBlocksTracker.getBufferBindingIndex(bufferID);
@@ -677,31 +920,31 @@ void Repeater::glBegin(GLenum mode)
 {
     if(m_callList == 0)
     {
-        m_callList = glGenLists(1);
+        m_callList = OpenglRedirectorBase::glGenLists(1);
     }
-    glNewList(m_callList, GL_COMPILE);
+    OpenglRedirectorBase::glNewList(m_callList, GL_COMPILE);
     OpenglRedirectorBase::glBegin(mode);
 }
 
 void Repeater::glEnd()
 {
     OpenglRedirectorBase::glEnd();
-    glEndList();
+    OpenglRedirectorBase::glEndList();
 
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glCallList(m_callList);
     });
 }
 
 void Repeater::glCallList(GLuint list)
 {
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glCallList(list);
     });
 }
 void Repeater::glCallLists(GLsizei n,GLenum type,const GLvoid* lists)
 {
-    Repeater::duplicateCode([&]() {
+    Repeater::drawMultiviewed([&]() {
         OpenglRedirectorBase::glCallLists(n,type, lists);
     });
 }
@@ -787,17 +1030,17 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
 void Repeater::setEnhancerShift(const glm::mat4& viewSpaceTransform, float projectionAdjust)
 {
     const auto& resultMat = viewSpaceTransform;
-    auto program = m_Manager.getBoundedProgramID();
+    auto program = m_Manager.getBoundId();
     if(program)
     {
-        auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
-        OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
+        //auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_view_transform");
+        //OpenglRedirectorBase::glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
 
-        location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
+        auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
         OpenglRedirectorBase::glUniform1i(location, GL_FALSE);
 
-        location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_projection_adjust");
-        OpenglRedirectorBase::glUniform1f(location, projectionAdjust);
+        //location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_projection_adjust");
+        //OpenglRedirectorBase::glUniform1f(location, projectionAdjust);
     }
 
     // Legacy support
@@ -832,9 +1075,14 @@ void Repeater::resetEnhancerShift()
 void Repeater::setEnhancerIdentity()
 {
     const auto identity = glm::mat4(1.0);
-    auto program = m_Manager.getBoundedProgramID();
+    auto program = m_Manager.getBoundId();
     auto location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_identity");
     OpenglRedirectorBase::glUniform1i(location, GL_TRUE);
+
+    location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_max_views");
+    OpenglRedirectorBase::glUniform1i(location, 1);
+    location = OpenglRedirectorBase::glGetUniformLocation(program, "enhancer_max_invocations");
+    OpenglRedirectorBase::glUniform1i(location, 1);
 }
 
 void Repeater::takeScreenshot(const std::string filename)
@@ -844,7 +1092,7 @@ void Repeater::takeScreenshot(const std::string filename)
     // Make the BYTE array, factor of 3 because it's RBG.
     BYTE* pixels = new BYTE[3 * width * height];
 
-    glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, pixels);
+    OpenglRedirectorBase::glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, pixels);
 
     // Convert to FreeImage format & save to file
     FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF, 0xFF00, 0xFF0000, false);
@@ -857,37 +1105,92 @@ void Repeater::takeScreenshot(const std::string filename)
     delete [] pixels;
 }
 
-void Repeater::duplicateCode(const std::function<void(void)>& code)
+void Repeater::drawMultiviewed(const std::function<void(void)>& drawCallLambda)
 {
-    bool shouldNotDuplicate = (
-            !m_IsMultiviewActivated ||
-            // don't duplicate while rendering light's point of view into shadow map
-            m_FBOTracker.isFBOshadowMap() ||
-            // don't duplicate while there is no projection and its not legacy OpenGL at the same time
-            (m_Manager.isAnyBound() && m_Manager.isVSBound() && !m_Manager.getBoundedVS().hasDetectedTransformation() && !m_LegacyTracker.isLegacyNeeded())
-    );
+    //-------------------------------------------------------------------------
+    auto drawWrapper = [&]()
+    {
 
-    if(shouldNotDuplicate)
+        if(!m_TextureTracker.getTextureUnits().hasShadowedTextureBinded())
+        {
+            auto loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_isSingleViewActivated");
+            OpenglRedirectorBase::glUniform1i(loc, false);
+            drawCallLambda();
+            return;
+        }
+
+        const auto numOfLayers = m_OutputFBO.getParams().getLayers();
+        for(size_t l = 0; l < numOfLayers; l++)
+        {
+            m_TextureTracker.getTextureUnits().bindShadowedTexturesToLayer(l);
+
+            auto loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_isSingleViewActivated");
+            OpenglRedirectorBase::glUniform1i(loc, true);
+
+            loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_singleViewID");
+            OpenglRedirectorBase::glUniform1i(loc, l);
+            drawCallLambda();
+        }
+    };
+    //-------------------------------------------------------------------------
+    if(!m_IsMultiviewActivated || (m_FBOTracker.hasBounded() && !m_FBOTracker.isSuitableForRepeating()) )
     {
         setEnhancerIdentity();
-        code();
+        drawWrapper();
         return;
     }
 
-    /// If Uniform Buffer Object is used
-    if(m_Manager.isAnyBound() && m_Manager.getBoundedVS().isUBOused())
+    if(!m_FBOTracker.hasBounded())
     {
-        const auto& blockName = m_Manager.getBoundedVS().m_InterfaceBlockName;
-        auto index = m_Manager.getBoundedProgram().m_UniformBlocks[blockName].bindingIndex;
+        OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_OutputFBO.getFBOId());
+        OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getParams().getTextureWidth(),m_OutputFBO.getParams().getTextureHeight());
+    } else {
+        auto fbo = m_FBOTracker.getBound();
+        if(!fbo->hasShadowFBO() && m_FBOTracker.isSuitableForRepeating())
+        {
+            fbo->createShadowedFBO();
+        }
+        if(fbo->hasShadowFBO())
+        {
+            OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, fbo->getShadowFBO());
+        }
+    }
+
+    /// If Uniform Buffer Object is used
+    if(m_Manager.hasBounded() && m_Manager.getBound()->m_Metadata && m_Manager.getBound()->m_Metadata->isUBOused())
+    {
+        const auto& blockName = m_Manager.getBound()->m_Metadata->m_InterfaceBlockName;
+        auto index = m_Manager.getBound()->m_UniformBlocks[blockName].bindingIndex;
         const auto& indexStructure = m_UniformBlocksTracker.getBindingIndex(index);
         if(indexStructure.hasTransformation)
         {
-            setEnhancerDecodedProjection(m_Manager.getBoundedProgramID(),indexStructure.projection);
+            setEnhancerDecodedProjection(m_Manager.getBoundId(),indexStructure.projection);
         } else {
             printf("[Repeater] Unexpected state. Expected UBO, but not found. Falling back to identity\n");
             setEnhancerIdentity();
         }
     }
+    auto loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_XShiftMultiplier");
+    OpenglRedirectorBase::glUniform1f(loc, m_cameraParameters.m_XShiftMultiplier);
+
+    loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_FrontalDistance");
+    OpenglRedirectorBase::glUniform1f(loc, m_cameraParameters.m_frontOpticalAxisCentreDistance);
+
+    auto location = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_max_views");
+    OpenglRedirectorBase::glUniform1i(location, 3*3);
+
+    location = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_max_invocations");
+    OpenglRedirectorBase::glUniform1i(location, 3*3);
+
+    //setEnhancerShift(glm::mat4(1.0),0.0);
+
+    loc = OpenglRedirectorBase::glGetUniformLocation(m_Manager.getBoundId(), "enhancer_identity");
+
+    bool shouldNotUseIdentity = (m_Manager.getBound()->m_Metadata && m_Manager.getBound()->m_Metadata->hasDetectedTransformation());
+    OpenglRedirectorBase::glUniform1i(loc, !shouldNotUseIdentity);
+    drawWrapper();
+    //resetEnhancerShift();
+    return;
     // Get original viewport
     auto originalViewport = currentViewport;
     auto originalScissor = currentScissorArea;
@@ -920,9 +1223,9 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
         // Detect if VS renders into clip-space, thus if z is always 1.0
         // => in such case, we don't want to translate the virtual camera
         bool isClipSpaceRendering = false;
-        if(m_Manager.isAnyBound() && m_Manager.isVSBound())
+        if(m_Manager.hasBounded() && m_Manager.isVSBound())
         {
-            isClipSpaceRendering = (m_Manager.getBoundedVS().m_IsClipSpaceTransform);
+            isClipSpaceRendering = (m_Manager.getBound()->m_Metadata->m_IsClipSpaceTransform);
         }
         const auto& t = (isClipSpaceRendering)?camera.getViewMatrixRotational():camera.getViewMatrix();
         const auto& v = camera.getViewport();
@@ -931,11 +1234,10 @@ void Repeater::duplicateCode(const std::function<void(void)>& code)
             OpenglRedirectorBase::glViewport(v.getX(), v.getY(), v.getWidth(), v.getHeight());
         }
         setEnhancerShift(t,camera.getAngle()*m_cameraParameters.m_XShiftMultiplier/m_cameraParameters.m_frontOpticalAxisCentreDistance);
-        code();
+        drawWrapper();
         resetEnhancerShift();
     }
     // restore
     OpenglRedirectorBase::glViewport(originalViewport.getX(), originalViewport.getY(), originalViewport.getWidth(), originalViewport.getHeight());
     OpenglRedirectorBase::glScissor(originalScissor.getX(), originalScissor.getY(), originalScissor.getWidth(), originalScissor.getHeight());
 }
-

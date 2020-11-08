@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
-#include "shader_inspector.hpp"
-#include "shader_parser.hpp"
+#include "pipeline/shader_inspector.hpp"
+#include "pipeline/shader_parser.hpp"
 
 namespace {
 TEST(ShaderInspector, Basics) {

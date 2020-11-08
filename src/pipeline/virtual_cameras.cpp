@@ -1,4 +1,4 @@
-#include "virtual_cameras.hpp"
+#include "pipeline/virtual_cameras.hpp"
 #include <glm/gtx/transform.hpp>
 #include <cassert>
 

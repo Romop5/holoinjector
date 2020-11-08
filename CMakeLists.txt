@@ -58,35 +58,48 @@ find_package(FreeImage REQUIRED)
 ###############################################################################
 
 add_library(enhancer_core 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/projection_estimator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/projection_estimator.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_inspector.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_inspector.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_manager.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_manager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/framebuffer_tracker.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/framebuffer_tracker.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/opengl_utils.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/opengl_utils.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/legacy_tracker.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/legacy_tracker.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/viewport_area.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/viewport_area.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/virtual_cameras.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/virtual_cameras.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_parser.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shader_parser.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/uniform_block_tracing.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/uniform_block_tracing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_manager.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/framebuffer_tracker.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/framebuffer_tracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/legacy_tracker.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/legacy_tracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/uniform_block_tracing.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/uniform_block_tracing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/texture_tracker.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/texture_tracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/renderbuffer_tracker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/renderbuffer_tracker.hpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/projection_estimator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/projection_estimator.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_inspector.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_inspector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/viewport_area.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/viewport_area.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/virtual_cameras.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/virtual_cameras.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_parser.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_parser.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/pipeline_injector.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/pipeline_injector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/program_metadata.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/program_metadata.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/output_fbo.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/output_fbo.cpp
+
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.cpp
-    )
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.cpp
+)
 
 # Hack: we would like a static library to be linked into shared library later
 # => Position Independent Code is thus required
 target_compile_options(enhancer_core PRIVATE "-fPIC")
 
-target_link_libraries(enhancer_core PUBLIC glm ${FREEIMAGE_LIBRARIES})
+target_link_libraries(enhancer_core PUBLIC GL glm ${FREEIMAGE_LIBRARIES})
 target_include_directories(enhancer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${FREEIMAGE_INCLUDE_DIR})
 target_compile_features(enhancer_core PUBLIC cxx_std_17)
@@ -100,7 +113,8 @@ add_library(${ENHANCER_PROJECT_NAME} INTERFACE
 )
 
 target_sources(${ENHANCER_PROJECT_NAME} INTERFACE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/opengl_redirector_base.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/hooking/opengl_redirector_base.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/hooking/opengl_redirector_base.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/startup_enhancer.cpp
     )
 
@@ -148,24 +162,30 @@ target_link_libraries(enhancer_core PUBLIC ${SIMPLECPP_SO})
 ###############################################################################
 
 if(${ENHANCER_BUILD_TESTS})
-
-    
     enable_testing()
     find_package(GTest REQUIRED)
+    find_package(Threads)
 
+    #===========================================================================
     set(GTEST_ROOT "${CMAKE_BINARY_DIR}/")
-
+    #===========================================================================
     file(GLOB UNITTEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/*.cpp)
     add_executable(unittests 
         ${UNITTEST_FILES}
     )
-    find_package(Threads)
     target_link_libraries(unittests ${GTEST_BOTH_LIBRARIES} enhancer_core Threads::Threads)
     set(TARGET unittests PROPERTY CXX_STANDARD 17)
 
+    #===========================================================================
+    add_executable(opengl-unittest
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/opengl/opengl_test_context.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/opengl/output_fbo_test.cpp
+    )
+    target_link_libraries(opengl-unittest ${GTEST_BOTH_LIBRARIES} enhancer_core GL X11)
+    set(TARGET opengl-unittest PROPERTY CXX_STANDARD 17)
+
+    #===========================================================================
     add_test(NAME AllTests COMMAND "$<TARGET_FILE:unittests>")
-
-
     if(${ENHANCER_BUILD_TESTS_COVERAGE})
         include(CodeCoverage)
         append_coverage_compiler_flags()

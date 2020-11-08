@@ -1,16 +1,21 @@
 #include <functional>
-#include "opengl_redirector_base.hpp"
+#include "hooking/opengl_redirector_base.hpp"
 #include <unordered_map>
 
 #include <GL/gl.h>
 #include <glm/glm.hpp>
 
-#include "shader_manager.hpp"
-#include "uniform_block_tracing.hpp"
-#include "framebuffer_tracker.hpp"
-#include "legacy_tracker.hpp"
-#include "viewport_area.hpp"
-#include "virtual_cameras.hpp"
+#include "trackers/shader_manager.hpp"
+#include "trackers/uniform_block_tracing.hpp"
+#include "trackers/framebuffer_tracker.hpp"
+#include "trackers/legacy_tracker.hpp"
+#include "trackers/texture_tracker.hpp"
+#include "trackers/renderbuffer_tracker.hpp"
+
+#include "pipeline/viewport_area.hpp"
+#include "pipeline/virtual_cameras.hpp"
+#include "pipeline/output_fbo.hpp"
+
 #include "diagnostics.hpp"
 
 namespace ve
@@ -23,8 +28,32 @@ namespace ve
         // Used for initialization
         virtual  void glClear(GLbitfield mask) override;
 
+
+        // Textures
+        virtual void glGenTextures(GLsizei n,GLuint* textures) override;
+
+        virtual void glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLint border,GLenum format,GLenum type,const GLvoid* pixels) override;
+        virtual void glTexImage2D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLsizei height,GLint border,GLenum format,GLenum type,const GLvoid* pixels) override;
+        virtual void glTexImage3D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels) override;
+
+        virtual void glTexStorage1D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width) override;
+        virtual void glTexStorage2D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height) override;
+        virtual void glTexStorage3D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth) override;
+
+        virtual void glTextureStorage1D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width) override;
+        virtual void glTextureStorage2D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height) override;
+        virtual void glTextureStorage3D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth) override;
+ 
+        virtual void glBindTexture(GLenum target,GLuint texture) override;
+        virtual void glActiveTexture (GLenum texture) override;
+
+        // Renderbuffers
+        virtual void glGenRenderbuffers (GLsizei n, GLuint* renderbuffers) override;
+        virtual void glRenderbufferStorage (GLenum target, GLenum internalformat, GLsizei width, GLsizei height) override;
+        
         // Swap buffers
         virtual  void glXSwapBuffers(	Display * dpy, GLXDrawable drawable) override;
+        virtual  Bool glXMakeCurrent(	Display * dpy, GLXDrawable drawable,GLXContext ctx) override;
 
         // Shader start
         virtual  GLuint glCreateShader(GLenum shaderType) override;
@@ -38,6 +67,7 @@ namespace ve
 
         virtual  GLuint glCreateProgram (void) override;
         virtual  void glUseProgram (GLuint program) override;
+        virtual void glLinkProgram (GLuint program) override;
 
         // Framebuffers
         virtual  void glGenFramebuffers (GLsizei n, GLuint* framebuffers) override;
@@ -46,6 +76,7 @@ namespace ve
         virtual  void glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) override;
         virtual  void glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) override;
         virtual  void glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset) override;
+        virtual void glFramebufferRenderbuffer (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer) override;
         // Framebuffers end
 
         
@@ -69,6 +100,8 @@ namespace ve
 
         // Draw calls start
         virtual void glDrawArrays(GLenum mode,GLint first,GLsizei count) override;
+        virtual void glDrawArraysInstanced (GLenum mode, GLint first, GLsizei count, GLsizei instancecount) override;
+
         virtual void glDrawElements(GLenum mode,GLsizei count,GLenum type,const GLvoid* indices) override;
         virtual  void glDrawElementsInstanced (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount) override;
         virtual  void glDrawRangeElements (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices) override;
@@ -84,7 +117,7 @@ namespace ve
         // Viewport start
         virtual  void glViewport(GLint x,GLint y,GLsizei width,GLsizei height) override;
         virtual  void glScissor(GLint x,GLint y,GLsizei width,GLsizei height) override;
-        // Viewport end 
+        // Viewport end
         virtual  void glMatrixMode(GLenum mode) override;
         virtual  void glLoadMatrixd(const GLdouble* m) override;
         virtual  void glLoadMatrixf(const GLfloat* m) override;
@@ -110,6 +143,7 @@ namespace ve
         private:
         /// Initialize parameters, caches etc
         void initialize();
+        void deinitialize();
 
         void setEnhancerShift(const glm::mat4& viewSpaceTransform, float projectionAdjust = 0.0);
         void resetEnhancerShift();
@@ -119,7 +153,7 @@ namespace ve
 
         void takeScreenshot(const std::string filename);
 
-        void duplicateCode(const std::function<void(void)>& code);
+        void drawMultiviewed(const std::function<void(void)>& code);
 
         
         ///////////////////////////////////////////////////////////////////////
@@ -149,6 +183,12 @@ namespace ve
         /// Keeps track of OpenGL fixed-pipeline calls
         LegacyTracker m_LegacyTracker;
 
+        /// Keeps track of each GL_TEXTURE_XYZ
+        TextureTracker m_TextureTracker;
+
+        /// Keeps track of GL_RENDERBUFFER objects
+        RenderbufferTracker m_RenderbufferTracker;
+
         /// Store metadata and bindings for UBO
         UniformBlockTracing m_UniformBlocksTracker;
 
@@ -160,5 +200,8 @@ namespace ve
          *   and then, duplicate it
          */
         GLint m_callList = 0;
+
+	/// FBO with all raw virtual cameras
+	OutputFBO m_OutputFBO;
     };
 }

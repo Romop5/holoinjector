@@ -127,7 +127,12 @@
 _retType _name( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ) \
 { \
     OPENGL_LOG_API_CALL (""#_name, OPENGL_PACK_ARGS(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__))); \
-    return g_OpenGLRedirector-> _handler(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__)); \
+    if(!g_IsAlreadyInsideWrapper)\
+    {\
+        auto lock = helper::ThreadLocalLock(g_IsAlreadyInsideWrapper);\
+        return g_OpenGLRedirector-> _handler(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__)); \
+    }\
+    return g_OpenGLRedirector-> OpenglRedirectorBase::_handler(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__)); \
 } \
 static helper::RegisterAPIFunction register_impl##_name(""#_name, reinterpret_cast<void*>(&_name));
 

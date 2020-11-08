@@ -1,4 +1,4 @@
-#include "viewport_area.hpp"
+#include "pipeline/viewport_area.hpp"
 #include <cstdlib> // size_t
 #include <cstring> // memcmp
 #include <cassert>

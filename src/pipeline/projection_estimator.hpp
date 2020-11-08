@@ -1,7 +1,7 @@
 #ifndef VE_PROJECTION_ESTIMATOR_HPP
 #define VE_PROJECTION_ESTIMATOR_HPP
 /**
- * @file projection_estimator.hpp
+ * @file pipeline/projection_estimator.hpp
  * @brief Helper routines for estimating projection from MVP matrix
  * @author Roman Dobias
  * @date 2020-09-16

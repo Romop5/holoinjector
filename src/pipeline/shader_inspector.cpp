@@ -1,4 +1,4 @@
-#include "shader_inspector.hpp"
+#include "pipeline/shader_inspector.hpp"
 #include <regex>
 #include <unordered_set>
 #include <cassert>
@@ -7,7 +7,7 @@
 #include <cctype>
 #include <iostream>
 
-#include "shader_parser.hpp"
+#include "pipeline/shader_parser.hpp"
 
 using namespace ve;
 
@@ -190,59 +190,8 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
 
     // At this point, caller must have verified that this is a VS, containing void main() method
     assert(startOfFunction != std::string::npos);
-    static std::string code = R"(
-    uniform bool enhancer_isOrthogonal; 
-    // when true, keeps original transformation flowing => used for shadow maps
-    uniform bool enhancer_identity; 
-    // Contains VIEW per-view camera
-    uniform mat4 enhancer_view_transform; 
-    // Contains projection
-    uniform float enhancer_projection_adjust; 
 
-    // Contains (fx,fy, near,far), estimated from original projection
-    uniform vec4 enhancer_estimatedParameters;
-
-    // Reversts original projection and apple per-view transformation & projection
-    vec4 enhancer_transform(vec4 clipSpace)
-    {
-        if(enhancer_isOrthogonal)
-            return clipSpace;
-        if(enhancer_identity)
-            return clipSpace;
-        float fx = enhancer_estimatedParameters[0];
-        float fy = enhancer_estimatedParameters[1];
-        float near = enhancer_estimatedParameters[2];
-        float far = enhancer_estimatedParameters[3];
-        // Revert clip-space to view-space
-        vec4 viewSpace = vec4(clipSpace.x/fx, clipSpace.y/fy, -clipSpace.w,1.0);
-
-        if(enhancer_isOrthogonal)
-        {
-            viewSpace[2] = 0;
-        }
-
-        float A = -2.0/(far-near);
-        float B = -(far+near)/(far-near);
-        if(enhancer_isOrthogonal)
-        {
-            A = 1.0;
-            B = 0.0;
-        }
-        mat4 projection = mat4(vec4(fx,0.0f,0.0f,0.0), vec4(0.0f,fy,0.0f,0.0), vec4(0.0f,0.0f,A,-1.0), vec4(0.0f,0.0f,B,0.0));
-        if(enhancer_isOrthogonal)
-        {
-            projection[3][3] = 1.0;
-            projection[2][3] = 0.0;
-        } else {
-            projection[2][0] = enhancer_projection_adjust;
-        }
-
-        // Do per-view transformation
-        vec4 viewSpaceTransformed = projection*enhancer_view_transform * viewSpace;
-        return viewSpaceTransformed;
-    }
-    )";
-
+    auto code = getCommonTransformationShader();
     output.insert(startOfFunction, code);
     return output;
 }
@@ -313,18 +262,73 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfI
     std::vector<std::pair<std::string, std::string>> result;
 
     std::smatch m;
-    static auto inDefinition = std::regex("in[\f\n\r\t\v ][^;]+");
-    if(!std::regex_search(sourceCode, m, inDefinition))
-        return result;
+    static auto inDefinition = std::regex("[\f\n\r\t\v ]in[\f\n\r\t\v ][^;]+");
 
-    for(auto& match: m)
+    auto searchIn = sourceCode;
+    while(std::regex_search(searchIn, m, inDefinition))
     {
-        std::string s = match.str();
-        auto definitionTokens = ve::tokenize(s);
-        assert(definitionTokens.size() >= 2);
-        const auto& type = definitionTokens[definitionTokens.size()-2];
-        const auto& name = definitionTokens[definitionTokens.size()-1];
-        result.emplace_back(std::make_pair(type, name));
+        for(auto& match: m)
+        {
+            std::string s = match.str();
+            if(s.find_first_of("{}") != std::string::npos)
+            {
+                auto start = sourceCode.find("in", m.position());
+                assert(start != std::string::npos);
+                // skip 'in'
+                start += 2;
+                auto end = sourceCode.find("}", m.position());
+                assert(end != std::string::npos);
+                end += 1;
+                auto idEnd = sourceCode.find(";", end);
+
+                auto snippet = sourceCode.substr(start, idEnd-start);
+                auto definitionTokens = ve::tokenize(snippet);
+
+                const auto type = sourceCode.substr(start, end-start);
+                const auto& name = definitionTokens[definitionTokens.size()-1];
+                assert(name.find_first_of(")(,;") == std::string::npos);
+                result.emplace_back(std::make_pair(type, name));
+                continue;
+            }
+
+            // is interface
+            auto definitionTokens = ve::tokenize(s);
+            assert(definitionTokens.size() >= 2);
+            const auto& type = definitionTokens[definitionTokens.size()-2];
+            const auto& name = definitionTokens[definitionTokens.size()-1];
+
+            assert(type.find_first_of(")(,;") == std::string::npos);
+            assert(name.find_first_of(")(,;") == std::string::npos);
+            result.emplace_back(std::make_pair(type, name));
+        }
+        searchIn = m.suffix();
+    }
+    return result;
+}
+
+std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfOutputs() const
+{
+    std::vector<std::pair<std::string, std::string>> result;
+
+    std::smatch m;
+    static auto inDefinition = std::regex("[\f\n\r\t\v ]out[\f\n\r\t\v ][^;]+");
+
+    auto searchIn = sourceCode;
+    while(std::regex_search(searchIn, m, inDefinition))
+    {
+        for(auto& match: m)
+        {
+            std::string s = match.str();
+            auto definitionTokens = ve::tokenize(s);
+            assert(definitionTokens.size() >= 2);
+            const auto& type = definitionTokens[definitionTokens.size()-2];
+            const auto& name = definitionTokens[definitionTokens.size()-1];
+
+            assert(type.find_first_of(")(,;") == std::string::npos);
+            assert(name.find_first_of(")(,;") == std::string::npos);
+            result.emplace_back(std::make_pair(type, name));
+        }
+        searchIn = m.suffix();
     }
     return result;
 }
@@ -382,7 +386,7 @@ std::string ve::ShaderInspector::replaceGLPositionAssignment(VertextAssignment a
     switch(assignment.analysis.type)
     {
         case UNIFORM:
-            return helper::wrapAssignmentExpresion(assignment.statementRawText, "enhancer_transform");
+            return helper::wrapAssignmentExpresion(assignment.statementRawText, "enhancer_VStransform");
         case POSSIBLE_TEMPORARY_VARIABLE:
         case INPUT:
             break;
@@ -448,4 +452,93 @@ bool ShaderInspector::isClipSpaceShader() const
     static auto clipAssign = std::regex(".[\f\n\r\t\v ]*xyww");
     std::smatch m;
     return std::regex_search(sourceCode, m, clipAssign); 
+}
+
+void ShaderInspector::injectCommonCode(std::string& sourceOriginal)
+{
+    auto pos = sourceOriginal.find_first_of("\n", sourceOriginal.find_last_of("#"));
+    assert(pos != std::string::npos);
+    pos += 1;
+    sourceOriginal.insert(pos, getCommonTransformationShader());
+}
+
+std::string ShaderInspector::getCommonTransformationShader()
+{   
+    static std::string code = R"(
+    uniform int enhancer_cameraId = 0;
+    uniform int enhancer_max_views = 9; 
+    uniform bool enhancer_isSingleViewActivated = false;
+    uniform int enhancer_singleViewID = 0;
+
+    uniform float enhancer_XShiftMultiplier = 5.0;
+    uniform float enhancer_FrontalDistance = 5.0;
+
+    uniform bool enhancer_isOrthogonal = false; 
+    // when true, keeps original transformation flowing => used for shadow maps
+    uniform bool enhancer_identity = true; 
+
+    // Contains (fx,fy, near,far), estimated from original projection
+    uniform vec4 enhancer_deprojection;
+
+    // 1/fx, etc...
+    uniform vec4 enhancer_deprojection_inv;
+
+    float enhancer_getProjectionShift(int cameraId)
+    {
+        float normalizedDistance = 1.0-2.0*float(cameraId)/float(enhancer_max_views);
+        return normalizedDistance*enhancer_XShiftMultiplier/enhancer_FrontalDistance;
+    }
+
+    float enhancer_getCenterShift(int cameraId)
+    {
+        float normalizedDistance = 1.0- 2.0*float(cameraId)/float(enhancer_max_views);
+        return normalizedDistance*enhancer_XShiftMultiplier;
+    }
+
+    // Reversts original projection and apple per-view transformation & projection
+    vec4 enhancer_extractViewSpace(vec4 clipSpace)
+    {
+	if(enhancer_isOrthogonal || enhancer_identity)
+            return clipSpace;
+
+        // Revert clip-space to view-space
+        vec4 viewSpace = vec4(clipSpace.x*enhancer_deprojection_inv[0], clipSpace.y*enhancer_deprojection_inv[1], -clipSpace.w,1.0);
+	return viewSpace;
+    }
+    vec4 enhancer_transform(bool isClipSpace, int camera, vec4 clipSpace)
+    {
+        if(enhancer_isOrthogonal || enhancer_identity)
+            return clipSpace;
+
+        float near = enhancer_deprojection[2];
+        float far = enhancer_deprojection[3];
+        
+        float A = -2.0/(far-near);
+        float B = -(far+near)/(far-near);
+        
+        mat4 projection = mat4(
+            vec4(enhancer_deprojection[0],0.0f,0.0,0.0),
+            vec4(0.0f,enhancer_deprojection[1],0.0f,0.0), 
+            vec4(enhancer_getProjectionShift(camera),0.0f,A,-1.0), 
+            vec4(0.0f,0.0f,B,0.0));
+
+        // Do per-view transformation
+        vec4 viewSpace = enhancer_extractViewSpace(clipSpace);
+        if(!isClipSpace)
+            viewSpace.x += enhancer_getCenterShift(camera);
+        vec4 viewSpaceTransformed = projection*viewSpace;
+        if(isClipSpace)
+            return viewSpaceTransformed.xyww;
+        return viewSpaceTransformed;
+    }
+
+    vec4 enhancer_VStransform(vec4 clipSpace)
+    {
+        return clipSpace;
+    }
+    )";
+
+    // Hack: remove clip space
+    code= std::regex_replace(code, std::regex(". xyww"),"");  
+    return code;
 }

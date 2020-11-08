@@ -1,4 +1,4 @@
-#include "opengl_redirector_base.hpp"
+#include "opengl_hooking/redirector_base.hpp"
 
 namespace ve
 {

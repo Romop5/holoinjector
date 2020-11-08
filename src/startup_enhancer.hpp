@@ -1,7 +1,7 @@
 #ifndef __STARTUP_ENHANCER__HPP
 #define __STARTUP_ENHANCER__HPP
 #include <memory>
-#include "redirector_base.hpp"
+#include "hooking/redirector_base.hpp"
 /**
  * @brief Call on process/DLL initialization to set up redirections
  *

@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
-#include "framebuffer_tracker.hpp"
+#include "trackers/framebuffer_tracker.hpp"
+#include "trackers/texture_tracker.hpp"
 
 using namespace ve;
 
@@ -9,80 +10,102 @@ TEST(FramebufferTracker, Basic) {
     /*
      * By default, default program should be bounded
      */
-    ASSERT_EQ(ft.getCurrentFrameBuffer(),0);
-    ASSERT_TRUE(ft.isFBODefault());
-    ASSERT_FALSE(ft.isFBOshadowMap());
+    EXPECT_EQ(ft.getBoundId(),0);
+    EXPECT_TRUE(ft.isFBODefault());
+    EXPECT_TRUE(ft.isSuitableForRepeating());
 
-    ASSERT_FALSE(ft.hasFramebuffer(1));
+    EXPECT_FALSE(ft.has(1));
 
     /*
      * Create new FBO and only attach depth buffer
      */
-    ft.addFramebuffer(1);
+    ft.add(1, std::make_shared<FramebufferMetadata>());
     // Not binded yet, still default
-    ASSERT_TRUE(ft.isFBODefault());
+    EXPECT_TRUE(ft.isFBODefault());
     // Bind new FBO
     ft.bind(1);
-    ASSERT_EQ(ft.getCurrentFrameBuffer(),1);
-    ASSERT_TRUE(!ft.isFBODefault());
-    ft.attach(GL_DEPTH_ATTACHMENT, 0);
+    EXPECT_EQ(ft.getBoundId(),1);
+    EXPECT_TRUE(!ft.isFBODefault());
+
+
+    TextureTracker tt;
+    auto depthTexture = std::make_shared<TextureMetadata>(0);
+    depthTexture->setStorage(GL_TEXTURE_2D,100,100,1,0, GL_DEPTH_COMPONENT24);
+    tt.add(0, depthTexture);
+
+    ft.get(1)->attach(GL_DEPTH_ATTACHMENT, depthTexture);
     /*
      * New FBO only has depth attached => should be shadow map
      */
-    ASSERT_TRUE(ft.isFBOshadowMap());
-    ft.attach(GL_COLOR_ATTACHMENT0, 1);
-    ASSERT_FALSE(ft.isFBOshadowMap());
+    EXPECT_TRUE(ft.get(1)->isShadowMapFBO());
+
+    auto colorTexture= std::make_shared<TextureMetadata>(1);
+    colorTexture->setStorage(GL_TEXTURE_2D,100,100,1,0, GL_RGBA8);
+    tt.add(1, colorTexture);
+
+    ft.get(1)->attach(GL_COLOR_ATTACHMENT0, colorTexture);
+    EXPECT_FALSE(ft.get(1)->isShadowMapFBO());
 
     /*
      * Rebind default (unbind)
      */
     ft.bind(0);
-    ASSERT_EQ(ft.getCurrentFrameBuffer(),0);
+    EXPECT_EQ(ft.getBoundId(),0);
 
-    ASSERT_TRUE(ft.isFBODefault());
-    ASSERT_FALSE(ft.isFBOshadowMap());
+    EXPECT_TRUE(ft.isFBODefault());
+    EXPECT_TRUE(ft.isSuitableForRepeating());
 }
 
 TEST(FramebufferTracker, NonDefaultAttachment) {
     FramebufferTracker ft;
+    TextureTracker tt;
+
+    auto depthTexture = std::make_shared<TextureMetadata>(1);
+    depthTexture->setStorage(GL_TEXTURE_2D,100,100,1,0, GL_DEPTH_COMPONENT16); 
+    tt.add(1, depthTexture);
+
+    auto colorTexture= std::make_shared<TextureMetadata>(2);
+    colorTexture->setStorage(GL_TEXTURE_2D,100,100,1,0, GL_RGBA8); 
+    tt.add(2, colorTexture);
+
     for(size_t i = 0; i < 8; i++)
     {
-        ft.addFramebuffer(i+1);
-        ASSERT_EQ(ft.getCurrentFrameBuffer(),i);
+        ft.add(i+1, std::make_shared<FramebufferMetadata>());
+        EXPECT_EQ(ft.getBoundId(),i);
         ft.bind(i+1);
-        ASSERT_EQ(ft.getCurrentFrameBuffer(),i+1);
-        ft.attach(GL_DEPTH_ATTACHMENT, 0);
-        ASSERT_TRUE(ft.isFBOshadowMap());
-        ft.attach(GL_COLOR_ATTACHMENT0+i, i+1);
-        ASSERT_FALSE(ft.isFBOshadowMap());
+        EXPECT_EQ(ft.getBoundId(),i+1);
+        ft.getBound()->attach(GL_DEPTH_ATTACHMENT, depthTexture);
+        EXPECT_TRUE(ft.getBound()->isShadowMapFBO());
+        ft.getBound()->attach(GL_COLOR_ATTACHMENT0+i, colorTexture);
+        EXPECT_FALSE(ft.getBound()->isShadowMapFBO());
     }
 }
 TEST(FramebufferTracker, Stencil) {
     FramebufferTracker ft;
-    ft.addFramebuffer(1);
+    ft.add(1, std::make_shared<FramebufferMetadata>());
     ft.bind(1);
-    ft.attach(GL_STENCIL_ATTACHMENT, 0);
-    ASSERT_FALSE(ft.isFBOshadowMap());
+    ft.getBound()->attach(GL_STENCIL_ATTACHMENT, 0);
+    EXPECT_FALSE(ft.getBound()->isShadowMapFBO());
 }
 TEST(FramebufferTracker, DepthStencil) {
     FramebufferTracker ft;
-    ft.addFramebuffer(1);
+    ft.add(1, std::make_shared<FramebufferMetadata>());
     ft.bind(1);
-    ft.attach(GL_DEPTH_STENCIL_ATTACHMENT, 0);
-    ASSERT_TRUE(ft.isFBOshadowMap());
+    ft.getBound()->attach(GL_DEPTH_STENCIL_ATTACHMENT, 0);
+    EXPECT_TRUE(ft.getBound()->isShadowMapFBO());
 }
 
 TEST(FramebufferTracker, DeleteFBO) {
     FramebufferTracker ft;
-    ft.addFramebuffer(1);
+    ft.add(1, std::make_shared<FramebufferMetadata>());
     ft.bind(1);
-    ft.attach(GL_DEPTH_ATTACHMENT, 0);
-    ASSERT_TRUE(ft.isFBOshadowMap());
-    ASSERT_TRUE(ft.hasFramebuffer(1));
+    ft.getBound()->attach(GL_DEPTH_ATTACHMENT, 0);
+    EXPECT_TRUE(ft.getBound()->isShadowMapFBO());
+    EXPECT_TRUE(ft.has(1));
 
-    ft.deleteFramebuffer(1);
-    ASSERT_FALSE(ft.hasFramebuffer(1));
-    ASSERT_EQ(ft.getCurrentFrameBuffer(),0);
-    ASSERT_FALSE(ft.isFBOshadowMap());
+    ft.remove(1);
+    EXPECT_FALSE(ft.has(1));
+    EXPECT_EQ(ft.getBoundId(),0);
+    EXPECT_TRUE(ft.isSuitableForRepeating());
 }
 }

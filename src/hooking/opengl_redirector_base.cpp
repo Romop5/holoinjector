@@ -10,9 +10,11 @@
 
 #include <unordered_map>
 #include <sstream>
-#include "opengl_redirector_base.hpp"
-#include "opengl_redirector_impl_macros.hpp"
-#include "opengl_utils.hpp"
+#include <type_traits>
+
+#include "hooking/opengl_redirector_base.hpp"
+#include "hooking/opengl_redirector_impl_macros.hpp"
+#include "utils/opengl_utils.hpp"
 
 /*
  * To redirect API call to our class method, a static method with same type must be
@@ -23,10 +25,15 @@
 using namespace ve;
 
 static OpenglRedirectorBase* g_OpenGLRedirector = nullptr;
+thread_local bool g_IsAlreadyInsideWrapper = false;
 
 OpenglRedirectorBase::OpenglRedirectorBase()
 {
     g_OpenGLRedirector = this;
+}
+OpenglRedirectorBase::~OpenglRedirectorBase()
+{
+    g_OpenGLRedirector = nullptr;
 }
 
 namespace helper
@@ -168,9 +175,29 @@ namespace helper
             i++;
         return std::string(reinterpret_cast<const char*>(name), i);
     }
+
+
+    /**
+     * @brief Simple RAII lock mechanism
+     */
+    template <typename T>
+    class ThreadLocalLock
+    {
+        T& m_ref;
+        public:
+        ThreadLocalLock(T& ref): m_ref(ref)
+        {
+            m_ref = 1;
+        }
+        ~ThreadLocalLock()
+        {
+            m_ref = 0;
+        }
+    };
 }
 
 OPENGL_FORWARD(void,glXSwapBuffers,Display*, dpy, GLXDrawable, drawable);
+OPENGL_FORWARD(Bool,glXMakeCurrent,Display*, dpy, GLXDrawable, drawable,GLXContext,ctx);
 OPENGL_FORWARD_LOADER_ONLY(helper::ReturnFunctionType,glXGetProcAddress,const GLubyte *, procName);
 void (*OpenglRedirectorBase::glXGetProcAddress(	const GLubyte * procName))(void)
 {

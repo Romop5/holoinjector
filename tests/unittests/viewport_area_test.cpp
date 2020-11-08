@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "viewport_area.hpp"
+#include "pipeline/viewport_area.hpp"
 
 using namespace ve;
 

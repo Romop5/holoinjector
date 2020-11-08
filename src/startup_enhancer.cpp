@@ -8,7 +8,7 @@
 #include <mutex>
 #include <memory>
 
-#include "redirector_base.hpp"
+#include "hooking/redirector_base.hpp"
 
 #include <unistd.h>
 #include <cassert>
@@ -23,10 +23,32 @@ struct EnhancerContext
 
 static std::unique_ptr<EnhancerContext> context = nullptr;
 
+extern "C" void * __libc_dlopen_mode(const char * filename, int flag);
+extern "C" void * __libc_dlsym(void * handle, const char * symbol);
+
 namespace ve
 {
+    /*
+     * Stores function names, that were replaced by our symbols
+     */
+    std::unordered_map<std::string, void*> m_OriginalCalls;
+
     void* original_dlsym(void* params, const char* symbol)
     {
+        typedef void * (*PFN_DLSYM)(void* , const char*);
+        static PFN_DLSYM dlsym_sym = NULL;
+        if (!dlsym_sym) {
+            void *libdl_handle = __libc_dlopen_mode("libdl.so.2", RTLD_LOCAL | RTLD_NOW);
+            if (libdl_handle) {
+                dlsym_sym = (PFN_DLSYM)__libc_dlsym(libdl_handle, "dlsym");
+            }
+            if (!dlsym_sym) {
+                printf("[Enhancer] error: failed to look up real dlsym\n");
+                return NULL;
+            }
+        }
+        return dlsym_sym(params,symbol);
+
         void* original_dlsym = reinterpret_cast<void*>(&dlsym);
         /*
          * Prepare call to original dlsym code
@@ -43,6 +65,31 @@ namespace ve
     }
     void* hooked_dlsym(void* params, const char* symbol)
     {
+        /*
+         * Fix: route dlopen() directly to libc.so
+         * This is needed for libraries such as apitrace
+         */
+        if(std::string(symbol)== "dlopen")
+        {
+            //auto moduleHandle = dlopen("libc.so",RTLD_LAZY);
+            //return original_dlsym(RTLD_NEXT, symbol); 
+
+            typedef void * (*PFN_DLOPEN)(const char *, int);
+            static PFN_DLOPEN dlopen_sym = NULL;
+            if (!dlopen_sym) {
+                void *libdl_handle = __libc_dlopen_mode("libdl.so.2", RTLD_LOCAL | RTLD_NOW);
+                if (libdl_handle) {
+                    dlopen_sym = (PFN_DLOPEN)__libc_dlsym(libdl_handle, "dlopen");
+                }
+                if (!dlopen_sym) {
+                    printf("[Enhancer] error: failed to look up real dlsym\n");
+                    return NULL;
+                }
+            }
+            return (void*) dlopen_sym;
+        }
+        
+
         static std::mutex dlsym_mutex;
         auto lock = std::unique_lock<std::mutex>(dlsym_mutex);
 
@@ -50,16 +97,45 @@ namespace ve
 
         assert(context != nullptr);
         const auto& functions = context->redirector->getRedirectedFunctions();
+
+        auto originalSymbol = original_dlsym(params, symbol);
+        m_OriginalCalls[symbol] = originalSymbol;
+
         if(functions.hasRedirection(symbol))
         {
             auto* const targetAddress = functions.getTarget(symbol);
             return targetAddress;
         }
         // Else, return original address
-        return original_dlsym(params, symbol);
+        return originalSymbol;
     }
 
+
+    void* getOriginalCallAddress(std::string symbol)
+    {
+        if(m_OriginalCalls.count(symbol) > 0)
+        {
+            return m_OriginalCalls[symbol];
+        }
+        printf("[Enhancer- symbol getter] Calling original dlsym with symbo %s\n",symbol.c_str());
+        auto addr = ve::original_dlsym(RTLD_NEXT,symbol.c_str());
+        if(addr == NULL)
+        {
+            puts("[Enhancer- symbol getter] Failed to get original address via dlsym()");
+        }
+        return addr;
     }
+
+} // namespace ve
+
+// Hooked
+void* dlsym(void* params, const char* symbol)
+{
+    if(context == nullptr)
+        return ve::original_dlsym(params,symbol);
+    return ve::hooked_dlsym(params,symbol);
+}
+
 
 namespace helper
 {
@@ -126,20 +202,15 @@ void enhancer_setup(std::unique_ptr<RedirectorBase> redirector)
     /*
      * Hook dlopen/dlsym functions and dispatch via our own function
      */
-    auto dlSymHookStatus = helper::hook_function(context->dlsymhook, reinterpret_cast<void *>(dlsym), reinterpret_cast<void *>(hooked_dlsym), hookTypeFlags);
+    //auto dlSymHookStatus = helper::hook_function(context->dlsymhook, reinterpret_cast<void *>(dlsym), reinterpret_cast<void *>(hooked_dlsym), hookTypeFlags);
+    auto dlSymHookStatus = true;
     
     /*
      * Set original symbol getter using trampolined dlsym()
      */
     context->redirector->setSymbolGetter([](const char* symbol)->void* 
     {
-        printf("[Enhancer- symbol getter] Calling original dlsym with symbo %s\n",symbol);
-        auto addr = ve::original_dlsym(RTLD_NEXT,symbol);
-        if(addr == NULL)
-        {
-            puts("[Enhancer- symbol getter] Failed to get original address via dlsym()");
-        }
-        return addr;
+        return getOriginalCallAddress(symbol);
     });    
 
     /*

@@ -1,4 +1,4 @@
-#include "legacy_tracker.hpp"
+#include "trackers/legacy_tracker.hpp"
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/string_cast.hpp>
