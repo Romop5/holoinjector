@@ -1,33 +1,39 @@
 #include <functional>
-#include "hooking/opengl_redirector_base.hpp"
 #include <unordered_map>
 
 #include <GL/gl.h>
 #include <glm/glm.hpp>
 
-#include "trackers/shader_manager.hpp"
-#include "trackers/uniform_block_tracing.hpp"
-#include "trackers/framebuffer_tracker.hpp"
-#include "trackers/legacy_tracker.hpp"
-#include "trackers/texture_tracker.hpp"
-#include "trackers/renderbuffer_tracker.hpp"
-
-#include "pipeline/viewport_area.hpp"
-#include "pipeline/virtual_cameras.hpp"
-#include "pipeline/output_fbo.hpp"
-
-#include "diagnostics.hpp"
+#include "hooking/opengl_redirector_base.hpp"
+#include "managers/draw_manager.hpp"
+#include "context.hpp"
 
 namespace ve
 {
+    /**
+     * @brief Reroutes hooked OpenGL calls to submodules
+     *
+     * Repeater serves as a dispatcher, redirecting OpenGL's API calls to
+     * corresponding trackers and managers.
+     *
+     * Trackers keep track of object' properties and bindings whereas 
+     * managers are responsible for handling events w.r.t. context.
+     */
     class Repeater: public OpenglRedirectorBase
     {
         public:
         virtual void registerCallbacks() override;
 
+        ///////////////////////////////////////////////////////////////////////
+        // Hooked-function handlers
+        ///////////////////////////////////////////////////////////////////////
         // Used for initialization
         virtual  void glClear(GLbitfield mask) override;
 
+        // X11 library & GLX extension handlers
+        virtual  void glXSwapBuffers(	Display * dpy, GLXDrawable drawable) override;
+        virtual  Bool glXMakeCurrent(	Display * dpy, GLXDrawable drawable,GLXContext ctx) override;
+        virtual  int XNextEvent(Display *display, XEvent *event_return) override;
 
         // Textures
         virtual void glGenTextures(GLsizei n,GLuint* textures) override;
@@ -51,9 +57,6 @@ namespace ve
         virtual void glGenRenderbuffers (GLsizei n, GLuint* renderbuffers) override;
         virtual void glRenderbufferStorage (GLenum target, GLenum internalformat, GLsizei width, GLsizei height) override;
         
-        // Swap buffers
-        virtual  void glXSwapBuffers(	Display * dpy, GLXDrawable drawable) override;
-        virtual  Bool glXMakeCurrent(	Display * dpy, GLXDrawable drawable,GLXContext ctx) override;
 
         // Shader start
         virtual  GLuint glCreateShader(GLenum shaderType) override;
@@ -118,19 +121,19 @@ namespace ve
         virtual  void glViewport(GLint x,GLint y,GLsizei width,GLsizei height) override;
         virtual  void glScissor(GLint x,GLint y,GLsizei width,GLsizei height) override;
         // Viewport end
+
+        // Legacy fixed-pipeline OpenGL state tracking
         virtual  void glMatrixMode(GLenum mode) override;
         virtual  void glLoadMatrixd(const GLdouble* m) override;
         virtual  void glLoadMatrixf(const GLfloat* m) override;
         virtual void glLoadIdentity(void) override;
         virtual void glMultMatrixd(const GLdouble* m) override;
         virtual void glMultMatrixf(const GLfloat* m) override;
-
         virtual void glOrtho(GLdouble left,GLdouble right,GLdouble bottom,GLdouble top,GLdouble near_val,GLdouble far_val) override;
         virtual void glFrustum(GLdouble left,GLdouble right,GLdouble bottom,GLdouble top,GLdouble near_val,GLdouble far_val) override;
         virtual void glCallList(GLuint list) override;
         virtual void glCallLists(GLsizei n,GLenum type,const GLvoid* lists) override;
-        
-        virtual  int XNextEvent(Display *display, XEvent *event_return) override;
+
 
         // Legacy OpenGL fixed-pipeline wihout VBO and VAO
         virtual void glBegin(GLenum mode) override;
@@ -141,67 +144,19 @@ namespace ve
         // Internal routines
         ///////////////////////////////////////////////////////////////////////
         private:
+        GLint getCurrentID(GLenum target);
         /// Initialize parameters, caches etc
         void initialize();
         void deinitialize();
 
-        void setEnhancerShift(const glm::mat4& viewSpaceTransform, float projectionAdjust = 0.0);
-        void resetEnhancerShift();
-        void setEnhancerIdentity();
-
-        void setEnhancerDecodedProjection(GLuint program, const PerspectiveProjectionParameters& projection);
-
         void takeScreenshot(const std::string filename);
-
         void drawMultiviewed(const std::function<void(void)>& code);
 
-        
         ///////////////////////////////////////////////////////////////////////
-        // OPTIONS
+        // OpenGL structures
         ///////////////////////////////////////////////////////////////////////
+        Context m_Context;
 
-        /// Is repeater rendering scene into multiple virtual screens
-        bool m_IsMultiviewActivated = false;
-        
-        /// Determines how virtual views are placed in view-space
-        CameraParameters m_cameraParameters;
-
-        /// Store's repeating setup
-        VirtualCameras m_cameras;
-
-        /// Provides interface for system testing
-        Diagnostics m_diagnostics;
-
-        ///////////////////////////////////////////////////////////////////////
-        // OpenGL hooking structures
-        ///////////////////////////////////////////////////////////////////////
-
-        /// Store metadata about application's shaders and programs
-        ShaderManager m_Manager;
-        /// Store metadata about create Frame Buffer Objects
-        FramebufferTracker m_FBOTracker;
-        /// Keeps track of OpenGL fixed-pipeline calls
-        LegacyTracker m_LegacyTracker;
-
-        /// Keeps track of each GL_TEXTURE_XYZ
-        TextureTracker m_TextureTracker;
-
-        /// Keeps track of GL_RENDERBUFFER objects
-        RenderbufferTracker m_RenderbufferTracker;
-
-        /// Store metadata and bindings for UBO
-        UniformBlockTracing m_UniformBlocksTracker;
-
-        /// Caches current viewport/scissor area
-        ViewportArea currentViewport, currentScissorArea;
-        /* 
-         * Global glCallList for legacy OpenGL primitives
-         * - record everything between glBegin()/glEnd() 
-         *   and then, duplicate it
-         */
-        GLint m_callList = 0;
-
-	/// FBO with all raw virtual cameras
-	OutputFBO m_OutputFBO;
+        DrawManager m_DrawManager;
     };
 }

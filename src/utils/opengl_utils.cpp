@@ -1,6 +1,41 @@
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/transform.hpp>
+
 #include "utils/opengl_utils.hpp"
 #include <string>
 #include <unordered_map>
+
+template<typename T>
+void ve::opengl_utils::dumpOpenglMatrix(const T* m)
+{
+    printf("[Repeater] Matrix: \n");
+    printf("[Repeater] %f %f %f %f\n", m[0],m[4],m[8],m[12]);
+    printf("[Repeater] %f %f %f %f\n", m[1],m[5],m[9],m[13]);
+    printf("[Repeater] %f %f %f %f\n", m[2],m[6],m[10],m[14]);
+    printf("[Repeater] %f %f %f %f\n", m[3],m[7],m[11],m[15]);
+}
+
+template<>
+void ve::opengl_utils::dumpOpenglMatrix<glm::mat4>(const glm::mat4* m);
+
+glm::mat4 ve::opengl_utils::createMatrixFromRawGL(const GLfloat* values)
+{
+    glm::mat4 result;
+    std::memcpy(glm::value_ptr(result), values, 16*sizeof(GLfloat));
+    return result;
+}
+
+glm::mat4 ve::opengl_utils::createMatrixFromRawGL(const GLdouble* value)
+{
+    GLfloat newM[16];
+    for(size_t i=0;i < 16;i++)
+    {
+        newM[i] = static_cast<float>(value[i]);
+    }
+    glm::mat4 result;
+    std::memcpy(glm::value_ptr(result), newM, 16*sizeof(GLfloat));
+    return result;
+}
 
 std::string ve::opengl_utils::getEnumStringRepresentation(GLenum type)
 {

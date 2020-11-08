@@ -91,8 +91,17 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.cpp
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/context.hpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/draw_manager.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/draw_manager.cpp
+
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/enviroment.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/enviroment.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/glsl_preprocess.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/glsl_preprocess.cpp
 )
 
 # Hack: we would like a static library to be linked into shared library later

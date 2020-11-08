@@ -29,6 +29,8 @@ namespace ve
         void deinitialize();
         /// Blits all cameras to back buffer (as a grid)
         void renderToBackbuffer();
+        /// Clear buffers on new frame
+        void clearBuffers();
 
         GLuint getFBOId();
 

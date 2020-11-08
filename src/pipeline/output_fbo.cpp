@@ -263,11 +263,17 @@ void OutputFBO::renderToBackbuffer()
     glBindVertexArray(oldVao);
 }
 
+
+void OutputFBO::clearBuffers()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+}
+
 GLuint OutputFBO::getFBOId()
 {
     return m_FBOId;
 }
-
 
 const OutputFBOParameters& OutputFBO::getParams()
 {
