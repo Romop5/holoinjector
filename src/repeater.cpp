@@ -286,6 +286,8 @@ void Repeater::glRenderbufferStorage (GLenum target, GLenum internalformat, GLsi
     OpenglRedirectorBase::glRenderbufferStorage(target,internalformat, width, height);
     GLint id;
     OpenglRedirectorBase::glGetIntegerv(GL_RENDERBUFFER_BINDING, &id);
+    // Fix internal format when transfering renderbuffer to texture
+    internalformat = (internalformat == GL_DEPTH_COMPONENT?GL_DEPTH_COMPONENT32:internalformat);
     m_RenderbufferTracker.get(id)->setStorage(target,width, height, 1, 0, internalformat);
 }
 
@@ -622,6 +624,12 @@ void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
         OpenglRedirectorBase::glBindFramebuffer(target,framebuffer);
         OpenglRedirectorBase::glViewport(currentViewport.getX(), currentViewport.getY(),
                 currentViewport.getWidth(), currentViewport.getHeight());
+
+        // TODO: shadowed textures are the same size as OutputFBO
+        if(m_IsMultiviewActivated)
+        {
+            OpenglRedirectorBase::glViewport(0,0,m_OutputFBO.getParams().getTextureWidth(), m_OutputFBO.getParams().getTextureHeight());
+        }
     }
     m_FBOTracker.bind(framebuffer);
 }

@@ -60,8 +60,10 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
         output = injectGeometryShader(output,updatedParams);
 
     // Replace version with GLSL 4.6
-    for(auto& [_, shaderSourceCode]: output)
+    for(auto& [type, shaderSourceCode]: output)
     {
+        if(type != GL_GEOMETRY_SHADER)
+            continue;
         shaderSourceCode = std::regex_replace(shaderSourceCode, std::regex("version[\f\n\r\t\v ]*[0-9]*"), "version 450");
     }
 

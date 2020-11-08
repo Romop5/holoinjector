@@ -117,7 +117,7 @@ namespace ve
         // Viewport start
         virtual  void glViewport(GLint x,GLint y,GLsizei width,GLsizei height) override;
         virtual  void glScissor(GLint x,GLint y,GLsizei width,GLsizei height) override;
-        // Viewport end 
+        // Viewport end
         virtual  void glMatrixMode(GLenum mode) override;
         virtual  void glLoadMatrixd(const GLdouble* m) override;
         virtual  void glLoadMatrixf(const GLfloat* m) override;

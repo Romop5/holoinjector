@@ -219,11 +219,29 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
 {
     switch(internalFormat)
     {
+        case GL_RED:
+            switch(size)
+            {
+                case GL_BYTE: return GL_R8I;
+                case GL_UNSIGNED_BYTE: return GL_R8UI;
+                case GL_SHORT: return GL_R16I;
+                case GL_UNSIGNED_SHORT: return GL_R16UI;
+                case GL_INT: return GL_R32I;
+                case GL_UNSIGNED_INT: return GL_R32UI;
+                case GL_FLOAT: return GL_R32F;
+                default:
+                   return 0;
+            }
+
         case GL_RGB:
             switch(size)
             {
-                case GL_UNSIGNED_BYTE: return GL_RGB8;
-                case GL_UNSIGNED_INT: return GL_RGB32I;
+                case GL_BYTE: return GL_RGB8I;
+                case GL_UNSIGNED_BYTE: return GL_RGB8UI;
+                case GL_SHORT: return GL_RGB16I;
+                case GL_UNSIGNED_SHORT: return GL_RGB16UI;
+                case GL_INT: return GL_RGB32I;
+                case GL_UNSIGNED_INT: return GL_RGB32UI;
                 case GL_FLOAT: return GL_RGB32F;
                 default:
                    return 0;
@@ -232,15 +250,19 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
         {
             switch(size)
             {
-                case GL_UNSIGNED_BYTE: return GL_RGBA8;
-                case GL_UNSIGNED_INT: return GL_RGBA32I;
+                case GL_BYTE: return GL_RGBA8I;
+                case GL_UNSIGNED_BYTE: return GL_RGBA8UI;
+                case GL_SHORT: return GL_RGBA16I;
+                case GL_UNSIGNED_SHORT: return GL_RGBA16UI;
+                case GL_INT: return GL_RGBA32I;
+                case GL_UNSIGNED_INT: return GL_RGBA32UI;
                 case GL_FLOAT: return GL_RGBA32F;
                 default:
                    return 0;
             }
         }
         case GL_DEPTH_COMPONENT:
-            return size;
+            return GL_DEPTH_COMPONENT32;
         default:
             return 0;
     }
