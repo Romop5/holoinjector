@@ -198,6 +198,8 @@ namespace helper
 
 OPENGL_FORWARD(void,glXSwapBuffers,Display*, dpy, GLXDrawable, drawable);
 OPENGL_FORWARD(Bool,glXMakeCurrent,Display*, dpy, GLXDrawable, drawable,GLXContext,ctx);
+OPENGL_FORWARD(Bool,glXMakeContextCurrent,Display*, dpy, GLXDrawable, draw,GLXDrawable, read,GLXContext,ctx);
+
 OPENGL_FORWARD_LOADER_ONLY(helper::ReturnFunctionType,glXGetProcAddress,const GLubyte *, procName);
 void (*OpenglRedirectorBase::glXGetProcAddress(	const GLubyte * procName))(void)
 {

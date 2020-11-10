@@ -28,12 +28,13 @@ namespace ve
         // Hooked-function handlers
         ///////////////////////////////////////////////////////////////////////
         // Used for initialization
-        virtual  void glClear(GLbitfield mask) override;
+        virtual void glClear(GLbitfield mask) override;
 
         // X11 library & GLX extension handlers
-        virtual  void glXSwapBuffers(	Display * dpy, GLXDrawable drawable) override;
-        virtual  Bool glXMakeCurrent(	Display * dpy, GLXDrawable drawable,GLXContext ctx) override;
-        virtual  int XNextEvent(Display *display, XEvent *event_return) override;
+        virtual void glXSwapBuffers(Display * dpy, GLXDrawable drawable) override;
+        virtual Bool glXMakeCurrent(Display * dpy, GLXDrawable drawable,GLXContext ctx) override;
+        virtual Bool glXMakeContextCurrent(Display * display, GLXDrawable draw, GLXDrawable read, GLXContext ctx) override;
+        virtual int XNextEvent(Display *display, XEvent *event_return) override;
 
         // Textures
         virtual void glGenTextures(GLsizei n,GLuint* textures) override;

@@ -21,6 +21,11 @@ using namespace ve;
 
 void Repeater::initialize()
 {
+    static bool isInitialzed = false;
+    if(isInitialzed)
+        return;
+    isInitialzed = true;
+
     // Override default angle
     enviroment::getEnviroment("ENHANCER_XMULTIPLIER", m_Context.m_cameraParameters.m_XShiftMultiplier); 
     // Override default center of rotation
@@ -50,7 +55,6 @@ void Repeater::initialize()
         m_Context.m_diagnostics.setNonIntrusiveness(shouldNotBeIntrusive);
     }
 
-
     /// Fill viewports
     OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, m_Context.currentViewport.getDataPtr());
     OpenglRedirectorBase::glGetIntegerv(GL_SCISSOR_BOX, m_Context.currentScissorArea.getDataPtr());
@@ -74,11 +78,11 @@ void Repeater::deinitialize()
 GLint Repeater::getCurrentID(GLenum target)
 {
     GLint id;
-    OpenglRedirectorBase::glGetIntegerv(TextureTracker::getParameterForType(target), &id);
+    OpenglRedirectorBase::glGetIntegerv(target, &id);
     return id;
 }
 
-void Repeater::glClear(GLbitfield mask) 
+void Repeater::glClear(GLbitfield mask)
 {
     /*static bool isInitialized = false;
     if(!isInitialized)
@@ -103,8 +107,18 @@ void Repeater::glClear(GLbitfield mask)
         }
     }
     */
+
+    if(m_Context.m_IsMultiviewActivated && m_Context.m_FBOTracker.isFBODefault() &&  m_Context.m_OutputFBO.hasImage())
+    {
+        OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        OpenglRedirectorBase::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
+                    m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
+        m_Context.m_OutputFBO.renderToBackbuffer();
+        m_Context.m_OutputFBO.clearBuffers();
+    }
+
     OpenglRedirectorBase::glClear(mask);
-        
 }
 void Repeater::registerCallbacks() 
 {
@@ -113,14 +127,14 @@ void Repeater::registerCallbacks()
 
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
-    if(m_Context.m_IsMultiviewActivated)
+    if(m_Context.m_IsMultiviewActivated && m_Context.m_OutputFBO.hasImage())
     {
         OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         OpenglRedirectorBase::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
                     m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
         m_Context.m_OutputFBO.renderToBackbuffer();
-        //m_Context.m_OutputFBO.clearBuffers();
+        m_Context.m_OutputFBO.clearBuffers();
     }
 
     OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
@@ -135,12 +149,17 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 
 Bool Repeater::glXMakeCurrent(Display * dpy, GLXDrawable drawable,GLXContext context)
 {
-    if(drawable == None && context == nullptr)
+    return Repeater::glXMakeContextCurrent(dpy, drawable, drawable, context);
+}
+
+Bool Repeater::glXMakeContextCurrent(Display * dpy, GLXDrawable draw, GLXDrawable read,GLXContext context)
+{
+    if(draw == None && context == nullptr)
     { // release our resources
-        deinitialize();
-        return OpenglRedirectorBase::glXMakeCurrent(dpy,drawable,context);
+        //deinitialize();
+        return OpenglRedirectorBase::glXMakeContextCurrent(dpy,draw,read,context);
     } else {
-        auto result = OpenglRedirectorBase::glXMakeCurrent(dpy,drawable,context);
+        auto result = OpenglRedirectorBase::glXMakeContextCurrent(dpy,draw,read,context);
         initialize();
         return result;
     }

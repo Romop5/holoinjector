@@ -67,7 +67,7 @@ namespace ve
         void updateViewports(const ViewportArea viewport);
 
         /// Get reference to all cameras' container
-        const StorageContainer getCameras() const;
+        const StorageContainer& getCameras() const;
         
         /// Returns (per-width,per-height) camera counts
         std::pair<size_t, size_t> getCameraGridSetup() const;

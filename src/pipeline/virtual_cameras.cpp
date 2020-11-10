@@ -62,7 +62,7 @@ void VirtualCameras::updateViewports(const ViewportArea viewport)
 }
 
 /// Get reference to all cameras' container
-const VirtualCameras::StorageContainer VirtualCameras::getCameras() const
+const VirtualCameras::StorageContainer& VirtualCameras::getCameras() const
 {
     return m_cameras;
 }

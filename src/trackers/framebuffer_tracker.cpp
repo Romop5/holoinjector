@@ -37,6 +37,7 @@ size_t ve::FramebufferMetadata::getShadowFBO() const
 {
     return m_shadowFBOId;
 }
+
 void ve::FramebufferMetadata::createShadowedFBO()
 {
     GLuint shadowFBO;
@@ -57,6 +58,28 @@ void ve::FramebufferMetadata::createShadowedFBO()
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     assert(status == GL_FRAMEBUFFER_COMPLETE);
     m_shadowFBOId = shadowFBO;
+}
+
+GLuint ve::FramebufferMetadata::createProxyFBO(size_t layer)
+{
+    GLuint proxyFBO;
+    glGenFramebuffers(1,&proxyFBO);
+    // Hack: OpenGL require at least one bind before attaching
+    glBindFramebuffer(GL_FRAMEBUFFER,proxyFBO);
+    for(auto& [attachmentType, metadata]: m_attachments.getMap())
+    {
+        auto texture = metadata.texture;
+        if(!texture->hasShadowTexture())
+        {
+            texture->createShadowedTexture();
+        }
+        auto shadowedTexture = texture->getShadowedTextureId();
+        glFramebufferTexture3D(GL_FRAMEBUFFER, attachmentType, GL_TEXTURE_2D_ARRAY,shadowedTexture,metadata.level, layer);
+    }
+    auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    assert(status == GL_FRAMEBUFFER_COMPLETE);
+    return proxyFBO;
 }
 
 

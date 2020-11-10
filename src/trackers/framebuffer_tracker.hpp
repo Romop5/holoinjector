@@ -34,7 +34,12 @@ namespace ve
 
         bool hasShadowFBO() const;
         size_t getShadowFBO() const;
+
+        /// Create multi-layer shadow FBO
         void createShadowedFBO();
+
+        /// Create proxy FBO from texture views to a single layer of shadow FBO
+        GLuint createProxyFBO(size_t layer);
         /*
          * Heuristics
          */

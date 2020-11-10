@@ -515,7 +515,7 @@ std::string ShaderInspector::getCommonTransformationShader()
         
         float A = -2.0/(far-near);
         float B = -(far+near)/(far-near);
-        
+
         mat4 projection = mat4(
             vec4(enhancer_deprojection[0],0.0f,0.0,0.0),
             vec4(0.0f,enhancer_deprojection[1],0.0f,0.0), 

@@ -38,6 +38,8 @@ namespace ve
          */
         virtual void glXSwapBuffers(Display * dpy, GLXDrawable drawable);
         virtual Bool glXMakeCurrent(Display * dpy, GLXDrawable drawable, GLXContext ctx);
+        virtual Bool glXMakeContextCurrent(Display * display, GLXDrawable draw, GLXDrawable read, GLXContext ctx);
+
         virtual void (*glXGetProcAddress(	const GLubyte * procName))(void);
         virtual void (*glXGetProcAddressARB(	const GLubyte * procName))(void);
 

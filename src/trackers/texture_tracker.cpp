@@ -194,7 +194,9 @@ GLenum TextureTracker::getParameterForType(GLenum type)
     {
         case GL_TEXTURE_1D: return GL_TEXTURE_BINDING_1D;
         case GL_TEXTURE_1D_ARRAY: return GL_TEXTURE_BINDING_1D_ARRAY;
-        case GL_TEXTURE_2D: return GL_TEXTURE_BINDING_2D;
+        case GL_TEXTURE_2D: 
+        case GL_PROXY_TEXTURE_2D: 
+            return GL_TEXTURE_BINDING_2D;
         case GL_TEXTURE_2D_ARRAY: return GL_TEXTURE_BINDING_2D_ARRAY;
         case GL_TEXTURE_2D_MULTISAMPLE: return GL_TEXTURE_BINDING_2D_MULTISAMPLE;
         case GL_TEXTURE_2D_MULTISAMPLE_ARRAY: return GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY;

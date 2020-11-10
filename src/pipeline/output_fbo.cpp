@@ -242,6 +242,9 @@ void OutputFBO::deinitialize()
 }
 void OutputFBO::renderToBackbuffer()
 {
+    // Mark FBO as clean
+    clearImageFlag();
+
     GLint oldProgram;
     glGetIntegerv(GL_CURRENT_PROGRAM, &oldProgram);
 
@@ -280,3 +283,38 @@ const OutputFBOParameters& OutputFBO::getParams()
     return m_Params;
 }
 
+void OutputFBO::setContainsImageFlag()
+{
+    m_ContainsImageFlag = true;
+}
+
+bool OutputFBO::hasImage() const
+{
+    return m_ContainsImageFlag;
+}
+
+void OutputFBO::clearImageFlag()
+{
+    m_ContainsImageFlag = false;
+}
+
+GLuint OutputFBO::createProxyFBO(size_t layer)
+{
+    // Assert that OutputFBO has already been initialized
+    assert(m_FBOId != 0);
+    assert(m_LayeredColorBuffer != 0);
+    assert(m_LayeredDepthStencilBuffer != 0);
+
+    GLuint proxyFBO;
+    glGenFramebuffers(1,&proxyFBO);
+    // Hack: OpenGL require at least one bind before attaching
+    glBindFramebuffer(GL_FRAMEBUFFER,proxyFBO);
+    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_LayeredColorBuffer,0, layer);
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredDepthStencilBuffer);
+    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,m_LayeredDepthStencilBuffer,0,layer);
+    auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    assert(status == GL_FRAMEBUFFER_COMPLETE);
+    return proxyFBO;
+}

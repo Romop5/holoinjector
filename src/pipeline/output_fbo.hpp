@@ -26,16 +26,29 @@ namespace ve
         ~OutputFBO();
         /// Creates OpenGL objects
         void initialize(OutputFBOParameters params = OutputFBOParameters());
+        /// Clean up
         void deinitialize();
+        /// Get reference to stored parameters
+        const OutputFBOParameters& getParams();
+        /// Return FBO's ID
+        GLuint getFBOId();
+
+
         /// Blits all cameras to back buffer (as a grid)
         void renderToBackbuffer();
         /// Clear buffers on new frame
         void clearBuffers();
 
-        GLuint getFBOId();
+        /// Sets the flag, determining if any pixel of final image is contained, to on
+        void setContainsImageFlag();
+        /// Has any valid image in buffer
+        bool hasImage() const;
 
-        const OutputFBOParameters& getParams();
+        /// Create proxy FBO from texture views to a single layer of shadow FBO
+        GLuint createProxyFBO(size_t layer);
         private:
+        void clearImageFlag();
+        bool    m_ContainsImageFlag = false;
         GLuint  m_FBOId = 0;
         GLuint  m_LayeredColorBuffer = 0;
         GLuint  m_LayeredDepthStencilBuffer = 0;

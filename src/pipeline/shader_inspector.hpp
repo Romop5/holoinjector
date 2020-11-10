@@ -83,6 +83,8 @@ namespace ve
         bool isClipSpaceShader() const;
 
         static void injectCommonCode(std::string& sourceOriginal);
+
+        //TODO: separate into logic module
 	static std::string getCommonTransformationShader();
     };
 } //namespace ve
