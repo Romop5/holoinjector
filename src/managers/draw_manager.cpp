@@ -32,10 +32,12 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
         glViewport(0,0,context.m_OutputFBO.getParams().getTextureWidth(),context.m_OutputFBO.getParams().getTextureHeight());
     } else {
         auto fbo = context.m_FBOTracker.getBound();
-        if(!fbo->hasShadowFBO() && context.m_FBOTracker.isSuitableForRepeating())
-            fbo->createShadowedFBO();
-        if(fbo->hasShadowFBO())
+        if(context.m_FBOTracker.isSuitableForRepeating())
+        {
+            // should be available since binding
+            assert(fbo->hasShadowFBO());
             glBindFramebuffer(GL_FRAMEBUFFER, fbo->getShadowFBO());
+        }
     }
 
     /// If Uniform Buffer Object (UBO) is used, then load values to uniforms
@@ -63,11 +65,12 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
         loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_FrontalDistance");
         glUniform1f(loc, context.m_cameraParameters.m_frontOpticalAxisCentreDistance);
 
+        const auto maxViews = context.m_OutputFBO.getParams().getLayers();
         auto location = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_max_views");
-        glUniform1i(location, 3*3);
+        glUniform1i(location, maxViews);
 
         location = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_max_invocations");
-        glUniform1i(location, 3*3);
+        glUniform1i(location, maxViews);
 
         loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_identity");
 

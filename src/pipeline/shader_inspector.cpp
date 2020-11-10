@@ -466,7 +466,7 @@ std::string ShaderInspector::getCommonTransformationShader()
 {   
     static std::string code = R"(
     uniform int enhancer_cameraId = 0;
-    uniform int enhancer_max_views = 9; 
+    uniform int enhancer_max_views = 9;
     uniform bool enhancer_isSingleViewActivated = false;
     uniform int enhancer_singleViewID = 0;
 

@@ -22,11 +22,15 @@ size_t OutputFBOParameters::getTextureHeight() const
 }
 size_t OutputFBOParameters::getLayers() const
 {
-    return gridSize*gridSize;
+    return gridXSize*gridYSize;
 }
 size_t OutputFBOParameters::getGridSizeX() const
 {
-    return gridSize;
+    return gridXSize;
+}
+size_t OutputFBOParameters::getGridSizeY() const
+{
+    return gridYSize;
 }
 //-----------------------------------------------------------------------------
 // OutputFBO
@@ -105,7 +109,8 @@ void OutputFBO::initialize(OutputFBOParameters params)
     auto FS = std::string(R"(
         #version 440 core
         uniform sampler2DArray enhancer_layeredScreen;
-        uniform int gridSize = 3;
+        uniform int gridXSize = 3;
+        uniform int gridYSize = 3;
         in vec2 uv;
         out vec4 color;
 
@@ -114,12 +119,12 @@ void OutputFBO::initialize(OutputFBOParameters params)
             // debug only
             //if(uv.x > 0.5)
             //    discard;
-            vec2 newUv = mod(float(gridSize)*uv, 1.0);
-            ivec2 indices = ivec2(int(uv.x*float(gridSize)),int(uv.y*float(gridSize)));
-            int layer = (gridSize-indices.y-1)*gridSize+indices.x;
+            vec2 newUv = mod(vec2(gridXSize*uv.x, gridYSize*uv.y), 1.0);
+            ivec2 indices = ivec2(int(uv.x*float(gridXSize)),int(uv.y*float(gridYSize)));
+            int layer = (gridYSize-indices.y-1)*gridXSize+indices.x;
             color = texture(enhancer_layeredScreen, vec3(newUv, layer));
             color.w = 1.0;
-            //color.z = float(layer)/float(gridSize*gridSize);
+            //color.z = float(layer)/float(gridXSize*gridYSize);
         }
     )");
 
@@ -252,8 +257,11 @@ void OutputFBO::renderToBackbuffer()
     glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&oldVao);
 
     glUseProgram(m_ViewerProgram);
-    auto gridLocation = glGetUniformLocation(m_ViewerProgram, "gridSize");
-    glUniform1i(gridLocation, m_Params.getGridSizeX());
+    auto gridXLocation = glGetUniformLocation(m_ViewerProgram, "gridXSize");
+    glUniform1i(gridXLocation, m_Params.getGridSizeX());
+
+    auto gridYLocation = glGetUniformLocation(m_ViewerProgram, "gridYSize");
+    glUniform1i(gridYLocation, m_Params.getGridSizeY());
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindVertexArray(m_VAO);   
@@ -306,6 +314,7 @@ GLuint OutputFBO::createProxyFBO(size_t layer)
         return m_proxyFBO[layer].getID();
     }
     m_proxyFBO.reserve(layer+1);
+
     // Assert that OutputFBO has already been initialized
     assert(m_FBOId != 0);
     assert(m_LayeredColorBuffer != 0);

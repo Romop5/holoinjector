@@ -55,16 +55,18 @@ void Repeater::initialize()
         m_Context.m_diagnostics.setNonIntrusiveness(shouldNotBeIntrusive);
     }
 
-    /// Fill viewports
-    OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, m_Context.currentViewport.getDataPtr());
-    OpenglRedirectorBase::glGetIntegerv(GL_SCISSOR_BOX, m_Context.currentScissorArea.getDataPtr());
-    m_Context.m_cameras.setupWindows(9,3);
-    m_Context.m_cameras.updateViewports(m_Context.currentViewport);
-    m_Context.m_cameras.updateParamaters(m_Context.m_cameraParameters);
-
     // Initialize oputput FBO
     m_Context.m_OutputFBO.initialize();
     assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
+
+    const auto layers = m_Context.m_OutputFBO.getParams().getLayers();
+    const auto gridXSize = m_Context.m_OutputFBO.getParams().getGridSizeX();
+    /// Fill viewports
+    OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, m_Context.currentViewport.getDataPtr());
+    OpenglRedirectorBase::glGetIntegerv(GL_SCISSOR_BOX, m_Context.currentScissorArea.getDataPtr());
+    m_Context.m_cameras.setupWindows(layers, gridXSize);
+    m_Context.m_cameras.updateViewports(m_Context.currentViewport);
+    m_Context.m_cameras.updateParamaters(m_Context.m_cameraParameters);
 }
 
 void Repeater::deinitialize()
@@ -275,8 +277,15 @@ void Repeater::glLinkProgram (GLuint programId)
 
     auto program = m_Context.m_Manager.get(programId);
 
+    /*
+     *  Create pipeline injector with correct parameters (number of vies)
+     */
     ve::PipelineInjector plInjector;
     ve::PipelineInjector::PipelineType pipeline;
+    PipelineParams parameters;
+
+    // TODO: detect if number of invocations is supported
+    parameters.countOfInvocations = m_Context.m_OutputFBO.getParams().getLayers();
 
     /*
      * Deregister all attached shaders (they're going to be changed in any case)
@@ -294,7 +303,7 @@ void Repeater::glLinkProgram (GLuint programId)
     /*
      * Inject pipeline
      */
-    auto resultPipeline = plInjector.process(pipeline);
+    auto resultPipeline = plInjector.process(pipeline,parameters);
     program->m_Metadata = std::move(resultPipeline.metadata);
 
     for(auto& [type, sourceCode]: resultPipeline.pipeline)
@@ -508,9 +517,10 @@ void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
             if(fbo->hasAnyAttachment())
             {
                 if(!fbo->hasShadowFBO() && m_Context.m_FBOTracker.isSuitableForRepeating())
-                    fbo->createShadowedFBO();
-                if(fbo->hasShadowFBO())
-                    id =fbo->getShadowFBO();
+                    fbo->createShadowedFBO(m_Context.m_OutputFBO.getParams().getLayers());
+                // Creation of shadow FBO should never fail
+                assert(fbo->hasShadowFBO());
+                id = fbo->getShadowFBO();
             }
 
             OpenglRedirectorBase::glBindFramebuffer(target,id);

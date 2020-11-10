@@ -41,7 +41,7 @@ size_t ve::FramebufferMetadata::getShadowFBO() const
     return m_shadowFBOId;
 }
 
-void ve::FramebufferMetadata::createShadowedFBO()
+void ve::FramebufferMetadata::createShadowedFBO(size_t numLayers)
 {
     assert(hasAnyAttachment());
     GLuint shadowFBO;
@@ -53,7 +53,7 @@ void ve::FramebufferMetadata::createShadowedFBO()
         auto texture = metadata.texture;
         if(!texture->hasShadowTexture())
         {
-            texture->createShadowedTexture();
+            texture->createShadowedTexture(numLayers);
         }
         auto shadowedTexture = texture->getShadowedTextureId();
         glFramebufferTexture(GL_FRAMEBUFFER, attachmentType, shadowedTexture,metadata.level);
@@ -67,7 +67,11 @@ void ve::FramebufferMetadata::createShadowedFBO()
 
 GLuint ve::FramebufferMetadata::createProxyFBO(size_t layer)
 {
-    // Use cache
+    // draw() call should be over existing FBO, which should have been previously created
+    // and binded, thus a shadow FBO must already exist!
+    assert(hasShadowFBO());
+
+        // Use cached FBO if available
     if(layer < m_proxyFBO.size() && m_proxyFBO[layer].getID() != 0)
     {
         return m_proxyFBO[layer].getID();
@@ -82,10 +86,8 @@ GLuint ve::FramebufferMetadata::createProxyFBO(size_t layer)
     for(auto& [attachmentType, metadata]: m_attachments.getMap())
     {
         auto texture = metadata.texture;
-        if(!texture->hasShadowTexture())
-        {
-            texture->createShadowedTexture();
-        }
+        // This should hold, because we call createShadowedFBO() above
+        assert(texture->hasShadowTexture());
         auto shadowedTexture = texture->getShadowedTextureId();
         assert(shadowedTexture != 0);
         glFramebufferTextureLayer(GL_FRAMEBUFFER, attachmentType, shadowedTexture,metadata.level, layer);
