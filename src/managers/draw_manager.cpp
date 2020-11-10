@@ -26,6 +26,7 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
      */
     if(!context.m_FBOTracker.hasBounded())
     {
+        assert(context.m_OutputFBO.getFBOId() != 0 && "OutputFBO must be initialized");
         context.m_OutputFBO.setContainsImageFlag();
         glBindFramebuffer(GL_FRAMEBUFFER, context.m_OutputFBO.getFBOId());
         glViewport(0,0,context.m_OutputFBO.getParams().getTextureWidth(),context.m_OutputFBO.getParams().getTextureHeight());
@@ -131,9 +132,8 @@ namespace helper
 
 void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& drawCallLambda)
 {
-    if(!context.m_IsMultiviewActivated)
+    if(!context.m_IsMultiviewActivated || (context.m_FBOTracker.hasBounded() && !context.m_FBOTracker.isSuitableForRepeating()) )
     {
-        glBindFramebuffer(GL_FRAMEBUFFER,0);
         drawCallLambda();
         return;
     }
@@ -151,6 +151,10 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
         resetEnhancerShift(context);
     }
 }
+
+/*
+ * ----------------------------------------------------------------------------
+ */
 
 void DrawManager::setEnhancerShift(Context& context,const glm::mat4& viewSpaceTransform, float projectionAdjust)
 {

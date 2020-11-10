@@ -75,6 +75,7 @@ namespace ve
         void deinitialize();
 	static GLenum getParameterForType(GLenum type);
         static GLenum convertToSizedFormat(GLenum internalFormat, GLenum size);
+        static bool isSizedFormat(GLenum format);
 
         void bind(GLenum target, size_t id);
         void activate(size_t id);

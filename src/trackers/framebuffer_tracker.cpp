@@ -79,7 +79,10 @@ GLuint ve::FramebufferMetadata::createProxyFBO(size_t layer)
             texture->createShadowedTexture();
         }
         auto shadowedTexture = texture->getShadowedTextureId();
-        glFramebufferTexture3D(GL_FRAMEBUFFER, attachmentType, GL_TEXTURE_2D_ARRAY,shadowedTexture,metadata.level, layer);
+        assert(shadowedTexture != 0);
+        glFramebufferTextureLayer(GL_FRAMEBUFFER, attachmentType, shadowedTexture,metadata.level, layer);
+        //glFramebufferTexture3D(GL_FRAMEBUFFER, attachmentType, GL_TEXTURE_2D_ARRAY,shadowedTexture,metadata.level, layer);
+        assert(glGetError() == GL_NO_ERROR);
     }
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     glBindFramebuffer(GL_FRAMEBUFFER,0);

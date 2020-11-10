@@ -157,18 +157,21 @@ void Repeater::glGenTextures(GLsizei n,GLuint* textures)
 void Repeater::glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLint border,GLenum format,GLenum type,const GLvoid* pixels) 
 {
     OpenglRedirectorBase::glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
-    m_Context.m_TextureTracker.get(getCurrentID(TextureTracker::getParameterForType(target)))->setStorage(target,width, 0, level, 0, TextureTracker::convertToSizedFormat(format, type));
+    auto finalFormat = TextureTracker::isSizedFormat(internalFormat)?internalFormat:TextureTracker::convertToSizedFormat(format,type);
+    m_Context.m_TextureTracker.get(getCurrentID(TextureTracker::getParameterForType(target)))->setStorage(target,width, 0, level, 0, finalFormat);
 }
 void Repeater::glTexImage2D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLsizei height,GLint border,GLenum format,GLenum type,const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
-    m_Context.m_TextureTracker.get(getCurrentID(TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, TextureTracker::convertToSizedFormat(format,type));
+    auto finalFormat = TextureTracker::isSizedFormat(internalFormat)?internalFormat:TextureTracker::convertToSizedFormat(format,type);
+    m_Context.m_TextureTracker.get(getCurrentID(TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
 }
 
 void Repeater::glTexImage3D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels)
 {
     OpenglRedirectorBase::glTexImage3D(target, level, internalformat, width, height, depth, border, format, type, pixels);
-    m_Context.m_TextureTracker.get(getCurrentID(TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, TextureTracker::convertToSizedFormat(format, type));
+    auto finalFormat = TextureTracker::isSizedFormat(internalformat)?internalformat:TextureTracker::convertToSizedFormat(format,type);
+    m_Context.m_TextureTracker.get(getCurrentID(TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
 }
 
 void Repeater::glTexStorage1D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
@@ -495,27 +498,32 @@ void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
                     m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
         }
     } else {
-        auto id = framebuffer;
-        auto fbo = m_Context.m_FBOTracker.getBound();
-        /*
-         * Only create & bind shadow FBO when original FBO is complete (thus has any attachment)
-         */
-        if(fbo->hasAnyAttachment())
-        {
-            if(!fbo->hasShadowFBO() && m_Context.m_FBOTracker.isSuitableForRepeating())
-                fbo->createShadowedFBO();
-            if(fbo->hasShadowFBO())
-                id =fbo->getShadowFBO();
-        }
-
-        OpenglRedirectorBase::glBindFramebuffer(target,id);
-        OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
-                m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
-
-        // TODO: shadowed textures are the same size as OutputFBO
         if(m_Context.m_IsMultiviewActivated)
         {
-            OpenglRedirectorBase::glViewport(0,0,m_Context.m_OutputFBO.getParams().getTextureWidth(), m_Context.m_OutputFBO.getParams().getTextureHeight());
+            auto id = framebuffer;
+            auto fbo = m_Context.m_FBOTracker.getBound();
+            /*
+             * Only create & bind shadow FBO when original FBO is complete (thus has any attachment)
+             */
+            if(fbo->hasAnyAttachment())
+            {
+                if(!fbo->hasShadowFBO() && m_Context.m_FBOTracker.isSuitableForRepeating())
+                    fbo->createShadowedFBO();
+                if(fbo->hasShadowFBO())
+                    id =fbo->getShadowFBO();
+            }
+
+            OpenglRedirectorBase::glBindFramebuffer(target,id);
+            OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
+                    m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
+
+            // TODO: shadowed textures are the same size as OutputFBO
+            if(m_Context.m_IsMultiviewActivated)
+            {
+                OpenglRedirectorBase::glViewport(0,0,m_Context.m_OutputFBO.getParams().getTextureWidth(), m_Context.m_OutputFBO.getParams().getTextureHeight());
+            }
+        } else {
+            OpenglRedirectorBase::glBindFramebuffer(target, framebuffer);
         }
     }
 }
