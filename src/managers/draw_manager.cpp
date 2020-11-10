@@ -113,23 +113,6 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
     }
 }
 
-namespace helper
-{
-    /// FBO RAII owner
-    struct FBORAII
-    {
-        explicit FBORAII(GLuint fboId): m_id(fboId) {}
-        ~FBORAII() {
-            if(m_id)
-                glDeleteFramebuffers(1, &m_id);
-            m_id = 0;
-        }
-        GLuint getID() const { return m_id; }
-        private:
-        GLuint m_id;
-    };
-};
-
 void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& drawCallLambda)
 {
     if(!context.m_IsMultiviewActivated || (context.m_FBOTracker.hasBounded() && !context.m_FBOTracker.isSuitableForRepeating()) )
@@ -142,8 +125,8 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
     {
         const auto& camera = context.m_cameras.getCameras()[cameraID];
 
-        auto shadowFBO = helper::FBORAII(createSingleViewFBO(context, cameraID));
-        glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO.getID());
+        auto shadowFBO = createSingleViewFBO(context, cameraID);
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 
         const auto& t = camera.getViewMatrix();
         setEnhancerShift(context,t,camera.getAngle()*context.m_cameraParameters.m_XShiftMultiplier/context.m_cameraParameters.m_frontOpticalAxisCentreDistance);

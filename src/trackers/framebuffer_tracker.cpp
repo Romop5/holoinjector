@@ -67,6 +67,14 @@ void ve::FramebufferMetadata::createShadowedFBO()
 
 GLuint ve::FramebufferMetadata::createProxyFBO(size_t layer)
 {
+    // Use cache
+    if(layer < m_proxyFBO.size() && m_proxyFBO[layer].getID() != 0)
+    {
+        return m_proxyFBO[layer].getID();
+    }
+
+    m_proxyFBO.reserve(layer+1);
+
     GLuint proxyFBO;
     glGenFramebuffers(1,&proxyFBO);
     // Hack: OpenGL require at least one bind before attaching
@@ -87,6 +95,7 @@ GLuint ve::FramebufferMetadata::createProxyFBO(size_t layer)
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     assert(status == GL_FRAMEBUFFER_COMPLETE);
+    m_proxyFBO[layer] = std::move(utils::FBORAII(proxyFBO));
     return proxyFBO;
 }
 

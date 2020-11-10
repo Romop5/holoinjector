@@ -1,7 +1,9 @@
 #ifndef REPEATER_OUTPUT_FBO_HPP
 #define REPEATER_OUTPUT_FBO_HPP
 
+#include <vector>
 #include "GL/gl.h"
+#include "utils/opengl_raii.hpp"
 
 namespace ve
 {
@@ -47,6 +49,7 @@ namespace ve
         /// Create proxy FBO from texture views to a single layer of shadow FBO
         GLuint createProxyFBO(size_t layer);
         private:
+        std::vector<utils::FBORAII> m_proxyFBO;
         void clearImageFlag();
         bool    m_ContainsImageFlag = false;
         GLuint  m_FBOId = 0;

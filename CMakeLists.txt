@@ -98,6 +98,8 @@ add_library(enhancer_core
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_raii.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_raii.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/enviroment.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/enviroment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/glsl_preprocess.hpp

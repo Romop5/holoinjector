@@ -1,11 +1,13 @@
 #ifndef VE_FRAMEBUFFER_TRACKER_HPP
 #define VE_FRAMEBUFFER_TRACKER_HPP
 
+#include <vector>
 #include <unordered_map>
 #include <memory>
 
 #include <GL/gl.h>
 #include "utils/context_tracker.hpp"
+#include "utils/opengl_raii.hpp"
 
 
 namespace ve
@@ -52,6 +54,7 @@ namespace ve
         bool hasAnyAttachment() const;
         private:
         ContextTracker<FramebufferAttachment> m_attachments;
+        std::vector<utils::FBORAII> m_proxyFBO;
 
         size_t m_shadowFBOId = 0;
     };
