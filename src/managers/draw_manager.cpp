@@ -112,6 +112,23 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
     }
 }
 
+namespace helper
+{
+    /// FBO RAII owner
+    struct FBORAII
+    {
+        explicit FBORAII(GLuint fboId): m_id(fboId) {}
+        ~FBORAII() {
+            if(m_id)
+                glDeleteFramebuffers(1, &m_id);
+            m_id = 0;
+        }
+        GLuint getID() const { return m_id; }
+        private:
+        GLuint m_id;
+    };
+};
+
 void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& drawCallLambda)
 {
     if(!context.m_IsMultiviewActivated)
@@ -120,44 +137,20 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
         drawCallLambda();
         return;
     }
-    if(!context.m_FBOTracker.hasBounded())
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER,context.m_OutputFBO.getFBOId());
-    }
-    // for each virtual camera, create a subview (subviewport)
-    // and render draw call using its transformation into this subview
-    size_t cameraID = 0;
-    GLuint shadowFBO = 0;
-    //for(const auto& camera: context.m_cameras.getCameras())
+
     for(size_t cameraID = 0; cameraID < context.m_cameras.getCameras().size(); cameraID++)
     {
         const auto& camera = context.m_cameras.getCameras()[cameraID];
-        // If only-camera mode is active && ID does not match
-        if(context.m_diagnostics.shouldShowOnlySpecificVirtualCamera() &&
-                cameraID++ != context.m_diagnostics.getOnlyCameraID())
-            continue;
 
-        if(shadowFBO)
-        {
-            glDeleteFramebuffers(1, &shadowFBO);
-            shadowFBO = 0;
-        }
-        shadowFBO = createSingleViewFBO(context, cameraID);
-        glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+        auto shadowFBO = helper::FBORAII(createSingleViewFBO(context, cameraID));
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO.getID());
 
         const auto& t = camera.getViewMatrix();
         setEnhancerShift(context,t,camera.getAngle()*context.m_cameraParameters.m_XShiftMultiplier/context.m_cameraParameters.m_frontOpticalAxisCentreDistance);
         drawCallLambda();
         resetEnhancerShift(context);
     }
-
-    if(shadowFBO)
-    {
-        glDeleteFramebuffers(1, &shadowFBO);
-        shadowFBO = 0;
-    }
 }
-
 
 void DrawManager::setEnhancerShift(Context& context,const glm::mat4& viewSpaceTransform, float projectionAdjust)
 {
@@ -165,14 +158,8 @@ void DrawManager::setEnhancerShift(Context& context,const glm::mat4& viewSpaceTr
     auto program = context.m_Manager.getBoundId();
     if(program)
     {
-        //auto location = glGetUniformLocation(program, "enhancer_view_transform");
-        //glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(glm::value_ptr(resultMat)));
-
         auto location = glGetUniformLocation(program, "enhancer_identity");
-        glUniform1i(location, GL_FALSE);
-
-        //location = glGetUniformLocation(program, "enhancer_projection_adjust");
-        //glUniform1f(location, projectionAdjust);
+        glUniform1i(location, GL_TRUE);
     }
 
     // Legacy support

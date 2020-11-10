@@ -84,30 +84,6 @@ GLint Repeater::getCurrentID(GLenum target)
 
 void Repeater::glClear(GLbitfield mask)
 {
-    /*static bool isInitialized = false;
-    if(!isInitialized)
-    {
-        initialize();
-        isInitialized = true;
-    }
-    */
-
-    /*
-    if(!m_Context.m_FBOTracker.hasBounded())
-    {
-        OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_Context.m_OutputFBO.getFBOId());
-        OpenglRedirectorBase::glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT | mask);
-        OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER,0);
-    } else {
-        if(m_Context.m_FBOTracker.getBound()->hasShadowFBO())
-        {
-            OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_Context.m_FBOTracker.getBound()->getShadowFBO());
-            OpenglRedirectorBase::glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT | mask);
-            OpenglRedirectorBase::glBindFramebuffer(GL_FRAMEBUFFER, m_Context.m_FBOTracker.getBoundId());
-        }
-    }
-    */
-
     if(m_Context.m_IsMultiviewActivated && m_Context.m_FBOTracker.isFBODefault() &&  m_Context.m_OutputFBO.hasImage())
     {
         OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -135,6 +111,8 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
                     m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
         m_Context.m_OutputFBO.renderToBackbuffer();
         m_Context.m_OutputFBO.clearBuffers();
+    } else {
+        OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     }
 
     OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
