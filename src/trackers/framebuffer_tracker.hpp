@@ -47,6 +47,9 @@ namespace ve
         bool isShadowMapFBO() const;
         /// Has attachment of CUBEMAP type
         bool isEnvironmentMapFBO() const;
+
+        /// Has any attachment
+        bool hasAnyAttachment() const;
         private:
         ContextTracker<FramebufferAttachment> m_attachments;
 

@@ -21,6 +21,9 @@ void ve::FramebufferMetadata::attach(GLenum attachmentType, std::shared_ptr<Text
     attachment.layer = layer;
     attachment.texture = texture;
     m_attachments.add(attachmentType, attachment);
+
+    assert(hasAnyAttachment() == true);
+    assert(hasAttachment(attachmentType) == true);
 }
 
 bool ve::FramebufferMetadata::hasAttachment(GLenum attachmentType) const
@@ -40,6 +43,7 @@ size_t ve::FramebufferMetadata::getShadowFBO() const
 
 void ve::FramebufferMetadata::createShadowedFBO()
 {
+    assert(hasAnyAttachment());
     GLuint shadowFBO;
     glGenFramebuffers(1,&shadowFBO);
     // Hack: OpenGL require at least one bind before attaching
@@ -53,6 +57,7 @@ void ve::FramebufferMetadata::createShadowedFBO()
         }
         auto shadowedTexture = texture->getShadowedTextureId();
         glFramebufferTexture(GL_FRAMEBUFFER, attachmentType, shadowedTexture,metadata.level);
+        assert(glGetError() == GL_NO_ERROR);
     }
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -109,6 +114,10 @@ bool ve::FramebufferMetadata::isEnvironmentMapFBO() const
     return false;
 }
 
+bool ve::FramebufferMetadata::hasAnyAttachment() const
+{
+    return m_attachments.size() > 0;
+}
 ///////////////////////////////////////////////////////////////////////////////
 // FramebufferTracker
 ///////////////////////////////////////////////////////////////////////////////

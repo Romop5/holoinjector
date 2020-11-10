@@ -34,6 +34,11 @@ void TextureMetadata::deinitialize()
 
 void TextureMetadata::setStorage(GLenum type, size_t width, size_t height, size_t levels, size_t layers, GLenum internalFormat)
 {
+    // Hack: ignore mipmaps
+    if(levels > 0)
+    {
+        return;
+    }
     m_Width = width;
     m_Height = height;
 
@@ -85,23 +90,23 @@ size_t TextureMetadata::getTextureViewIdOfShadowedTexture() const
 }
 void TextureMetadata::createShadowedTexture(size_t numOfLayers)
 {
+
     GLuint textures[2];
     glGenTextures(1, textures);
+    assert(glGetError() == GL_NO_ERROR);
     assert(getType() == GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, textures[0]);
+    assert(glGetError() == GL_NO_ERROR);
     assert(getLevels() == 1);
-    //glTexStorage3D(GL_TEXTURE_2D_ARRAY, getLevels(), getFormat(), getWidth(),getHeight(), numOfLayers);
+    assert(getFormat() != GL_ZERO);
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, getFormat(), 256,256, numOfLayers);
+    assert(glGetError() == GL_NO_ERROR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     m_shadowedLayerVersionId = textures[0];
 
     // set texture view as original texture
-    // use layer 0 as default
-    //glGenTextures(1, &textures[1]);
-    //glTextureView(textures[1], GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, getLevels(), 0, 1);
-    //m_shadowTextureViewId = textures[1];
     setTextureViewToLayer(0);
 }
 

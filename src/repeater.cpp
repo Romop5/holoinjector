@@ -217,7 +217,7 @@ void Repeater::glRenderbufferStorage (GLenum target, GLenum internalformat, GLsi
     OpenglRedirectorBase::glRenderbufferStorage(target,internalformat, width, height);
     // Fix internal format when transfering renderbuffer to texture
     internalformat = (internalformat == GL_DEPTH_COMPONENT?GL_DEPTH_COMPONENT32:internalformat);
-    m_Context.m_RenderbufferTracker.get(getCurrentID(GL_RENDERBUFFER_BINDING))->setStorage(target,width, height, 1, 0, internalformat);
+    m_Context.m_RenderbufferTracker.get(getCurrentID(GL_RENDERBUFFER_BINDING))->setStorage(target,width, height, 0, 0, internalformat);
 }
 
 
@@ -482,6 +482,7 @@ void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
 
 void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
 {
+    m_Context.m_FBOTracker.bind(framebuffer);
     if(framebuffer == 0)
     {
         if(m_Context.m_IsMultiviewActivated)
@@ -495,7 +496,19 @@ void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
         }
     } else {
         auto id = framebuffer;
-        OpenglRedirectorBase::glBindFramebuffer(target,framebuffer);
+        auto fbo = m_Context.m_FBOTracker.getBound();
+        /*
+         * Only create & bind shadow FBO when original FBO is complete (thus has any attachment)
+         */
+        if(fbo->hasAnyAttachment())
+        {
+            if(!fbo->hasShadowFBO() && m_Context.m_FBOTracker.isSuitableForRepeating())
+                fbo->createShadowedFBO();
+            if(fbo->hasShadowFBO())
+                id =fbo->getShadowFBO();
+        }
+
+        OpenglRedirectorBase::glBindFramebuffer(target,id);
         OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
                 m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
 
@@ -505,7 +518,6 @@ void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
             OpenglRedirectorBase::glViewport(0,0,m_Context.m_OutputFBO.getParams().getTextureWidth(), m_Context.m_OutputFBO.getParams().getTextureHeight());
         }
     }
-    m_Context.m_FBOTracker.bind(framebuffer);
 }
 
 void Repeater::glFramebufferTexture (GLenum target, GLenum attachment, GLuint texture, GLint level)
