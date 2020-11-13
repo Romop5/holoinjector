@@ -20,7 +20,7 @@ namespace ve
         protected:
         size_t gridXSize = 5;
         size_t gridYSize = 9;
-        size_t pixels_width = 256;
+        size_t pixels_width = 512;
         size_t pixels_height = 256;
     };
     struct OutputFBO
