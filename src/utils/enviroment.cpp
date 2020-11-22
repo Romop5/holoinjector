@@ -1,4 +1,5 @@
 #include "utils/enviroment.hpp"
+#include "logger.hpp"
 
 float ve::enviroment::getEnviromentValue(const std::string& variable, float defaultValue)
 {
@@ -9,7 +10,7 @@ float ve::enviroment::getEnviromentValue(const std::string& variable, float defa
     try {
         resultValue = std::stof(envStringRaw);
     } catch(...) {};
-    printf("[Enhancer] Getting env value of %s => %f\n", variable.c_str(),resultValue);
+    Logger::log("[Enhancer] Getting env value of {} => {}\n", variable.c_str(),resultValue);
     return resultValue;
 }
 
@@ -17,7 +18,7 @@ std::string ve::enviroment::getEnviromentValueStr(const std::string& variable, s
 {
     auto envStringRaw = getenv(variable.c_str());
     auto result = (envStringRaw)?envStringRaw:defaultValue;
-    printf("[Enhancer] Getting env value of %s => %s\n", variable.c_str(),result.c_str());
+    Logger::log("[Enhancer] Getting env value of {} => {}\n", variable.c_str(),result.c_str());
     return result;
 }
 

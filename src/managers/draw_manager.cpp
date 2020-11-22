@@ -5,10 +5,9 @@
 #include <glm/gtx/transform.hpp>
 
 #include "context.hpp"
-
 #include "draw_manager.hpp"
-
 #include "pipeline/projection_estimator.hpp"
+#include "logger.hpp"
 
 using namespace ve;
 
@@ -50,7 +49,7 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
         {
             setEnhancerDecodedProjection(context,context.m_Manager.getBoundId(),indexStructure.projection);
         } else {
-            printf("[Repeater] Unexpected state. Expected UBO, but not found. Falling back to identity\n");
+            Logger::log("[Repeater] Unexpected state. Expected UBO, but not found. Falling back to identity\n");
             setEnhancerIdentity(context);
         }
     }

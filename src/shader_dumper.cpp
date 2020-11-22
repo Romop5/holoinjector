@@ -8,9 +8,9 @@ namespace helper
     {
         for(size_t i=0; i < count; i++)
         {
-            printf("Dumping shader source i: %d\n", i);
+            Logger::log("Dumping shader source i: {}\n", i);
             puts(strings[i]);
-            printf("---\n");
+            Logger::log("---\n");
         }
     }
 } // namespace helper
@@ -29,13 +29,13 @@ GLuint ShaderDumper::glCreateShader(GLenum shaderType)
 
 void ShaderDumper::glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length)
 {
-    printf("[ShaderDumper] glShaderSource: \n");
+    Logger::log("[ShaderDumper] glShaderSource: \n");
     helper::dumpShaderSources(string, count);
     OpenglRedirectorBase::glShaderSource(shader,count,string,length);
 }
 void ShaderDumper::glShaderSourceARB (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length)
 {
-    printf("[ShaderDumper] glShaderSource: \n");
+    Logger::log("[ShaderDumper] glShaderSource: \n");
     helper::dumpShaderSources(string, count);
     OpenglRedirectorBase::glShaderSource(shader,count,string,length);
 }

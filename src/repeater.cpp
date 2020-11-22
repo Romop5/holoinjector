@@ -17,17 +17,20 @@
 #include "utils/enviroment.hpp"
 #include "utils/glsl_preprocess.hpp"
 
+#include "logger.hpp"
+
 using namespace ve;
 
 void Repeater::initialize()
 {
+    Logger::log("Repeater::initialize");
     static bool isInitialzed = false;
     if(isInitialzed)
         return;
     isInitialzed = true;
 
     // Override default angle
-    enviroment::getEnviroment("ENHANCER_XMULTIPLIER", m_Context.m_cameraParameters.m_XShiftMultiplier); 
+    enviroment::getEnviroment("ENHANCER_XMULTIPLIER", m_Context.m_cameraParameters.m_XShiftMultiplier);
     // Override default center of rotation
     enviroment::getEnviroment("ENHANCER_DISTANCE", m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance);
     // if ENHANCER_NOW is provided, then start with multiple views right now
@@ -254,7 +257,7 @@ GLuint Repeater::glCreateShader(GLenum shaderType)
 void Repeater::glShaderSource (GLuint shaderId, GLsizei count, const GLchar* const*string, const GLint* length)
 {
     auto concatenatedShader = glsl_preprocess::joinGLSLshaders(count, string, length);
-    printf("[Repeater] glShaderSource: [%d]\n",shaderId);
+    Logger::log("[Repeater] glShaderSource: [{}]\n",shaderId);
     if(m_Context.m_Manager.shaders.has(shaderId))
     {
         auto shader = m_Context.m_Manager.shaders.get(shaderId);
@@ -297,7 +300,7 @@ void Repeater::glLinkProgram (GLuint programId)
         OpenglRedirectorBase::glDetachShader(programId, shader->m_Id);
         // store source code for given shader type
         pipeline[shader->m_Type] = shader->preprocessedSourceCode;
-        printf("[Repeater] Detaching: %d %zu\n", shader->m_Type, shader->m_Id);
+        Logger::log("[Repeater] Detaching: {} {}\n", shader->m_Type, shader->m_Id);
     }
 
     /*
@@ -311,7 +314,7 @@ void Repeater::glLinkProgram (GLuint programId)
         auto newShader = OpenglRedirectorBase::glCreateShader(type);
         const GLchar* sources[1] = {reinterpret_cast<const GLchar*>(sourceCode.data())}; 
         OpenglRedirectorBase::glShaderSource(newShader, 1, sources , nullptr);
-	printf("[Repeater] Compiling shader: \n %s\n", sourceCode.c_str());
+	Logger::log("[Repeater] Compiling shader: \n {}\n", sourceCode.c_str());
         fflush(stdout);
         OpenglRedirectorBase::glCompileShader(newShader);
         GLint status;
@@ -324,13 +327,13 @@ void Repeater::glLinkProgram (GLuint programId)
             GLsizei realLogLength = 0;
             GLchar log[5120] = {0,};
             OpenglRedirectorBase::glGetShaderInfoLog(newShader, logSize, &realLogLength, log);
-            printf("[Repeater] Error while compiling new shader type %u: %s\n", type,log);
-            printf("Shade source: %s\n", sourceCode.c_str());
+            Logger::log("[Repeater] Error while compiling new shader type {}: {}\n", type,log);
+            Logger::log("Shade source: {}\n", sourceCode.c_str());
             return;
         }
         OpenglRedirectorBase::glAttachShader(programId, newShader);
     }
-    printf("[Repeater] Relink program with new shaders\n");
+    Logger::log("[Repeater] Relink program with new shaders\n");
     OpenglRedirectorBase::glLinkProgram(programId);
     GLint linkStatus = 0;
     OpenglRedirectorBase::glGetProgramiv(programId, GL_LINK_STATUS, &linkStatus);
@@ -342,26 +345,26 @@ void Repeater::glLinkProgram (GLuint programId)
         GLsizei realLogLength = 0;
         GLchar log[5120] = {0,};
         OpenglRedirectorBase::glGetProgramInfoLog(programId, logSize, &realLogLength, log);
-        printf("[Repeater] Link failed with log: %s\n",log);
+        Logger::log("[Repeater] Link failed with log: {}\n",log);
     }
     assert(linkStatus == GL_TRUE);
 }
 
 void Repeater::glCompileShader (GLuint shader)
 {
-    printf("[Repeater] glCompileShader\n");
+    Logger::log("[Repeater] glCompileShader\n");
     OpenglRedirectorBase::glCompileShader(shader);
     GLint status;
     OpenglRedirectorBase::glGetShaderiv(shader, GL_COMPILE_STATUS,&status);
     if(status == GL_FALSE)
     {
-        printf("[Repeater] Error while comping shader [%d]\n", shader);
+        Logger::log("[Repeater] Error while comping shader [{}]\n", shader);
     }
 }
 
 void Repeater::glAttachShader (GLuint program, GLuint shader)
 {
-    printf("[Repeater] attaching shader [%d] to program [%d] \n", shader, program);
+    Logger::log("[Repeater] attaching shader [{}] to program [{}] \n", shader, program);
     //OpenglRedirectorBase::glAttachShader(program,shader);
 
     if(!m_Context.m_Manager.has(program) || !m_Context.m_Manager.shaders.has(shader))
@@ -397,8 +400,8 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     const auto mat = opengl_utils::createMatrixFromRawGL(value);
     auto estimatedParameters = estimatePerspectiveProjection(mat);
 
-    printf("[Repeater] estimating parameters from uniform matrix\n");
-    printf("[Repeater] parameters: fx(%f) fy(%f) near (%f) near(%f) isPerspective (%d) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane, estimatedParameters.isPerspective);
+    Logger::log("[Repeater] estimating parameters from uniform matrix\n");
+    Logger::log("[Repeater] parameters: fx({}) fy({}) near ({}) near({}) isPerspective ({}) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane, estimatedParameters.isPerspective);
 
     m_DrawManager.setEnhancerDecodedProjection(m_Context,programID, estimatedParameters);
 }
@@ -711,8 +714,8 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data)+metadata.transformationOffset, sizeof(float)*16);
             auto estimatedParameters = estimatePerspectiveProjection(metadata.transformation);
 
-            printf("[Repeater] estimating parameters from UBO\n");
-            printf("[Repeater] parameters: fx(%f) fy(%f) near (%f) near(%f) isPerspective (%d) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane, estimatedParameters.isPerspective);
+            Logger::log("[Repeater] estimating parameters from UBO\n");
+            Logger::log("[Repeater] parameters: fx({}) fy({}) near ({}) near({}) isPerspective ({}) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane, estimatedParameters.isPerspective);
 
             // TODO: refactor into class method of Binding index structure
             metadata.projection = estimatedParameters;
@@ -739,8 +742,8 @@ void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size,
         {
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data)+metadata.transformationOffset, sizeof(float)*16);
             auto estimatedParameters = estimatePerspectiveProjection(metadata.transformation);
-            printf("[Repeater] estimating parameters from UBO\n");
-            printf("[Repeater] parameters: fx(%f) fy(%f) near (%f) near(%f) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane);
+            Logger::log("[Repeater] estimating parameters from UBO\n");
+            Logger::log("[Repeater] parameters: fx({}) fy({}) near ({}) near({}) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane);
 
             metadata.projection = estimatedParameters;
             metadata.hasTransformation = true;
@@ -753,7 +756,7 @@ void Repeater::glMatrixMode(GLenum mode)
 {
     OpenglRedirectorBase::glMatrixMode(mode);
     m_Context.m_LegacyTracker.matrixMode(mode);
-    //printf("[Repeater] glMatrixMode %s\n", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
+    //Logger::log("[Repeater] glMatrixMode {}\n", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
 }
 void Repeater::glLoadMatrixd(const GLdouble* m)
 {
@@ -866,8 +869,9 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
         if(keyEvent->serial == lastSerial)
             return returnVal;
         lastSerial = keyEvent->serial;
-        printf("[Repeater] XNextEvent KeyPress %d, %lu - %d - %p - [%d %d] [%u %u] %d\n",
-                keyEvent->type,keyEvent->serial, keyEvent->send_event,keyEvent->display, 
+        Logger::log("[Repeater] XNextEvent KeyPress {}, {} - {} - {} - [{} {}] [{} {}] {}\n",
+                keyEvent->type,keyEvent->serial, keyEvent->send_event,
+                static_cast<void*>(keyEvent->display),
                 keyEvent->x,keyEvent->y,keyEvent->state,keyEvent->keycode, keyEvent->same_screen);
         auto keySym = XLookupKeysym(reinterpret_cast<XKeyEvent*>(event_return), 0);
 
@@ -887,7 +891,7 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
                 m_Context.m_IsMultiviewActivated = !m_Context.m_IsMultiviewActivated;
             break;
         }
-        printf("[Repeater] Setting: frontDistance (%f), X multiplier(%f)\n", 
+        Logger::log("[Repeater] Setting: frontDistance ({}), X multiplier({})\n",
                 m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance, m_Context.m_cameraParameters.m_XShiftMultiplier);
         m_Context.m_cameras.updateParamaters(m_Context.m_cameraParameters);
     }
@@ -911,7 +915,7 @@ void Repeater::takeScreenshot(const std::string filename)
     FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF, 0xFF00, 0xFF0000, false);
     if(!FreeImage_Save(FIF_BMP, image, filename.c_str(), 0))
     {
-        printf("[Repeater] Failed to save screenshot %s\n", filename.c_str());
+        Logger::log("[Repeater] Failed to save screenshot {}\n", filename.c_str());
     }
     // Free resources
     FreeImage_Unload(image);

@@ -4,6 +4,7 @@
 
 #include "texture_tracker.hpp"
 #include <cassert>
+#include "logger.hpp"
 
 using namespace ve;
 
@@ -118,7 +119,7 @@ void TextureMetadata::setTextureViewToLayer(size_t layer)
     if(m_shadowTextureViewId)
         glDeleteTextures(1, &viewId);
     glGenTextures(1, &viewId);
-    printf("[Repeater] viewID %d\n", viewId);
+    Logger::log("[Repeater] viewID {}\n", viewId);
     glTextureView(viewId, GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, getLevels(), layer, 1);
     m_shadowTextureViewId = viewId;
 }

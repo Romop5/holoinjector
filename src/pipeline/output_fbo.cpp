@@ -7,6 +7,8 @@
 
 #include "pipeline/output_fbo.hpp"
 
+#include "logger.hpp"
+
 using namespace ve;
 
 //-----------------------------------------------------------------------------
@@ -68,7 +70,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
     auto error = glGetError();
     if(error != GL_NO_ERROR)
     {
-        printf("[Repeater] error: %d\n", error);
+        Logger::log("[Repeater] error: {}\n", error);
     }
     assert(error == GL_NO_ERROR);
 
@@ -84,7 +86,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(status != GL_FRAMEBUFFER_COMPLETE)
     {
-        printf("[Repeater] Failed to create FBO for layered rendering: Status: glEnum %d\n", status);
+        Logger::log("[Repeater] Failed to create FBO for layered rendering: Status: glEnum {}\n", status);
     }
     assert(status == GL_FRAMEBUFFER_COMPLETE);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -144,8 +146,8 @@ void OutputFBO::initialize(OutputFBOParameters params)
             GLsizei realLogLength = 0;
             GLchar log[5120] = {0,};
             glGetShaderInfoLog(shaderId, logSize, &realLogLength, log);
-            std::printf("[Repeater] Failed to compile %s\n", log);
-            std::printf("[Repeater] code %s\n", sourceCode.c_str());
+            Logger::log("[Repeater] Failed to compile {}\n", log);
+            Logger::log("[Repeater] code {}\n", sourceCode.c_str());
             std::fflush(stdout);
         }
         assert(compileStatus == GL_TRUE);

@@ -1,18 +1,20 @@
+#include <string>
+#include <unordered_map>
+
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
 
 #include "utils/opengl_utils.hpp"
-#include <string>
-#include <unordered_map>
+#include "logger.hpp"
 
 template<typename T>
 void ve::opengl_utils::dumpOpenglMatrix(const T* m)
 {
-    printf("[Repeater] Matrix: \n");
-    printf("[Repeater] %f %f %f %f\n", m[0],m[4],m[8],m[12]);
-    printf("[Repeater] %f %f %f %f\n", m[1],m[5],m[9],m[13]);
-    printf("[Repeater] %f %f %f %f\n", m[2],m[6],m[10],m[14]);
-    printf("[Repeater] %f %f %f %f\n", m[3],m[7],m[11],m[15]);
+    Logger::log("[Repeater] Matrix: \n");
+    Logger::log("[Repeater] {} {} {} {}\n", m[0],m[4],m[8],m[12]);
+    Logger::log("[Repeater] {} {} {} {}\n", m[1],m[5],m[9],m[13]);
+    Logger::log("[Repeater] {} {} {} {}\n", m[2],m[6],m[10],m[14]);
+    Logger::log("[Repeater] {} {} {} {}\n", m[3],m[7],m[11],m[15]);
 }
 
 template<>

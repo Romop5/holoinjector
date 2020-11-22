@@ -43,8 +43,8 @@ namespace ve
         /// Debug option: terminate process after N frames (or go for infty in case of 0)
         size_t m_ExitAfterFrames = 0;
 
-        /// May contain %d (for frame ID)
-        std::string m_ScreenshotNameFormat = "screenshot_%d.bmp";
+        /// May contain {} (for frame ID)
+        std::string m_ScreenshotNameFormat = "screenshot_{}.bmp";
 
         /// Is specific camera activated
         size_t m_ActivatedCameraID = -1;
