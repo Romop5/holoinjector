@@ -29,13 +29,12 @@ message(STATUS "Using project name: ${ENHANCER_PROJECT_NAME}")
 ###############################################################################
 # Find subhook & 3rd parties
 ###############################################################################
-find_file (SUBHOOK_SO32 NAMES libsubhook.so PATHS /usr/local/lib/ REQUIRED)
-find_file (SUBHOOK_SO64 NAMES libsubhook.so PATHS /usr/local/lib64/ REQUIRED)
-find_file (SUBHOOK_H NAMES subhook.h REQUIRED)
+#find_file (SUBHOOK_SO32 NAMES libsubhook.so PATHS /usr/local/lib/ REQUIRED)
+#find_file (SUBHOOK_SO64 NAMES libsubhook.so PATHS /usr/local/lib64/ REQUIRED)
+#find_file (SUBHOOK_H NAMES subhook.h REQUIRED)
 
-set(SUBHOOK_SO ${SUBHOOK_SO${ENHANCER_BITS}})
-
-get_filename_component(SUBHOOK_INCL ${SUBHOOK_H} DIRECTORY)
+#set(SUBHOOK_SO ${SUBHOOK_SO${ENHANCER_BITS}})
+#get_filename_component(SUBHOOK_INCL ${SUBHOOK_H} DIRECTORY)
 
 find_file (SIMPLECPP_SO32 NAMES libsimplecpp.so PATHS /usr/local/lib/ REQUIRED)
 find_file (SIMPLECPP_SO64 NAMES libsimplecpp.so PATHS /usr/local/lib/ REQUIRED)

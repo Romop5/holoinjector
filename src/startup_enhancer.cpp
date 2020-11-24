@@ -4,7 +4,7 @@
  */
 #include <dlfcn.h>
 #include <cstdio>
-#include <subhook.h>
+//#include <subhook.h>
 #include <mutex>
 #include <memory>
 
@@ -18,7 +18,7 @@ using namespace ve;
 struct EnhancerContext
 {
     std::unique_ptr<RedirectorBase> redirector;
-    subhook_t dlsymhook;
+    //subhook_t dlsymhook;
 };
 
 static std::unique_ptr<EnhancerContext> context = nullptr;
@@ -48,11 +48,12 @@ namespace ve
             }
         }
         return dlsym_sym(params,symbol);
-
-        void* original_dlsym = reinterpret_cast<void*>(&dlsym);
         /*
+         * SUBHOOK
+        void* original_dlsym = reinterpret_cast<void*>(&dlsym);
+         *
          * Prepare call to original dlsym code
-         */
+         *
         if(context->dlsymhook)
             original_dlsym = subhook_get_trampoline(context->dlsymhook);
         if(original_dlsym == nullptr)
@@ -62,6 +63,8 @@ namespace ve
         }
         using dlsym_type = void*(void*, const char*);
         return reinterpret_cast<dlsym_type*>(original_dlsym)(params, symbol);
+        */
+        
     }
     void* hooked_dlsym(void* params, const char* symbol)
     {
@@ -139,6 +142,7 @@ void* dlsym(void* params, const char* symbol)
 
 namespace helper
 {
+    /* SUBHOOK
     bool hook_function(subhook_t& hook, void* target, void* ourHandler,subhook_flags_t hookTypeFlags = (subhook_flags_t)(0))
     {
         hook = subhook_new(target, ourHandler, hookTypeFlags);
@@ -157,6 +161,7 @@ namespace helper
         }
         return true;
     }
+    */
 
     template<typename DICT>
     void dumpRedirections(DICT dict)
@@ -196,7 +201,9 @@ void enhancer_setup(std::unique_ptr<RedirectorBase> redirector)
 
     puts("[Enhancer] starting setup...");
     // Decide whether to use 64bit hook or not
-    auto hookTypeFlags = static_cast<subhook_flags>(SUBHOOK_BITS == 32?0:SUBHOOK_64BIT_OFFSET);
+    /* SUBHOOK
+     * auto hookTypeFlags = static_cast<subhook_flags>(SUBHOOK_BITS == 32?0:SUBHOOK_64BIT_OFFSET);
+     */
     context = std::make_unique<EnhancerContext>();
     context->redirector = std::move(redirector);
     /*
