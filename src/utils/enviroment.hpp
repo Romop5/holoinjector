@@ -7,6 +7,7 @@ namespace ve
 {
 namespace enviroment
 {
+    bool hasEnviromentalVariable(const std::string& variable);
     /// Get value of enviromental variable as float
     float getEnviromentValue(const std::string& variable, float defaultValue = 0.0f);
 

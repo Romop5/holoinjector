@@ -18,48 +18,65 @@
 #include "utils/glsl_preprocess.hpp"
 
 #include "logger.hpp"
+#include "config.hpp"
 
 using namespace ve;
 
 void Repeater::initialize()
 {
-    Logger::log("Repeater::initialize");
+    Logger::log("Repeater::initialize\n");
     static bool isInitialzed = false;
     if(isInitialzed)
         return;
     isInitialzed = true;
 
+    // Load config
+    Config cfg;
+    const auto settings = cfg.load();
+
     // Override default angle
-    enviroment::getEnviroment("ENHANCER_XMULTIPLIER", m_Context.m_cameraParameters.m_XShiftMultiplier);
+    if(settings.hasKey("xmultiplier"))
+        m_Context.m_cameraParameters.m_XShiftMultiplier = settings.getAsFloat("xmultiplier");
     // Override default center of rotation
-    enviroment::getEnviroment("ENHANCER_DISTANCE", m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance);
+    if(settings.hasKey("distance"))
+        m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance = settings.getAsFloat("distance");
     // if ENHANCER_NOW is provided, then start with multiple views right now
-    if(enviroment::getEnviromentValue("ENHANCER_NOW", 0))
+    if(settings.hasKey("now"))
     {
         m_Context.m_IsMultiviewActivated = true;
     }
-    m_Context.m_diagnostics.setTerminationAfterFrame(enviroment::getEnviromentValue("ENHANCER_EXIT_AFTER", 0)); 
+    if(settings.hasKey("exitAfterFrames"))
+        m_Context.m_diagnostics.setTerminationAfterFrame(settings.getAsSizet("exitAfterFrames"));
 
-    auto onlyCamera = enviroment::getEnviromentValue("ENHANCER_CAMERAID", -1);
-    if(onlyCamera != -1)
+    /*
+     * DIAGNOSTIC
+     */
+    if(settings.hasKey("onlyShownCameraID"))
     {
-        m_Context.m_diagnostics.setOnlyVirtualCamera(onlyCamera);
+        m_Context.m_diagnostics.setOnlyVirtualCamera(settings.getAsSizet("onlyShownCameraID"));
     }
 
-    auto screenshotFormat = enviroment::getEnviromentValueStr("ENHANCER_SCREENSHOT");
-    if(!screenshotFormat.empty())
+    if(settings.hasKey("screenshotFormatString"))
     {
-        m_Context.m_diagnostics.setScreenshotFormat(screenshotFormat);
+        m_Context.m_diagnostics.setScreenshotFormat(settings.getAsString("screenshotFormatString"));
     }
 
-    auto shouldNotBeIntrusive= enviroment::getEnviromentValue("ENHANCER_NONINTRUSIVE");
-    if(shouldNotBeIntrusive)
+    if(settings.hasKey("shouldBeNonIntrusive"))
     {
-        m_Context.m_diagnostics.setNonIntrusiveness(shouldNotBeIntrusive);
+        m_Context.m_diagnostics.setNonIntrusiveness(true);
     }
 
     // Initialize oputput FBO
-    m_Context.m_OutputFBO.initialize();
+    OutputFBOParameters outParameters;
+    if(settings.hasKey("outputXSize"))
+    {
+        outParameters.pixels_width = settings.getAsSizet("outputXSize");
+    }
+    if(settings.hasKey("outputYSize"))
+    {
+        outParameters.pixels_width = settings.getAsSizet("outputYSize");
+    }
+    m_Context.m_OutputFBO.initialize(outParameters);
     assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
 
     const auto layers = m_Context.m_OutputFBO.getParams().getLayers();
@@ -289,6 +306,11 @@ void Repeater::glLinkProgram (GLuint programId)
 
     // TODO: detect if number of invocations is supported
     parameters.countOfInvocations = m_Context.m_OutputFBO.getParams().getLayers();
+    if(parameters.countOfInvocations > 32)
+    {
+        parameters.countOfPrimitivesDuplicates = parameters.countOfInvocations/32;
+        parameters.countOfInvocations = 32;
+    }
 
     /*
      * Deregister all attached shaders (they're going to be changed in any case)

@@ -17,7 +17,6 @@ namespace ve
         size_t getGridSizeX() const;
         size_t getGridSizeY() const;
 
-        protected:
         size_t gridXSize = 5;
         size_t gridYSize = 9;
         size_t pixels_width = 512;

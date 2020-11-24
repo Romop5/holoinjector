@@ -1,6 +1,11 @@
 #include "utils/enviroment.hpp"
 #include "logger.hpp"
 
+bool ve::enviroment::hasEnviromentalVariable(const std::string& variable)
+{
+    return getenv(variable.c_str()) != nullptr;
+}
+
 float ve::enviroment::getEnviromentValue(const std::string& variable, float defaultValue)
 {
     auto envStringRaw = getenv(variable.c_str());

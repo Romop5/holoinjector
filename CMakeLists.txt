@@ -51,6 +51,7 @@ get_filename_component(SIMPLECPP_INCL ${SIMPLECPP_H} DIRECTORY)
 find_package(glm REQUIRED)
 find_package(FreeImage REQUIRED)
 find_package(fmt REQUIRED)
+find_package(yaml-cpp REQUIRED)
 ###############################################################################
 
 ###############################################################################
@@ -96,6 +97,9 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logger.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logger.cpp
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/config.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/config.cpp
+
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/draw_manager.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/draw_manager.cpp
 
@@ -113,7 +117,8 @@ add_library(enhancer_core
 # => Position Independent Code is thus required
 target_compile_options(enhancer_core PRIVATE "-fPIC")
 
-target_link_libraries(enhancer_core PUBLIC GL glm ${FREEIMAGE_LIBRARIES} fmt::fmt-header-only)
+target_link_libraries(enhancer_core PUBLIC GL glm ${FREEIMAGE_LIBRARIES} fmt::fmt-header-only
+    yaml-cpp)
 target_include_directories(enhancer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${FREEIMAGE_INCLUDE_DIR})
 target_compile_features(enhancer_core PUBLIC cxx_std_17)
