@@ -36,7 +36,6 @@ namespace ve
         /// Return FBO's ID
         GLuint getFBOId();
 
-
         /// Blits all cameras to back buffer (as a grid)
         void renderToBackbuffer();
         /// Clear buffers on new frame
@@ -49,6 +48,7 @@ namespace ve
 
         /// Create proxy FBO from texture views to a single layer of shadow FBO
         GLuint createProxyFBO(size_t layer);
+        //---------------------------------------------------------------------
         private:
         std::vector<utils::FBORAII> m_proxyFBO;
         void clearImageFlag();

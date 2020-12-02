@@ -6,6 +6,7 @@
 #include "GL/glext.h"
 
 #include "pipeline/output_fbo.hpp"
+#include "utils/opengl_objects.hpp"
 
 #include "logger.hpp"
 
@@ -130,50 +131,14 @@ void OutputFBO::initialize(OutputFBOParameters params)
         }
     )");
 
-    auto compileShader = [&](GLenum type,const std::string& sourceCode)->GLuint
-    {
-        auto shaderId = glCreateShader(type);
-        const GLchar* const sources[1] = {sourceCode.c_str(),};
-        glShaderSource(shaderId, 1, sources,nullptr);
-        glCompileShader(shaderId);
-        GLint compileStatus;
-        glGetShaderiv(shaderId, GL_COMPILE_STATUS, &compileStatus);
-        if(compileStatus != GL_TRUE)
-        {
-            GLint logSize = 0;
-            glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &logSize);
-            
-            GLsizei realLogLength = 0;
-            GLchar log[5120] = {0,};
-            glGetShaderInfoLog(shaderId, logSize, &realLogLength, log);
-            Logger::log("[Repeater] Failed to compile {}\n", log);
-            Logger::log("[Repeater] code {}\n", sourceCode.c_str());
-            std::fflush(stdout);
-        }
-        assert(compileStatus == GL_TRUE);
-        return shaderId;
-    };
+    auto fs = utils::glShader(FS, GL_FRAGMENT_SHADER);
+    assert(fs.getID() != 0);
+    auto vs = utils::glShader(VS, GL_VERTEX_SHADER);
+    assert(vs.getID() != 0);
 
-    auto fsId = compileShader(GL_FRAGMENT_SHADER, FS);
-    auto vsId = compileShader(GL_VERTEX_SHADER, VS);
-
-    GLint oldProgram;
-    glGetIntegerv(GL_CURRENT_PROGRAM, &oldProgram);
-
-    auto program = glCreateProgram();
-    //glUseProgram(program);
-    glAttachShader(program, fsId);
-    glAttachShader(program, vsId);
-
-    glLinkProgram(program);
-    GLint linkStatus;
-    glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
-
-
-    //glUseProgram(oldProgram);
-
-    assert(linkStatus == GL_TRUE);
-    m_ViewerProgram = program;
+    auto program = utils::glProgram(std::move(vs),std::move(fs));
+    assert(program.getID() != 0);
+    m_ViewerProgram = program.releaseID();
 
     /*
      * Create VAO for full screen quad
