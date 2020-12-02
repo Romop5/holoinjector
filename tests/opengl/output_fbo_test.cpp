@@ -7,6 +7,7 @@
 #include "opengl_test_context.hpp"
 
 #include "pipeline/output_fbo.hpp"
+#include "utils/opengl_objects.hpp"
 
 
 struct Triangle

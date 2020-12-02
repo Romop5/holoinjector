@@ -96,12 +96,14 @@ add_library(enhancer_core
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logger.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logger.cpp
-
     ${CMAKE_CURRENT_SOURCE_DIR}/src/config.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/config.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/draw_manager.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/draw_manager.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/paralax/mapping.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/paralax/mapping.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.cpp

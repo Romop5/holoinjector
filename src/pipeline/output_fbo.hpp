@@ -1,12 +1,18 @@
 #ifndef REPEATER_OUTPUT_FBO_HPP
 #define REPEATER_OUTPUT_FBO_HPP
 
+#include <memory>
 #include <vector>
 #include "GL/gl.h"
 #include "utils/opengl_raii.hpp"
 
 namespace ve
 {
+    namespace utils
+    {
+        class glFullscreenVAO;
+    }
+
     class OutputFBOParameters
     {
         public:
@@ -61,7 +67,7 @@ namespace ve
         GLuint  m_ViewerProgram = 0;
 
         // Full screen quad
-        GLuint  m_VAO = 0;
+        std::shared_ptr<ve::utils::glFullscreenVAO> m_VAO;
 
         // Parameters
         OutputFBOParameters m_Params;

@@ -140,45 +140,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
     assert(program.getID() != 0);
     m_ViewerProgram = program.releaseID();
 
-    /*
-     * Create VAO for full screen quad
-     */
-
-    struct VertexData
-    {
-        float position[3];
-        float uv[2];
-    };
-    VertexData vertices[] = 
-    {
-        {-1.0, -1.0, 0.0, 0.0,0.0},
-        {1.0, -1.0, 0.0, 1.0,0.0},
-        {-1.0, 1.0, 0.0, -1.0,0.0},
-        {1.0, 1.0, 0.0, 1.0,1.0},
-    };
-
-    GLuint vertexBuffer;
-    glGenBuffers(1, &vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*5*4, vertices, GL_STATIC_DRAW);
-
-    GLint oldVao;
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&oldVao);
-    GLint oldVBO;
-    glGetIntegerv(GL_ARRAY_BUFFER_BINDING,&oldVBO);
-
-    glGenVertexArrays(1, &m_VAO);
-    glBindVertexArray(m_VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    // Enable coords
-    glVertexAttribPointer(0, 3, GL_FLOAT, false, 5*sizeof(float),0);
-    glEnableVertexAttribArray(0);
-    // Enable UV
-    glVertexAttribPointer(1, 2, GL_FLOAT, false, 5*sizeof(float),reinterpret_cast<void*>(2*sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, oldVBO);
-    glBindVertexArray(oldVao);
+    m_VAO = std::make_shared<ve::utils::glFullscreenVAO>();
 }
 
 void OutputFBO::deinitialize()
@@ -205,12 +167,6 @@ void OutputFBO::deinitialize()
         glDeleteProgram(m_ViewerProgram);
         m_ViewerProgram = 0;
     }
-
-    if(m_VAO)
-    {
-        glDeleteVertexArrays(1,&m_VAO);
-        m_VAO = 0;
-    }
 }
 void OutputFBO::renderToBackbuffer()
 {
@@ -231,7 +187,7 @@ void OutputFBO::renderToBackbuffer()
     glUniform1i(gridYLocation, m_Params.getGridSizeY());
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindVertexArray(m_VAO);   
+    glBindVertexArray(m_VAO->getID());   
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
