@@ -13,6 +13,10 @@ shifted camera's translation
 # Project's architecture
 TODO
 
+# Bulding && Installation
+
+**Pro tip:** use *cloneDeps.sh* script to get 3rd party dependencies \& create a CMake configuration
+ready-to-compile.
 
 ## Author
 - Roman Dobias (xdobia11(at)stud.fit.vutbr.cz)
