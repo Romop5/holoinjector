@@ -5,6 +5,7 @@
 #include <vector>
 #include "GL/gl.h"
 #include "utils/opengl_raii.hpp"
+#include "paralax/mapping.hpp"
 
 namespace ve
 {
@@ -14,7 +15,6 @@ namespace utils
 }
 namespace pipeline
 {
-    
 
     class OutputFBOParameters
     {
@@ -31,6 +31,14 @@ namespace pipeline
         size_t pixels_width = 512;
         size_t pixels_height = 256;
     };
+    /**
+     * @brief Wraps back-buffer with a layered FBO
+     *
+     * This class shadows a back-buffer. Instead rendering into the back-buffer,
+     * hooked draw calls are redirected to layers of OutputFBO. In the end of frame,
+     * layers are drawed to back-buffer using grid shader (nt. debug) or quit shader (a native
+     * display).
+     */
     struct OutputFBO
     {
         public:
@@ -61,6 +69,9 @@ namespace pipeline
         private:
         std::vector<ve::utils::FBORAII> m_proxyFBO;
         void clearImageFlag();
+
+        /// Render layers in grid layout
+        void renderGridLayout();
         bool    m_ContainsImageFlag = false;
         GLuint  m_FBOId = 0;
         GLuint  m_LayeredColorBuffer = 0;
@@ -74,6 +85,8 @@ namespace pipeline
 
         // Parameters
         OutputFBOParameters m_Params;
+
+        paralax::Mapping m_Pm;
     };
 
 }; //namespace pipeline

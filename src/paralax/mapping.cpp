@@ -12,7 +12,7 @@ void ve::paralax::Mapping::initializeResources()
         out vec2 uv;
         void main()
         {
-            vs_uv = uvIn;
+            uv = uvIn;
             float z = uvIn.x;
             if(!isFBO)
                 z = 0.0;
@@ -54,14 +54,14 @@ void ve::paralax::Mapping::initializeResources()
                 currentDepth += stepSize;
             }
 
-            float positionBeforeLastStep = currentPos.x - direction;
-            float depthBeforeLastStep = texture(texDepth, positionBeforeLastStep).x;
+            //float positionBeforeLastStep = currentPos.x - direction;
+            //float depthBeforeLastStep = texture(texDepth, positionBeforeLastStep).x;
             // how much depth changed when we moved along X axis in depth map
-            float depthStep = depth-depthBeforeLastStep;
+            //float depthStep = depth-depthBeforeLastStep;
             // how much ray traced depth differ from last depth
-            float depthDifference = currentDepth-depthBeforeLastStep;
+            //float depthDifference = currentDepth-depthBeforeLastStep;
             // ratio for traced depth vs step
-            float weight = depthDifference/depthStep;
+            //float weight = depthDifference/depthStep;
             if(currentPos.x > 1.0)
                 currentPos.x = 1.0;
             if(currentPos.x < 0.0)
@@ -91,6 +91,7 @@ void ve::paralax::Mapping::initializeResources()
     )", GL_FRAGMENT_SHADER);
 
     m_program = std::make_unique<ve::utils::glProgram>(std::move(vs), std::move(fs));
+    m_VAO = std::make_shared<ve::utils::glFullscreenVAO>();
 }
 
 void ve::paralax::Mapping::bindInputDepthBuffer(size_t bufferID)

@@ -10,8 +10,8 @@
 
 #include "logger.hpp"
 
+
 using namespace ve;
-using namespace ve::pipeline;
 using namespace ve::pipeline;
 
 //-----------------------------------------------------------------------------
@@ -172,31 +172,26 @@ void OutputFBO::deinitialize()
 }
 void OutputFBO::renderToBackbuffer()
 {
-    // Mark FBO as clean
-    clearImageFlag();
+    bool result = false;
+    if(result)
+    {
+        renderGridLayout();
+    } else {
+        static GLuint m_colorBuffer = 0;
+        static GLuint m_depthBuffer = 0;
+        if(!m_colorBuffer || !m_depthBuffer)
+        {
+            glGenTextures(1, &m_colorBuffer);
+            glTextureView(m_colorBuffer, GL_TEXTURE_2D, m_LayeredColorBuffer, GL_RGBA8,0,1,0,1);
 
-    GLint oldProgram;
-    glGetIntegerv(GL_CURRENT_PROGRAM, &oldProgram);
-
-    GLint oldVao;
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&oldVao);
-
-    glUseProgram(m_ViewerProgram);
-    auto gridXLocation = glGetUniformLocation(m_ViewerProgram, "gridXSize");
-    glUniform1i(gridXLocation, m_Params.getGridSizeX());
-
-    auto gridYLocation = glGetUniformLocation(m_ViewerProgram, "gridYSize");
-    glUniform1i(gridYLocation, m_Params.getGridSizeY());
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindVertexArray(m_VAO->getID());   
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
-
-    glUseProgram(oldProgram);
-    glBindVertexArray(oldVao);
+            glGenTextures(1, &m_depthBuffer);
+            glTextureView(m_depthBuffer, GL_TEXTURE_2D, m_LayeredColorBuffer, GL_DEPTH24_STENCIL8,0,1,0,1);
+            m_Pm.initializeResources();
+        }
+        m_Pm.bindInputColorBuffer(m_colorBuffer);
+        m_Pm.bindInputDepthBuffer(m_depthBuffer);
+        m_Pm.draw(m_Params.getTextureWidth(), m_Params.getTextureHeight(), 0.0, 1.0);
+    }
 }
 
 
@@ -260,3 +255,32 @@ GLuint OutputFBO::createProxyFBO(size_t layer)
     m_proxyFBO[layer] = ve::utils::FBORAII(proxyFBO);
     return proxyFBO;
 }
+
+void OutputFBO::renderGridLayout()
+{
+    // Mark FBO as clean
+    clearImageFlag();
+
+    GLint oldProgram;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &oldProgram);
+
+    GLint oldVao;
+    glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&oldVao);
+
+    glUseProgram(m_ViewerProgram);
+    auto gridXLocation = glGetUniformLocation(m_ViewerProgram, "gridXSize");
+    glUniform1i(gridXLocation, m_Params.getGridSizeX());
+
+    auto gridYLocation = glGetUniformLocation(m_ViewerProgram, "gridYSize");
+    glUniform1i(gridYLocation, m_Params.getGridSizeY());
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindVertexArray(m_VAO->getID());   
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
+
+    glUseProgram(oldProgram);
+    glBindVertexArray(oldVao);
+};
