@@ -3,6 +3,8 @@
 
 namespace ve
 {
+namespace trackers
+{
 class LegacyTracker
 {
     public:
@@ -28,4 +30,5 @@ class LegacyTracker
     
 };
 
+} // namespace trackers
 } // namespace ve

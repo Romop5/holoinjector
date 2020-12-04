@@ -6,13 +6,15 @@
 
 namespace ve
 {
+namespace trackers
+{
     /// Should be filled by shader program during glUniformBlockBinding
     struct UniformBinding
     {
         bool hasTransformation = false;
         size_t transformationOffset = -1;
         glm::mat4 transformation;
-        PerspectiveProjectionParameters projection; 
+        ve::pipeline::PerspectiveProjectionParameters projection;
     };
 
     class UniformBlockTracing
@@ -30,5 +32,6 @@ namespace ve
             // binding point (e.g. 0) to metadata
             std::unordered_map<size_t, UniformBinding> m_UniformBindings;
     };
+} //namespace trackers
 } //namespace ve
 #endif

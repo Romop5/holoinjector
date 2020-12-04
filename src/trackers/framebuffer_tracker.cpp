@@ -9,11 +9,12 @@
 #include <unordered_set>
 
 using namespace ve;
+using namespace ve::trackers;
 
 ///////////////////////////////////////////////////////////////////////////////
 // FramebufferMetadata 
 ///////////////////////////////////////////////////////////////////////////////
-void ve::FramebufferMetadata::attach(GLenum attachmentType, std::shared_ptr<TextureMetadata> texture, FramebufferAttachment::DType type, size_t level, size_t layer)
+void ve::trackers::FramebufferMetadata::attach(GLenum attachmentType, std::shared_ptr<TextureMetadata> texture, FramebufferAttachment::DType type, size_t level, size_t layer)
 {
     FramebufferAttachment attachment;
     attachment.type = type;
@@ -26,22 +27,22 @@ void ve::FramebufferMetadata::attach(GLenum attachmentType, std::shared_ptr<Text
     assert(hasAttachment(attachmentType) == true);
 }
 
-bool ve::FramebufferMetadata::hasAttachment(GLenum attachmentType) const
+bool ve::trackers::FramebufferMetadata::hasAttachment(GLenum attachmentType) const
 {
     return m_attachments.has(attachmentType);
 }
 
-bool ve::FramebufferMetadata::hasShadowFBO() const
+bool ve::trackers::FramebufferMetadata::hasShadowFBO() const
 {
     return m_shadowFBOId;
 }
 
-size_t ve::FramebufferMetadata::getShadowFBO() const
+size_t ve::trackers::FramebufferMetadata::getShadowFBO() const
 {
     return m_shadowFBOId;
 }
 
-void ve::FramebufferMetadata::createShadowedFBO(size_t numLayers)
+void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
 {
     assert(hasAnyAttachment());
     GLuint shadowFBO;
@@ -65,7 +66,7 @@ void ve::FramebufferMetadata::createShadowedFBO(size_t numLayers)
     m_shadowFBOId = shadowFBO;
 }
 
-GLuint ve::FramebufferMetadata::createProxyFBO(size_t layer)
+GLuint ve::trackers::FramebufferMetadata::createProxyFBO(size_t layer)
 {
     // draw() call should be over existing FBO, which should have been previously created
     // and binded, thus a shadow FBO must already exist!
@@ -102,13 +103,13 @@ GLuint ve::FramebufferMetadata::createProxyFBO(size_t layer)
 }
 
 
-bool ve::FramebufferMetadata::isShadowMapFBO() const
+bool ve::trackers::FramebufferMetadata::isShadowMapFBO() const
 {
     return !m_attachments.has(GL_COLOR_ATTACHMENT0) && 
             (m_attachments.has(GL_DEPTH_ATTACHMENT) || m_attachments.has(GL_DEPTH_STENCIL_ATTACHMENT)) &&
             m_attachments.size() == 1;
 }
-bool ve::FramebufferMetadata::isEnvironmentMapFBO() const
+bool ve::trackers::FramebufferMetadata::isEnvironmentMapFBO() const
 {
     const static auto cubeMapTypes = std::unordered_set<GLenum>{GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BINDING_CUBE_MAP,GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_PROXY_TEXTURE_CUBE_MAP};
 
@@ -128,19 +129,19 @@ bool ve::FramebufferMetadata::isEnvironmentMapFBO() const
     return false;
 }
 
-bool ve::FramebufferMetadata::hasAnyAttachment() const
+bool ve::trackers::FramebufferMetadata::hasAnyAttachment() const
 {
     return m_attachments.size() > 0;
 }
 ///////////////////////////////////////////////////////////////////////////////
 // FramebufferTracker
 ///////////////////////////////////////////////////////////////////////////////
-bool ve::FramebufferTracker::isFBODefault() const
+bool ve::trackers::FramebufferTracker::isFBODefault() const
 {
     return getBoundId() == 0;
 }
 
-bool ve::FramebufferTracker::isSuitableForRepeating() const
+bool ve::trackers::FramebufferTracker::isSuitableForRepeating() const
 {
     if(isFBODefault())
         return true;

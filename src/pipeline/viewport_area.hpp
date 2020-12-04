@@ -3,6 +3,8 @@
 #include <GL/gl.h>
 namespace ve
 {
+namespace pipeline
+{
 /**
  * @brief Utility for storing & accessing OpenGL's viewport structure with more comfort
  */
@@ -31,5 +33,6 @@ class ViewportArea
     private:
     GLint data[4];
 }; 
+} //namespace pipeline
 } //namespace ve
 #endif

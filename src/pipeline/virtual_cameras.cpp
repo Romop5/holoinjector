@@ -3,6 +3,7 @@
 #include <cassert>
 
 using namespace ve;
+using namespace ve::pipeline;
 const glm::mat4& Camera::getViewMatrix() const
 {
     return m_viewMatrix;

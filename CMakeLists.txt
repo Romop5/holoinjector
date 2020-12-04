@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
-project(enhancer)
+project(enhancer
+    VERSION 1.0
+    DESCRIPTION "A conversion layer for legacy OpenGL apps to multiview, wide-angle 3D display"
+    HOMEPAGE_URL "https://github.com/Romop5/diploma-thesis")
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
@@ -7,6 +10,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 # Get options from user
 ###############################################################################
 option(ENHANCER_BUILD_TESTS "Should also build unittests?" ON)
+option(ENHANCER_BUILD_DOCS "Should also build Doxygen docs?" OFF)
 option(ENHANCER_BUILD_TESTS_COVERAGE "Should also enable code coverage?" OFF)
 option(ENHANCER_32 "Force 32-bit compilation" OFF)
 
@@ -52,6 +56,15 @@ find_package(glm REQUIRED)
 find_package(FreeImage REQUIRED)
 find_package(fmt REQUIRED)
 find_package(yaml-cpp REQUIRED)
+
+if(${ENHANCER_BUILD_DOCS})
+    find_package(Doxygen
+                 REQUIRED dot
+                 OPTIONAL_COMPONENTS mscgen dia)
+
+    set(DOXYGEN_HAVE_DOT TRUE)
+    doxygen_add_docs(Doxygen ALL)
+endif()
 ###############################################################################
 
 ###############################################################################
@@ -125,15 +138,13 @@ target_include_directories(enhancer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${FREEIMAGE_INCLUDE_DIR})
 target_compile_features(enhancer_core PUBLIC cxx_std_17)
 
-
-
 ###############################################################################
 # Create utils library (enhancer_core)
 ###############################################################################
 add_library(${ENHANCER_PROJECT_NAME} INTERFACE 
 )
 
-target_sources(${ENHANCER_PROJECT_NAME} INTERFACE 
+target_sources(${ENHANCER_PROJECT_NAME} INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hooking/opengl_redirector_base.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hooking/opengl_redirector_base.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/startup_enhancer.cpp

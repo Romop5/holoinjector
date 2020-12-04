@@ -11,6 +11,8 @@
 #include "logger.hpp"
 
 using namespace ve;
+using namespace ve::pipeline;
+using namespace ve::pipeline;
 
 //-----------------------------------------------------------------------------
 // OutputFBOParameters
@@ -131,12 +133,12 @@ void OutputFBO::initialize(OutputFBOParameters params)
         }
     )");
 
-    auto fs = utils::glShader(FS, GL_FRAGMENT_SHADER);
+    auto fs = ve::utils::glShader(FS, GL_FRAGMENT_SHADER);
     assert(fs.getID() != 0);
-    auto vs = utils::glShader(VS, GL_VERTEX_SHADER);
+    auto vs = ve::utils::glShader(VS, GL_VERTEX_SHADER);
     assert(vs.getID() != 0);
 
-    auto program = utils::glProgram(std::move(vs),std::move(fs));
+    auto program = ve::utils::glProgram(std::move(vs),std::move(fs));
     assert(program.getID() != 0);
     m_ViewerProgram = program.releaseID();
 
@@ -255,6 +257,6 @@ GLuint OutputFBO::createProxyFBO(size_t layer)
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     assert(status == GL_FRAMEBUFFER_COMPLETE);
 
-    m_proxyFBO[layer] = utils::FBORAII(proxyFBO);
+    m_proxyFBO[layer] = ve::utils::FBORAII(proxyFBO);
     return proxyFBO;
 }

@@ -8,6 +8,8 @@ using original_symbol_getter = std::function<void*(const char* symbolName)>;
 
 namespace ve
 {
+namespace hooking 
+{
     class RedirectorBase
     {
         private:
@@ -33,5 +35,6 @@ namespace ve
             return redirector;
         }
     };
+} // namespace hooking
 } // namespace ve
 #endif

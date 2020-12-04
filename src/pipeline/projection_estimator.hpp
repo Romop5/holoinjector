@@ -9,6 +9,8 @@
 #include <glm/glm.hpp>
 namespace ve
 {
+namespace pipeline
+{
     struct PerspectiveProjectionParameters
     {
         bool isPerspective = true;
@@ -33,5 +35,6 @@ namespace ve
      * @return estimated parameters
      */
     PerspectiveProjectionParameters estimatePerspectiveProjection(glm::mat4 transformationMatrix);
+} // namespace pipeline
 } // namespace ve
 #endif

@@ -12,7 +12,8 @@
 
 namespace ve
 {
-    /// 
+namespace trackers 
+{
     class TextureMetadata;
 
     struct FramebufferAttachment
@@ -66,5 +67,6 @@ namespace ve
         bool isFBODefault() const;
         bool isSuitableForRepeating() const;
     };
+} // namespace trackers
 } // namespace ve
 #endif

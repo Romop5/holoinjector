@@ -2,6 +2,8 @@
 #include <string>
 namespace ve
 {
+namespace hooking
+{
     /**
      * @brief 
      */
@@ -31,4 +33,5 @@ namespace ve
                 return mapping;
             }
     };
+} //namespace hooking
 } //namespace ve

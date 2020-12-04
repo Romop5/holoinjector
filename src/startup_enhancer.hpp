@@ -7,7 +7,7 @@
  *
  * @param redirector
  */
-void enhancer_setup(std::unique_ptr<ve::RedirectorBase> redirector);
+void enhancer_setup(std::unique_ptr<ve::hooking::RedirectorBase> redirector);
 void enhancer_cleaner();
 
 #endif

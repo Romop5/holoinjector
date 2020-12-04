@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "pipeline/pipeline_injector.hpp"
 using namespace ve;
+using namespace ve::pipeline;
 namespace helper
 {
     static void printPipeline(PipelineInjector::PipelineType& pipeline)

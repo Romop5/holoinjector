@@ -6,6 +6,8 @@
 
 namespace ve
 {
+namespace pipeline
+{
     class Camera
     {
         public:
@@ -85,5 +87,6 @@ namespace ve
         StorageContainer m_cameras;
         size_t m_CamerasPerWidth = 1;
     };
+} //namespace pipeline
 } //namespace ve
 #endif

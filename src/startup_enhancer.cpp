@@ -17,7 +17,7 @@ using namespace ve;
 
 struct EnhancerContext
 {
-    std::unique_ptr<RedirectorBase> redirector;
+    std::unique_ptr<ve::hooking::RedirectorBase> redirector;
     //subhook_t dlsymhook;
 };
 
@@ -194,7 +194,7 @@ void _hack_preventLazyBinding()
  *
  * Hooks all neccessary functions to detour OpenGL library calls
  */
-void enhancer_setup(std::unique_ptr<RedirectorBase> redirector)
+void enhancer_setup(std::unique_ptr<ve::hooking::RedirectorBase> redirector)
 {
     // Necessary hack
     _hack_preventLazyBinding();

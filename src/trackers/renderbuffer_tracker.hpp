@@ -8,6 +8,8 @@
 
 namespace ve
 {
+namespace trackers
+{
     class RenderbufferMetadata: public TextureMetadata
     {
         public:
@@ -18,5 +20,6 @@ namespace ve
     class RenderbufferTracker: public ContextTracker<std::shared_ptr<RenderbufferMetadata>>
     {
     };
-}
+} //namespace trackers
+} //namespace ve
 #endif

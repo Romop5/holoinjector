@@ -5,6 +5,7 @@
 #include <iostream>
 
 using namespace ve;
+using namespace ve::trackers;
 
 bool LegacyTracker::isLegacyNeeded() const
 {

@@ -5,6 +5,7 @@
 #include "renderbuffer_tracker.hpp"
 
 using namespace ve;
+using namespace ve::trackers;
 //-----------------------------------------------------------------------------
 // RenderbufferMetadata
 //-----------------------------------------------------------------------------

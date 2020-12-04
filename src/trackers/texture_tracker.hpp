@@ -8,6 +8,8 @@
 
 namespace ve
 {
+namespace trackers
+{
     class TextureMetadata
     {
         public:
@@ -84,5 +86,6 @@ namespace ve
         private:
         TextureUnitTracker m_TextureUnits;
     };
-}
+} //namespace trackers
+} //namespace ve
 #endif

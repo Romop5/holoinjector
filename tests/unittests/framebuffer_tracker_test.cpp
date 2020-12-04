@@ -3,6 +3,7 @@
 #include "trackers/texture_tracker.hpp"
 
 using namespace ve;
+using namespace ve::trackers;
 
 namespace {
 TEST(FramebufferTracker, Basic) {

@@ -10,6 +10,8 @@
 
 namespace ve
 {
+namespace pipeline
+{
     struct PipelineParams
     {
         // True when original VS was dividing by 1.0
@@ -67,5 +69,6 @@ namespace ve
 
             bool injectShader(std::string& sourceCode, ProgramMetadata& outMetadata);
     };
+} //namespace pipeline
 } //namespace ve
 #endif

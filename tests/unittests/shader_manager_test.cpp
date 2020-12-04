@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 using namespace ve;
+using namespace ve::trackers;
 
 namespace {
 TEST(ShaderManager, Basic) 
@@ -14,7 +15,7 @@ TEST(ShaderManager, Basic)
     ASSERT_FALSE(m.isVSBound());
     ASSERT_FALSE(m.isGSBound());
 
-    m.add(1,std::make_shared<ve::ShaderProgram>());
+    m.add(1,std::make_shared<ShaderProgram>());
     ASSERT_TRUE(m.has(1));
 
     m.bind(1);
@@ -29,11 +30,11 @@ TEST(ShaderManager, Basic)
 TEST(ShaderManager, VertexShaderCreation) 
 {
     ShaderManager m;
-    m.add(1,std::make_shared<ve::ShaderProgram>());
+    m.add(1,std::make_shared<ShaderProgram>());
     m.bind(1);
     ASSERT_EQ(m.getBoundId(), 1);
 
-    auto newTest = std::make_shared<ve::ShaderMetadata>();
+    auto newTest = std::make_shared<ShaderMetadata>();
     newTest->m_Type = GL_VERTEX_SHADER;
     m.shaders.add(2,newTest);
     m.get(1)->attachShaderToProgram(m.shaders.get(2));
@@ -52,10 +53,10 @@ TEST(ShaderManager, VertexShaderCreation)
 TEST(ShaderManager, GeometryShader) 
 {
     ShaderManager m;
-    m.add(1,std::make_shared<ve::ShaderProgram>());
+    m.add(1,std::make_shared<ShaderProgram>());
     m.bind(1);
 
-    auto shader = std::make_shared<ve::ShaderMetadata>();
+    auto shader = std::make_shared<ShaderMetadata>();
     shader->m_Type = GL_GEOMETRY_SHADER;
     m.shaders.add(2,shader);
     m.get(1)->attachShaderToProgram(shader);
@@ -82,7 +83,7 @@ TEST(ShaderManager, IsShaderOneOf)
     size_t shaderID = 1;
     for(const auto& type: types)
     {
-        auto newShader = std::make_shared<ve::ShaderMetadata>();
+        auto newShader = std::make_shared<ShaderMetadata>();
         newShader->m_Type = type;
         m.shaders.add(shaderID,newShader);
         ASSERT_TRUE(m.shaders.has(shaderID));
@@ -97,10 +98,10 @@ TEST(ShaderManager, IsShaderOneOf)
 TEST(ShaderManager, GenericShaderCreation) 
 {
     ShaderManager m;
-    m.add(1,std::make_shared<ve::ShaderProgram>());
+    m.add(1,std::make_shared<ShaderProgram>());
     m.bind(1);
 
-    auto shader = std::make_shared<ve::ShaderMetadata>();
+    auto shader = std::make_shared<ShaderMetadata>();
     shader->m_Type = GL_FRAGMENT_SHADER;
     m.shaders.add(2,shader);
     m.get(1)->attachShaderToProgram(shader);
@@ -113,14 +114,14 @@ TEST(ShaderManager, GenericShaderCreation)
 TEST(ShaderManager, ProgramEnumeration) 
 {
     ShaderManager m;
-    m.add(1,std::make_shared<ve::ShaderProgram>());
+    m.add(1,std::make_shared<ShaderProgram>());
     ASSERT_EQ(m.getMap().size(),1);
     ASSERT_EQ(m.getMap().size(),1);
-    m.add(2,std::make_shared<ve::ShaderProgram>());
+    m.add(2,std::make_shared<ShaderProgram>());
     ASSERT_EQ(m.getMap().size(),2);
     ASSERT_EQ(m.getMap().size(),2);
 
-    m.shaders.add(2, std::make_shared<ve::ShaderMetadata>(2, GL_VERTEX_SHADER));
+    m.shaders.add(2, std::make_shared<ShaderMetadata>(2, GL_VERTEX_SHADER));
     m.get(2)->attachShaderToProgram(m.shaders.get(2));
 
     m.bind(2);

@@ -3,7 +3,10 @@
 
 #include <string>
 
-namespace ve {
+namespace ve 
+{
+namespace pipeline
+{
 struct ProgramMetadata
 {
     bool m_IsUniformInInterfaceBlock = false;
@@ -23,5 +26,6 @@ struct ProgramMetadata
     bool hasDetectedTransformation() const;
 };
 
+} //namespace pipeline
 } //namespace ve
 #endif

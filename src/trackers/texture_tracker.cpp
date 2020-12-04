@@ -7,6 +7,7 @@
 #include "logger.hpp"
 
 using namespace ve;
+using namespace ve::trackers;
 
 //-----------------------------------------------------------------------------
 // TextureMetadata

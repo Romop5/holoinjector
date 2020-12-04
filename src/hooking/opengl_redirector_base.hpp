@@ -12,6 +12,8 @@ namespace helper
 
 namespace ve
 {
+namespace hooking
+{
     /**
      * @brief Defines mechanism to redirect calls, specific to OpenGL
      *
@@ -3017,4 +3019,5 @@ namespace ve
 
         friend class helper::RegisterAPIFunction;
     };
+} //namespace hooking
 } //namespace ve

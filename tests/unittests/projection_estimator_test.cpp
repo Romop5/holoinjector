@@ -15,6 +15,9 @@
 
 #define ASSERT_NEAR_RELATIVE(a,b,c) ASSERT_NEAR(a,b,glm::abs(c*a))
 
+using namespace ve;
+using namespace ve::pipeline;
+
 struct EmptyOutputter
 {
     template<typename T>
@@ -41,7 +44,7 @@ float calculateFX(float deg, float aspectRatio = 1.0)
 
 #define TEST_PERSPECTIVE(angleDegrees, aspect, near, far)\
 {\
-    auto estimation = ve::estimatePerspectiveProjection(mvp);\
+    auto estimation = ve::pipeline::estimatePerspectiveProjection(mvp);\
     ASSERT_NEAR_RELATIVE(estimation.fy, calculateFX(angleDegrees),1e-3);\
     ASSERT_NEAR_RELATIVE(estimation.fx, calculateFX(angleDegrees, aspect),1e-3);\
 \
@@ -81,7 +84,7 @@ glm::mat4 SCALE(float s) { return glm::scale(glm::vec3(s)); }
 namespace {
 TEST(ProjectionEstimator, AsVector) {
     MAKE_PERSPECTIVE(90.0, 2.0, 0.1,100.0);
-    auto params = ve::estimatePerspectiveProjection(projection);
+    auto params = ve::pipeline::estimatePerspectiveProjection(projection);
 
     auto paramsVec = params.asVector();
     ASSERT_NEAR_RELATIVE(paramsVec[1], calculateFX(90.0),1e-3);
@@ -129,7 +132,7 @@ TEST(ProjectionEstimator, Scale) {
 TEST(ProjectionEstimator, OrthogonalProjection) {
     auto ortho = glm::mat4(glm::vec4(1.0,0.0,0.0,0.0), glm::vec4(0.0,1.0,0.0,0.0), glm::vec4(0.0,0.0,5.0,0.0), glm::vec4(0.0,0.0,1.0,1.0)); 
 
-    auto projection = ve::estimatePerspectiveProjection(ortho);
+    auto projection = ve::pipeline::estimatePerspectiveProjection(ortho);
     ASSERT_EQ(projection.isPerspective, false);
     ASSERT_EQ(projection.fx, 1.0);
     ASSERT_EQ(projection.fy, 1.0);

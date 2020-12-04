@@ -2,6 +2,7 @@
 #include "pipeline/virtual_cameras.hpp"
 
 using namespace ve;
+using namespace ve::pipeline;
 
 namespace {
 TEST(VirtualCameras, Setup) {

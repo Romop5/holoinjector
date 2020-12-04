@@ -10,6 +10,7 @@
 #include "logger.hpp"
 
 using namespace ve;
+using namespace ve::managers;
 
 void DrawManager::draw(Context& context, const std::function<void(void)>& drawCallLambda)
 {
@@ -187,7 +188,7 @@ void DrawManager::setEnhancerIdentity(Context& context)
     glUniform1i(location, 1);
 }
 
-void DrawManager::setEnhancerDecodedProjection(Context& context, GLuint program, const PerspectiveProjectionParameters& projection)
+void DrawManager::setEnhancerDecodedProjection(Context& context, GLuint program, const ve::pipeline::PerspectiveProjectionParameters& projection)
 {
     // upload parameters to GPU's program
     auto parametersLocation = glGetUniformLocation(program, "enhancer_deprojection");

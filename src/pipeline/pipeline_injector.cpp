@@ -6,6 +6,7 @@
 #include <cassert>
 
 using namespace ve;
+using namespace ve::pipeline;
 
 PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType input, const PipelineParams& params)
 {
@@ -150,7 +151,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
              * Interface blocks must be copied per-partes
              * => for each identifier, generate "out.id = in.id;" statement
              */
-            auto interfaceBlockDefinitionTokens = ve::tokenize(type);
+            auto interfaceBlockDefinitionTokens = ve::pipeline::tokenize(type);
             for(size_t i = 1; i < interfaceBlockDefinitionTokens.size(); i++)
             {
                 if(interfaceBlockDefinitionTokens[i] != ";")

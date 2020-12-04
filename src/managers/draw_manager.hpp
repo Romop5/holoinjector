@@ -6,7 +6,11 @@
 namespace ve
 {
 class Context;
-class PerspectiveProjectionParameters;
+namespace pipeline {
+    class PerspectiveProjectionParameters;
+}
+namespace managers
+{
 
 class DrawPipelineInterface
 {
@@ -23,7 +27,7 @@ class DrawManager
 {
     public:
     void draw(Context& context, const std::function<void(void)>& code);
-    void setEnhancerDecodedProjection(Context& context, GLuint program, const PerspectiveProjectionParameters& projection);
+    void setEnhancerDecodedProjection(Context& context, GLuint program, const ve::pipeline::PerspectiveProjectionParameters& projection);
     private:
     /// Decide which draw methods should be used
     void drawGeneric(Context& context, const std::function<void(void)>& code);
@@ -44,6 +48,7 @@ class DrawManager
     // Legacy OpenGL - Create single-view FBO from current FBO
     GLuint createSingleViewFBO(Context& contex, size_t layer);
 };
+} // namespace managers
 } // namespace ve
 
 #endif

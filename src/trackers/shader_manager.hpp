@@ -10,6 +10,8 @@
 
 namespace ve
 {
+namespace trackers
+{
     struct ShaderMetadata
     {
         ShaderMetadata() = default;
@@ -30,7 +32,7 @@ namespace ve
     {
         BindableContextTracker<std::shared_ptr<ShaderMetadata>> shaders;
 
-        std::unique_ptr<ProgramMetadata> m_Metadata;
+        std::unique_ptr<ve::pipeline::ProgramMetadata> m_Metadata;
 
         struct UniformBlock
         {
@@ -65,5 +67,6 @@ namespace ve
         /// Get metadata for currently bounded program
         std::shared_ptr<ShaderMetadata> getBoundGS();
     };
+} // namespace trackers
 } // namespace ve
 

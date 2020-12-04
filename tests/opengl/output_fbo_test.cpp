@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
     OpenGLTestContext windowSystem;
     windowSystem.initialize();
 
-    ve::OutputFBO fbo;
+    ve::pipeline::OutputFBO fbo;
     fbo.initialize();
 
     Triangle triangle;

@@ -67,7 +67,7 @@ void Repeater::initialize()
     }
 
     // Initialize oputput FBO
-    OutputFBOParameters outParameters;
+    ve::pipeline::OutputFBOParameters outParameters;
     if(settings.hasKey("outputXSize"))
     {
         outParameters.pixels_width = settings.getAsSizet("outputXSize");
@@ -171,7 +171,7 @@ void Repeater::glGenTextures(GLsizei n,GLuint* textures)
 
     for(size_t i = 0; i < n; i++)
     {
-        auto texture = std::make_shared<TextureMetadata>(textures[i]);
+        auto texture = std::make_shared<ve::trackers::TextureMetadata>(textures[i]);
 	m_Context.m_TextureTracker.add(textures[i], texture);
     }
 }
@@ -179,37 +179,37 @@ void Repeater::glGenTextures(GLsizei n,GLuint* textures)
 void Repeater::glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLint border,GLenum format,GLenum type,const GLvoid* pixels) 
 {
     OpenglRedirectorBase::glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
-    auto finalFormat = TextureTracker::isSizedFormat(internalFormat)?internalFormat:TextureTracker::convertToSizedFormat(format,type);
-    m_Context.m_TextureTracker.get(getCurrentID(TextureTracker::getParameterForType(target)))->setStorage(target,width, 0, level, 0, finalFormat);
+    auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat)?internalFormat:ve::trackers::TextureTracker::convertToSizedFormat(format,type);
+    m_Context.m_TextureTracker.get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, 0, level, 0, finalFormat);
 }
 void Repeater::glTexImage2D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLsizei height,GLint border,GLenum format,GLenum type,const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
-    auto finalFormat = TextureTracker::isSizedFormat(internalFormat)?internalFormat:TextureTracker::convertToSizedFormat(format,type);
-    m_Context.m_TextureTracker.get(getCurrentID(TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
+    auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat)?internalFormat:ve::trackers::TextureTracker::convertToSizedFormat(format,type);
+    m_Context.m_TextureTracker.get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
 }
 
 void Repeater::glTexImage3D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels)
 {
     OpenglRedirectorBase::glTexImage3D(target, level, internalformat, width, height, depth, border, format, type, pixels);
-    auto finalFormat = TextureTracker::isSizedFormat(internalformat)?internalformat:TextureTracker::convertToSizedFormat(format,type);
-    m_Context.m_TextureTracker.get(getCurrentID(TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
+    auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalformat)?internalformat:ve::trackers::TextureTracker::convertToSizedFormat(format,type);
+    m_Context.m_TextureTracker.get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
 }
 
 void Repeater::glTexStorage1D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
 {
     OpenglRedirectorBase::glTexStorage1D(target,levels,internalformat,width);
-    m_Context.m_TextureTracker.get(getCurrentID(TextureTracker::getParameterForType(target)))->setStorage(target,width, 0, levels, 0, internalformat);
+    m_Context.m_TextureTracker.get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, 0, levels, 0, internalformat);
 }
 void Repeater::glTexStorage2D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
 {
     OpenglRedirectorBase::glTexStorage2D(target,levels,internalformat,width,height);
-    m_Context.m_TextureTracker.get(getCurrentID(TextureTracker::getParameterForType(target)))->setStorage(target,width, height, levels, 0, internalformat);
+    m_Context.m_TextureTracker.get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, levels, 0, internalformat);
 }
 void Repeater::glTexStorage3D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
 {
     OpenglRedirectorBase::glTexStorage3D(target,levels,internalformat,width,height, depth);
-    m_Context.m_TextureTracker.get(getCurrentID(TextureTracker::getParameterForType(target)))->setStorage(target,width, height, levels, depth, internalformat);
+    m_Context.m_TextureTracker.get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, levels, depth, internalformat);
 }
 
 void Repeater::glTextureStorage1D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width)
@@ -234,7 +234,7 @@ void Repeater::glGenRenderbuffers (GLsizei n, GLuint* renderbuffers)
 
     for(size_t i = 0; i < n; i++)
     {
-        m_Context.m_RenderbufferTracker.add(renderbuffers[i],std::make_shared<RenderbufferMetadata>(renderbuffers[i]));
+        m_Context.m_RenderbufferTracker.add(renderbuffers[i],std::make_shared<ve::trackers::RenderbufferMetadata>(renderbuffers[i]));
     }
 }
 void Repeater::glRenderbufferStorage (GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
@@ -266,7 +266,7 @@ void Repeater::glActiveTexture (GLenum texture)
 GLuint Repeater::glCreateShader(GLenum shaderType)
 {
     auto id = OpenglRedirectorBase::glCreateShader(shaderType);
-    auto shaderDesc = std::make_shared<ShaderMetadata>(id,shaderType);
+    auto shaderDesc = std::make_shared<ve::trackers::ShaderMetadata>(id,shaderType);
     m_Context.m_Manager.shaders.add(id, shaderDesc);
     return id;
 }
@@ -300,9 +300,9 @@ void Repeater::glLinkProgram (GLuint programId)
     /*
      *  Create pipeline injector with correct parameters (number of vies)
      */
-    ve::PipelineInjector plInjector;
-    ve::PipelineInjector::PipelineType pipeline;
-    PipelineParams parameters;
+    ve::pipeline::PipelineInjector plInjector;
+    ve::pipeline::PipelineInjector::PipelineType pipeline;
+    ve::pipeline::PipelineParams parameters;
 
     // TODO: detect if number of invocations is supported
     parameters.countOfInvocations = m_Context.m_OutputFBO.getParams().getLayers();
@@ -420,7 +420,7 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
 
     // estimate projection matrix from value
     const auto mat = opengl_utils::createMatrixFromRawGL(value);
-    auto estimatedParameters = estimatePerspectiveProjection(mat);
+    auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(mat);
 
     Logger::log("[Repeater] estimating parameters from uniform matrix\n");
     Logger::log("[Repeater] parameters: fx({}) fy({}) near ({}) near({}) isPerspective ({}) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane, estimatedParameters.isPerspective);
@@ -432,7 +432,7 @@ GLuint Repeater::glCreateProgram (void)
 {
     auto result = OpenglRedirectorBase::glCreateProgram();
 
-    auto program = std::make_shared<ShaderProgram>();
+    auto program = std::make_shared<ve::trackers::ShaderProgram>();
     m_Context.m_Manager.add(result, program);
     return result;
 }
@@ -512,7 +512,7 @@ void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
     OpenglRedirectorBase::glGenFramebuffers(n, framebuffers);
     for(size_t i=0;i < n; i++)
     {
-        auto fbo = std::make_shared<FramebufferMetadata>();
+        auto fbo = std::make_shared<ve::trackers::FramebufferMetadata>();
         m_Context.m_FBOTracker.add(framebuffers[i],fbo);
     }
 }
@@ -574,23 +574,23 @@ void Repeater::glFramebufferTexture (GLenum target, GLenum attachment, GLuint te
 void Repeater::glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture1D(target,attachment,textarget, texture,level);
-    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_TextureTracker.get(texture),FramebufferAttachment::ATTACHMENT_1D);
+    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_TextureTracker.get(texture),ve::trackers::FramebufferAttachment::ATTACHMENT_1D);
 }
 void Repeater::glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture2D(target,attachment,textarget, texture,level);
-    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_TextureTracker.get(texture),FramebufferAttachment::ATTACHMENT_2D);
+    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_TextureTracker.get(texture),ve::trackers::FramebufferAttachment::ATTACHMENT_2D);
 }
 void Repeater::glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset)
 {
     OpenglRedirectorBase::glFramebufferTexture3D(target,attachment,textarget, texture,level,zoffset);
-    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_TextureTracker.get(texture),FramebufferAttachment::ATTACHMENT_3D);
+    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_TextureTracker.get(texture),ve::trackers::FramebufferAttachment::ATTACHMENT_3D);
 }
 
 void Repeater::glFramebufferRenderbuffer (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
 {
     OpenglRedirectorBase::glFramebufferRenderbuffer(target,attachment,renderbuffertarget, renderbuffer);
-    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_RenderbufferTracker.get(renderbuffer),FramebufferAttachment::ATTACHMENT_2D);
+    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_RenderbufferTracker.get(renderbuffer),ve::trackers::FramebufferAttachment::ATTACHMENT_2D);
 }
 // ----------------------------------------------------------------------------
 GLuint Repeater::glGetUniformBlockIndex (GLuint program, const GLchar* uniformBlockName)
@@ -601,7 +601,7 @@ GLuint Repeater::glGetUniformBlockIndex (GLuint program, const GLchar* uniformBl
     auto record = m_Context.m_Manager.get(program);
     if(record->m_UniformBlocks.count(uniformBlockName) == 0)
     {
-        ShaderProgram::UniformBlock block;
+        ve::trackers::ShaderProgram::UniformBlock block;
         block.location = result;
         record->m_UniformBlocks[std::string(uniformBlockName)] = block;
     }
@@ -734,7 +734,7 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
         if(size >= metadata.transformationOffset+sizeof(float)*16)
         {
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data)+metadata.transformationOffset, sizeof(float)*16);
-            auto estimatedParameters = estimatePerspectiveProjection(metadata.transformation);
+            auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(metadata.transformation);
 
             Logger::log("[Repeater] estimating parameters from UBO\n");
             Logger::log("[Repeater] parameters: fx({}) fy({}) near ({}) near({}) isPerspective ({}) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane, estimatedParameters.isPerspective);
@@ -763,7 +763,7 @@ void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size,
         if(offset+size >= metadata.transformationOffset+sizeof(float)*16)
         {
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data)+metadata.transformationOffset, sizeof(float)*16);
-            auto estimatedParameters = estimatePerspectiveProjection(metadata.transformation);
+            auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(metadata.transformation);
             Logger::log("[Repeater] estimating parameters from UBO\n");
             Logger::log("[Repeater] parameters: fx({}) fy({}) near ({}) near({}) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane);
 
@@ -907,7 +907,7 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
                 m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance += (keySym == XK_F3?1.0:-1.0)*0.5;
             break; 
             case XK_F5:
-                m_Context.m_cameraParameters = CameraParameters();
+                m_Context.m_cameraParameters = ve::pipeline::CameraParameters();
             break;
             case XK_F12: case XK_F11:
                 m_Context.m_IsMultiviewActivated = !m_Context.m_IsMultiviewActivated;

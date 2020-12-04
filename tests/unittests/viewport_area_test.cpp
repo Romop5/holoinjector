@@ -5,7 +5,7 @@ using namespace ve;
 
 namespace {
 TEST(ViewportArea, Basic) {
-    ve::ViewportArea area(1,2,3,4);
+    ve::pipeline::ViewportArea area(1,2,3,4);
     ASSERT_EQ(area.getX(), 1);
     ASSERT_EQ(area[0], 1);
     ASSERT_EQ(area.getY(), 2);
@@ -24,7 +24,7 @@ TEST(ViewportArea, Basic) {
 }
 
 TEST(ViewportArea, RawPtr) {
-    ViewportArea area;
+    ve::pipeline::ViewportArea area;
     area.getDataPtr()[0] = 666;
     ASSERT_EQ(area[0],666);
 }

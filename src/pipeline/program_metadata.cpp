@@ -1,6 +1,7 @@
 #include "pipeline/program_metadata.hpp"
 
 using namespace ve;
+using namespace ve::pipeline;
 
 bool ProgramMetadata::isUBOused() const
 {

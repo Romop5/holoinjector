@@ -4,6 +4,7 @@
 #include <cassert>
 
 using namespace ve;
+using namespace ve::pipeline;
 
 ViewportArea::ViewportArea()
 {

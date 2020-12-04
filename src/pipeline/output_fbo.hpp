@@ -8,10 +8,13 @@
 
 namespace ve
 {
-    namespace utils
-    {
-        class glFullscreenVAO;
-    }
+namespace utils
+{
+    class glFullscreenVAO;
+}
+namespace pipeline
+{
+    
 
     class OutputFBOParameters
     {
@@ -56,7 +59,7 @@ namespace ve
         GLuint createProxyFBO(size_t layer);
         //---------------------------------------------------------------------
         private:
-        std::vector<utils::FBORAII> m_proxyFBO;
+        std::vector<ve::utils::FBORAII> m_proxyFBO;
         void clearImageFlag();
         bool    m_ContainsImageFlag = false;
         GLuint  m_FBOId = 0;
@@ -73,5 +76,6 @@ namespace ve
         OutputFBOParameters m_Params;
     };
 
+}; //namespace pipeline
 }; //namespace ve
 #endif

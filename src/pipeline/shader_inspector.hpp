@@ -6,6 +6,8 @@
 
 namespace ve
 {
+namespace pipeline 
+{
     class ShaderInspector
     {
         protected:
@@ -87,6 +89,7 @@ namespace ve
         //TODO: separate into logic module
 	static std::string getCommonTransformationShader();
     };
+} //namespace pipeline
 } //namespace ve
 
 #endif

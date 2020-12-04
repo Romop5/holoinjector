@@ -1,6 +1,7 @@
 #include "trackers/uniform_block_tracing.hpp"
 
 using namespace ve;
+using namespace ve::trackers;
 
 bool UniformBlockTracing::hasBufferBindingIndex(size_t buffer) const
 {

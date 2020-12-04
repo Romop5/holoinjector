@@ -23,6 +23,7 @@
  */
 
 using namespace ve;
+using namespace ve::hooking;
 
 static OpenglRedirectorBase* g_OpenGLRedirector = nullptr;
 thread_local bool g_IsAlreadyInsideWrapper = false;

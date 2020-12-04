@@ -11,6 +11,7 @@
 
 
 using namespace ve;
+using namespace ve::pipeline;
 
 namespace helper
 {
@@ -43,7 +44,7 @@ namespace helper
         }
     }
 
-    PerspectiveProjectionParameters extractPerspective(const glm::mat4& mvp)
+    ve::pipeline::PerspectiveProjectionParameters extractPerspective(const glm::mat4& mvp)
     {
         PerspectiveProjectionParameters result;
         // Obtain fx as length of 0th row of 3x3 matrix
@@ -96,7 +97,7 @@ namespace helper
 } //namespace helper
 
 
-PerspectiveProjectionParameters ve::estimatePerspectiveProjection(glm::mat4 transformationMatrix)
+ve::pipeline::PerspectiveProjectionParameters ve::pipeline::estimatePerspectiveProjection(glm::mat4 transformationMatrix)
 {
     return helper::extractPerspective(transformationMatrix);
 }

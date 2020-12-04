@@ -19,7 +19,7 @@ namespace ve
      * Trackers keep track of object' properties and bindings whereas 
      * managers are responsible for handling events w.r.t. context.
      */
-    class Repeater: public OpenglRedirectorBase
+    class Repeater: public ve::hooking::OpenglRedirectorBase
     {
         public:
         virtual void registerCallbacks() override;
@@ -158,6 +158,6 @@ namespace ve
         ///////////////////////////////////////////////////////////////////////
         Context m_Context;
 
-        DrawManager m_DrawManager;
+        ve::managers::DrawManager m_DrawManager;
     };
 }

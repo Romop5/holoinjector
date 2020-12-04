@@ -10,6 +10,7 @@
 #include "pipeline/shader_parser.hpp"
 
 using namespace ve;
+using namespace ve::pipeline;
 
 namespace helper {
     /**
@@ -53,7 +54,7 @@ namespace helper {
     }
 } // namespace helper
 
-bool ve::ShaderInspector::isIdentifier(const std::string_view& token) const
+bool ve::pipeline::ShaderInspector::isIdentifier(const std::string_view& token) const
 {
     auto tk = std::string(token);
     std::smatch m;
@@ -61,7 +62,7 @@ bool ve::ShaderInspector::isIdentifier(const std::string_view& token) const
     return std::regex_match(tk, m, identifier);
 }
 
-bool ve::ShaderInspector::isUniformVariableInInterfaceBlock(const std::string& identifier) const
+bool ve::pipeline::ShaderInspector::isUniformVariableInInterfaceBlock(const std::string& identifier) const
 {
     std::string regexLiteral = std::string("uniform[^;]*\\{[^\\}]*[\f\n\r\t\v ]") + identifier + std::string("[\f\n\r\t\v ]*;[^\\}]*\\}");
     auto isDefinedAsUniform = std::regex(regexLiteral,std::regex::extended);
@@ -70,7 +71,7 @@ bool ve::ShaderInspector::isUniformVariableInInterfaceBlock(const std::string& i
     return m.size() > 0;
 }
 
-std::string ve::ShaderInspector::getUniformBlockName(const std::string& uniformName) const
+std::string ve::pipeline::ShaderInspector::getUniformBlockName(const std::string& uniformName) const
 {
     if(uniformName.empty())
         return "";
@@ -85,7 +86,7 @@ std::string ve::ShaderInspector::getUniformBlockName(const std::string& uniformN
     return "";
 }
 
-bool ve::ShaderInspector::isUniformVariable(const std::string& identifier) const
+bool ve::pipeline::ShaderInspector::isUniformVariable(const std::string& identifier) const
 {
     if(identifier.empty())
         return false;
@@ -100,7 +101,7 @@ bool ve::ShaderInspector::isUniformVariable(const std::string& identifier) const
 }
 
 
-std::string ve::ShaderInspector::getVariableType(const std::string& variable) const
+std::string ve::pipeline::ShaderInspector::getVariableType(const std::string& variable) const
 {
     std::string regexLiteral = std::string("[a-zA-Z0-9]+[\f\n\r\t\v ]+") + variable+ std::string("[\f\n\r\t\v ]*;");
     auto definitionPattern = std::regex(regexLiteral,std::regex::extended);
@@ -113,7 +114,7 @@ std::string ve::ShaderInspector::getVariableType(const std::string& variable) co
     return definitionStatementRawText.substr(0, firstWhitespacePosition);
 }
 
-std::vector<ShaderInspector::VertextAssignment> ve::ShaderInspector::findAllOutVertexAssignments() const
+std::vector<ShaderInspector::VertextAssignment> ve::pipeline::ShaderInspector::findAllOutVertexAssignments() const
 {
     std::vector<VertextAssignment> results;
     // Search for all assignments into gl_Position
@@ -171,7 +172,7 @@ std::vector<ShaderInspector::VertextAssignment> ve::ShaderInspector::findAllOutV
 }
 
 
-std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector::VertextAssignment>& assignments)
+std::string ve::pipeline::ShaderInspector::injectShader(const std::vector<ShaderInspector::VertextAssignment>& assignments)
 {
     std::string output = sourceCode;
     for(auto& statement: assignments)
@@ -196,7 +197,7 @@ std::string ve::ShaderInspector::injectShader(const std::vector<ShaderInspector:
     return output;
 }
 
-std::string ve::ShaderInspector::getTransformationUniformName(std::vector<VertextAssignment> assignments)
+std::string ve::pipeline::ShaderInspector::getTransformationUniformName(std::vector<VertextAssignment> assignments)
 {
     for(const auto& statement: assignments)
     {
@@ -208,7 +209,7 @@ std::string ve::ShaderInspector::getTransformationUniformName(std::vector<Vertex
 
 
 /// Get count of declared uniforms in shader
-size_t ve::ShaderInspector::getCountOfUniforms() const
+size_t ve::pipeline::ShaderInspector::getCountOfUniforms() const
 {
     size_t count = 0;
     size_t position = sourceCode.find("uniform");
@@ -220,7 +221,7 @@ size_t ve::ShaderInspector::getCountOfUniforms() const
     return count;
 }
 
-std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfUniforms() const
+std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::getListOfUniforms() const
 {
     std::vector<std::pair<std::string, std::string>> result;
     size_t position = sourceCode.find("uniform");
@@ -234,7 +235,7 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfU
             // parser shader block
             auto positionBracketEnd = sourceCode.find_first_of("}",position+1);
             auto uniformDefinition = sourceCode.substr(position, positionBracketEnd-position);
-            auto tokens = ve::tokenize(uniformDefinition);
+            auto tokens = ve::pipeline::tokenize(uniformDefinition);
             decltype(tokens)::iterator semicolon = tokens.begin();
             while((semicolon = std::find(semicolon, tokens.end(), ";")) != tokens.end())
             {
@@ -245,7 +246,7 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfU
         } else {
             // parse scalar uniform definition
             auto uniformDefinition = sourceCode.substr(position, positionSemicolon-position);
-            auto definitionTokens = ve::tokenize(uniformDefinition);
+            auto definitionTokens = ve::pipeline::tokenize(uniformDefinition);
             const auto& type = definitionTokens[definitionTokens.size()-2];
             const auto& name = definitionTokens[definitionTokens.size()-1];
 
@@ -257,7 +258,7 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfU
     return result;
 }
 
-std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfInputs() const
+std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::getListOfInputs() const
 {
     std::vector<std::pair<std::string, std::string>> result;
 
@@ -282,7 +283,7 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfI
                 auto idEnd = sourceCode.find(";", end);
 
                 auto snippet = sourceCode.substr(start, idEnd-start);
-                auto definitionTokens = ve::tokenize(snippet);
+                auto definitionTokens = ve::pipeline::tokenize(snippet);
 
                 const auto type = sourceCode.substr(start, end-start);
                 const auto& name = definitionTokens[definitionTokens.size()-1];
@@ -292,7 +293,7 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfI
             }
 
             // is interface
-            auto definitionTokens = ve::tokenize(s);
+            auto definitionTokens = ve::pipeline::tokenize(s);
             assert(definitionTokens.size() >= 2);
             const auto& type = definitionTokens[definitionTokens.size()-2];
             const auto& name = definitionTokens[definitionTokens.size()-1];
@@ -306,7 +307,7 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfI
     return result;
 }
 
-std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfOutputs() const
+std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::getListOfOutputs() const
 {
     std::vector<std::pair<std::string, std::string>> result;
 
@@ -319,7 +320,7 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfO
         for(auto& match: m)
         {
             std::string s = match.str();
-            auto definitionTokens = ve::tokenize(s);
+            auto definitionTokens = ve::pipeline::tokenize(s);
             assert(definitionTokens.size() >= 2);
             const auto& type = definitionTokens[definitionTokens.size()-2];
             const auto& name = definitionTokens[definitionTokens.size()-1];
@@ -333,12 +334,12 @@ std::vector<std::pair<std::string, std::string>> ve::ShaderInspector::getListOfO
     return result;
 }
 
-ShaderInspector::Analysis ve::ShaderInspector::analyzeGLPositionAssignment(std::string& assignment) const
+ShaderInspector::Analysis ve::pipeline::ShaderInspector::analyzeGLPositionAssignment(std::string& assignment) const
 {
-    auto tokens = ve::tokenize(assignment);
+    auto tokens = ve::pipeline::tokenize(assignment);
 
     auto firstIdentifier = std::find_if(tokens.begin()+1, tokens.end(), [&](const auto token)->bool {
-            return isIdentifier(token) && !ve::isBuiltinGLSLType(token);});
+            return isIdentifier(token) && !ve::pipeline::isBuiltinGLSLType(token);});
 
     const auto uniforms = getListOfUniforms();
     const auto inputs = getListOfInputs();
@@ -378,7 +379,7 @@ ShaderInspector::Analysis ve::ShaderInspector::analyzeGLPositionAssignment(std::
     return ana;
 }
 
-std::string ve::ShaderInspector::replaceGLPositionAssignment(VertextAssignment assignment) const
+std::string ve::pipeline::ShaderInspector::replaceGLPositionAssignment(VertextAssignment assignment) const
 {
     if(assignment.isFixedPipelineUsed)
         return assignment.statementRawText;
@@ -410,10 +411,10 @@ std::string ShaderInspector::recursivelySearchUniformFromTemporaryVariable(std::
     while(std::regex_search(sourceCode, m, firstTokenPattern))
     {
         std::string foundStr = m.str();
-        auto tokens = ve::tokenize(foundStr);
+        auto tokens = ve::pipeline::tokenize(foundStr);
 
         auto firstIdentifier = std::find_if(tokens.begin()+1, tokens.end(), [&](const auto token)->bool {
-            return isIdentifier(token) && !ve::isBuiltinGLSLType(token);});
+            return isIdentifier(token) && !ve::pipeline::isBuiltinGLSLType(token);});
 
         if(firstIdentifier != tokens.end())
         {

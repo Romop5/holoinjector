@@ -27,9 +27,9 @@ struct Context
     /// Is repeater rendering scene into multiple virtual screens
     bool m_IsMultiviewActivated = false;
     /// Determines how virtual views are placed in view-space
-    CameraParameters m_cameraParameters;
+    ve::pipeline::CameraParameters m_cameraParameters;
     /// Store's repeating setup
-    VirtualCameras m_cameras;
+    ve::pipeline::VirtualCameras m_cameras;
     /// Provides interface for system testing
     Diagnostics m_diagnostics;
  
@@ -37,23 +37,23 @@ struct Context
      *  TRACKERS
      * ----------------------------------------------------------------------*/
     /// Store metadata about application's shaders and programs
-    ShaderManager m_Manager;
+    ve::trackers::ShaderManager m_Manager;
     /// Store metadata about create Frame Buffer Objects
-    FramebufferTracker m_FBOTracker;
+    ve::trackers::FramebufferTracker m_FBOTracker;
     /// Keeps track of OpenGL fixed-pipeline calls
-    LegacyTracker m_LegacyTracker;
+    ve::trackers::LegacyTracker m_LegacyTracker;
     /// Keeps track of each GL_TEXTURE_XYZ
-    TextureTracker m_TextureTracker;
+    ve::trackers::TextureTracker m_TextureTracker;
     /// Keeps track of GL_RENDERBUFFER objects
-    RenderbufferTracker m_RenderbufferTracker;
+    ve::trackers::RenderbufferTracker m_RenderbufferTracker;
     /// Store metadata and bindings for UBO
-    UniformBlockTracing m_UniformBlocksTracker;
+    ve::trackers::UniformBlockTracing m_UniformBlocksTracker;
 
     /* ------------------------------------------------------------------------
      *  HELPER STRUCTURES
      * ----------------------------------------------------------------------*/
     /// Caches current viewport/scissor area
-    ViewportArea currentViewport, currentScissorArea;
+    ve::pipeline::ViewportArea currentViewport, currentScissorArea;
     /* 
      * Global glCallList for legacy OpenGL primitives
      * - record everything between glBegin()/glEnd() 
@@ -62,7 +62,7 @@ struct Context
     GLint m_callList = 0;
 
     /// FBO with all raw virtual cameras
-    OutputFBO m_OutputFBO;
+    ve::pipeline::OutputFBO m_OutputFBO;
 };
 } // namespace ve
 #endif
