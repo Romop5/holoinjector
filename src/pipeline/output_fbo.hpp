@@ -72,6 +72,8 @@ namespace pipeline
 
         /// Render layers in grid layout
         void renderGridLayout();
+        /// Render paralax
+        void renderParalax();
         bool    m_ContainsImageFlag = false;
         GLuint  m_FBOId = 0;
         GLuint  m_LayeredColorBuffer = 0;

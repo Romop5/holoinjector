@@ -130,11 +130,12 @@ namespace utils
                 float position[3];
                 float uv[2];
             };
-            VertexData vertices[] = 
+
+            VertexData vertices[] =
             {
                 {-1.0, -1.0, 0.0, 0.0,0.0},
                 {1.0, -1.0, 0.0, 1.0,0.0},
-                {-1.0, 1.0, 0.0, -1.0,0.0},
+                {-1.0, 1.0, 0.0, 0.0,1.0},
                 {1.0, 1.0, 0.0, 1.0,1.0},
             };
 
@@ -156,9 +157,10 @@ namespace utils
             glVertexAttribPointer(0, 3, GL_FLOAT, false, 5*sizeof(float),0);
             glEnableVertexAttribArray(0);
             // Enable UV
-            glVertexAttribPointer(1, 2, GL_FLOAT, false, 5*sizeof(float),reinterpret_cast<void*>(2*sizeof(float)));
+            glVertexAttribPointer(1, 2, GL_FLOAT, false, 5*sizeof(float),reinterpret_cast<void*>(3*sizeof(float)));
             glEnableVertexAttribArray(1);
 
+            glBindVertexArray(0);
             glBindBuffer(GL_ARRAY_BUFFER, oldVBO);
             glBindVertexArray(oldVao);
 
@@ -174,7 +176,7 @@ namespace utils
         {
             GLint oldVao;
             glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&oldVao);
-            glBindVertexArray(getID());   
+            glBindVertexArray(getID());
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             glBindVertexArray(oldVao);
         }

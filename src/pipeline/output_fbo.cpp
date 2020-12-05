@@ -172,28 +172,21 @@ void OutputFBO::deinitialize()
 }
 void OutputFBO::renderToBackbuffer()
 {
+    // Mark FBO as clean
+    clearImageFlag();
+
+    GLint oldProgram;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &oldProgram);
+
     bool result = false;
     if(result)
     {
         renderGridLayout();
     } else {
-        static GLuint m_colorBuffer = 0;
-        static GLuint m_depthBuffer = 0;
-        if(!m_colorBuffer || !m_depthBuffer)
-        {
-            glGenTextures(1, &m_colorBuffer);
-            glTextureView(m_colorBuffer, GL_TEXTURE_2D, m_LayeredColorBuffer, GL_RGBA8,0,1,0,1);
-
-            glGenTextures(1, &m_depthBuffer);
-            glTextureView(m_depthBuffer, GL_TEXTURE_2D, m_LayeredColorBuffer, GL_DEPTH24_STENCIL8,0,1,0,1);
-            m_Pm.initializeResources();
-        }
-        m_Pm.bindInputColorBuffer(m_colorBuffer);
-        m_Pm.bindInputDepthBuffer(m_depthBuffer);
-        m_Pm.draw(m_Params.getTextureWidth(), m_Params.getTextureHeight(), 0.0, 1.0);
+        renderParalax();
     }
+    glUseProgram(oldProgram);
 }
-
 
 void OutputFBO::clearBuffers()
 {
@@ -258,15 +251,6 @@ GLuint OutputFBO::createProxyFBO(size_t layer)
 
 void OutputFBO::renderGridLayout()
 {
-    // Mark FBO as clean
-    clearImageFlag();
-
-    GLint oldProgram;
-    glGetIntegerv(GL_CURRENT_PROGRAM, &oldProgram);
-
-    GLint oldVao;
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&oldVao);
-
     glUseProgram(m_ViewerProgram);
     auto gridXLocation = glGetUniformLocation(m_ViewerProgram, "gridXSize");
     glUniform1i(gridXLocation, m_Params.getGridSizeX());
@@ -275,12 +259,39 @@ void OutputFBO::renderGridLayout()
     glUniform1i(gridYLocation, m_Params.getGridSizeY());
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindVertexArray(m_VAO->getID());   
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_VAO->draw();
     glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
 
-    glUseProgram(oldProgram);
-    glBindVertexArray(oldVao);
 };
+
+void OutputFBO::renderParalax()
+{
+    static GLuint m_colorBuffer = 0;
+    static GLuint m_depthBuffer = 0;
+    if(!m_colorBuffer || !m_depthBuffer)
+    {
+        glGenTextures(1, &m_colorBuffer);
+        glTextureView(m_colorBuffer, GL_TEXTURE_2D, m_LayeredColorBuffer, GL_RGBA8,0,1,0,1);
+
+        glGenTextures(1, &m_depthBuffer);
+        glTextureView(m_depthBuffer, GL_TEXTURE_2D, m_LayeredDepthStencilBuffer, GL_DEPTH24_STENCIL8,0,1,0,1);
+        m_Pm.initializeResources();
+    }
+
+    glActiveTexture(GL_TEXTURE0+79);
+    glBindTexture(GL_TEXTURE_2D, m_colorBuffer);
+
+    glActiveTexture(GL_TEXTURE0+78);
+    glBindTexture(GL_TEXTURE_2D, m_depthBuffer);
+    // Hack: needed for DEPTH+STENCIL texture
+    glTexParameteri (GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+    glActiveTexture(GL_TEXTURE0);
+
+    m_Pm.bindInputColorBuffer(79);
+    m_Pm.bindInputDepthBuffer(78);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    m_Pm.draw(m_Params.getTextureWidth(), m_Params.getTextureHeight(), 0.0, 1.0);
+    glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
+}
