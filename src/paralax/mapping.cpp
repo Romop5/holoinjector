@@ -31,10 +31,19 @@ void ve::paralax::Mapping::initializeResources()
         uniform bool isFBO = false;
         uniform float time = 0.0;
 
-        
+
+        float getDepth(vec2 pos)
+        {
+            if(currentPos.x > 1.0)
+                currentPos.x = 1.0;
+            if(currentPos.x < 0.0)
+                currentPos.x = 0.0;
+ 
+            return texture(texDepth, pos).x
+        }
         vec2 paralax(vec2 start, float disparity, float center)
         {
-            int maxSteps = 60;
+            int maxSteps = 5;
             float stepSize = 1.0/maxSteps;
             // when disparity is 0, depth map is projected orthogonally,
             // thus ray should have zero horizontal movement when stepping
@@ -45,17 +54,17 @@ void ve::paralax::Mapping::initializeResources()
 
             vec2 currentPos = start-vec2(disparity*center,0.0);
             float currentDepth = 0.0;
-            float depth = texture(texDepth, currentPos).x;
+            float depth = getDepth(currentPos);
 
             while(currentDepth < depth)
             {
                 currentPos.x += direction;
-                depth = texture(texDepth, currentPos).x;
+                depth = getDepth(currentPos);
                 currentDepth += stepSize;
             }
 
             //float positionBeforeLastStep = currentPos.x - direction;
-            //float depthBeforeLastStep = texture(texDepth, positionBeforeLastStep).x;
+            //float depthBeforeLastStep = getDepth(positionBeforeLastStep);
             // how much depth changed when we moved along X axis in depth map
             //float depthStep = depth-depthBeforeLastStep;
             // how much ray traced depth differ from last depth
@@ -70,23 +79,15 @@ void ve::paralax::Mapping::initializeResources()
         }
        
 
-        uniform float disparity = 0.0;
+        uniform float disparity = 0.1;
         void main()
         {
             vec4 color = texture(tex, uv);
             vec4 depth = texture(texDepth,uv);
-            if(isFBO)
-            {
-                color.x = 0.2*gl_Layer;
-            }
-            FragColor = vec4(color.xyz, 0.5);
-            if(!isFBO)
-            {
-                FragColor.z = depth.x*1.0;
-                float center = time;
-                //float center = 0.0;
-                FragColor = texture(tex, paralax(uv, disparity, center));
-            }
+            //FragColor = vec4(color.xyz, 0.5);
+            FragColor = vec4(1.0);
+            float center = time;
+            FragColor.xyz = texture(tex, paralax(uv, disparity, center)).xyz;
         }
     )", GL_FRAGMENT_SHADER);
 
