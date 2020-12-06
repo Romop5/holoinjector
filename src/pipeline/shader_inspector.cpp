@@ -486,13 +486,13 @@ std::string ShaderInspector::getCommonTransformationShader()
 
     float enhancer_getProjectionShift(int cameraId)
     {
-        float normalizedDistance = 1.0-2.0*float(cameraId)/float(enhancer_max_views);
+        float normalizedDistance = 1.0-2.0*float(cameraId+1)/float(enhancer_max_views+1);
         return normalizedDistance*enhancer_XShiftMultiplier/enhancer_FrontalDistance;
     }
 
     float enhancer_getCenterShift(int cameraId)
     {
-        float normalizedDistance = 1.0- 2.0*float(cameraId)/float(enhancer_max_views);
+        float normalizedDistance = 1.0- 2.0*float(cameraId+1)/float(enhancer_max_views+1);
         return normalizedDistance*enhancer_XShiftMultiplier;
     }
 

@@ -91,6 +91,8 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_inspector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/viewport_area.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/viewport_area.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/camera_parameters.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/camera_parameters.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/virtual_cameras.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/virtual_cameras.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_parser.hpp

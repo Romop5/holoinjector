@@ -9,6 +9,7 @@
 #include "trackers/renderbuffer_tracker.hpp"
 
 #include "pipeline/viewport_area.hpp"
+#include "pipeline/camera_parameters.hpp"
 #include "pipeline/virtual_cameras.hpp"
 #include "pipeline/output_fbo.hpp"
 

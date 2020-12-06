@@ -34,23 +34,30 @@ void ve::paralax::Mapping::initializeResources()
 
         float getDepth(vec2 pos)
         {
-            if(currentPos.x > 1.0)
-                currentPos.x = 1.0;
-            if(currentPos.x < 0.0)
-                currentPos.x = 0.0;
- 
-            return texture(texDepth, pos).x
+            float depth = texture(texDepth, pos).x;
+
+            if(depth > 1.0)
+                return 1.0;
+            if(depth < 0.0)
+                return 0.0;
+
+
+            // Linearize
+            const float C = 0.01;
+            depth = (exp(depth * log(C + 1.0)) - 1.0) / C;
+
+            return depth;
         }
-        vec2 paralax(vec2 start, float disparity, float center)
+        vec3 paralax(vec2 start, float disparity, float center)
         {
-            int maxSteps = 5;
+            int maxSteps = 60;
+            const float GapOffset = 01.0;
             float stepSize = 1.0/maxSteps;
             // when disparity is 0, depth map is projected orthogonally,
             // thus ray should have zero horizontal movement when stepping
             // on the other hand, when disparity increases, viewer see
             // scene from the angle.
             float direction = stepSize*disparity;
-            //float direction = -(start.x-0.5)*stepSize*disparity;
 
             vec2 currentPos = start-vec2(disparity*center,0.0);
             float currentDepth = 0.0;
@@ -63,31 +70,46 @@ void ve::paralax::Mapping::initializeResources()
                 currentDepth += stepSize;
             }
 
-            //float positionBeforeLastStep = currentPos.x - direction;
-            //float depthBeforeLastStep = getDepth(positionBeforeLastStep);
-            // how much depth changed when we moved along X axis in depth map
-            //float depthStep = depth-depthBeforeLastStep;
-            // how much ray traced depth differ from last depth
-            //float depthDifference = currentDepth-depthBeforeLastStep;
-            // ratio for traced depth vs step
-            //float weight = depthDifference/depthStep;
-            if(currentPos.x > 1.0)
-                currentPos.x = 1.0;
-            if(currentPos.x < 0.0)
-                currentPos.x = 0.0;
-            return currentPos;
+            vec2 positionBeforeLastStep = currentPos - vec2(direction,0.0);
+            float depthBeforeLastStep = getDepth(positionBeforeLastStep);
+            float before =  depthBeforeLastStep - (currentDepth - stepSize);
+            float after = currentDepth-depth;
+            float DepthDifference = depthBeforeLastStep - depth;
+
+            float weight = before / (after+before);
+            currentPos = weight*currentPos + (1-weight)*positionBeforeLastStep;
+
+            const float pixelSize = 1.0/1024.0;
+            // Apply gap masking (by JMF)
+            DepthDifference *= GapOffset * disparity * 100.0;
+            DepthDifference *= pixelSize; // Replace function
+            currentPos.x += DepthDifference;
+
+            //return vec2(weight, 0.0);
+            //return currentPos;
+            return vec3(currentPos, weight);
         }
        
 
-        uniform float disparity = 0.1;
+        uniform float centerRatio = 1.0;
+        uniform float disparityRatio = 0.1;
+        uniform int gridXSize = 1;
+        uniform int gridYSize = 1;
         void main()
         {
-            vec4 color = texture(tex, uv);
-            vec4 depth = texture(texDepth,uv);
-            //FragColor = vec4(color.xyz, 0.5);
+            vec2 newUv = mod(vec2(gridXSize*uv.x, gridYSize*uv.y), 1.0);
+            ivec2 indices = ivec2(int(uv.x*float(gridXSize)),int(uv.y*float(gridYSize)));
+            int layer = (gridYSize-indices.y-1)*gridXSize+indices.x;
+            int maxLayers = gridXSize*gridYSize;
+            float disparityOffset = 2.0*(((layer+1.0)/(maxLayers+1.0))-0.5);
+            float disparity = disparityOffset*disparityRatio;
+
+            vec4 color = texture(tex, newUv);
+            vec4 depth = texture(texDepth, newUv);
             FragColor = vec4(1.0);
-            float center = time;
-            FragColor.xyz = texture(tex, paralax(uv, disparity, center)).xyz;
+            vec3 paraUv = paralax(newUv, -disparity, centerRatio);
+            FragColor.xyz = texture(tex, paraUv.xy).xyz;
+            //FragColor.x = paraUv.z;
         }
     )", GL_FRAGMENT_SHADER);
 
@@ -105,12 +127,12 @@ void ve::paralax::Mapping::bindInputColorBuffer(size_t bufferID)
     setUniform1i("tex", bufferID);
 }
 
-void ve::paralax::Mapping::draw(size_t windowsX, size_t windowsY, float disparityRatio, float centerRatio)
+void ve::paralax::Mapping::draw(size_t gridXSize, size_t gridYSize, float disparityRatio, float centerRatio)
 {
-    setUniform1i("windowsX", windowsX); 
-    setUniform1i("windowsY", windowsY); 
-    setUniform1i("disparityRatio", disparityRatio); 
-    setUniform1i("centerRatio", centerRatio); 
+    setUniform1i("gridXSize", gridXSize);
+    setUniform1i("gridYSize", gridYSize);
+    setUniform1f("disparityRatio", disparityRatio);
+    setUniform1f("centerRatio", centerRatio); 
     m_VAO->draw();
 }
 
@@ -120,4 +142,12 @@ void ve::paralax::Mapping::setUniform1i(const std::string& name, size_t value)
     size_t texLocation = glGetUniformLocation(progID, name.c_str());
     glUseProgram(progID);
     glUniform1i(texLocation, value);
+}
+
+void ve::paralax::Mapping::setUniform1f(const std::string& name, float value)
+{
+    auto progID = m_program->getID();
+    size_t texLocation = glGetUniformLocation(progID, name.c_str());
+    glUseProgram(progID);
+    glUniform1f(texLocation, value);
 }

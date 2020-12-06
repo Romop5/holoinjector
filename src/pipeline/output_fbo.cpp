@@ -6,6 +6,7 @@
 #include "GL/glext.h"
 
 #include "pipeline/output_fbo.hpp"
+#include "pipeline/camera_parameters.hpp"
 #include "utils/opengl_objects.hpp"
 
 #include "logger.hpp"
@@ -69,6 +70,8 @@ void OutputFBO::initialize(OutputFBOParameters params)
     assert(glGetError() == GL_NO_ERROR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_LayeredColorBuffer, 0);
     auto error = glGetError();
     if(error != GL_NO_ERROR)
@@ -81,6 +84,8 @@ void OutputFBO::initialize(OutputFBOParameters params)
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, params.getTextureWidth(),params.getTextureHeight(), countOfLayers);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     assert(glGetError() == GL_NO_ERROR);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, m_LayeredDepthStencilBuffer, 0);
     assert(glGetError() == GL_NO_ERROR);
@@ -121,12 +126,10 @@ void OutputFBO::initialize(OutputFBOParameters params)
 
         void main()
         {
-            // debug only
-            //if(uv.x > 0.5)
-            //    discard;
             vec2 newUv = mod(vec2(gridXSize*uv.x, gridYSize*uv.y), 1.0);
             ivec2 indices = ivec2(int(uv.x*float(gridXSize)),int(uv.y*float(gridYSize)));
             int layer = (gridYSize-indices.y-1)*gridXSize+indices.x;
+
             color = texture(enhancer_layeredScreen, vec3(newUv, layer));
             color.w = 1.0;
             //color.z = float(layer)/float(gridXSize*gridYSize);
@@ -170,7 +173,7 @@ void OutputFBO::deinitialize()
         m_ViewerProgram = 0;
     }
 }
-void OutputFBO::renderToBackbuffer()
+void OutputFBO::renderToBackbuffer(const CameraParameters& params)
 {
     // Mark FBO as clean
     clearImageFlag();
@@ -183,7 +186,7 @@ void OutputFBO::renderToBackbuffer()
     {
         renderGridLayout();
     } else {
-        renderParalax();
+        renderParalax(params);
     }
     glUseProgram(oldProgram);
 }
@@ -266,32 +269,45 @@ void OutputFBO::renderGridLayout()
 
 };
 
-void OutputFBO::renderParalax()
+void OutputFBO::renderParalax(const CameraParameters& params)
 {
     static GLuint m_colorBuffer = 0;
     static GLuint m_depthBuffer = 0;
     if(!m_colorBuffer || !m_depthBuffer)
     {
+        size_t layers = m_Params.gridXSize*m_Params.gridYSize;
+        size_t zeroLayer = layers/2;
         glGenTextures(1, &m_colorBuffer);
-        glTextureView(m_colorBuffer, GL_TEXTURE_2D, m_LayeredColorBuffer, GL_RGBA8,0,1,0,1);
+        glTextureView(m_colorBuffer, GL_TEXTURE_2D, m_LayeredColorBuffer, GL_RGBA8,0,1,zeroLayer,1);
 
         glGenTextures(1, &m_depthBuffer);
-        glTextureView(m_depthBuffer, GL_TEXTURE_2D, m_LayeredDepthStencilBuffer, GL_DEPTH24_STENCIL8,0,1,0,1);
+        glTextureView(m_depthBuffer, GL_TEXTURE_2D, m_LayeredDepthStencilBuffer, GL_DEPTH24_STENCIL8,0,1,zeroLayer,1);
         m_Pm.initializeResources();
     }
 
+    /*
+     * TODO: make sure that TU 78/79 are not used by native app
+     */
     glActiveTexture(GL_TEXTURE0+79);
     glBindTexture(GL_TEXTURE_2D, m_colorBuffer);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glActiveTexture(GL_TEXTURE0+78);
     glBindTexture(GL_TEXTURE_2D, m_depthBuffer);
     // Hack: needed for DEPTH+STENCIL texture
     glTexParameteri (GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glActiveTexture(GL_TEXTURE0);
 
     m_Pm.bindInputColorBuffer(79);
     m_Pm.bindInputDepthBuffer(78);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    m_Pm.draw(m_Params.getTextureWidth(), m_Params.getTextureHeight(), 0.0, 1.0);
+
+    const auto disparityRatio = std::max(0.0,1.0-1.0/params.m_XShiftMultiplier);
+    const auto centerRatio = std::max(0.0,1.0-1.0/params.m_frontOpticalAxisCentreDistance);
+    //m_Pm.draw(m_Params.getGridSizeX(), m_Params.getGridSizeY(), disparityRatio, centerRatio);
+    m_Pm.draw(2,1, disparityRatio, centerRatio);
     glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
 }

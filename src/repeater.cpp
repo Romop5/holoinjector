@@ -112,7 +112,7 @@ void Repeater::glClear(GLbitfield mask)
         OpenglRedirectorBase::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
                     m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
-        m_Context.m_OutputFBO.renderToBackbuffer();
+        m_Context.m_OutputFBO.renderToBackbuffer(m_Context.m_cameraParameters);
         m_Context.m_OutputFBO.clearBuffers();
     }
 
@@ -131,7 +131,7 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
         OpenglRedirectorBase::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
                     m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
-        m_Context.m_OutputFBO.renderToBackbuffer();
+        m_Context.m_OutputFBO.renderToBackbuffer(m_Context.m_cameraParameters);
         m_Context.m_OutputFBO.clearBuffers();
     } else {
         OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);

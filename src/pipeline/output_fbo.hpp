@@ -11,10 +11,13 @@ namespace ve
 {
 namespace utils
 {
+    /// Fwd declaration
     class glFullscreenVAO;
 }
 namespace pipeline
 {
+    /// Fwd declaration
+    class CameraParameters;
 
     class OutputFBOParameters
     {
@@ -26,10 +29,10 @@ namespace pipeline
         size_t getGridSizeX() const;
         size_t getGridSizeY() const;
 
-        size_t gridXSize = 5;
-        size_t gridYSize = 9;
+        size_t gridXSize = 3;
+        size_t gridYSize = 3;
         size_t pixels_width = 512;
-        size_t pixels_height = 256;
+        size_t pixels_height = 512;
     };
     /**
      * @brief Wraps back-buffer with a layered FBO
@@ -54,7 +57,7 @@ namespace pipeline
         GLuint getFBOId();
 
         /// Blits all cameras to back buffer (as a grid)
-        void renderToBackbuffer();
+        void renderToBackbuffer(const CameraParameters& params);
         /// Clear buffers on new frame
         void clearBuffers();
 
@@ -73,7 +76,7 @@ namespace pipeline
         /// Render layers in grid layout
         void renderGridLayout();
         /// Render paralax
-        void renderParalax();
+        void renderParalax(const CameraParameters& params);
         bool    m_ContainsImageFlag = false;
         GLuint  m_FBOId = 0;
         GLuint  m_LayeredColorBuffer = 0;

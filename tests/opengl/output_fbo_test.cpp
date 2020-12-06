@@ -7,6 +7,7 @@
 #include "opengl_test_context.hpp"
 
 #include "pipeline/output_fbo.hpp"
+#include "pipeline/camera_parameters.hpp"
 #include "utils/opengl_objects.hpp"
 
 
@@ -142,10 +143,10 @@ int main(int argc, char** argv) {
     Triangle triangle;
     triangle.initialize();
 
-    //fbo.renderToBackbuffer();
-
     // Set GL Sample stuff
     glClearColor(0.5f, 0.6f, 0.7f, 1.0f);
+
+    ve::pipeline::CameraParameters params;
 
         // Enter message loop
     while (true) {
@@ -157,7 +158,7 @@ int main(int argc, char** argv) {
         triangle.draw();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        fbo.renderToBackbuffer();
+        fbo.renderToBackbuffer(params);
 
         /*glBegin(GL_TRIANGLES);
                 glColor3f(  1.0f,  0.0f, 0.0f);

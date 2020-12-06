@@ -3,6 +3,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include "pipeline/viewport_area.hpp"
+#include "pipeline/camera_parameters.hpp"
 
 namespace ve
 {
@@ -29,25 +30,6 @@ namespace pipeline
         glm::mat4 m_viewMatrixRotational;
         /// Cache: per-camera viewport
         ViewportArea m_viewport;
-    };
-
-    /// Groups parameters
-    struct CameraParameters
-    {
-        /// Multiplies camera's shift in X
-        float m_XShiftMultiplier = 0.0;
-        /// Distance in view-space of the centrum where all optical axis points at
-        float m_frontOpticalAxisCentreDistance = 1.0;
-        
-        /// Default constructor
-        CameraParameters() = default;
-        /// Copy-constructor
-        CameraParameters(CameraParameters&) = default;
-        bool operator==(const CameraParameters& p)
-        {
-            return (m_XShiftMultiplier == p.m_XShiftMultiplier
-                    && m_frontOpticalAxisCentreDistance == p.m_frontOpticalAxisCentreDistance);
-        }
     };
 
     /*
