@@ -42,9 +42,7 @@ void Repeater::initialize()
         m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance = settings.getAsFloat("distance");
     // if ENHANCER_NOW is provided, then start with multiple views right now
     if(settings.hasKey("now"))
-    {
         m_Context.m_IsMultiviewActivated = true;
-    }
     if(settings.hasKey("exitAfterFrames"))
         m_Context.m_diagnostics.setTerminationAfterFrame(settings.getAsSizet("exitAfterFrames"));
 
@@ -52,38 +50,36 @@ void Repeater::initialize()
      * DIAGNOSTIC
      */
     if(settings.hasKey("onlyShownCameraID"))
-    {
         m_Context.m_diagnostics.setOnlyVirtualCamera(settings.getAsSizet("onlyShownCameraID"));
-    }
 
     if(settings.hasKey("screenshotFormatString"))
-    {
         m_Context.m_diagnostics.setScreenshotFormat(settings.getAsString("screenshotFormatString"));
-    }
 
     if(settings.hasKey("shouldBeNonIntrusive"))
-    {
         m_Context.m_diagnostics.setNonIntrusiveness(true);
-    }
 
     // Initialize oputput FBO
     ve::pipeline::OutputFBOParameters outParameters;
     if(settings.hasKey("outputXSize"))
-    {
         outParameters.pixels_width = settings.getAsSizet("outputXSize");
-    }
     if(settings.hasKey("outputYSize"))
-    {
         outParameters.pixels_width = settings.getAsSizet("outputYSize");
-    }
+
+    if(settings.hasKey("gridXSize"))
+        outParameters.gridXSize = settings.getAsSizet("gridXSize");
+    if(settings.hasKey("gridYSize"))
+        outParameters.gridYSize = settings.getAsSizet("gridYSize");
+
+    // Initialize hidden FBO for redirecting draws to back-buffer
     m_Context.m_OutputFBO.initialize(outParameters);
     assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
 
     const auto layers = m_Context.m_OutputFBO.getParams().getLayers();
     const auto gridXSize = m_Context.m_OutputFBO.getParams().getGridSizeX();
-    /// Fill viewports
+    // Fill viewports
     OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, m_Context.currentViewport.getDataPtr());
     OpenglRedirectorBase::glGetIntegerv(GL_SCISSOR_BOX, m_Context.currentScissorArea.getDataPtr());
+    // Initialize a cache of windows's subviews
     m_Context.m_cameras.setupWindows(layers, gridXSize);
     m_Context.m_cameras.updateViewports(m_Context.currentViewport);
     m_Context.m_cameras.updateParamaters(m_Context.m_cameraParameters);

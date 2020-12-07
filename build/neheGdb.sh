@@ -1,0 +1,1 @@
+../../../examples/nehe-opengl/gdb.sh

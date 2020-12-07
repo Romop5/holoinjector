@@ -56,6 +56,8 @@ void Config::loadFromFile(ConfigDict& dict,const std::string& fileName)
     {
         {"outputXSize", "512"},
         {"outputYSize", "512"},
+        {"gridXSize", "3"},
+        {"gridYSize", "3"},
     };
     
     YAML::Node config = YAML::LoadFile(fileName);

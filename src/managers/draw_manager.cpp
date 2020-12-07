@@ -129,6 +129,7 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
         const auto& camera = context.m_cameras.getCameras()[cameraID];
 
         auto shadowFBO = createSingleViewFBO(context, cameraID);
+        assert(shadowFBO != 0);
         glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 
         const auto& t = camera.getViewMatrix();
@@ -179,6 +180,8 @@ void DrawManager::setEnhancerIdentity(Context& context)
 {
     const auto identity = glm::mat4(1.0);
     auto program = context.m_Manager.getBoundId();
+    if(program == 0)
+        return;
     auto location = glGetUniformLocation(program, "enhancer_identity");
     glUniform1i(location, GL_TRUE);
 

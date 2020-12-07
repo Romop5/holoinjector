@@ -52,6 +52,8 @@ void OutputFBO::initialize(OutputFBOParameters params)
     m_Params = params;
 
     auto countOfLayers = params.getLayers();
+    for(size_t i = 0; i < countOfLayers; i++)
+        m_proxyFBO.push_back(std::move(ve::utils::FBORAII(0)));
 
     glGenFramebuffers(1, &m_FBOId); 
     assert(glGetError() == GL_NO_ERROR);
@@ -181,7 +183,7 @@ void OutputFBO::renderToBackbuffer(const CameraParameters& params)
     GLint oldProgram;
     glGetIntegerv(GL_CURRENT_PROGRAM, &oldProgram);
 
-    bool result = false;
+    bool result = true;
     if(result)
     {
         renderGridLayout();
@@ -229,7 +231,6 @@ GLuint OutputFBO::createProxyFBO(size_t layer)
     {
         return m_proxyFBO[layer].getID();
     }
-    m_proxyFBO.reserve(layer+1);
 
     // Assert that OutputFBO has already been initialized
     assert(m_FBOId != 0);
@@ -248,8 +249,9 @@ GLuint OutputFBO::createProxyFBO(size_t layer)
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     assert(status == GL_FRAMEBUFFER_COMPLETE);
 
-    m_proxyFBO[layer] = ve::utils::FBORAII(proxyFBO);
-    return proxyFBO;
+    m_proxyFBO[layer] = std::move(ve::utils::FBORAII(proxyFBO));
+    assert(m_proxyFBO[layer].getID() == proxyFBO);
+    return m_proxyFBO[layer].getID();
 }
 
 void OutputFBO::renderGridLayout()
@@ -307,7 +309,6 @@ void OutputFBO::renderParalax(const CameraParameters& params)
 
     const auto disparityRatio = std::max(0.0,1.0-1.0/params.m_XShiftMultiplier);
     const auto centerRatio = std::max(0.0,1.0-1.0/params.m_frontOpticalAxisCentreDistance);
-    //m_Pm.draw(m_Params.getGridSizeX(), m_Params.getGridSizeY(), disparityRatio, centerRatio);
-    m_Pm.draw(2,1, disparityRatio, centerRatio);
+    m_Pm.draw(m_Params.getGridSizeX(), m_Params.getGridSizeY(), disparityRatio, centerRatio);
     glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
 }

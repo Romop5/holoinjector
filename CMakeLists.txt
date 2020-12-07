@@ -120,6 +120,8 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/paralax/mapping.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/paralax/mapping.cpp
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_objects.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_objects.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_raii.hpp
