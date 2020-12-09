@@ -164,7 +164,7 @@ void DrawManager::setEnhancerShift(Context& context,const glm::mat4& viewSpaceTr
 
     if(context.m_LegacyTracker.isLegacyNeeded())
     {
-        pushFixedPipelineProjection(context, resultMat);
+        pushFixedPipelineProjection(context, resultMat, projectionAdjust);
     }
 }
 
