@@ -14,6 +14,7 @@
 #include "pipeline/output_fbo.hpp"
 
 #include "diagnostics.hpp"
+#include "imgui_adapter.hpp"
 
 namespace ve
 {
@@ -33,6 +34,9 @@ struct Context
     ve::pipeline::VirtualCameras m_cameras;
     /// Provides interface for system testing
     Diagnostics m_diagnostics;
+
+    /// Dear ImGUI Adapter
+    ImguiAdapter m_gui;
  
     /* ------------------------------------------------------------------------
      *  TRACKERS
@@ -55,7 +59,7 @@ struct Context
      * ----------------------------------------------------------------------*/
     /// Caches current viewport/scissor area
     ve::pipeline::ViewportArea currentViewport, currentScissorArea;
-    /* 
+    /*
      * Global glCallList for legacy OpenGL primitives
      * - record everything between glBegin()/glEnd() 
      *   and then, duplicate it

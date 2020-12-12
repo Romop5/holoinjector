@@ -57,6 +57,8 @@ find_package(FreeImage REQUIRED)
 find_package(fmt REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
+find_library(IMGUI_LIB libimgui.so PATHS lib lib64 REQUIRED)
+
 if(${ENHANCER_BUILD_DOCS})
     find_package(Doxygen
                  REQUIRED dot
@@ -113,6 +115,8 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logger.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/config.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/config.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/imgui_adapter.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/imgui_adapter.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/draw_manager.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/draw_manager.cpp
@@ -137,7 +141,7 @@ add_library(enhancer_core
 target_compile_options(enhancer_core PRIVATE "-fPIC")
 
 target_link_libraries(enhancer_core PUBLIC GL glm ${FREEIMAGE_LIBRARIES} fmt::fmt-header-only
-    yaml-cpp)
+    yaml-cpp )
 target_include_directories(enhancer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${FREEIMAGE_INCLUDE_DIR})
 target_compile_features(enhancer_core PUBLIC cxx_std_17)
@@ -167,7 +171,7 @@ macro(createEnhancerApplication name)
         ${ARGN}
     )
     target_link_libraries(${APPLICATION_NAME} PRIVATE ${ENHANCER_PROJECT_NAME})
-    target_link_libraries(${APPLICATION_NAME} PUBLIC ${SIMPLECPP_SO})
+    target_link_libraries(${APPLICATION_NAME} PUBLIC ${SIMPLECPP_SO} ${IMGUI_LIB})
 
     if(${ENHANCER_32})
         set_target_properties(${APPLICATION_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")

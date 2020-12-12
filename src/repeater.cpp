@@ -20,6 +20,8 @@
 #include "logger.hpp"
 #include "config.hpp"
 
+#include <imgui.h>
+
 using namespace ve;
 
 void Repeater::initialize()
@@ -83,7 +85,11 @@ void Repeater::initialize()
     m_Context.m_cameras.setupWindows(layers, gridXSize);
     m_Context.m_cameras.updateViewports(m_Context.currentViewport);
     m_Context.m_cameras.updateParamaters(m_Context.m_cameraParameters);
+
+    // Initialize GUI
+    m_Context.m_gui.initialize();
 }
+
 
 void Repeater::deinitialize()
 {
@@ -126,15 +132,20 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
         OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         OpenglRedirectorBase::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
-                    m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
+        m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
         m_Context.m_OutputFBO.renderToBackbuffer(m_Context.m_cameraParameters);
         m_Context.m_OutputFBO.clearBuffers();
     } else {
         OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        m_Context.m_gui.beginFrame(m_Context);
+        bool shouldShow = true;
+        ImGui::ShowDemoWindow(&shouldShow);
+        m_Context.m_gui.endFrame();
+        m_Context.m_gui.renderCurrentFrame();
     }
 
     OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
-    m_Context.m_diagnostics.incrementFrameCount(); 
+    m_Context.m_diagnostics.incrementFrameCount();
     if(m_Context.m_diagnostics.hasReachedLastFrame())
     {
         // Note: this is debug only, leaves mem. leaks and uncleaned objects

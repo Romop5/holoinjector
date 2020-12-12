@@ -160,4 +160,4 @@ namespace ve
 
         ve::managers::DrawManager m_DrawManager;
     };
-}
+} // namespace ve

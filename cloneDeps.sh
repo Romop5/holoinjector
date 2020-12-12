@@ -34,12 +34,42 @@ prepareRepo "simplecpp" "https://github.com/Romop5/simplecpp"
 prepareRepo "subhook" "https://github.com/Romop5/subhook" 
 prepareRepo "fmt" "https://github.com/fmtlib/fmt" 
 prepareRepo "yaml-cpp" "https://github.com/jbeder/yaml-cpp" "-DYAML_BUILD_SHARED_LIBS=ON" 
-
+prepareRepo "imgui" "https://github.com/ocornut/imgui" 
 
 ###############################################################################
-# II. Generate configuration
+# II. Add imgui configuration
+###############################################################################
+echo "
+cmake_minimum_required(VERSION 3.10)
+project(imgui)
+add_library(imgui SHARED 
+    imgui.cpp
+    imgui_demo.cpp
+    imgui_draw.cpp
+    imgui_tables.cpp
+    imgui_widgets.cpp
+    imconfig.h
+    imgui.h
+    imgui_internal.h
+    imstb_rectpack.h
+    imstb_textedit.h
+    imstb_truetype.h
+
+    backends/imgui_impl_opengl3.h
+    backends/imgui_impl_opengl3.cpp
+)
+target_include_directories(imgui PUBLIC \${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(imgui PRIVATE GLEW)
+install(TARGETS imgui DESTINATION lib)
+INSTALL(FILES "imgui.h imconfig.h backends/imgui_impl_opengl3.h" DESTINATION include)
+" > 3rd/imgui/CMakeLists.txt
+prepareRepo "imgui" "https://github.com/ocornut/imgui" 
+
+###############################################################################
+# III. Generate configuration
 ###############################################################################
 
 cd build
 CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:${INSTALL_DIR} cmake ../
+
 
