@@ -35,6 +35,7 @@ namespace ve
         virtual Bool glXMakeCurrent(Display * dpy, GLXDrawable drawable,GLXContext ctx) override;
         virtual Bool glXMakeContextCurrent(Display * display, GLXDrawable draw, GLXDrawable read, GLXContext ctx) override;
         virtual int XNextEvent(Display *display, XEvent *event_return) override;
+        virtual int XWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y) override;
 
         // Textures
         virtual void glGenTextures(GLsizei n,GLuint* textures) override;
@@ -153,11 +154,19 @@ namespace ve
         void takeScreenshot(const std::string filename);
         void drawMultiviewed(const std::function<void(void)>& code);
 
+        // Handle settings
+        void onKeyPress(size_t key);
+
         ///////////////////////////////////////////////////////////////////////
         // OpenGL structures
         ///////////////////////////////////////////////////////////////////////
         Context m_Context;
 
         ve::managers::DrawManager m_DrawManager;
+
+        struct {
+            int m_LastXPosition = 0;
+            int m_LastYPosition = 0;
+        } X11MouseHook;
     };
 } // namespace ve

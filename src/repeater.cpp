@@ -891,7 +891,7 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
 {
     auto returnVal = OpenglRedirectorBase::XNextEvent(display,event_return);
 
-    if(event_return->type == KeyPress)
+    if(event_return->type == KeyPress || event_return->type == KeyRelease)
     {
         auto keyEvent = reinterpret_cast<XKeyEvent*>(event_return);
         static unsigned long lastSerial = 0;
@@ -904,27 +904,37 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
                 keyEvent->x,keyEvent->y,keyEvent->state,keyEvent->keycode, keyEvent->same_screen);
         auto keySym = XLookupKeysym(reinterpret_cast<XKeyEvent*>(event_return), 0);
 
-        const float increment = 0.10f;
-        switch(keySym)
-        {
-            case XK_F1: case XK_F2:
-                m_Context.m_cameraParameters.m_XShiftMultiplier += (keySym == XK_F1?1.0:-1.0)*increment;
-            break;
-            case XK_F3: case XK_F4:
-                m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance += (keySym == XK_F3?1.0:-1.0)*0.5;
-            break; 
-            case XK_F5:
-                m_Context.m_cameraParameters = ve::pipeline::CameraParameters();
-            break;
-            case XK_F12: case XK_F11:
-                m_Context.m_IsMultiviewActivated = !m_Context.m_IsMultiviewActivated;
-            break;
-        }
-        Logger::log("[Repeater] Setting: frontDistance ({}), X multiplier({})\n",
-                m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance, m_Context.m_cameraParameters.m_XShiftMultiplier);
-        m_Context.m_cameras.updateParamaters(m_Context.m_cameraParameters);
+        if(event_return->type == KeyPress)
+            onKeyPress(keySym);
+        m_Context.m_gui.onKey(keySym,(event_return->type == KeyPress));
     }
+
+    if(event_return->type == MotionNotify)
+    {
+        auto mouseEvent = reinterpret_cast<XMotionEvent*>(event_return);
+        auto dx = mouseEvent->x-X11MouseHook.m_LastXPosition;
+        auto dy = mouseEvent->y-X11MouseHook.m_LastYPosition;
+        std::swap(X11MouseHook.m_LastXPosition,mouseEvent->x);
+        std::swap(X11MouseHook.m_LastYPosition,mouseEvent->y);
+        m_Context.m_gui.onMousePosition(dx,dy);
+        Logger::log("[Repeater] {} {}\n", dx, dy);
+    }
+
+    if(event_return->type == ButtonPress || event_return->type == ButtonRelease)
+    {
+        const auto isPressed = (event_return->type == ButtonPress);
+        auto event = reinterpret_cast<XButtonPressedEvent*>(event_return);
+        m_Context.m_gui.onButton(event->button-1, isPressed);
+    }
+
     return returnVal;
+}
+
+int Repeater::XWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y)
+{
+    X11MouseHook.m_LastXPosition = dest_x;
+    X11MouseHook.m_LastYPosition = dest_y;
+    return OpenglRedirectorBase::XWarpPointer(display, src_w, dest_w, src_x, src_y, src_width, src_height, dest_x, dest_y);
 }
 
 //-----------------------------------------------------------------------------
@@ -949,4 +959,28 @@ void Repeater::takeScreenshot(const std::string filename)
     // Free resources
     FreeImage_Unload(image);
     delete [] pixels;
+}
+
+void Repeater::onKeyPress(size_t keySym)
+{
+        const float increment = 0.10f;
+        switch(keySym)
+        {
+            case XK_F1: case XK_F2:
+                m_Context.m_cameraParameters.m_XShiftMultiplier += (keySym == XK_F1?1.0:-1.0)*increment;
+            break;
+            case XK_F3: case XK_F4:
+                m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance += (keySym == XK_F3?1.0:-1.0)*0.5;
+            break; 
+            case XK_F5:
+                m_Context.m_cameraParameters = ve::pipeline::CameraParameters();
+            break;
+            case XK_F12: case XK_F11:
+                m_Context.m_IsMultiviewActivated = !m_Context.m_IsMultiviewActivated;
+            default:
+            break;
+        }
+        Logger::log("[Repeater] Setting: frontDistance ({}), X multiplier({})\n",
+                m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance, m_Context.m_cameraParameters.m_XShiftMultiplier);
+        m_Context.m_cameras.updateParamaters(m_Context.m_cameraParameters);
 }

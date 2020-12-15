@@ -46,6 +46,7 @@ namespace hooking
         virtual void (*glXGetProcAddressARB(	const GLubyte * procName))(void);
 
         virtual int XNextEvent(Display *display, XEvent *event_return);
+        virtual int XWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y);
 
         /*
          * Declarations of virtual OpenGL API calls that can be overloaded.

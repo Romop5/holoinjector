@@ -1,5 +1,8 @@
 #ifndef VE_IMGUI_ADAPTER_HPP
 #define VE_IMGUI_ADAPTER_HPP
+
+#include <cstddef>
+
 namespace ve
 {
     // Fwd
@@ -21,6 +24,10 @@ namespace ve
             void renderCurrentFrame();
             /// Clean up
             void destroy();
+
+            void onKey(size_t key, bool isDown = true);
+            void onMousePosition(float x, float y);
+            void onButton(size_t buttonID, bool isPressed);
         private:
     };
 } // namespace ve
