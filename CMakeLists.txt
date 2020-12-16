@@ -134,6 +134,9 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/enviroment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/glsl_preprocess.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/glsl_preprocess.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/x11_sniffer.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/x11_sniffer.cpp
 )
 
 # Hack: we would like a static library to be linked into shared library later

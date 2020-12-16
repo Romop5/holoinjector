@@ -15,6 +15,7 @@
 
 #include "diagnostics.hpp"
 #include "imgui_adapter.hpp"
+#include "ui/x11_sniffer.hpp"
 
 namespace ve
 {
@@ -37,7 +38,8 @@ struct Context
 
     /// Dear ImGUI Adapter
     ImguiAdapter m_gui;
- 
+
+    X11Sniffer m_x11Sniffer;
     /* ------------------------------------------------------------------------
      *  TRACKERS
      * ----------------------------------------------------------------------*/

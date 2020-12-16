@@ -889,6 +889,13 @@ void Repeater::glCallLists(GLsizei n,GLenum type,const GLvoid* lists)
 //-----------------------------------------------------------------------------
 int Repeater::XNextEvent(Display *display, XEvent *event_return)
 {
+    auto fillEmptyEvent = [](XEvent* event)
+    {
+        auto msg = reinterpret_cast<XClientMessageEvent*>(event);
+        msg->type = ClientMessage;
+        msg->message_type = None;
+        return;
+    };
     auto returnVal = OpenglRedirectorBase::XNextEvent(display,event_return);
 
     if(event_return->type == KeyPress || event_return->type == KeyRelease)
@@ -907,6 +914,7 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
         if(event_return->type == KeyPress)
             onKeyPress(keySym);
         m_Context.m_gui.onKey(keySym,(event_return->type == KeyPress));
+        fillEmptyEvent(event_return);
     }
 
     if(event_return->type == MotionNotify)
@@ -918,6 +926,9 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
         std::swap(X11MouseHook.m_LastYPosition,mouseEvent->y);
         m_Context.m_gui.onMousePosition(dx,dy);
         Logger::log("[Repeater] {} {}\n", dx, dy);
+
+        fillEmptyEvent(event_return);
+        return 0;
     }
 
     if(event_return->type == ButtonPress || event_return->type == ButtonRelease)
@@ -932,6 +943,7 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
 
 int Repeater::XWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y)
 {
+    return 0;
     X11MouseHook.m_LastXPosition = dest_x;
     X11MouseHook.m_LastYPosition = dest_y;
     return OpenglRedirectorBase::XWarpPointer(display, src_w, dest_w, src_x, src_y, src_width, src_height, dest_x, dest_y);
