@@ -64,8 +64,10 @@ if(${ENHANCER_BUILD_DOCS})
                  REQUIRED dot
                  OPTIONAL_COMPONENTS mscgen dia)
 
+    file(GLOB DOXY_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
     set(DOXYGEN_HAVE_DOT TRUE)
-    doxygen_add_docs(Doxygen ALL)
+    doxygen_add_docs(Doxygen "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
+        ${DOXY_FILES} ALL)
 endif()
 ###############################################################################
 
