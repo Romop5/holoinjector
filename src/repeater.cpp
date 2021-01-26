@@ -315,7 +315,7 @@ void Repeater::glLinkProgram (GLuint programId)
     parameters.countOfInvocations = m_Context.m_OutputFBO.getParams().getLayers();
     if(parameters.countOfInvocations > 32)
     {
-        parameters.countOfPrimitivesDuplicates = parameters.countOfInvocations/32;
+        parameters.countOfPrimitivesDuplicates = floor(parameters.countOfInvocations/32)+1;
         parameters.countOfInvocations = 32;
     }
 

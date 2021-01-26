@@ -129,7 +129,8 @@ void OutputFBO::initialize(OutputFBOParameters params)
         void main()
         {
             vec2 newUv = mod(vec2(gridXSize*uv.x, gridYSize*uv.y), 1.0);
-            ivec2 indices = ivec2(int(uv.x*float(gridXSize)),int(uv.y*float(gridYSize)));
+            vec2 indicesuv = vec2(uv.x, 1.0-uv.y);
+            ivec2 indices = ivec2(int(indicesuv.x*float(gridXSize)),int(indicesuv.y*float(gridYSize)));
             int layer = (gridYSize-indices.y-1)*gridXSize+indices.x;
 
             color = texture(enhancer_layeredScreen, vec3(newUv, layer));
