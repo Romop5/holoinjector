@@ -127,16 +127,19 @@ void Repeater::registerCallbacks()
 
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
+    OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     if(m_Context.m_IsMultiviewActivated && m_Context.m_OutputFBO.hasImage())
     {
-        OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         OpenglRedirectorBase::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
         m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
         m_Context.m_OutputFBO.renderToBackbuffer(m_Context.m_cameraParameters);
         m_Context.m_OutputFBO.clearBuffers();
-    } else {
-        OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    }
+
+    // Draw GUI overlay if GUI is visible
+    if(m_Context.m_gui.isVisible())
+    {
         m_Context.m_gui.beginFrame(m_Context);
         bool shouldShow = true;
         ImGui::ShowDemoWindow(&shouldShow);
@@ -144,6 +147,7 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
         m_Context.m_gui.renderCurrentFrame();
     }
 
+    // Physically do swap buffer
     OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
     m_Context.m_diagnostics.incrementFrameCount();
     if(m_Context.m_diagnostics.hasReachedLastFrame())
@@ -913,8 +917,12 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
 
         if(event_return->type == KeyPress)
             onKeyPress(keySym);
-        m_Context.m_gui.onKey(keySym,(event_return->type == KeyPress));
-        fillEmptyEvent(event_return);
+        // If GUI is active, propagate input to GUI and block
+        if(m_Context.m_gui.isVisible())
+        {
+            m_Context.m_gui.onKey(keySym,(event_return->type == KeyPress));
+            fillEmptyEvent(event_return);
+        }
     }
 
     if(event_return->type == MotionNotify)
@@ -924,10 +932,14 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
         auto dy = mouseEvent->y-X11MouseHook.m_LastYPosition;
         std::swap(X11MouseHook.m_LastXPosition,mouseEvent->x);
         std::swap(X11MouseHook.m_LastYPosition,mouseEvent->y);
-        m_Context.m_gui.onMousePosition(dx,dy);
-        Logger::log("[Repeater] {} {}\n", dx, dy);
 
-        fillEmptyEvent(event_return);
+        if(m_Context.m_gui.isVisible())
+        {
+            m_Context.m_gui.onMousePosition(dx,dy);
+            Logger::log("[Repeater] {} {}\n", dx, dy);
+
+            fillEmptyEvent(event_return);
+        }
         return 0;
     }
 
@@ -935,7 +947,10 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
     {
         const auto isPressed = (event_return->type == ButtonPress);
         auto event = reinterpret_cast<XButtonPressedEvent*>(event_return);
-        m_Context.m_gui.onButton(event->button-1, isPressed);
+        if(m_Context.m_gui.isVisible())
+        {
+            m_Context.m_gui.onButton(event->button-1, isPressed);
+        }
     }
 
     return returnVal;
@@ -987,8 +1002,12 @@ void Repeater::onKeyPress(size_t keySym)
             case XK_F5:
                 m_Context.m_cameraParameters = ve::pipeline::CameraParameters();
             break;
-            case XK_F12: case XK_F11:
+            case XK_F11:
+                m_Context.m_gui.setVisibility(!m_Context.m_gui.isVisible());
+            break;
+            case XK_F12:
                 m_Context.m_IsMultiviewActivated = !m_Context.m_IsMultiviewActivated;
+            break;
             default:
             break;
         }

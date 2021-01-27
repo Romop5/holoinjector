@@ -131,3 +131,13 @@ void ve::ImguiAdapter::onButton(size_t buttonID, bool isPressed)
     ImGuiIO& io = ImGui::GetIO();
     io.MouseDown[buttonID] = isPressed;
 }
+
+
+bool ve::ImguiAdapter::isVisible()
+{
+    return m_Visibility;
+}
+void ve::ImguiAdapter::setVisibility(bool isVisible)
+{
+    m_Visibility = isVisible;
+}

@@ -28,7 +28,11 @@ namespace ve
             void onKey(size_t key, bool isDown = true);
             void onMousePosition(float x, float y);
             void onButton(size_t buttonID, bool isPressed);
+
+            bool isVisible();
+            void setVisibility(bool isVisible);
         private:
+            bool m_Visibility = false;
     };
 } // namespace ve
 #endif
