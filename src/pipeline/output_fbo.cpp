@@ -147,6 +147,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
           uniform uint drawOnlyOneImage = 0;
           uniform int ri = 0;
           uniform int bi = 2;
+          uniform bool shouldDisplayGrid = false;
           
           vec3 texArr(vec3 uvz)
           {
@@ -157,7 +158,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
               float y = (floor(z / gridYSize) + uvz.y) / gridYSize;
               vec2 finalXY = vec2(x, y) * viewPortion.xy;
               //return vec3(finalXY, z);
-              return vec3(x,y,z);
+              return vec3(uvz.x,uvz.y,z);
           }
      
           
@@ -183,8 +184,12 @@ void OutputFBO::initialize(OutputFBOParameters params)
         //-----------------------------------------------
         void main()
         {
-            //renderGrid();
-            renderLookingGlass();
+            if(shouldDisplayGrid)
+            {
+                renderGrid();
+            } else {
+                renderLookingGlass();
+            }
         }
     )");
 
@@ -304,6 +309,11 @@ GLuint OutputFBO::createProxyFBO(size_t layer)
     return m_proxyFBO[layer].getID();
 }
 
+void OutputFBO::toggleGridView()
+{
+    shouldDisplayGrid = !shouldDisplayGrid;
+}
+
 void OutputFBO::renderGridLayout()
 {
     glUseProgram(m_ViewerProgram);
@@ -312,6 +322,9 @@ void OutputFBO::renderGridLayout()
 
     auto gridYLocation = glGetUniformLocation(m_ViewerProgram, "gridYSize");
     glUniform1i(gridYLocation, m_Params.getGridSizeY());
+
+    auto gridToggleLocation = glGetUniformLocation(m_ViewerProgram, "shouldDisplayGrid");
+    glUniform1i(gridToggleLocation, shouldDisplayGrid);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glActiveTexture(GL_TEXTURE0);

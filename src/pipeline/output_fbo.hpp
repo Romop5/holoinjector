@@ -29,8 +29,8 @@ namespace pipeline
         size_t getGridSizeX() const;
         size_t getGridSizeY() const;
 
-        size_t gridXSize = 3;
-        size_t gridYSize = 3;
+        size_t gridXSize = 5;
+        size_t gridYSize = 9;
         size_t pixels_width = 512;
         size_t pixels_height = 512;
     };
@@ -68,6 +68,9 @@ namespace pipeline
 
         /// Create proxy FBO from texture views to a single layer of shadow FBO
         GLuint createProxyFBO(size_t layer);
+
+        /// Toggle grid vs native format view
+        void toggleGridView();
         //---------------------------------------------------------------------
         private:
         std::vector<ve::utils::FBORAII> m_proxyFBO;
@@ -92,6 +95,8 @@ namespace pipeline
         OutputFBOParameters m_Params;
 
         paralax::Mapping m_Pm;
+
+        bool shouldDisplayGrid = false;
     };
 
 }; //namespace pipeline

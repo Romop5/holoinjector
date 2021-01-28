@@ -22,6 +22,9 @@
 
 #include <imgui.h>
 
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+
 using namespace ve;
 
 void Repeater::initialize()
@@ -137,12 +140,18 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
         m_Context.m_OutputFBO.clearBuffers();
     }
 
+    OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
     // Draw GUI overlay if GUI is visible
     if(m_Context.m_gui.isVisible())
     {
         m_Context.m_gui.beginFrame(m_Context);
         bool shouldShow = true;
-        ImGui::ShowDemoWindow(&shouldShow);
+        //ImGui::ShowDemoWindow(&shouldShow);
+        if(ImGui::Button("Toggle quilt/native format"))
+        {
+            m_Context.m_OutputFBO.toggleGridView();
+        }
         m_Context.m_gui.endFrame();
         m_Context.m_gui.renderCurrentFrame();
     }
@@ -916,7 +925,16 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
         auto keySym = XLookupKeysym(reinterpret_cast<XKeyEvent*>(event_return), 0);
 
         if(event_return->type == KeyPress)
+        {
             onKeyPress(keySym);
+            if(keySym == XK_F10)
+            {
+                Atom window_type = XInternAtom(keyEvent->display, "_NET_WM_WINDOW_TYPE", False);
+                long value = XInternAtom(keyEvent->display, "_NET_WM_WINDOW_TYPE_DOCK", False);
+                XChangeProperty(keyEvent->display, keyEvent->window, window_type,
+                XA_ATOM, 32, PropModeReplace, (unsigned char *) &value,1 );
+            }
+        }
         // If GUI is active, propagate input to GUI and block
         if(m_Context.m_gui.isVisible())
         {
@@ -1002,7 +1020,7 @@ void Repeater::onKeyPress(size_t keySym)
             case XK_F5:
                 m_Context.m_cameraParameters = ve::pipeline::CameraParameters();
             break;
-            case XK_F11:
+           case XK_F11:
                 m_Context.m_gui.setVisibility(!m_Context.m_gui.isVisible());
             break;
             case XK_F12:
