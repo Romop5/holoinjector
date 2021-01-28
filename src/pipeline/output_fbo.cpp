@@ -126,7 +126,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
         in vec2 uv;
         out vec4 color;
 
-        void main()
+        void renderGrid()
         {
             vec2 newUv = mod(vec2(gridXSize*uv.x, gridYSize*uv.y), 1.0);
             vec2 indicesuv = vec2(uv.x, 1.0-uv.y);
@@ -135,7 +135,56 @@ void OutputFBO::initialize(OutputFBOParameters params)
 
             color = texture(enhancer_layeredScreen, vec3(newUv, layer));
             color.w = 1.0;
-            //color.z = float(layer)/float(gridXSize*gridYSize);
+        }
+
+        //-----------------------------------------------
+         // HoloPlay values
+          uniform float pitch = 354.42108f;
+          uniform float tilt = -0.1153f;
+          uniform float center = 0.04239f;
+          uniform float subp = 0.00013f;
+          uniform vec4 viewPortion = vec4(0.99976f, 0.99976f, 0.00f, 0.00f);
+          uniform uint drawOnlyOneImage = 0;
+          uniform int ri = 0;
+          uniform int bi = 2;
+          
+          vec3 texArr(vec3 uvz)
+          {
+              int layersCount = gridXSize*gridYSize;
+              // decide which section to take from based on the z.
+              float z = floor(uvz.z * layersCount);
+              float x = (mod(z, gridXSize) + uvz.x) / gridXSize;
+              float y = (floor(z / gridYSize) + uvz.y) / gridYSize;
+              vec2 finalXY = vec2(x, y) * viewPortion.xy;
+              //return vec3(finalXY, z);
+              return vec3(x,y,z);
+          }
+     
+          
+          void renderLookingGlass()
+          {
+                int countOfLayers = gridXSize*gridYSize;
+                vec2 texCoords = uv;
+
+                vec3 nuv = vec3(texCoords.xy, 0.0);
+          
+                vec4 rgb[3];
+                for (int i=0; i < 3; i++) 
+                {
+                    nuv.z = (texCoords.x + i * subp + texCoords.y * tilt) * pitch - center;
+                    nuv.z = fract(nuv.z);
+                    nuv.z = (1.0 - nuv.z);
+                    rgb[i] = texture(enhancer_layeredScreen, texArr(nuv));
+                }
+
+                color = vec4(rgb[ri].r, rgb[1].g, rgb[bi].b, 1.0);
+          }
+
+        //-----------------------------------------------
+        void main()
+        {
+            //renderGrid();
+            renderLookingGlass();
         }
     )");
 
