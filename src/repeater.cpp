@@ -91,7 +91,25 @@ void Repeater::initialize()
 
     // Initialize GUI
     m_Context.m_gui.initialize();
-}
+
+    // Register settings UI
+    m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
+    {
+        m_Context.m_gui.setScaling(newValue);
+    }, "UI font scaling",0.5, 5)->setValue(1.0);
+
+    m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
+    {
+        m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance = newValue;
+    }, "Near plane",0.0, 400);
+
+    m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
+    {
+        m_Context.m_cameraParameters.m_XShiftMultiplier = newValue;
+    }, "Horizontal shift",0.0, 400);
+
+
+    }
 
 
 void Repeater::deinitialize()
@@ -152,6 +170,7 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
         {
             m_Context.m_OutputFBO.toggleGridView();
         }
+        m_Context.m_settingsWidget.draw();
         m_Context.m_gui.endFrame();
         m_Context.m_gui.renderCurrentFrame();
     }
@@ -945,14 +964,14 @@ int Repeater::XNextEvent(Display *display, XEvent *event_return)
 
     if(event_return->type == MotionNotify)
     {
-        auto mouseEvent = reinterpret_cast<XMotionEvent*>(event_return);
-        auto dx = mouseEvent->x-X11MouseHook.m_LastXPosition;
-        auto dy = mouseEvent->y-X11MouseHook.m_LastYPosition;
-        std::swap(X11MouseHook.m_LastXPosition,mouseEvent->x);
-        std::swap(X11MouseHook.m_LastYPosition,mouseEvent->y);
-
         if(m_Context.m_gui.isVisible())
         {
+            auto mouseEvent = reinterpret_cast<XMotionEvent*>(event_return);
+            auto dx = mouseEvent->x-X11MouseHook.m_LastXPosition;
+            auto dy = mouseEvent->y-X11MouseHook.m_LastYPosition;
+            std::swap(X11MouseHook.m_LastXPosition,mouseEvent->x);
+            std::swap(X11MouseHook.m_LastYPosition,mouseEvent->y);
+
             m_Context.m_gui.onMousePosition(dx,dy);
             Logger::log("[Repeater] {} {}\n", dx, dy);
 

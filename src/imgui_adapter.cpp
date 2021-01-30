@@ -68,7 +68,6 @@ bool ve::ImguiAdapter::initialize()
     io.KeyMap[ImGuiKey_Z] = XK_Z;
 
     io.MouseDrawCursor = true;
-    io.FontGlobalScale = 4.0;
     ImGui_ImplOpenGL3_Init();
     return true;
 }
@@ -84,6 +83,7 @@ void ve::ImguiAdapter::beginFrame(Context& context)
     h = context.currentViewport.getHeight();
     io.DisplaySize = ImVec2((float)w, (float)h);
     io.DisplayFramebufferScale = ImVec2(1.0,1.0);
+    io.FontGlobalScale = m_Scaling;
 
     // Setup time step
     io.DeltaTime = (float)(1.0f / 60.0f);
@@ -141,4 +141,9 @@ bool ve::ImguiAdapter::isVisible()
 void ve::ImguiAdapter::setVisibility(bool isVisible)
 {
     m_Visibility = isVisible;
+}
+
+void ve::ImguiAdapter::setScaling(float scale)
+{
+    m_Scaling = scale;
 }

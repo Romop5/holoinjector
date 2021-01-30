@@ -31,8 +31,10 @@ namespace ve
 
             bool isVisible();
             void setVisibility(bool isVisible);
+            void setScaling(float scale);
         private:
             bool m_Visibility = false;
+            float m_Scaling = 1.0;
     };
 } // namespace ve
 #endif

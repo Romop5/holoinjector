@@ -16,6 +16,7 @@
 #include "diagnostics.hpp"
 #include "imgui_adapter.hpp"
 #include "ui/x11_sniffer.hpp"
+#include "ui/settings_widget.hpp"
 
 namespace ve
 {
@@ -38,6 +39,9 @@ struct Context
 
     /// Dear ImGUI Adapter
     ImguiAdapter m_gui;
+
+    /// UI controller for settings
+    SettingsWidget m_settingsWidget;
 
     X11Sniffer m_x11Sniffer;
     /* ------------------------------------------------------------------------
