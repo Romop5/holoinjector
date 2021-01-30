@@ -484,11 +484,22 @@ std::string ShaderInspector::getCommonTransformationShader()
     // 1/fx, etc...
     uniform vec4 enhancer_deprojection_inv;
 
+    float enhancer_normalizedCamera(int cameraId)
+    {
+        return 1.0-2.0*float(cameraId+1)/float(enhancer_max_views+1);
+    }
     float enhancer_getProjectionShift(int cameraId)
     {
         float normalizedDistance = 1.0-2.0*float(cameraId+1)/float(enhancer_max_views+1);
-        return normalizedDistance*enhancer_XShiftMultiplier/enhancer_FrontalDistance;
+        return -normalizedDistance*enhancer_XShiftMultiplier/enhancer_FrontalDistance;
     }
+
+    float enhancer_getShearCoeff(int cameraId, float r)
+    {
+        float normalizedDistance = 1.0-2.0*float(cameraId+1)/float(enhancer_max_views+1);
+        return 1.0*normalizedDistance*enhancer_XShiftMultiplier/r;
+    }
+
 
     float enhancer_getCenterShift(int cameraId)
     {
@@ -511,17 +522,27 @@ std::string ShaderInspector::getCommonTransformationShader()
         if(enhancer_isOrthogonal || enhancer_identity)
             return clipSpace;
 
-        float near = enhancer_deprojection[2];
+        float nearOriginal = enhancer_deprojection[2];
+        float near = enhancer_FrontalDistance;
         float far = enhancer_deprojection[3];
         
         float A = -2.0/(far-near);
         float B = -(far+near)/(far-near);
 
+        const float aspect = 1.3;
+        float angle = radians(80.0);
+
+        float r = tan(angle*0.5)*near;
+
+        //float fovX = enhancer_deprojection[0]*(near/nearOriginal);
+        float fovX = near/r;
+        float fovY = fovX*aspect;
+        
         mat4 projection = mat4(
-            vec4(enhancer_deprojection[0],0.0f,0.0,0.0),
-            vec4(0.0f,enhancer_deprojection[1],0.0f,0.0), 
-            vec4(enhancer_getProjectionShift(camera),0.0f,A,-1.0), 
-            vec4(0.0f,0.0f,B,0.0));
+            vec4(fovX,0.0f,0.0,0.0),
+            vec4(0.0f,fovY,0.0f,0.0),
+            vec4(enhancer_getShearCoeff(camera,r),0.0f,A,-1.0),
+            vec4(0,0.0f,B,0.0));
 
         // Do per-view transformation
         vec4 viewSpace = enhancer_extractViewSpace(clipSpace);
@@ -540,6 +561,6 @@ std::string ShaderInspector::getCommonTransformationShader()
     )";
 
     // Hack: remove clip space
-    code= std::regex_replace(code, std::regex(". xyww"),"");  
+    code= std::regex_replace(code, std::regex(". xyww"),"");
     return code;
 }
