@@ -68,6 +68,7 @@ bool ve::ImguiAdapter::initialize()
     io.KeyMap[ImGuiKey_Z] = XK_Z;
 
     io.MouseDrawCursor = true;
+    io.FontGlobalScale = 4.0;
     ImGui_ImplOpenGL3_Init();
     return true;
 }
