@@ -139,6 +139,9 @@ add_library(enhancer_core
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/x11_sniffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/x11_sniffer.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/settings_widget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/settings_widget.cpp
 )
 
 # Hack: we would like a static library to be linked into shared library later
