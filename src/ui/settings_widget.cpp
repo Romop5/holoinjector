@@ -10,6 +10,12 @@ void SettingsWidgetInputItem<float>::drawContent()
         onValueChanged(m_Value);
 }
 
+template<>
+void SettingsWidgetInputItem<bool>::drawContent()
+{
+    if(ImGui::Checkbox(name.c_str(), &m_Value) && onValueChanged)
+        onValueChanged(m_Value);
+}
 
 template<>
 void SettingsWidgetSliderItem<float>::drawContent()
@@ -18,11 +24,26 @@ void SettingsWidgetSliderItem<float>::drawContent()
         onValueChanged(m_Value);
 }
 
+template<>
+void SettingsWidgetSliderItem<int>::drawContent()
+{
+    if(ImGui::SliderInt(name.c_str(), &m_Value, m_Minimum, m_Maximum) && onValueChanged)
+        onValueChanged(m_Value);
+}
+
 
 void SettingsWidgetItemBase::draw()
 {
     // Render name / tooltip
     drawContent();
+    if(tooltip.size() && ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(450.0f);
+        ImGui::TextUnformatted(tooltip.c_str());
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
     // End render
 }
 

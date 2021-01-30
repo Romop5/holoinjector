@@ -31,8 +31,8 @@ namespace pipeline
 
         size_t gridXSize = 5;
         size_t gridYSize = 9;
-        size_t pixels_width = 512;
-        size_t pixels_height = 512;
+        size_t pixels_width = 256;
+        size_t pixels_height = 256;
     };
     /**
      * @brief Wraps back-buffer with a layered FBO
@@ -71,6 +71,12 @@ namespace pipeline
 
         /// Toggle grid vs native format view
         void toggleGridView();
+
+        /// Toggle
+        void toggleSingleViewGridView();
+
+        /// Set id of only-viewed quilt view
+        void setOnlyQuiltImageID(size_t id);
         //---------------------------------------------------------------------
         private:
         std::vector<ve::utils::FBORAII> m_proxyFBO;
@@ -97,6 +103,8 @@ namespace pipeline
         paralax::Mapping m_Pm;
 
         bool shouldDisplayGrid = false;
+        bool shouldDisplayOnlySingleQuiltImage = false;
+        size_t m_OnlyQuiltImageID = 0;
     };
 
 }; //namespace pipeline

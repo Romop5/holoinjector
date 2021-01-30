@@ -96,20 +96,32 @@ void Repeater::initialize()
     m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
     {
         m_Context.m_gui.setScaling(newValue);
-    }, "UI font scaling",0.5, 5)->setValue(1.0);
+    }, "UI font scaling",0.5, 5, "Scale IMGUI window to fit high DPI displays")->setValue(1.0);
 
     m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
     {
         m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance = newValue;
-    }, "Near plane",0.0, 400);
+    }, "Near plane",0.0, 400, "Define distance of near plane");
 
     m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
     {
         m_Context.m_cameraParameters.m_XShiftMultiplier = newValue;
-    }, "Horizontal shift",0.0, 400);
+    }, "Horizontal shift",0.0, 40, "Define horizontal distance of left-most side view from the original point of view");
 
+    m_Context.m_settingsWidget.registerInputItem<bool>([this](auto newValue)
+    {
+        m_Context.m_OutputFBO.toggleGridView();
+    }, "Toggle quilt/native format", "Toggle between transformed native format, suitable for 3D Displays, and quilt format, showing all views into scene in a grid.");
 
-    }
+    m_Context.m_settingsWidget.registerInputItem<bool>([this](auto newValue)
+    {
+        m_Context.m_OutputFBO.toggleSingleViewGridView();
+    }, "Toggle single view vs quilt view", "Toggle between quilt grid and single view");
+    m_Context.m_settingsWidget.registerSliderItem<int>([this](auto newValue)
+    {
+        m_Context.m_OutputFBO.setOnlyQuiltImageID(newValue);
+    }, "Single view ID",0, 45, "Select one of quilt views");
+}
 
 
 void Repeater::deinitialize()
@@ -166,10 +178,6 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
         m_Context.m_gui.beginFrame(m_Context);
         bool shouldShow = true;
         //ImGui::ShowDemoWindow(&shouldShow);
-        if(ImGui::Button("Toggle quilt/native format"))
-        {
-            m_Context.m_OutputFBO.toggleGridView();
-        }
         m_Context.m_settingsWidget.draw();
         m_Context.m_gui.endFrame();
         m_Context.m_gui.renderCurrentFrame();

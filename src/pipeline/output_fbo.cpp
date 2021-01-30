@@ -123,17 +123,25 @@ void OutputFBO::initialize(OutputFBOParameters params)
         uniform sampler2DArray enhancer_layeredScreen;
         uniform int gridXSize = 3;
         uniform int gridYSize = 3;
+        uniform bool shouldDisplayGrid = false;
+        uniform bool shouldSingleViewQuilt= false;
+        uniform int singleViewID = 0;
         in vec2 uv;
         out vec4 color;
 
         void renderGrid()
         {
-            vec2 newUv = mod(vec2(gridXSize*uv.x, gridYSize*uv.y), 1.0);
-            vec2 indicesuv = vec2(uv.x, 1.0-uv.y);
-            ivec2 indices = ivec2(int(indicesuv.x*float(gridXSize)),int(indicesuv.y*float(gridYSize)));
-            int layer = (gridYSize-indices.y-1)*gridXSize+indices.x;
+            if(shouldSingleViewQuilt)
+            {
+                color = texture(enhancer_layeredScreen, vec3(uv, singleViewID));
+            } else {
+                vec2 newUv = mod(vec2(gridXSize*uv.x, gridYSize*uv.y), 1.0);
+                vec2 indicesuv = vec2(uv.x, 1.0-uv.y);
+                ivec2 indices = ivec2(int(indicesuv.x*float(gridXSize)),int(indicesuv.y*float(gridYSize)));
+                int layer = (gridYSize-indices.y-1)*gridXSize+indices.x;
 
-            color = texture(enhancer_layeredScreen, vec3(newUv, layer));
+                color = texture(enhancer_layeredScreen, vec3(newUv, layer));
+            }
             color.w = 1.0;
         }
 
@@ -147,8 +155,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
           uniform uint drawOnlyOneImage = 0;
           uniform int ri = 0;
           uniform int bi = 2;
-          uniform bool shouldDisplayGrid = false;
-          
+
           vec3 texArr(vec3 uvz)
           {
               int layersCount = gridXSize*gridYSize;
@@ -175,7 +182,14 @@ void OutputFBO::initialize(OutputFBOParameters params)
                     nuv.z = (texCoords.x + i * subp + texCoords.y * tilt) * pitch - center;
                     nuv.z = fract(nuv.z);
                     nuv.z = (1.0 - nuv.z);
-                    rgb[i] = texture(enhancer_layeredScreen, texArr(nuv));
+                    vec3 quiltTextureCoords = texArr(nuv);
+                    if(shouldSingleViewQuilt && quiltTextureCoords.z != singleViewID)
+                    {
+                        rgb[i] = vec4(0.0);
+                    }
+                    else {
+                        rgb[i] = texture(enhancer_layeredScreen, quiltTextureCoords);
+                    }
                 }
 
                 color = vec4(rgb[ri].r, rgb[1].g, rgb[bi].b, 1.0);
@@ -314,6 +328,17 @@ void OutputFBO::toggleGridView()
     shouldDisplayGrid = !shouldDisplayGrid;
 }
 
+void OutputFBO::toggleSingleViewGridView()
+{
+    shouldDisplayOnlySingleQuiltImage = !shouldDisplayOnlySingleQuiltImage;
+}
+
+
+void OutputFBO::setOnlyQuiltImageID(size_t id)
+{
+    m_OnlyQuiltImageID = id;
+}
+
 void OutputFBO::renderGridLayout()
 {
     glUseProgram(m_ViewerProgram);
@@ -325,6 +350,12 @@ void OutputFBO::renderGridLayout()
 
     auto gridToggleLocation = glGetUniformLocation(m_ViewerProgram, "shouldDisplayGrid");
     glUniform1i(gridToggleLocation, shouldDisplayGrid);
+
+    auto singleViewQuilt = glGetUniformLocation(m_ViewerProgram, "shouldSingleViewQuilt");
+    glUniform1i(singleViewQuilt, shouldDisplayOnlySingleQuiltImage);
+
+    auto quiltSingle = glGetUniformLocation(m_ViewerProgram,"singleViewID");
+    glUniform1i(quiltSingle, m_OnlyQuiltImageID);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glActiveTexture(GL_TEXTURE0);
