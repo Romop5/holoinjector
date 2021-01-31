@@ -50,7 +50,7 @@ namespace pipeline
             PipelineProcessResult process(PipelineType inputPipeline, const PipelineParams& params = PipelineParams());
         private:
             /**
-             * @brief Insert new geometry shader 
+             * @brief Insert new geometry shader
              *
              * @param pipeline
              * @return alterned pipeline with correct in/out attributes passing

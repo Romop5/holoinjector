@@ -121,6 +121,40 @@ void Repeater::initialize()
     {
         m_Context.m_OutputFBO.setOnlyQuiltImageID(newValue);
     }, "Single view ID",0, 45, "Select one of quilt views");
+
+    const auto params = m_Context.m_OutputFBO.getHoloDisplayParameters();
+    auto pitchItem = m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
+    {
+        auto params = m_Context.m_OutputFBO.getHoloDisplayParameters();
+        params.m_Pitch = newValue;
+        m_Context.m_OutputFBO.setHoloDisplayParameters(params);
+    }, "Pitch",0.0, 400, "");
+    pitchItem->setValue(params.m_Pitch);
+
+    auto tiltItem = m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
+    {
+        auto params = m_Context.m_OutputFBO.getHoloDisplayParameters();
+        params.m_Pitch = newValue;
+        m_Context.m_OutputFBO.setHoloDisplayParameters(params);
+    }, "Tilt",-1.0, 1, "");
+    tiltItem->setValue(params.m_Tilt);
+
+    auto centerItem = m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
+    {
+        auto params = m_Context.m_OutputFBO.getHoloDisplayParameters();
+        params.m_Center = newValue;
+        m_Context.m_OutputFBO.setHoloDisplayParameters(params);
+    }, "Center",-1.0, 1, "");
+    centerItem->setValue(params.m_Center);
+
+    m_Context.m_settingsWidget.registerInputItem<void*>([this,params,pitchItem, tiltItem, centerItem] (auto)
+    {
+        pitchItem->setValue(params.m_Pitch);
+        tiltItem->setValue(params.m_Tilt);
+        centerItem->setValue(params.m_Center);
+        m_Context.m_OutputFBO.setHoloDisplayParameters(params);
+    }, "Reset default holo parameters","");
+
 }
 
 

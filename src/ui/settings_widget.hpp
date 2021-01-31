@@ -67,6 +67,8 @@ namespace ve
             SettingsWidget();
             void draw();
 
+            std::shared_ptr<SettingsWidgetItemBase> getItemByName(const std::string name);
+
             template <typename T>
             std::shared_ptr<SettingsWidgetInputItem<T>> registerInputItem(typename SettingsWidgetInputItem<T>::callbackType callback, const std::string name, const std::string tooltip = std::string());
 

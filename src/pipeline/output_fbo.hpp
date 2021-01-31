@@ -31,8 +31,15 @@ namespace pipeline
 
         size_t gridXSize = 5;
         size_t gridYSize = 9;
-        size_t pixels_width = 256;
-        size_t pixels_height = 256;
+        size_t pixels_width = 512;
+        size_t pixels_height = 512;
+    };
+
+    struct HoloDisplayParameters
+    {
+        float m_Pitch = 354.42108f;
+        float m_Tilt = -0.1153f;
+        float m_Center = 0.00013f;
     };
     /**
      * @brief Wraps back-buffer with a layered FBO
@@ -77,6 +84,9 @@ namespace pipeline
 
         /// Set id of only-viewed quilt view
         void setOnlyQuiltImageID(size_t id);
+
+        const HoloDisplayParameters getHoloDisplayParameters() const;
+        void setHoloDisplayParameters(const HoloDisplayParameters params);
         //---------------------------------------------------------------------
         private:
         std::vector<ve::utils::FBORAII> m_proxyFBO;
@@ -105,6 +115,9 @@ namespace pipeline
         bool shouldDisplayGrid = false;
         bool shouldDisplayOnlySingleQuiltImage = false;
         size_t m_OnlyQuiltImageID = 0;
+
+        HoloDisplayParameters m_HoloParameters;
+
     };
 
 }; //namespace pipeline

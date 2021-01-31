@@ -55,7 +55,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
     for(size_t i = 0; i < countOfLayers; i++)
         m_proxyFBO.push_back(std::move(ve::utils::FBORAII(0)));
 
-    glGenFramebuffers(1, &m_FBOId); 
+    glGenFramebuffers(1, &m_FBOId);
     assert(glGetError() == GL_NO_ERROR);
     glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
     assert(glGetError() == GL_NO_ERROR);
@@ -177,7 +177,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
                 vec3 nuv = vec3(texCoords.xy, 0.0);
           
                 vec4 rgb[3];
-                for (int i=0; i < 3; i++) 
+                for (int i=0; i < 3; i++)
                 {
                     nuv.z = (texCoords.x + i * subp + texCoords.y * tilt) * pitch - center;
                     nuv.z = fract(nuv.z);
@@ -339,6 +339,30 @@ void OutputFBO::setOnlyQuiltImageID(size_t id)
     m_OnlyQuiltImageID = id;
 }
 
+const HoloDisplayParameters OutputFBO::getHoloDisplayParameters() const
+{
+    return m_HoloParameters;
+}
+
+void OutputFBO::setHoloDisplayParameters(const HoloDisplayParameters params)
+{
+    if(m_HoloParameters.m_Pitch != params.m_Pitch)
+    {
+        glUniform1f(glGetUniformLocation(m_ViewerProgram,"pitch"),params.m_Pitch);
+    }
+
+    if(m_HoloParameters.m_Tilt != params.m_Tilt)
+    {
+        glUniform1f(glGetUniformLocation(m_ViewerProgram,"til"),params.m_Tilt);
+    }
+
+    if(m_HoloParameters.m_Center != params.m_Center)
+    {
+        glUniform1f(glGetUniformLocation(m_ViewerProgram,"center"),params.m_Center);
+    }
+    m_HoloParameters = params;
+}
+
 void OutputFBO::renderGridLayout()
 {
     glUseProgram(m_ViewerProgram);
@@ -356,6 +380,11 @@ void OutputFBO::renderGridLayout()
 
     auto quiltSingle = glGetUniformLocation(m_ViewerProgram,"singleViewID");
     glUniform1i(quiltSingle, m_OnlyQuiltImageID);
+
+    auto& params = m_HoloParameters;
+    glUniform1f(glGetUniformLocation(m_ViewerProgram,"pitch"),params.m_Pitch);
+    glUniform1f(glGetUniformLocation(m_ViewerProgram,"tilt"),params.m_Tilt);
+    glUniform1f(glGetUniformLocation(m_ViewerProgram,"center"),params.m_Center);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glActiveTexture(GL_TEXTURE0);

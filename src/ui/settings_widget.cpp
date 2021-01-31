@@ -18,6 +18,14 @@ void SettingsWidgetInputItem<bool>::drawContent()
 }
 
 template<>
+void SettingsWidgetInputItem<void*>::drawContent()
+{
+    if(ImGui::Button(name.c_str()) && onValueChanged)
+        onValueChanged(m_Value);
+}
+
+
+template<>
 void SettingsWidgetSliderItem<float>::drawContent()
 {
     if(ImGui::SliderFloat(name.c_str(), &m_Value, m_Minimum, m_Maximum) && onValueChanged)
@@ -60,5 +68,15 @@ void SettingsWidget::draw()
         item->draw();
     }
 }
+
+std::shared_ptr<SettingsWidgetItemBase> SettingsWidget::getItemByName(const std::string name)
+{
+    auto it = std::find_if(items.begin(), items.end(), [name](auto item)
+    {
+        return item->name == name;
+    });
+    return (it != items.end()?*it:nullptr);
+}
+
 
 
