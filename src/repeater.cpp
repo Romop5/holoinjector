@@ -155,6 +155,50 @@ void Repeater::initialize()
         m_Context.m_OutputFBO.setHoloDisplayParameters(params);
     }, "Reset default holo parameters","");
 
+    /* 
+     * Register input callbacks 
+     */
+    m_Context.m_x11Sniffer.registerOnKeyCallback([&](size_t keySym, bool isDown)->bool
+    {
+        bool shouldBlockInput = false;
+        if(isDown)
+        {
+            onKeyPress(keySym);
+            if(keySym == XK_F10)
+            {
+                Atom window_type = XInternAtom(m_Context.m_x11Sniffer.getDisplay(), "_NET_WM_WINDOW_TYPE", False);
+                long value = XInternAtom(m_Context.m_x11Sniffer.getDisplay(), "_NET_WM_WINDOW_TYPE_DOCK", False);
+                XChangeProperty(m_Context.m_x11Sniffer.getDisplay(), m_Context.m_x11Sniffer.getWindow(), window_type,
+                XA_ATOM, 32, PropModeReplace, (unsigned char *) &value,1 );
+            }
+        }
+        // If GUI is active, propagate input to GUI and block
+        if(m_Context.m_gui.isVisible())
+        {
+            m_Context.m_gui.onKey(keySym,isDown);
+            shouldBlockInput = true;
+        }
+        return shouldBlockInput;
+    });
+    m_Context.m_x11Sniffer.registerOnMouseMoveCallback([&](float dx, float dy)
+    {
+        if(m_Context.m_gui.isVisible())
+        {
+            m_Context.m_gui.onMousePosition(dx,dy);
+            return true;
+        }
+        return false;
+    });
+
+    m_Context.m_x11Sniffer.registerOnButtonCallback([&](size_t buttonID, bool isPressed)
+    {
+        if(m_Context.m_gui.isVisible())
+        {
+            m_Context.m_gui.onButton(buttonID, isPressed);
+            return true;
+        }
+        return false;
+    });
 }
 
 
@@ -211,7 +255,7 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
     {
         m_Context.m_gui.beginFrame(m_Context);
         bool shouldShow = true;
-        //ImGui::ShowDemoWindow(&shouldShow);
+        ImGui::ShowDemoWindow(&shouldShow);
         m_Context.m_settingsWidget.draw();
         m_Context.m_gui.endFrame();
         m_Context.m_gui.renderCurrentFrame();
@@ -963,84 +1007,13 @@ void Repeater::glCallLists(GLsizei n,GLenum type,const GLvoid* lists)
 //-----------------------------------------------------------------------------
 int Repeater::XNextEvent(Display *display, XEvent *event_return)
 {
-    auto fillEmptyEvent = [](XEvent* event)
-    {
-        auto msg = reinterpret_cast<XClientMessageEvent*>(event);
-        msg->type = ClientMessage;
-        msg->message_type = None;
-        return;
-    };
-    auto returnVal = OpenglRedirectorBase::XNextEvent(display,event_return);
-
-    if(event_return->type == KeyPress || event_return->type == KeyRelease)
-    {
-        auto keyEvent = reinterpret_cast<XKeyEvent*>(event_return);
-        static unsigned long lastSerial = 0;
-        if(keyEvent->serial == lastSerial)
-            return returnVal;
-        lastSerial = keyEvent->serial;
-        Logger::log("[Repeater] XNextEvent KeyPress {}, {} - {} - {} - [{} {}] [{} {}] {}\n",
-                keyEvent->type,keyEvent->serial, keyEvent->send_event,
-                static_cast<void*>(keyEvent->display),
-                keyEvent->x,keyEvent->y,keyEvent->state,keyEvent->keycode, keyEvent->same_screen);
-        auto keySym = XLookupKeysym(reinterpret_cast<XKeyEvent*>(event_return), 0);
-
-        if(event_return->type == KeyPress)
-        {
-            onKeyPress(keySym);
-            if(keySym == XK_F10)
-            {
-                Atom window_type = XInternAtom(keyEvent->display, "_NET_WM_WINDOW_TYPE", False);
-                long value = XInternAtom(keyEvent->display, "_NET_WM_WINDOW_TYPE_DOCK", False);
-                XChangeProperty(keyEvent->display, keyEvent->window, window_type,
-                XA_ATOM, 32, PropModeReplace, (unsigned char *) &value,1 );
-            }
-        }
-        // If GUI is active, propagate input to GUI and block
-        if(m_Context.m_gui.isVisible())
-        {
-            m_Context.m_gui.onKey(keySym,(event_return->type == KeyPress));
-            fillEmptyEvent(event_return);
-        }
-    }
-
-    if(event_return->type == MotionNotify)
-    {
-        if(m_Context.m_gui.isVisible())
-        {
-            auto mouseEvent = reinterpret_cast<XMotionEvent*>(event_return);
-            auto dx = mouseEvent->x-X11MouseHook.m_LastXPosition;
-            auto dy = mouseEvent->y-X11MouseHook.m_LastYPosition;
-            std::swap(X11MouseHook.m_LastXPosition,mouseEvent->x);
-            std::swap(X11MouseHook.m_LastYPosition,mouseEvent->y);
-
-            m_Context.m_gui.onMousePosition(dx,dy);
-            Logger::log("[Repeater] {} {}\n", dx, dy);
-
-            fillEmptyEvent(event_return);
-        }
-        return 0;
-    }
-
-    if(event_return->type == ButtonPress || event_return->type == ButtonRelease)
-    {
-        const auto isPressed = (event_return->type == ButtonPress);
-        auto event = reinterpret_cast<XButtonPressedEvent*>(event_return);
-        if(m_Context.m_gui.isVisible())
-        {
-            m_Context.m_gui.onButton(event->button-1, isPressed);
-        }
-    }
-
-    return returnVal;
+    //return OpenglRedirectorBase::XNextEvent(display, event_return);
+    return m_Context.m_x11Sniffer.onXNextEvent(display, event_return);
 }
 
 int Repeater::XWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y)
 {
-    return 0;
-    X11MouseHook.m_LastXPosition = dest_x;
-    X11MouseHook.m_LastYPosition = dest_y;
-    return OpenglRedirectorBase::XWarpPointer(display, src_w, dest_w, src_x, src_y, src_width, src_height, dest_x, dest_y);
+    return OpenglRedirectorBase::XWarpPointer(display,src_w, dest_w, src_x, src_y, src_width, src_height, dest_x, dest_y);
 }
 
 //-----------------------------------------------------------------------------

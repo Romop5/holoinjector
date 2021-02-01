@@ -35,6 +35,9 @@ namespace ve
         private:
             bool m_Visibility = false;
             float m_Scaling = 1.0;
+
+            float posX = 0.0;
+            float posY = 0.0;
     };
 } // namespace ve
 #endif

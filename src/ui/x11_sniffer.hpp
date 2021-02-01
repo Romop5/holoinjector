@@ -13,15 +13,17 @@ namespace ve
         using MouseMoveHandler = std::function<bool(float x, float y)>;
         using ButtonEventHandler = std::function<bool(size_t buttonID, bool isPressed)>;
 
-        void registerOnKeyCallback(KeyEventHandler&&);
-        void registerOnMouseMoveCallback(MouseMoveHandler&&);
-        void registerOnButtonCallback(ButtonEventHandler&&);
+        void registerOnKeyCallback(KeyEventHandler);
+        void registerOnMouseMoveCallback(MouseMoveHandler);
+        void registerOnButtonCallback(ButtonEventHandler);
 
         /* Event */
         /// Process keyboard/mouse events
         int onXNextEvent(Display *display, XEvent* event);
         int onXWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y);
 
+        Window&     getWindow();
+        Display*    getDisplay();
         private:
         KeyEventHandler m_KeyEventCallback;
         MouseMoveHandler m_MouseEventCallback;
@@ -31,6 +33,9 @@ namespace ve
             int m_LastXPosition = 0;
             int m_LastYPosition = 0;
         } X11MouseHook;
+
+        Window   m_Window;
+        Display* m_Display = nullptr;
 
     };
 } // namespace ve

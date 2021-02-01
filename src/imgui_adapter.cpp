@@ -117,9 +117,6 @@ void ve::ImguiAdapter::onKey(size_t key, bool isDown)
 
 void ve::ImguiAdapter::onMousePosition(float x, float y)
 {
-    static float posX = 0.0;
-    static float posY = 0.0;
-
     posX += x;
     posY += y;
     ImGuiIO& io = ImGui::GetIO();
@@ -131,8 +128,8 @@ void ve::ImguiAdapter::onButton(size_t buttonID, bool isPressed)
     assert(buttonID < 5);
     ImGuiIO& io = ImGui::GetIO();
     io.MouseDown[buttonID] = isPressed;
+    io.MousePos = ImVec2(posX,posY);
 }
-
 
 bool ve::ImguiAdapter::isVisible()
 {
