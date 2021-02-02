@@ -101,12 +101,12 @@ void Repeater::initialize()
     m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
     {
         m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance = newValue;
-    }, "Near plane",0.0, 400, "Define distance of near plane");
+    }, "Near plane",0.0, 40, "Define distance of near plane");
 
     m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
     {
         m_Context.m_cameraParameters.m_XShiftMultiplier = newValue;
-    }, "Horizontal shift",0.0, 40, "Define horizontal distance of left-most side view from the original point of view");
+    }, "Horizontal shift",0.0, 8, "Define horizontal distance of left-most side view from the original point of view");
 
     m_Context.m_settingsWidget.registerInputItem<bool>([this](auto newValue)
     {
@@ -254,8 +254,8 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
     if(m_Context.m_gui.isVisible())
     {
         m_Context.m_gui.beginFrame(m_Context);
-        bool shouldShow = true;
-        ImGui::ShowDemoWindow(&shouldShow);
+        //bool shouldShow = true;
+        //ImGui::ShowDemoWindow(&shouldShow);
         m_Context.m_settingsWidget.draw();
         m_Context.m_gui.endFrame();
         m_Context.m_gui.renderCurrentFrame();

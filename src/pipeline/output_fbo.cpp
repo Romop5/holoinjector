@@ -147,9 +147,9 @@ void OutputFBO::initialize(OutputFBOParameters params)
 
         //-----------------------------------------------
          // HoloPlay values
-          uniform float pitch = 354.42108f;
-          uniform float tilt = -0.1153f;
-          uniform float center = 0.04239f;
+          uniform float pitch = 354.677;
+          uniform float tilt = -0.113949f;
+          uniform float center = -0.400272;
           uniform float subp = 0.00013f;
           uniform vec4 viewPortion = vec4(0.99976f, 0.99976f, 0.00f, 0.00f);
           uniform uint drawOnlyOneImage = 0;
@@ -217,6 +217,8 @@ void OutputFBO::initialize(OutputFBOParameters params)
     m_ViewerProgram = program.releaseID();
 
     m_VAO = std::make_shared<ve::utils::glFullscreenVAO>();
+
+    setHoloDisplayParameters(HoloDisplayParameters{});
 }
 
 void OutputFBO::deinitialize()

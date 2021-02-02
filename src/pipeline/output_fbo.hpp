@@ -37,9 +37,9 @@ namespace pipeline
 
     struct HoloDisplayParameters
     {
-        float m_Pitch = 354.42108f;
-        float m_Tilt = -0.1153f;
-        float m_Center = 0.00013f;
+        float m_Pitch = 354.677f;
+        float m_Tilt = -0.113949f;
+        float m_Center = -0.400272;
     };
     /**
      * @brief Wraps back-buffer with a layered FBO
