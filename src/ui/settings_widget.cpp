@@ -42,12 +42,14 @@ void SettingsWidgetSliderItem<int>::drawContent()
 
 void SettingsWidgetItemBase::draw()
 {
+    ImGuiIO& io = ImGui::GetIO(); 
+    const auto scale = io.FontGlobalScale;
     // Render name / tooltip
     drawContent();
     if(tooltip.size() && ImGui::IsItemHovered())
     {
         ImGui::BeginTooltip();
-        ImGui::PushTextWrapPos(450.0f);
+        ImGui::PushTextWrapPos(450.0f*scale);
         ImGui::TextUnformatted(tooltip.c_str());
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
@@ -63,10 +65,17 @@ SettingsWidget::SettingsWidget()
 
 void SettingsWidget::draw()
 {
-    for(auto& item: items)
+    ImGuiWindowFlags window_flags = 0;
+    window_flags |= ImGuiWindowFlags_NoBackground;
+    window_flags |= ImGuiWindowFlags_NoTitleBar;
+    ImGui::Begin("Settings", nullptr, window_flags);
     {
-        item->draw();
+        for(auto& item: items)
+        {
+            item->draw();
+        }
     }
+    ImGui::End();
 }
 
 std::shared_ptr<SettingsWidgetItemBase> SettingsWidget::getItemByName(const std::string name)
