@@ -491,7 +491,7 @@ std::string ShaderInspector::getCommonTransformationShader()
     float enhancer_getProjectionShift(int cameraId)
     {
         float normalizedDistance = 1.0-2.0*float(cameraId+1)/float(enhancer_max_views+1);
-        return -normalizedDistance*enhancer_XShiftMultiplier/enhancer_FrontalDistance;
+        return normalizedDistance*enhancer_XShiftMultiplier/enhancer_FrontalDistance;
     }
 
     float enhancer_getShearCoeff(int cameraId, float r)
@@ -523,7 +523,8 @@ std::string ShaderInspector::getCommonTransformationShader()
             return clipSpace;
 
         float nearOriginal = enhancer_deprojection[2];
-        float near = enhancer_FrontalDistance;
+        //float near = enhancer_FrontalDistance;
+        float near = nearOriginal;
         float far = enhancer_deprojection[3];
         
         float A = -2.0/(far-near);
@@ -534,14 +535,15 @@ std::string ShaderInspector::getCommonTransformationShader()
 
         float r = tan(angle*0.5)*near;
 
-        //float fovX = enhancer_deprojection[0]*(near/nearOriginal);
-        float fovX = near/r;
-        float fovY = fovX*aspect;
+        float fovX = enhancer_deprojection[0];
+        float fovY = enhancer_deprojection[1];
+        //float fovX = near/r;
+        //float fovY = fovX*aspect;
         
         mat4 projection = mat4(
             vec4(fovX,0.0f,0.0,0.0),
             vec4(0.0f,fovY,0.0f,0.0),
-            vec4(enhancer_getShearCoeff(camera,r),0.0f,A,-1.0),
+            vec4(enhancer_getProjectionShift(camera),0.0f,A,-1.0),
             vec4(0,0.0f,B,0.0));
 
         // Do per-view transformation
