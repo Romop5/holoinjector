@@ -22,8 +22,6 @@ void ve::X11Sniffer::registerOnButtonCallback(ButtonEventHandler handler)
 int ve::X11Sniffer::onXNextEvent(Display *display, XEvent* event_return)
 {
     auto anyEvent = reinterpret_cast<XAnyEvent*>(event_return);
-    m_Window = anyEvent->window;
-    m_Display = anyEvent->display;
 
     auto fillEmptyEvent = [](XEvent* event)
     {
@@ -46,6 +44,9 @@ int ve::X11Sniffer::onXNextEvent(Display *display, XEvent* event_return)
                     static_cast<void*>(keyEvent->display),
                     keyEvent->x,keyEvent->y,keyEvent->state,keyEvent->keycode, keyEvent->same_screen);
             auto keySym = XLookupKeysym(reinterpret_cast<XKeyEvent*>(event_return), 0);
+
+            m_Window = keyEvent->window;
+            m_Display = keyEvent->display;
             if(m_KeyEventCallback(keySym,(event_return->type == KeyPress)))
             {
                 fillEmptyEvent(event_return);
