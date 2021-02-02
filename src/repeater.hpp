@@ -36,6 +36,7 @@ namespace ve
         virtual Bool glXMakeContextCurrent(Display * display, GLXDrawable draw, GLXDrawable read, GLXContext ctx) override;
         virtual int XNextEvent(Display *display, XEvent *event_return) override;
         virtual int XWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y) override;
+        virtual Window XCreateWindow(Display *display, Window parent, int x, int y, unsigned int width, unsigned int height, unsigned int border_width, int depth, unsigned int classInstance, Visual *visual, unsigned long valuemask, XSetWindowAttributes *        attributes) override;
 
         // Textures
         virtual void glGenTextures(GLsizei n,GLuint* textures) override;

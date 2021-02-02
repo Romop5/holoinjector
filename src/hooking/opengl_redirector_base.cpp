@@ -227,6 +227,8 @@ void (*OpenglRedirectorBase::glXGetProcAddressARB(	const GLubyte * procName))(vo
     return originalAddress(procName);
 }
 
+
+OPENGL_FORWARD(Window,XCreateWindow,Display *,display, Window, parent, int, x, int, y, unsigned int, width, unsigned int, height, unsigned int, border_width, int, depth, unsigned int, classInstance, Visual*, visual,unsigned long, valuemask, XSetWindowAttributes*, attributes);
 OPENGL_FORWARD(int,XNextEvent,Display *,display, XEvent *,event_return);
 OPENGL_FORWARD(int,XWarpPointer,Display *,display, Window,src_w, Window,dest_w, int,src_x, int
         ,src_y, unsigned int,src_width, unsigned int,src_height, int,dest_x, int,dest_y);

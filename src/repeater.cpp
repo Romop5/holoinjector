@@ -1015,6 +1015,14 @@ int Repeater::XWarpPointer(Display* display, Window src_w, Window dest_w, int sr
 {
     return OpenglRedirectorBase::XWarpPointer(display,src_w, dest_w, src_x, src_y, src_width, src_height, dest_x, dest_y);
 }
+Window Repeater::XCreateWindow(Display *display, Window parent, int x, int y, unsigned int width, unsigned int height, unsigned int border_width, int depth, unsigned int classInstance, Visual *visual, unsigned long valuemask, XSetWindowAttributes *        attributes)
+{
+    if(attributes)
+    {
+        attributes->event_mask |= PointerMotionMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask;
+    }
+    return OpenglRedirectorBase::XCreateWindow(display, parent, x,y,width, height, border_width, depth, classInstance, visual, valuemask, attributes);
+}
 
 //-----------------------------------------------------------------------------
 // Utils
