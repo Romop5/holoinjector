@@ -25,9 +25,16 @@ int ve::X11Sniffer::onXNextEvent(Display *display, XEvent* event_return)
 
     auto fillEmptyEvent = [](XEvent* event)
     {
-        auto msg = reinterpret_cast<XClientMessageEvent*>(event);
-        msg->type = ClientMessage;
-        msg->message_type = None;
+        /* X11 event system does not allow to report an empty event when user
+         * calls blocking XNextEvent. Instead, we return an event which we
+         * consider unharmful and which should keep status quo of underlying
+         * application.
+         * Originally, ClientMessage was used, but these caused collision with applications
+         * such as NeHes.
+         */
+        auto msg = reinterpret_cast<XVisibilityEvent*>(event);
+        msg->type = VisibilityNotify;
+        msg->state = VisibilityUnobscured;
         return;
     };
     auto returnVal = XNextEvent(display,event_return);
