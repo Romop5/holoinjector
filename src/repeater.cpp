@@ -1023,11 +1023,25 @@ int Repeater::XWarpPointer(Display* display, Window src_w, Window dest_w, int sr
 }
 Window Repeater::XCreateWindow(Display *display, Window parent, int x, int y, unsigned int width, unsigned int height, unsigned int border_width, int depth, unsigned int classInstance, Visual *visual, unsigned long valuemask, XSetWindowAttributes *        attributes)
 {
+    x = 2560;
+    y = 1600;
     if(attributes)
     {
         attributes->event_mask |= PointerMotionMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask;
+        attributes->do_not_propagate_mask = NoEventMask;
+        attributes->override_redirect = False;
     }
     return OpenglRedirectorBase::XCreateWindow(display, parent, x,y,width, height, border_width, depth, classInstance, visual, valuemask, attributes);
+}
+
+void Repeater::XSetWMNormalHints(Display *display, Window w, XSizeHints* hints)
+{
+    if(hints)
+    {
+        hints->max_width = 2560;
+        hints->max_height = 1600;
+    }
+    OpenglRedirectorBase::XSetWMNormalHints(display, w, hints);
 }
 
 //-----------------------------------------------------------------------------
