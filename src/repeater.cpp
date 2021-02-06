@@ -236,6 +236,65 @@ void Repeater::registerCallbacks()
     registerOpenGLSymbols();
 }
 
+
+GLXContext Repeater::glXCreateContext(Display * dpy, XVisualInfo * vis, GLXContext shareList, Bool direct)
+{
+    // TODO: code below does not work as expected in practices
+    // Hint: XVisualInfo needs to be converted into corresponding visual_attribs
+    return OpenglRedirectorBase::glXCreateContext(dpy, vis, shareList, direct);
+
+    /*
+     * See https://www.khronos.org/opengl/wiki/Tutorial:_OpenGL_3.0_Context_Creation_(GLX)
+     */
+    typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+
+    glXCreateContextAttribsARBProc proc = reinterpret_cast<glXCreateContextAttribsARBProc>(glXGetProcAddressARB(reinterpret_cast<const GLubyte*>("glXCreateContextAttribsARB")));
+    // FBConfigs were added in GLX version 1.3.
+    int glx_major, glx_minor;
+    if (!( !glXQueryVersion(dpy, &glx_major, &glx_minor ) ||
+       ( ( glx_major == 1 ) && ( glx_minor < 3 ) ) || ( glx_major < 1 ) ) && proc != nullptr)
+    {
+        static int visual_attribs[] =
+        {
+          GLX_X_RENDERABLE    , True,
+          GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+          GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+          GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+          GLX_RED_SIZE        , 8,
+          GLX_GREEN_SIZE      , 8,
+          GLX_BLUE_SIZE       , 8,
+          GLX_ALPHA_SIZE      , 8,
+          GLX_DEPTH_SIZE      , 24,
+          GLX_STENCIL_SIZE    , 8,
+          GLX_DOUBLEBUFFER    , True,
+          //GLX_SAMPLE_BUFFERS  , 1,
+          //GLX_SAMPLES         , 4,
+          None
+        };
+        int fbcount;
+        GLXFBConfig* fbc = glXChooseFBConfig(dpy, DefaultScreen(dpy), visual_attribs, &fbcount);
+        if(fbcount)
+        {
+            // TODO: choose best config
+            GLXFBConfig bestFbc = fbc[0];
+            XFree(fbc);
+
+            /* Use OpenGL 4.6*/
+            int attrib_list[] = {
+                GLX_CONTEXT_MAJOR_VERSION_ARB,3,
+                GLX_CONTEXT_MINOR_VERSION_ARB,3,
+                None
+            };
+
+            auto ctx = proc(dpy,bestFbc,shareList,direct, attrib_list);
+            //if(ctx)
+            //    return ctx;
+            Logger::log("[Repeater] Failed to create OpenGL 4.6 context, falling back to original glXCreateContext");
+        }
+    }
+    return OpenglRedirectorBase::glXCreateContext(dpy, vis, shareList, direct);
+}
+
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
     glDisable(GL_CULL_FACE);
@@ -260,6 +319,18 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
     if(m_Context.m_gui.isVisible())
     {
         m_Context.m_gui.beginFrame(m_Context);
+        ImGui::TextUnformatted(reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+        static char versionStr[256];
+        static bool hasVersion = false;
+        if(!hasVersion)
+        {
+            int major = 0, minor = 0;
+            glGetIntegerv(GL_MAJOR_VERSION, &major);
+            glGetIntegerv(GL_MINOR_VERSION, &minor);
+            sprintf(versionStr, "V: %d.%d",major, minor);
+            hasVersion = true;
+        }
+        ImGui::TextUnformatted(versionStr);
         //bool shouldShow = true;
         //ImGui::ShowDemoWindow(&shouldShow);
         m_Context.m_settingsWidget.draw();

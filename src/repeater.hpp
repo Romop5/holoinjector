@@ -31,6 +31,7 @@ namespace ve
         virtual void glClear(GLbitfield mask) override;
 
         // X11 library & GLX extension handlers
+        virtual GLXContext glXCreateContext(Display * dpy, XVisualInfo * vis, GLXContext shareList, Bool direct) override;
         virtual void glXSwapBuffers(Display * dpy, GLXDrawable drawable) override;
         virtual Bool glXMakeCurrent(Display * dpy, GLXDrawable drawable,GLXContext ctx) override;
         virtual Bool glXMakeContextCurrent(Display * display, GLXDrawable draw, GLXDrawable read, GLXContext ctx) override;

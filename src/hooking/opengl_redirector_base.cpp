@@ -197,6 +197,7 @@ namespace helper
     };
 }
 
+OPENGL_FORWARD(GLXContext,glXCreateContext,Display*, dpy, XVisualInfo*, vis,GLXContext,shareList, Bool, direct);
 OPENGL_FORWARD(void,glXSwapBuffers,Display*, dpy, GLXDrawable, drawable);
 OPENGL_FORWARD(Bool,glXMakeCurrent,Display*, dpy, GLXDrawable, drawable,GLXContext,ctx);
 OPENGL_FORWARD(Bool,glXMakeContextCurrent,Display*, dpy, GLXDrawable, draw,GLXDrawable, read,GLXContext,ctx);

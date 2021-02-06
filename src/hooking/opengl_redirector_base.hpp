@@ -38,6 +38,7 @@ namespace hooking
         /*
          * X Window methods
          */
+        virtual GLXContext glXCreateContext(Display * dpy, XVisualInfo * vis, GLXContext shareList, Bool direct);
         virtual void glXSwapBuffers(Display * dpy, GLXDrawable drawable);
         virtual Bool glXMakeCurrent(Display * dpy, GLXDrawable drawable, GLXContext ctx);
         virtual Bool glXMakeContextCurrent(Display * display, GLXDrawable draw, GLXDrawable read, GLXContext ctx);
