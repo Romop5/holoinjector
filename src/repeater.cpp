@@ -238,6 +238,9 @@ void Repeater::registerCallbacks()
 
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_SCISSOR_TEST);
     OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     if(m_Context.m_IsMultiviewActivated && m_Context.m_OutputFBO.hasImage())
     {
@@ -247,6 +250,9 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
         m_Context.m_OutputFBO.renderToBackbuffer(m_Context.m_cameraParameters);
         m_Context.m_OutputFBO.clearBuffers();
     }
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_SCISSOR_TEST);
 
     OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
