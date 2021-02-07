@@ -16,10 +16,21 @@ namespace utils
     {
         public:
         BackupOpenGLStatesRAII() = default;
-        ~BackupOpenGLStatesRAII();
         explicit BackupOpenGLStatesRAII(GLenum state);
+        ~BackupOpenGLStatesRAII();
+
+        // Delete copy constructor
+        BackupOpenGLStatesRAII(const BackupOpenGLStatesRAII&) = delete;
+        // Delete copy assign
+        BackupOpenGLStatesRAII& operator=(const BackupOpenGLStatesRAII&) = delete;
+
+        // Move constructable
+        BackupOpenGLStatesRAII(BackupOpenGLStatesRAII&& inst);
+        // Move assingnable
+        BackupOpenGLStatesRAII& operator=(BackupOpenGLStatesRAII&& inst);
+
         private:
-        GLenum m_State;
+        GLenum m_State = GL_FALSE;
         bool m_IsEnabled = false;
     };
 
