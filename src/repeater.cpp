@@ -93,6 +93,11 @@ void Repeater::initialize()
     m_Context.m_gui.initialize();
 
     // Register settings UI
+    m_Context.m_settingsWidget.registerInputItem<bool>([this](auto newValue)
+    {
+        m_Context.m_x11Sniffer.turnFullscreen();
+    }, "Toggle fullscreen")->setValue(false);
+
     m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
     {
         m_Context.m_gui.setScaling(newValue);
@@ -1088,13 +1093,16 @@ int Repeater::XWarpPointer(Display* display, Window src_w, Window dest_w, int sr
 }
 Window Repeater::XCreateWindow(Display *display, Window parent, int x, int y, unsigned int width, unsigned int height, unsigned int border_width, int depth, unsigned int classInstance, Visual *visual, unsigned long valuemask, XSetWindowAttributes *        attributes)
 {
-    x = 2560;
-    y = 1600;
-    if(attributes)
+    if(width > 1 && height > 1)
     {
-        attributes->event_mask |= PointerMotionMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask;
-        attributes->do_not_propagate_mask = NoEventMask;
-        attributes->override_redirect = False;
+        //width = 2560;
+        //height = 1600;
+        if(attributes)
+        {
+            attributes->event_mask |= PointerMotionMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask;
+            attributes->do_not_propagate_mask = NoEventMask;
+            //attributes->override_redirect = True;
+        }
     }
     return OpenglRedirectorBase::XCreateWindow(display, parent, x,y,width, height, border_width, depth, classInstance, visual, valuemask, attributes);
 }
