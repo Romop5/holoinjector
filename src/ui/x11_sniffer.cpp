@@ -1,6 +1,7 @@
 #include "ui/x11_sniffer.hpp"
-//#include <X11/keysym.h>
 #include "logger.hpp"
+
+#include <X11/Xatom.h>
 
 using namespace ve;
 
@@ -104,4 +105,12 @@ Window& X11Sniffer::getWindow()
 Display* X11Sniffer::getDisplay()
 {
     return m_Display;
+}
+
+void X11Sniffer::turnFullscreen()
+{
+    Atom window_type = XInternAtom(m_Display, "_NET_WM_WINDOW_TYPE", False);
+    long value = XInternAtom(m_Display, "_NET_WM_WINDOW_TYPE_DOCK", False);
+    XChangeProperty(m_Display, m_Window, window_type,
+    XA_ATOM, 32, PropModeReplace, (unsigned char *) &value,1 );
 }

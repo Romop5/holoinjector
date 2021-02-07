@@ -24,7 +24,6 @@
 #include <imgui.h>
 
 #include <X11/Xlib.h>
-#include <X11/Xatom.h>
 
 using namespace ve;
 
@@ -165,13 +164,7 @@ void Repeater::initialize()
         if(isDown)
         {
             onKeyPress(keySym);
-            if(keySym == XK_F10)
-            {
-                Atom window_type = XInternAtom(m_Context.m_x11Sniffer.getDisplay(), "_NET_WM_WINDOW_TYPE", False);
-                long value = XInternAtom(m_Context.m_x11Sniffer.getDisplay(), "_NET_WM_WINDOW_TYPE_DOCK", False);
-                XChangeProperty(m_Context.m_x11Sniffer.getDisplay(), m_Context.m_x11Sniffer.getWindow(), window_type,
-                XA_ATOM, 32, PropModeReplace, (unsigned char *) &value,1 );
-            }
+            
         }
         // If GUI is active, propagate input to GUI and block
         if(m_Context.m_gui.isVisible())
@@ -1154,11 +1147,14 @@ void Repeater::onKeyPress(size_t keySym)
             case XK_F5:
                 m_Context.m_cameraParameters = ve::pipeline::CameraParameters();
             break;
-           case XK_F11:
+            case XK_F11:
                 m_Context.m_gui.setVisibility(!m_Context.m_gui.isVisible());
             break;
             case XK_F12:
                 m_Context.m_IsMultiviewActivated = !m_Context.m_IsMultiviewActivated;
+            break;
+            case XK_F10:
+                m_Context.m_x11Sniffer.turnFullscreen();
             break;
             default:
             break;

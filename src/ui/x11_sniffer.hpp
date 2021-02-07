@@ -24,6 +24,8 @@ namespace ve
 
         Window&     getWindow();
         Display*    getDisplay();
+
+        void turnFullscreen();
         private:
         KeyEventHandler m_KeyEventCallback;
         MouseMoveHandler m_MouseEventCallback;
