@@ -130,6 +130,8 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_objects.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_state.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_state.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_raii.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_raii.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/enviroment.hpp

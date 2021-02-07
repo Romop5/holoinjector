@@ -14,6 +14,7 @@
 #include "pipeline/pipeline_injector.hpp"
 
 #include "utils/opengl_utils.hpp"
+#include "utils/opengl_state.hpp"
 #include "utils/enviroment.hpp"
 #include "utils/glsl_preprocess.hpp"
 
@@ -297,21 +298,21 @@ GLXContext Repeater::glXCreateContext(Display * dpy, XVisualInfo * vis, GLXConte
 
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_SCISSOR_TEST);
-    OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    if(m_Context.m_IsMultiviewActivated && m_Context.m_OutputFBO.hasImage())
+    ve::utils::restoreStateFunctor({GL_CULL_FACE, GL_DEPTH_TEST, GL_SCISSOR_TEST},[this]()
     {
-        OpenglRedirectorBase::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
-        m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
-        m_Context.m_OutputFBO.renderToBackbuffer(m_Context.m_cameraParameters);
-        m_Context.m_OutputFBO.clearBuffers();
-    }
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_SCISSOR_TEST);
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_SCISSOR_TEST);
+        OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        if(m_Context.m_IsMultiviewActivated && m_Context.m_OutputFBO.hasImage())
+        {
+            OpenglRedirectorBase::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
+            m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
+            m_Context.m_OutputFBO.renderToBackbuffer(m_Context.m_cameraParameters);
+            m_Context.m_OutputFBO.clearBuffers();
+        }
+    });
 
     OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
