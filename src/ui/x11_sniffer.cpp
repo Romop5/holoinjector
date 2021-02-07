@@ -109,8 +109,41 @@ Display* X11Sniffer::getDisplay()
 
 void X11Sniffer::turnFullscreen()
 {
+    /*
     Atom window_type = XInternAtom(m_Display, "_NET_WM_WINDOW_TYPE", False);
     long value = XInternAtom(m_Display, "_NET_WM_WINDOW_TYPE_DOCK", False);
     XChangeProperty(m_Display, m_Window, window_type,
     XA_ATOM, 32, PropModeReplace, (unsigned char *) &value,1 );
+    */
+
+    /*Atom wm_state   = XInternAtom (m_Display, "_NET_WM_STATE", true );
+    Atom wm_fullscreen = XInternAtom (m_Display, "_NET_WM_STATE_FULLSCREEN", true );
+
+    XChangeProperty(m_Display, m_Window, wm_state, XA_ATOM, 32,
+                    PropModeReplace, (unsigned char *)&wm_fullscreen, 1);
+    */
+
+    //code is from [http://tonyobryan.com/index.php?article=9][1]
+    typedef struct Hints
+    {
+        unsigned long   flags;
+        unsigned long   functions;
+        unsigned long   decorations;
+        long            inputMode;
+        unsigned long   status;
+    } Hints;
+
+    static bool shouldBeFullscreen = true;
+    // See: https://metacpan.org/pod/X11::Protocol::WM#_MOTIF_WM_HINTS
+    auto decorations = shouldBeFullscreen?0:1;
+    shouldBeFullscreen = !shouldBeFullscreen;
+    //code to remove decoration
+    Hints hints;
+    Atom property;
+    hints.flags = 2;
+    hints.decorations = decorations;
+
+    property = XInternAtom(m_Display, "_MOTIF_WM_HINTS", true);
+    XChangeProperty(m_Display, m_Window,property,property,32,PropModeReplace,(unsigned char *)&hints,5);
+    XMapWindow(m_Display, m_Window);
 }
