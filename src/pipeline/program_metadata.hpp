@@ -19,11 +19,12 @@ struct ProgramMetadata
     bool m_HasAnyUniform = false;
     // Determines if skybox / clipspace rendering was detected
     bool m_IsClipSpaceTransform = false;
-
-
+    // Determines if ftransform() is called in Vertex Shader
+    bool m_HasAnyFtransform = false;
     // Queries
     bool isUBOused() const;
     bool hasDetectedTransformation() const;
+    bool hasFtransform() const;
 };
 
 } //namespace pipeline

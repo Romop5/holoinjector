@@ -455,6 +455,13 @@ bool ShaderInspector::isClipSpaceShader() const
     return std::regex_search(sourceCode, m, clipAssign); 
 }
 
+bool ShaderInspector::hasFtransform() const
+{
+    static auto keyWord = std::regex("ftransform");
+    std::smatch m;
+    return std::regex_search(sourceCode, m, keyWord);
+}
+
 void ShaderInspector::injectCommonCode(std::string& sourceOriginal)
 {
     auto pos = sourceOriginal.find_first_of("\n", sourceOriginal.find_last_of("#"));

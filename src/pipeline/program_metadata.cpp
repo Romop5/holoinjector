@@ -13,4 +13,9 @@ bool ProgramMetadata::hasDetectedTransformation() const
     return !m_TransformationMatrixName.empty();
 }
 
+bool ProgramMetadata::hasFtransform() const
+{
+    return m_HasAnyFtransform;
+}
+
 

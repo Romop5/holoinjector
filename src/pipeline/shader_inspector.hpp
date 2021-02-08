@@ -83,6 +83,7 @@ namespace pipeline
 
         /// Is clip-space shader
         bool isClipSpaceShader() const;
+        bool hasFtransform() const;
 
         static void injectCommonCode(std::string& sourceOriginal);
 

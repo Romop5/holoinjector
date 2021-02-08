@@ -319,7 +319,8 @@ bool PipelineInjector::injectShader(std::string& sourceCode, ProgramMetadata& ou
         return false;
     
     outMetadata.m_TransformationMatrixName = transformationName;
-    outMetadata.m_IsClipSpaceTransform = inspector.isClipSpaceShader(); 
+    outMetadata.m_IsClipSpaceTransform = inspector.isClipSpaceShader();
+    outMetadata.m_HasAnyFtransform = inspector.hasFtransform();
     outMetadata.m_InterfaceBlockName = inspector.getUniformBlockName(outMetadata.m_TransformationMatrixName);
     outMetadata.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
 
