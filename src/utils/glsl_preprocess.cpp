@@ -26,7 +26,7 @@ std::string ve::glsl_preprocess::preprocessGLSLCode(std::string code)
     std::stringstream ss;
     ss << wrapGLSLMacros(code);
     auto tmp = unwrapGLSLMacros(simplecpp::preprocess_inmemory(ss));
-    return std::regex_replace(tmp, std::regex("^$"),"");
+    return std::regex_replace(tmp, std::regex("\n([ \t]*\n)*"),"\n");
 }
 
 std::string ve::glsl_preprocess::joinGLSLshaders(GLsizei count, const GLchar* const*string, const GLint* length)
