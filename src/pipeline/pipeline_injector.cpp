@@ -8,6 +8,30 @@
 using namespace ve;
 using namespace ve::pipeline;
 
+namespace helper
+{
+    std::string regex_replace_functor(const std::string str, const std::regex reg, std::function<std::string(std::string)> functor)
+    {
+        std::string result = str;
+        size_t startPosition = 0;
+        size_t currentLength = result.size();
+        auto end= std::sregex_iterator();
+        do {
+            auto it = std::sregex_iterator(result.begin()+startPosition, result.end(), reg);
+            if(it == end)
+                break;
+            auto& match = *it;
+            auto newString = functor(match.str(0));
+            // replace original with new
+            result.replace(startPosition+match.position(0), match.str(0).size(), newString);
+            // advance pass the replaced string
+            startPosition += match.position(0)+newString.size();
+            size_t currentLength = result.size();
+        } while (startPosition < currentLength);
+        return result;
+    }
+}
+
 PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType input, const PipelineParams& params)
 {
     PipelineType output = input;
@@ -57,7 +81,7 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
     // Inject new GS if none is provided
     if(input.count(GL_GEOMETRY_SHADER) == 0)
         output = insertGeometryShader(output,updatedParams);
-    else 
+    else
         output = injectGeometryShader(output,updatedParams);
 
     // Replace version with GLSL 4.6
@@ -140,7 +164,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
         ioDefinitionString += "in " + type + " " + name + "[];\n";
         ioDefinitionString += "out " + type + " " + "enhancer_frag_"+name + ";\n";
 
-        
+
         bool isInterfaceBlock = type.find_first_of("{}") != std::string::npos;
         if(!isInterfaceBlock)
         {
@@ -181,7 +205,16 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
     {
         bool isInterfaceBlock = type.find_first_of("{}") != std::string::npos;
         auto nameSuffix = (isInterfaceBlock?"_fs":"");
-        fragmentShader = std::regex_replace(fragmentShader, std::regex(name),"enhancer_frag_"+name+nameSuffix);  
+        //fragmentShader = std::regex_replace(fragmentShader, std::regex(name),"enhancer_frag_"+name+nameSuffix);
+        auto replaceRegexSearch = std::regex(std::string("([a-zA-Z_-][a-zA-Z0-9_-]*)?")+name+std::string("[a-zA-Z0-9_-]*"));
+        fragmentShader = helper::regex_replace_functor(fragmentShader, replaceRegexSearch,[&](auto str)->std::string
+        {
+            if(str == name)
+            {
+                return "enhancer_frag_"+name+nameSuffix;
+            }
+            return str;
+        });
     }
      
     /*
