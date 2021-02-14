@@ -53,6 +53,7 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
             // so we can't change the structure of program
             return {input, nullptr};
         }
+        // does Geometry Shader calculate MVP transformation?
         if(injectShader(GS, *metadata))
         {
             hasFilledMetadata = true;
@@ -63,9 +64,10 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
     }
 
     auto VS = output.at(GL_VERTEX_SHADER);
+    // if geometry shader does not exist or it does not calculat MVP and VS does
     if(!hasFilledMetadata && injectShader(VS, *metadata))
     {   // try VS if GS does not exists or does not contain transformation
-        hasFilledMetadata = true; 
+        hasFilledMetadata = true;
         output[GL_VERTEX_SHADER] = VS;
     }
 
