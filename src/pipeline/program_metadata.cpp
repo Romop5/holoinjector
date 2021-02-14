@@ -18,4 +18,9 @@ bool ProgramMetadata::hasFtransform() const
     return m_HasAnyFtransform;
 }
 
+bool ProgramMetadata::usesGeometryShader() const
+{
+    return m_IsGeometryShaderUsed;
+}
+
 

@@ -21,10 +21,15 @@ struct ProgramMetadata
     bool m_IsClipSpaceTransform = false;
     // Determines if ftransform() is called in Vertex Shader
     bool m_HasAnyFtransform = false;
+
+    // Is geometry shader user
+    bool m_IsGeometryShaderUsed = true;
+
     // Queries
     bool isUBOused() const;
     bool hasDetectedTransformation() const;
     bool hasFtransform() const;
+    bool usesGeometryShader() const;
 };
 
 } //namespace pipeline

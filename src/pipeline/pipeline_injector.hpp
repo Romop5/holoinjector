@@ -41,7 +41,7 @@ namespace pipeline
                 std::unique_ptr<ProgramMetadata> metadata;
             };
             /**
-             * @brief 
+             * @brief
              *
              * @param inputPipeline
              *

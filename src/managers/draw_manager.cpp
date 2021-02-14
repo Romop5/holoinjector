@@ -71,7 +71,13 @@ void DrawManager::drawGeneric(Context& context, const std::function<void(void)>&
     /// If application is using shaders and shader program has enhancer's GS capabilities
     if(programs.hasBounded() && programs.getBoundConst()->m_Metadata)
     {
-        drawWithGeometryShader(context, drawCallLambda);
+        const auto& metadata = *programs.getBoundConst()->m_Metadata;
+        if(metadata->usesGeometryShader())
+        {
+            drawWithGeometryShader(context, drawCallLambda);
+        } else {
+            drawWithVertexShader(context, drawCallLambda);
+        }
     } else {
         drawLegacy(context, drawCallLambda);
     }
@@ -98,6 +104,31 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
         glUniform1i(loc, l);
         drawCallLambda();
     }
+}
+
+void DrawManager::drawWithVertexShader(Context& context, const std::function<void(void)>& drawCallLambda)
+{
+    for(size_t cameraID = 0; cameraID < context.m_cameras.getCameras().size(); cameraID++)
+    {
+        // Bind correct layered texture
+        context.m_TextureTracker.getTextureUnits().bindShadowedTexturesToLayer(cameraID);
+
+        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_isSingleViewActivated");
+        glUniform1i(loc, true);
+
+        // Set correct cameraID
+        loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_singleViewID");
+        glUniform1i(loc, cameraID);
+ 
+
+        // Create & set single view for current render
+        auto shadowFBO = createSingleViewFBO(context, cameraID);
+        assert(shadowFBO != 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+
+        drawCallLambda();
+    }
+
 }
 
 void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& drawCallLambda)

@@ -35,6 +35,8 @@ class DrawManager
     void drawLegacy(Context& context, const std::function<void(void)>& code);
     /// Draw when Geometry Shader has been injected into program
     void drawWithGeometryShader(Context& context, const std::function<void(void)>& code);
+    /// Draw without, just using Vertex Shader + repeating
+    void drawWithVertexShader(Context& context, const std::function<void(void)>& code);
 
     // TODO: Replace setters with separate class, devoted for intershader communication
     void setEnhancerShift(Context& context, const glm::mat4& viewSpaceTransform, float projectionAdjust = 0.0);
