@@ -44,9 +44,10 @@ class DrawManager
     void pushFixedPipelineProjection(Context& context, const glm::mat4& viewSpaceTransform, float projectionAdjust = 0.0);
     void popFixedPipelineProjection(Context& context);
 
-
     // Legacy OpenGL - Create single-view FBO from current FBO
     GLuint createSingleViewFBO(Context& contex, size_t layer);
+
+    void setEnhancerUniforms(size_t shaderID, Context& context);
 };
 } // namespace managers
 } // namespace ve

@@ -59,23 +59,7 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
      */
     if(context.m_Manager.hasBounded())
     {
-        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_XShiftMultiplier");
-        glUniform1f(loc, context.m_cameraParameters.m_XShiftMultiplier);
-
-        loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_FrontalDistance");
-        glUniform1f(loc, context.m_cameraParameters.m_frontOpticalAxisCentreDistance);
-
-        const auto maxViews = context.m_OutputFBO.getParams().getLayers();
-        auto location = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_max_views");
-        glUniform1i(location, maxViews);
-
-        location = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_max_invocations");
-        glUniform1i(location, maxViews);
-
-        loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_identity");
-
-        bool shouldNotUseIdentity = (context.m_Manager.getBound()->m_Metadata && context.m_Manager.getBound()->m_Metadata->hasDetectedTransformation());
-        glUniform1i(loc, !shouldNotUseIdentity);
+        setEnhancerUniforms(context);
     }
     drawGeneric(context,drawCallLambda);
     return;
@@ -229,4 +213,28 @@ GLuint DrawManager::createSingleViewFBO(Context& context, size_t layer)
     } else {
         return context.m_OutputFBO.createProxyFBO(layer);
     }
+}
+
+void DrawManager::setEnhancerUniforms(size_t shaderID, Context& context)
+{
+    assert(context.m_Manager.hasBounded());
+
+    auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_XShiftMultiplier");
+    glUniform1f(loc, context.m_cameraParameters.m_XShiftMultiplier);
+
+    loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_FrontalDistance");
+    glUniform1f(loc, context.m_cameraParameters.m_frontOpticalAxisCentreDistance);
+
+    const auto maxViews = context.m_OutputFBO.getParams().getLayers();
+    auto location = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_max_views");
+    glUniform1i(location, maxViews);
+
+    location = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_max_invocations");
+    glUniform1i(location, maxViews);
+
+    loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_identity");
+
+    bool shouldNotUseIdentity = (context.m_Manager.getBound()->m_Metadata && context.m_Manager.getBound()->m_Metadata->hasDetectedTransformation());
+    glUniform1i(loc, !shouldNotUseIdentity);
+ 
 }
