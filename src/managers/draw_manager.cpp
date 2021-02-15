@@ -59,7 +59,8 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
      */
     if(context.m_Manager.hasBounded())
     {
-        setEnhancerUniforms(context);
+        const auto shaderID = context.m_Manager.getBoundId();
+        setEnhancerUniforms(shaderID, context);
     }
     drawGeneric(context,drawCallLambda);
     return;
@@ -72,7 +73,7 @@ void DrawManager::drawGeneric(Context& context, const std::function<void(void)>&
     if(programs.hasBounded() && programs.getBoundConst()->m_Metadata)
     {
         const auto& metadata = *programs.getBoundConst()->m_Metadata;
-        if(metadata->usesGeometryShader())
+        if(metadata.usesGeometryShader())
         {
             drawWithGeometryShader(context, drawCallLambda);
         } else {
