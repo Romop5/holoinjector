@@ -119,7 +119,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
     auto result = pipeline;
     std::stringstream geometryShaderStream;
     geometryShaderStream <<  R"(
-        #version 440 core 
+        #version 440 core
         layout (triangles) in;
         )";
 
@@ -332,7 +332,13 @@ PipelineInjector::PipelineType PipelineInjector::injectVertexShader(const Pipeli
 
     // 0. insert common shader functions / uniforms
     auto lastMacroDeclarationPosition = vertexShader.find_first_of("\n", vertexShader.find_last_of("#"));
-    assert(lastMacroDeclarationPosition != std::string::npos);
+    auto hasNewlineAfterLastMacro = (lastMacroDeclarationPosition != std::string::npos);
+    if(!hasNewlineAfterLastMacro)
+    {
+        // Insert in the beginning instead
+        lastMacroDeclarationPosition = 0;
+    }
+
     lastMacroDeclarationPosition += 1;
 
     std::stringstream headerInclude;
@@ -345,8 +351,10 @@ PipelineInjector::PipelineType PipelineInjector::injectVertexShader(const Pipeli
 
     // 1. rename void main() to void old_main()
     assert(vertexShader.find("void main") != std::string::npos);
-    vertexShader = std::regex_replace(vertexShader, std::regex("void[\f\n\r\t\v ]+main[\f\n\r\t\v ]*\\([\f\n\r\t\v ]*\\)"),"void old_main()");
+    vertexShader = std::regex_replace(vertexShader, std::regex("void[\f\n\r\t\v ]+main[\f\n\r\t\v ]*\\([^)]*\\)"),"void old_main()");
 
+    // Assert that main was really replaced
+    assert(vertexShader.find("void main") == std::string::npos);
     // 2. insert invocations
     // finds the old main() function
     std::stringstream beforeMainCodeChunk;
