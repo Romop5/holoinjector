@@ -62,9 +62,14 @@ namespace pipeline
              * @param pipeline
              * @param params
              *
-             * @return 
+             * @return
              */
             PipelineType injectGeometryShader(const PipelineType& pipeline, const PipelineParams params);
+
+
+
+            /// Insert repeating logic into Vertex shader and dont use any additional GS
+            PipelineType injectVertexShader(const PipelineType& pipeline, const PipelineParams params);
 
 
             bool injectShader(std::string& sourceCode, ProgramMetadata& outMetadata);

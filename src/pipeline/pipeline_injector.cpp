@@ -8,6 +8,8 @@
 using namespace ve;
 using namespace ve::pipeline;
 
+constexpr bool shouldUseOnlyVS = false;
+
 namespace helper
 {
     std::string regex_replace_functor(const std::string str, const std::regex reg, std::function<std::string(std::string)> functor)
@@ -80,12 +82,22 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
      * In any case, inject geometry shader
      */
     
+    metadata->m_IsGeometryShaderUsed = true;
+
     // Inject new GS if none is provided
     if(input.count(GL_GEOMETRY_SHADER) == 0)
-        output = insertGeometryShader(output,updatedParams);
-    else
+    {
+        if(shouldUseOnlyVS)
+        {
+            metadata->m_IsGeometryShaderUsed = false;
+            output = injectVertexShader(output,updatedParams);
+        }
+        else
+            output = insertGeometryShader(output,updatedParams);
+    } 
+    else {
         output = injectGeometryShader(output,updatedParams);
-
+    }
     // Replace version with GLSL 4.6
     for(auto& [type, shaderSourceCode]: output)
     {
@@ -115,7 +127,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
     geometryShaderStream << ShaderInspector::getCommonTransformationShader() << "\n";
     geometryShaderStream << "layout (triangle_strip, max_vertices = " << 3*params.countOfPrimitivesDuplicates<<  ") out;\n";
     geometryShaderStream << "layout (invocations= " << params.countOfInvocations <<  ") in;\n";
-    geometryShaderStream << "const bool enhancer_geometry_isClipSpace = " 
+    geometryShaderStream << "const bool enhancer_geometry_isClipSpace = "
         << (params.shouldRenderToClipspace?"true":"false") <<";\n";
     geometryShaderStream << "const int enhancer_max_invocations = " << params.countOfInvocations << ";\n";
     geometryShaderStream << "const int enhancer_duplications = "<< params.countOfPrimitivesDuplicates << ";\n";
@@ -256,13 +268,13 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
 
     // 1. rename void main() to void old_main()
     assert(geometryShader.find("void main") != std::string::npos);
-    geometryShader = std::regex_replace(geometryShader, std::regex("void[\f\n\r\t\v ]+main[\f\n\r\t\v ]*\\([\f\n\r\t\v ]*\\)"),"void old_main(int enhancer_layer)");  
+    geometryShader = std::regex_replace(geometryShader, std::regex("void[\f\n\r\t\v ]+main[\f\n\r\t\v ]*\\([\f\n\r\t\v ]*\\)"),"void old_main(int enhancer_layer)");
 
 
     
     // 2. Add gl_Layer = enhancer_layer; before each EmitVertex
     geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"),"gl_Layer = (enhancer_isSingleViewActivated?enhancer_singleViewID:enhancer_layer); \nEmitVertex");
-    geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"),"gl_Position = enhancer_transform(enhancer_geometry_isClipSpace, enhancer_layer, gl_Position); \nEmitVertex");  
+    geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"),"gl_Position = enhancer_transform(enhancer_geometry_isClipSpace, enhancer_layer, gl_Position); \nEmitVertex");
     // 3. insert double the 'max_vertices' count
     // 3. insert double the 'max_vertices' count
     auto maxVerticesPosition = geometryShader.find("max_vertices");
@@ -310,6 +322,60 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     output[GL_GEOMETRY_SHADER] = geometryShader;
     return output;
 }
+
+
+PipelineInjector::PipelineType PipelineInjector::injectVertexShader(const PipelineType& pipeline, const PipelineParams params)
+{
+    // Verify that pipeline does not have 
+    assert(pipeline.count(GL_GEOMETRY_SHADER) == 0);
+    auto vertexShader = pipeline.at(GL_VERTEX_SHADER);
+
+    // 0. insert common shader functions / uniforms
+    auto lastMacroDeclarationPosition = vertexShader.find_first_of("\n", vertexShader.find_last_of("#"));
+    assert(lastMacroDeclarationPosition != std::string::npos);
+    lastMacroDeclarationPosition += 1;
+
+    std::stringstream headerInclude;
+    headerInclude << "//------------ Enhancer Inject Header start\n";
+    headerInclude << "int enhancer_layer = 0; \n"; 
+    // Already injected by ShaderInspector::inject()
+    //headerInclude << ShaderInspector::getCommonTransformationShader() << "\n";
+    headerInclude << "//------------ Enhancer Inject Header end\n";
+    vertexShader.insert(lastMacroDeclarationPosition, headerInclude.str());
+
+    // 1. rename void main() to void old_main()
+    assert(vertexShader.find("void main") != std::string::npos);
+    vertexShader = std::regex_replace(vertexShader, std::regex("void[\f\n\r\t\v ]+main[\f\n\r\t\v ]*\\([\f\n\r\t\v ]*\\)"),"void old_main()");
+
+    // 2. insert invocations
+    // finds the old main() function
+    std::stringstream beforeMainCodeChunk;
+    beforeMainCodeChunk << "//------------ Enhancer Inject Header start\n";
+    beforeMainCodeChunk << "const bool enhancer_geometry_isClipSpace = " << (params.shouldRenderToClipspace?"true":"false") <<";\n";
+    beforeMainCodeChunk << "//------------ Enhancer Inject Header end\n";
+
+    auto beforeMainFunctionPosition = vertexShader.find("void");
+    vertexShader.insert(beforeMainFunctionPosition, beforeMainCodeChunk.str());
+
+    // 3. Insert new main() function, computing shifted gl_Position
+    std::string newMainFunction =
+    R"(
+    void main()
+    {
+        old_main();
+        gl_Position = enhancer_transform(enhancer_geometry_isClipSpace,enhancer_singleViewID, gl_Position);
+    }
+    )";
+
+    // Place new main() into the end of shader
+    vertexShader.insert(vertexShader.size(), newMainFunction);
+
+    // Return new pipeline
+    auto output = pipeline;
+    output[GL_VERTEX_SHADER] = vertexShader;
+    return output;
+}
+
 
 
 bool PipelineInjector::injectShader(std::string& sourceCode, ProgramMetadata& outMetadata)

@@ -109,6 +109,15 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
 
 void DrawManager::drawWithVertexShader(Context& context, const std::function<void(void)>& drawCallLambda)
 {
+    const auto middleCamera = (context.m_cameras.getCameras().size()/2);
+    if(!context.m_IsMultiviewActivated || (context.m_FBOTracker.hasBounded() && !context.m_FBOTracker.isSuitableForRepeating()) )
+    {
+        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_singleViewID");
+        glUniform1i(loc, middleCamera);
+
+        drawCallLambda();
+        return;
+    }
     for(size_t cameraID = 0; cameraID < context.m_cameras.getCameras().size(); cameraID++)
     {
         // Bind correct layered texture
@@ -121,7 +130,6 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
         loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_singleViewID");
         glUniform1i(loc, cameraID);
  
-
         // Create & set single view for current render
         auto shadowFBO = createSingleViewFBO(context, cameraID);
         assert(shadowFBO != 0);
@@ -129,13 +137,16 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
 
         drawCallLambda();
     }
-
 }
 
 void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& drawCallLambda)
 {
+    const auto middleCamera = (context.m_cameras.getCameras().size()/2);
     if(!context.m_IsMultiviewActivated || (context.m_FBOTracker.hasBounded() && !context.m_FBOTracker.isSuitableForRepeating()) )
     {
+        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_singleViewID");
+        glUniform1i(loc, middleCamera);
+
         drawCallLambda();
         return;
     }
@@ -147,6 +158,9 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
         auto shadowFBO = createSingleViewFBO(context, cameraID);
         assert(shadowFBO != 0);
         glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+
+        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_singleViewID");
+        glUniform1i(loc, cameraID);
 
         const auto& t = camera.getViewMatrix();
         setEnhancerShift(context,t,camera.getAngle()*context.m_cameraParameters.m_XShiftMultiplier/context.m_cameraParameters.m_frontOpticalAxisCentreDistance);
@@ -165,6 +179,9 @@ void DrawManager::setEnhancerShift(Context& context,const glm::mat4& viewSpaceTr
     auto program = context.m_Manager.getBoundId();
     if(program)
     {
+        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_isSingleViewActivated");
+        glUniform1i(loc, true);
+
         auto location = glGetUniformLocation(program, "enhancer_identity");
         glUniform1i(location, GL_TRUE);
     }
@@ -268,5 +285,5 @@ void DrawManager::setEnhancerUniforms(size_t shaderID, Context& context)
 
     bool shouldNotUseIdentity = (context.m_Manager.getBound()->m_Metadata && context.m_Manager.getBound()->m_Metadata->hasDetectedTransformation());
     glUniform1i(loc, !shouldNotUseIdentity);
- 
+
 }
