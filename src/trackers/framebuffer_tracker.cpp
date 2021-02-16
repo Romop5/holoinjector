@@ -1,6 +1,5 @@
 #define GL_GLEXT_PROTOTYPES 1
 #include <GL/gl.h>
-#include <GL/glext.h>
 
 #include "trackers/framebuffer_tracker.hpp"
 #include "trackers/texture_tracker.hpp"
