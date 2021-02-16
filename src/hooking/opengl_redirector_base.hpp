@@ -133,6 +133,7 @@ namespace hooking
         virtual void glListBase(GLuint base);
         virtual void glBegin(GLenum mode);
         virtual void glEnd(void);
+        /*
         virtual void glVertex2d(GLdouble x,GLdouble y);
         virtual void glVertex2f(GLfloat x,GLfloat y);
         virtual void glVertex2i(GLint x,GLint y);
@@ -265,6 +266,7 @@ namespace hooking
         virtual void glRasterPos4fv(const GLfloat* v);
         virtual void glRasterPos4iv(const GLint* v);
         virtual void glRasterPos4sv(const GLshort* v);
+        */
         virtual void glRectd(GLdouble x1,GLdouble y1,GLdouble x2,GLdouble y2);
         virtual void glRectf(GLfloat x1,GLfloat y1,GLfloat x2,GLfloat y2);
         virtual void glRecti(GLint x1,GLint y1,GLint x2,GLint y2);
@@ -1108,6 +1110,7 @@ namespace hooking
         virtual void glMultiDrawArraysIndirectCount (GLenum mode, const void* indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride);
         virtual void glMultiDrawElementsIndirectCount (GLenum mode, GLenum type, const void* indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride);
         virtual void glPolygonOffsetClamp (GLfloat factor, GLfloat units, GLfloat clamp);
+        /*
         virtual void glPrimitiveBoundingBoxARB (GLfloat minX, GLfloat minY, GLfloat minZ, GLfloat minW, GLfloat maxX, GLfloat maxY, GLfloat maxZ, GLfloat maxW);
         virtual GLuint64 glGetTextureHandleARB (GLuint texture);
         virtual GLuint64 glGetTextureSamplerHandleARB (GLuint texture, GLuint sampler);
@@ -3021,6 +3024,7 @@ namespace hooking
         virtual void glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN (GLuint rc, GLfloat s, GLfloat t, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z);
         virtual void glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN (const GLuint* rc, const GLfloat* tc, const GLfloat* c, const GLfloat* n, const GLfloat* v);
 
+        */
         friend class helper::RegisterAPIFunction;
     };
 } //namespace hooking

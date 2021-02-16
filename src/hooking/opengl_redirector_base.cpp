@@ -318,6 +318,7 @@ OPENGL_FORWARD(void,glCallLists,GLsizei,n,GLenum,type,const GLvoid*,lists);
 OPENGL_FORWARD(void,glListBase,GLuint,base);
 OPENGL_FORWARD(void,glBegin,GLenum,mode);
 OPENGL_FORWARD(void,glEnd,void,);
+/*
 OPENGL_FORWARD(void,glVertex2d,GLdouble,x,GLdouble,y);
 OPENGL_FORWARD(void,glVertex2f,GLfloat,x,GLfloat,y);
 OPENGL_FORWARD(void,glVertex2i,GLint,x,GLint,y);
@@ -450,6 +451,7 @@ OPENGL_FORWARD(void,glRasterPos4dv,const GLdouble*,v);
 OPENGL_FORWARD(void,glRasterPos4fv,const GLfloat*,v);
 OPENGL_FORWARD(void,glRasterPos4iv,const GLint*,v);
 OPENGL_FORWARD(void,glRasterPos4sv,const GLshort*,v);
+*/
 OPENGL_FORWARD(void,glRectd,GLdouble,x1,GLdouble,y1,GLdouble,x2,GLdouble,y2);
 OPENGL_FORWARD(void,glRectf,GLfloat,x1,GLfloat,y1,GLfloat,x2,GLfloat,y2);
 OPENGL_FORWARD(void,glRecti,GLint,x1,GLint,y1,GLint,x2,GLint,y2);
@@ -1293,6 +1295,7 @@ OPENGL_FORWARD(void,glSpecializeShader ,GLuint,shader, const GLchar*,pEntryPoint
 OPENGL_FORWARD(void,glMultiDrawArraysIndirectCount ,GLenum,mode, const void*,indirect, GLintptr,drawcount, GLsizei,maxdrawcount, GLsizei,stride)
 OPENGL_FORWARD(void,glMultiDrawElementsIndirectCount ,GLenum,mode, GLenum,type, const void*,indirect, GLintptr,drawcount, GLsizei,maxdrawcount, GLsizei,stride)
 OPENGL_FORWARD(void,glPolygonOffsetClamp ,GLfloat,factor, GLfloat,units, GLfloat,clamp)
+/*
 OPENGL_FORWARD(void,glPrimitiveBoundingBoxARB ,GLfloat,minX, GLfloat,minY, GLfloat,minZ, GLfloat,minW, GLfloat,maxX, GLfloat,maxY, GLfloat,maxZ, GLfloat,maxW)
 OPENGL_FORWARD(GLuint64,glGetTextureHandleARB ,GLuint,texture)
 OPENGL_FORWARD(GLuint64,glGetTextureSamplerHandleARB ,GLuint,texture, GLuint,sampler)
@@ -1497,6 +1500,7 @@ OPENGL_FORWARD(void,glMinSampleShadingARB ,GLfloat,value)
 OPENGL_FORWARD(void,glDeleteObjectARB ,GLhandleARB,obj)
 OPENGL_FORWARD(GLhandleARB,glGetHandleARB ,GLenum,pname)
 OPENGL_FORWARD(void,glDetachObjectARB ,GLhandleARB,containerObj, GLhandleARB,attachedObj)
+*/
 OPENGL_FORWARD_REDIRECT(GLhandleARB,glCreateShaderObjectARB,glCreateShader,GLenum,shaderType)
 OPENGL_FORWARD_EXT(ARB,void,glShaderSource ,GLhandleARB,shaderObj, GLsizei,count, const GLcharARB**,string, const GLint*,length)
 OPENGL_FORWARD_EXT(ARB,void,glCompileShader ,GLhandleARB,shaderObj)
@@ -1504,7 +1508,7 @@ OPENGL_FORWARD_EXT(ObjectARB, GLhandleARB,glCreateProgram,void,)
 OPENGL_FORWARD_REDIRECT(void,glAttachObjectARB, glAttachShader,GLhandleARB,containerObj, GLhandleARB,obj)
 OPENGL_FORWARD_EXT(ARB,void,glLinkProgram,GLhandleARB,programObj)
 OPENGL_FORWARD_EXT(ObjectARB,void,glUseProgram,GLhandleARB,programObj)
-OPENGL_FORWARD(void,glValidateProgramARB ,GLhandleARB,programObj)
+//OPENGL_FORWARD(void,glValidateProgramARB ,GLhandleARB,programObj)
 OPENGL_FORWARD_EXT(ARB,void,glUniform1f ,GLint,location, GLfloat,v0)
 OPENGL_FORWARD_EXT(ARB,void,glUniform2f ,GLint,location, GLfloat,v0, GLfloat,v1)
 OPENGL_FORWARD_EXT(ARB,void,glUniform3f ,GLint,location, GLfloat,v0, GLfloat,v1, GLfloat,v2)
@@ -1524,6 +1528,7 @@ OPENGL_FORWARD_EXT(ARB,void,glUniform4iv ,GLint,location, GLsizei,count, const G
 OPENGL_FORWARD_EXT(ARB,void,glUniformMatrix2fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
 OPENGL_FORWARD_EXT(ARB,void,glUniformMatrix3fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
 OPENGL_FORWARD_EXT(ARB,void,glUniformMatrix4fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
+/*
 OPENGL_FORWARD(void,glGetObjectParameterfvARB ,GLhandleARB,obj, GLenum,pname, GLfloat*,params)
 OPENGL_FORWARD(void,glGetObjectParameterivARB ,GLhandleARB,obj, GLenum,pname, GLint*,params)
 OPENGL_FORWARD(void,glGetInfoLogARB ,GLhandleARB,obj, GLsizei,maxLength, GLsizei*,length, GLcharARB*,infoLog)
@@ -3205,6 +3210,7 @@ OPENGL_FORWARD(void,glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN ,GLuint,rc,
 OPENGL_FORWARD(void,glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN ,const GLuint*,rc, const GLfloat*,tc, const GLfloat*,n, const GLfloat*,v)
 OPENGL_FORWARD(void,glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN ,GLuint,rc, GLfloat,s, GLfloat,t, GLfloat,r, GLfloat,g, GLfloat,b, GLfloat,a, GLfloat,nx, GLfloat,ny, GLfloat,nz, GLfloat,x, GLfloat,y, GLfloat,z)
 OPENGL_FORWARD(void,glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN ,const GLuint*,rc, const GLfloat*,tc, const GLfloat*,c, const GLfloat*,n, const GLfloat*,v)
+*/
 /*
  * EXT END
  */
