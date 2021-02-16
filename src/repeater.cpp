@@ -160,6 +160,11 @@ void Repeater::initialize()
         m_Context.m_OutputFBO.setHoloDisplayParameters(params);
     }, "Reset default holo parameters","");
 
+    m_Context.m_settingsWidget.registerInputItem<void*>([this] (auto)
+    {
+        m_Context.m_gui.setVisibility(!m_Context.m_gui.isVisible());
+    }, "Hide GUI","");
+
     /* 
      * Register input callbacks 
      */
