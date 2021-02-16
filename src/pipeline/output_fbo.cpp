@@ -362,6 +362,12 @@ void OutputFBO::setHoloDisplayParameters(const HoloDisplayParameters params)
     {
         glUniform1f(glGetUniformLocation(m_ViewerProgram,"center"),params.m_Center);
     }
+
+    if(m_HoloParameters.m_SubpixelSize != params.m_SubpixelSize)
+    {
+        glUniform1f(glGetUniformLocation(m_ViewerProgram,"subp"),params.m_SubpixelSize);
+    }
+
     m_HoloParameters = params;
 }
 

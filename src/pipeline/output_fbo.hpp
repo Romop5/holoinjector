@@ -37,9 +37,18 @@ namespace pipeline
 
     struct HoloDisplayParameters
     {
+        /* Small display */
         float m_Pitch = 354.677f;
         float m_Tilt = -0.113949f;
         float m_Center = -0.400272;
+        float m_SubpixelSize = 0.00013f;
+
+        /* Big display in large display*/
+        //float m_Pitch = 673.603f;
+        // float m_Tilt = -0.0734193;
+        // float m_Center = -0.0525362;
+        //subpixel size
+        //uniform float subp = 8.68000e-5;
     };
     /**
      * @brief Wraps back-buffer with a layered FBO
