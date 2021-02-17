@@ -4,17 +4,25 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
 
+#include "logger.hpp"
 #include "context.hpp"
 #include "draw_manager.hpp"
 #include "pipeline/projection_estimator.hpp"
-#include "logger.hpp"
+#include "pipeline/output_fbo.hpp"
+#include "pipeline/camera_parameters.hpp"
+#include "pipeline/virtual_cameras.hpp"
+#include "trackers/shader_manager.hpp"
+#include "trackers/legacy_tracker.hpp"
+#include "trackers/framebuffer_tracker.hpp"
+#include "trackers/uniform_block_tracing.hpp"
+#include "trackers/texture_tracker.hpp"
 
 using namespace ve;
 using namespace ve::managers;
 
 void DrawManager::draw(Context& context, const std::function<void(void)>& drawCallLambda)
 {
-   if(!context.m_IsMultiviewActivated || (context.m_FBOTracker.hasBounded() && !context.m_FBOTracker.isSuitableForRepeating()) )
+   if(!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
     {
         setEnhancerIdentity(context);
         drawGeneric(context,drawCallLambda);
@@ -24,15 +32,15 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
     /*
      * If applications is drawing into offscreen FBO, then bind our shadowed FBO
      */
-    if(!context.m_FBOTracker.hasBounded())
+    if(!context.getFBOTracker().hasBounded())
     {
-        assert(context.m_OutputFBO.getFBOId() != 0 && "OutputFBO must be initialized");
-        context.m_OutputFBO.setContainsImageFlag();
-        glBindFramebuffer(GL_FRAMEBUFFER, context.m_OutputFBO.getFBOId());
-        glViewport(0,0,context.m_OutputFBO.getParams().getTextureWidth(),context.m_OutputFBO.getParams().getTextureHeight());
+        assert(context.getOutputFBO().getFBOId() != 0 && "OutputFBO must be initialized");
+        context.getOutputFBO().setContainsImageFlag();
+        glBindFramebuffer(GL_FRAMEBUFFER, context.getOutputFBO().getFBOId());
+        glViewport(0,0,context.getOutputFBO().getParams().getTextureWidth(),context.getOutputFBO().getParams().getTextureHeight());
     } else {
-        auto fbo = context.m_FBOTracker.getBound();
-        if(context.m_FBOTracker.isSuitableForRepeating())
+        auto fbo = context.getFBOTracker().getBound();
+        if(context.getFBOTracker().isSuitableForRepeating())
         {
             // should be available since binding
             assert(fbo->hasShadowFBO());
@@ -41,14 +49,14 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
     }
 
     /// If Uniform Buffer Object (UBO) is used, then load values to uniforms
-    if(context.m_Manager.hasBounded() && context.m_Manager.getBound()->m_Metadata && context.m_Manager.getBound()->m_Metadata->isUBOused())
+    if(context.getManager().hasBounded() && context.getManager().getBound()->m_Metadata && context.getManager().getBound()->m_Metadata->isUBOused())
     {
-        const auto& blockName = context.m_Manager.getBound()->m_Metadata->m_InterfaceBlockName;
-        auto index = context.m_Manager.getBound()->m_UniformBlocks[blockName].bindingIndex;
-        const auto& indexStructure = context.m_UniformBlocksTracker.getBindingIndex(index);
+        const auto& blockName = context.getManager().getBound()->m_Metadata->m_InterfaceBlockName;
+        auto index = context.getManager().getBound()->m_UniformBlocks[blockName].bindingIndex;
+        const auto& indexStructure = context.getUniformBlocksTracker().getBindingIndex(index);
         if(indexStructure.hasTransformation)
         {
-            setEnhancerDecodedProjection(context,context.m_Manager.getBoundId(),indexStructure.projection);
+            setEnhancerDecodedProjection(context,context.getManager().getBoundId(),indexStructure.projection);
         } else {
             Logger::log("[Repeater] Unexpected state. Expected UBO, but not found. Falling back to identity\n");
             setEnhancerIdentity(context);
@@ -57,9 +65,9 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
     /*
      *  Load enhancer's values into uniforms
      */
-    if(context.m_Manager.hasBounded())
+    if(context.getManager().hasBounded())
     {
-        const auto shaderID = context.m_Manager.getBoundId();
+        const auto shaderID = context.getManager().getBoundId();
         setEnhancerUniforms(shaderID, context);
     }
     drawGeneric(context,drawCallLambda);
@@ -68,7 +76,7 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
 
 void DrawManager::drawGeneric(Context& context, const std::function<void(void)>& drawCallLambda)
 {
-    const auto& programs = context.m_Manager;
+    const auto& programs = context.getManager();
     /// If application is using shaders and shader program has enhancer's GS capabilities
     if(programs.hasBounded() && programs.getBoundConst()->m_Metadata)
     {
@@ -85,23 +93,23 @@ void DrawManager::drawGeneric(Context& context, const std::function<void(void)>&
 }
 void DrawManager::drawWithGeometryShader(Context& context, const std::function<void(void)>& drawCallLambda)
 {
-    if(!context.m_TextureTracker.getTextureUnits().hasShadowedTextureBinded())
+    if(!context.getTextureTracker().getTextureUnits().hasShadowedTextureBinded())
     {
-        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_isSingleViewActivated");
+        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_isSingleViewActivated");
         glUniform1i(loc, false);
         drawCallLambda();
         return;
     }
 
-    const auto numOfLayers = context.m_OutputFBO.getParams().getLayers();
+    const auto numOfLayers = context.getOutputFBO().getParams().getLayers();
     for(size_t l = 0; l < numOfLayers; l++)
     {
-        context.m_TextureTracker.getTextureUnits().bindShadowedTexturesToLayer(l);
+        context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(l);
 
-        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_isSingleViewActivated");
+        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_isSingleViewActivated");
         glUniform1i(loc, true);
 
-        loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_singleViewID");
+        loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
         glUniform1i(loc, l);
         drawCallLambda();
     }
@@ -109,25 +117,25 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
 
 void DrawManager::drawWithVertexShader(Context& context, const std::function<void(void)>& drawCallLambda)
 {
-    const auto middleCamera = (context.m_cameras.getCameras().size()/2);
-    if(!context.m_IsMultiviewActivated || (context.m_FBOTracker.hasBounded() && !context.m_FBOTracker.isSuitableForRepeating()) )
+    const auto middleCamera = (context.getCameras().getCameras().size()/2);
+    if(!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
     {
-        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_singleViewID");
+        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
         glUniform1i(loc, middleCamera);
 
         drawCallLambda();
         return;
     }
-    for(size_t cameraID = 0; cameraID < context.m_cameras.getCameras().size(); cameraID++)
+    for(size_t cameraID = 0; cameraID < context.getCameras().getCameras().size(); cameraID++)
     {
         // Bind correct layered texture
-        context.m_TextureTracker.getTextureUnits().bindShadowedTexturesToLayer(cameraID);
+        context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(cameraID);
 
-        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_isSingleViewActivated");
+        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_isSingleViewActivated");
         glUniform1i(loc, true);
 
         // Set correct cameraID
-        loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_singleViewID");
+        loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
         glUniform1i(loc, cameraID);
  
         // Create & set single view for current render
@@ -141,29 +149,29 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
 
 void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& drawCallLambda)
 {
-    const auto middleCamera = (context.m_cameras.getCameras().size()/2);
-    if(!context.m_IsMultiviewActivated || (context.m_FBOTracker.hasBounded() && !context.m_FBOTracker.isSuitableForRepeating()) )
+    const auto middleCamera = (context.getCameras().getCameras().size()/2);
+    if(!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
     {
-        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_singleViewID");
+        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
         glUniform1i(loc, middleCamera);
 
         drawCallLambda();
         return;
     }
 
-    for(size_t cameraID = 0; cameraID < context.m_cameras.getCameras().size(); cameraID++)
+    for(size_t cameraID = 0; cameraID < context.getCameras().getCameras().size(); cameraID++)
     {
-        const auto& camera = context.m_cameras.getCameras()[cameraID];
+        const auto& camera = context.getCameras().getCameras()[cameraID];
 
         auto shadowFBO = createSingleViewFBO(context, cameraID);
         assert(shadowFBO != 0);
         glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 
-        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_singleViewID");
+        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
         glUniform1i(loc, cameraID);
 
         const auto& t = camera.getViewMatrix();
-        setEnhancerShift(context,t,camera.getAngle()*context.m_cameraParameters.m_XShiftMultiplier/context.m_cameraParameters.m_frontOpticalAxisCentreDistance);
+        setEnhancerShift(context,t,camera.getAngle()*context.getCameraParameters().m_XShiftMultiplier/context.getCameraParameters().m_frontOpticalAxisCentreDistance);
         drawCallLambda();
         resetEnhancerShift(context);
     }
@@ -176,10 +184,10 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
 void DrawManager::setEnhancerShift(Context& context,const glm::mat4& viewSpaceTransform, float projectionAdjust)
 {
     const auto& resultMat = viewSpaceTransform;
-    auto program = context.m_Manager.getBoundId();
+    auto program = context.getManager().getBoundId();
     if(program)
     {
-        auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_isSingleViewActivated");
+        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_isSingleViewActivated");
         glUniform1i(loc, true);
 
         auto location = glGetUniformLocation(program, "enhancer_identity");
@@ -195,7 +203,7 @@ void DrawManager::setEnhancerShift(Context& context,const glm::mat4& viewSpaceTr
      * e.g. when porting DirectX game to OpenGL
      */
 
-    if(context.m_LegacyTracker.isLegacyNeeded())
+    if(context.getLegacyTracker().isLegacyNeeded())
     {
         pushFixedPipelineProjection(context, resultMat, projectionAdjust);
     }
@@ -203,7 +211,7 @@ void DrawManager::setEnhancerShift(Context& context,const glm::mat4& viewSpaceTr
 
 void DrawManager::resetEnhancerShift(Context& context)
 {
-    if(context.m_LegacyTracker.isLegacyNeeded())
+    if(context.getLegacyTracker().isLegacyNeeded())
     {
         popFixedPipelineProjection(context);
     }
@@ -212,7 +220,7 @@ void DrawManager::resetEnhancerShift(Context& context)
 void DrawManager::setEnhancerIdentity(Context& context)
 {
     const auto identity = glm::mat4(1.0);
-    auto program = context.m_Manager.getBoundId();
+    auto program = context.getManager().getBoundId();
     if(program == 0)
         return;
     auto location = glGetUniformLocation(program, "enhancer_identity");
@@ -242,48 +250,48 @@ void DrawManager::setEnhancerDecodedProjection(Context& context, GLuint program,
 void DrawManager::pushFixedPipelineProjection(Context& context, const glm::mat4& viewSpaceTransform, float projectionAdjust)
 {
     glMatrixMode(GL_PROJECTION);
-    auto oldProjection = context.m_LegacyTracker.getProjection();
+    auto oldProjection = context.getLegacyTracker().getProjection();
     oldProjection[2][0] = projectionAdjust;
     const auto newProjection = oldProjection*viewSpaceTransform;
-    if(!context.m_LegacyTracker.isOrthogonalProjection())
+    if(!context.getLegacyTracker().isOrthogonalProjection())
         glLoadMatrixf(glm::value_ptr(newProjection));
 }
 void DrawManager::popFixedPipelineProjection(Context& context)
 {
-    glLoadMatrixf(glm::value_ptr(context.m_LegacyTracker.getProjection()));
-    glMatrixMode(context.m_LegacyTracker.getMatrixMode());
+    glLoadMatrixf(glm::value_ptr(context.getLegacyTracker().getProjection()));
+    glMatrixMode(context.getLegacyTracker().getMatrixMode());
 }
 
 GLuint DrawManager::createSingleViewFBO(Context& context, size_t layer)
 {
-    if(context.m_FBOTracker.hasBounded())
+    if(context.getFBOTracker().hasBounded())
     {
-        return context.m_FBOTracker.getBound()->createProxyFBO(layer);
+        return context.getFBOTracker().getBound()->createProxyFBO(layer);
     } else {
-        return context.m_OutputFBO.createProxyFBO(layer);
+        return context.getOutputFBO().createProxyFBO(layer);
     }
 }
 
 void DrawManager::setEnhancerUniforms(size_t shaderID, Context& context)
 {
-    assert(context.m_Manager.hasBounded());
+    assert(context.getManager().hasBounded());
 
-    auto loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_XShiftMultiplier");
-    glUniform1f(loc, context.m_cameraParameters.m_XShiftMultiplier);
+    auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_XShiftMultiplier");
+    glUniform1f(loc, context.getCameraParameters().m_XShiftMultiplier);
 
-    loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_FrontalDistance");
-    glUniform1f(loc, context.m_cameraParameters.m_frontOpticalAxisCentreDistance);
+    loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_FrontalDistance");
+    glUniform1f(loc, context.getCameraParameters().m_frontOpticalAxisCentreDistance);
 
-    const auto maxViews = context.m_OutputFBO.getParams().getLayers();
-    auto location = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_max_views");
+    const auto maxViews = context.getOutputFBO().getParams().getLayers();
+    auto location = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_max_views");
     glUniform1i(location, maxViews);
 
-    location = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_max_invocations");
+    location = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_max_invocations");
     glUniform1i(location, maxViews);
 
-    loc = glGetUniformLocation(context.m_Manager.getBoundId(), "enhancer_identity");
+    loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_identity");
 
-    bool shouldNotUseIdentity = (context.m_Manager.getBound()->m_Metadata && context.m_Manager.getBound()->m_Metadata->hasDetectedTransformation());
+    bool shouldNotUseIdentity = (context.getManager().getBound()->m_Metadata && context.getManager().getBound()->m_Metadata->hasDetectedTransformation());
     glUniform1i(loc, !shouldNotUseIdentity);
 
 }

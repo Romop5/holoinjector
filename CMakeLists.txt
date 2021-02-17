@@ -112,6 +112,7 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/context.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/context.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logger.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logger.cpp

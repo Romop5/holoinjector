@@ -1,79 +1,92 @@
 #ifndef VE_CONTEXT_HPP
 #define VE_CONTEXT_HPP
-
-#include "trackers/shader_manager.hpp"
-#include "trackers/uniform_block_tracing.hpp"
-#include "trackers/framebuffer_tracker.hpp"
-#include "trackers/legacy_tracker.hpp"
-#include "trackers/texture_tracker.hpp"
-#include "trackers/renderbuffer_tracker.hpp"
-
-#include "pipeline/viewport_area.hpp"
-#include "pipeline/camera_parameters.hpp"
-#include "pipeline/virtual_cameras.hpp"
-#include "pipeline/output_fbo.hpp"
-
-#include "diagnostics.hpp"
-#include "imgui_adapter.hpp"
-#include "ui/x11_sniffer.hpp"
-#include "ui/settings_widget.hpp"
-
+#include <memory>
 namespace ve
 {
+    namespace pipeline
+    {
+        class CameraParameters; 
+        class VirtualCameras; 
+        class ViewportArea; 
+        class OutputFBO;
+    }
+
+    class Diagnostics; 
+    class ImguiAdapter; 
+    class SettingsWidget;
+    class X11Sniffer;
+
+    namespace trackers
+    {
+        class ShaderManager; 
+        class FramebufferTracker; 
+        class LegacyTracker; 
+        class TextureTracker; 
+        class RenderbufferTracker; 
+        class UniformBlockTracing;
+    }
+
+    class ContextPimpl;
 /**
  * @brief Stores all OpenGL-context related structures
  */
-struct Context
+class Context
 {
+    public:
+    explicit Context();
+    ~Context();
     /* ------------------------------------------------------------------------
      * OPTIONS
      * ----------------------------------------------------------------------*/
     /// Is repeater rendering scene into multiple virtual screens
     bool m_IsMultiviewActivated = false;
     /// Determines how virtual views are placed in view-space
-    ve::pipeline::CameraParameters m_cameraParameters;
+    ve::pipeline::CameraParameters& getCameraParameters();
     /// Store's repeating setup
-    ve::pipeline::VirtualCameras m_cameras;
+    ve::pipeline::VirtualCameras& getCameras();
     /// Provides interface for system testing
-    Diagnostics m_diagnostics;
+    Diagnostics& getDiagnostics();
 
     /// Dear ImGUI Adapter
-    ImguiAdapter m_gui;
+    ImguiAdapter& getGui();
 
     /// UI controller for settings
-    SettingsWidget m_settingsWidget;
+    SettingsWidget& getSettingsWidget();
 
-    X11Sniffer m_x11Sniffer;
+    X11Sniffer& getX11Sniffer();
     /* ------------------------------------------------------------------------
      *  TRACKERS
      * ----------------------------------------------------------------------*/
     /// Store metadata about application's shaders and programs
-    ve::trackers::ShaderManager m_Manager;
+    ve::trackers::ShaderManager& getManager();
     /// Store metadata about create Frame Buffer Objects
-    ve::trackers::FramebufferTracker m_FBOTracker;
+    ve::trackers::FramebufferTracker& getFBOTracker();
     /// Keeps track of OpenGL fixed-pipeline calls
-    ve::trackers::LegacyTracker m_LegacyTracker;
+    ve::trackers::LegacyTracker& getLegacyTracker();
     /// Keeps track of each GL_TEXTURE_XYZ
-    ve::trackers::TextureTracker m_TextureTracker;
+    ve::trackers::TextureTracker& getTextureTracker();
     /// Keeps track of GL_RENDERBUFFER objects
-    ve::trackers::RenderbufferTracker m_RenderbufferTracker;
+    ve::trackers::RenderbufferTracker& getRenderbufferTracker();
     /// Store metadata and bindings for UBO
-    ve::trackers::UniformBlockTracing m_UniformBlocksTracker;
+    ve::trackers::UniformBlockTracing& getUniformBlocksTracker();
 
     /* ------------------------------------------------------------------------
      *  HELPER STRUCTURES
      * ----------------------------------------------------------------------*/
     /// Caches current viewport/scissor area
-    ve::pipeline::ViewportArea currentViewport, currentScissorArea;
+    ve::pipeline::ViewportArea& getCurrentViewport();
+    ve::pipeline::ViewportArea& getCurrentScissorArea();
     /*
      * Global glCallList for legacy OpenGL primitives
      * - record everything between glBegin()/glEnd() 
      *   and then, duplicate it
      */
-    GLint m_callList = 0;
+    uint32_t m_callList = 0;
 
     /// FBO with all raw virtual cameras
-    ve::pipeline::OutputFBO m_OutputFBO;
+    ve::pipeline::OutputFBO& getOutputFBO();
+    private:
+    std::unique_ptr<ContextPimpl> pimpl;
 };
 } // namespace ve
 #endif

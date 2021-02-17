@@ -1,6 +1,8 @@
+#include <cctype>
 #include "imgui_adapter.hpp"
 #include <imgui_impl_opengl3.h>
 #include "context.hpp"
+#include "pipeline/viewport_area.hpp"
 
 #include <X11/keysym.h>
 using namespace ve;
@@ -79,8 +81,8 @@ void ve::ImguiAdapter::beginFrame(Context& context)
     // Setup display size (every frame to accommodate for window resizing)
     int w, h;
     int display_w, display_h;
-    w = context.currentViewport.getWidth();
-    h = context.currentViewport.getHeight();
+    w = context.getCurrentViewport().getWidth();
+    h = context.getCurrentViewport().getHeight();
     io.DisplaySize = ImVec2((float)w, (float)h);
     io.DisplayFramebufferScale = ImVec2(1.0,1.0);
     io.FontGlobalScale = m_Scaling;

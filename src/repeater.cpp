@@ -12,6 +12,21 @@
 #include "pipeline/shader_inspector.hpp"
 #include "pipeline/projection_estimator.hpp"
 #include "pipeline/pipeline_injector.hpp"
+#include "pipeline/virtual_cameras.hpp"
+#include "pipeline/camera_parameters.hpp"
+#include "pipeline/output_fbo.hpp"
+
+#include "trackers/legacy_tracker.hpp"
+#include "trackers/uniform_block_tracing.hpp"
+#include "trackers/uniform_block_tracing.hpp"
+#include "trackers/renderbuffer_tracker.hpp"
+#include "trackers/shader_manager.hpp"
+#include "trackers/framebuffer_tracker.hpp"
+
+#include "ui/x11_sniffer.hpp"
+#include "ui/settings_widget.hpp"
+
+#include "imgui_adapter.hpp"
 
 #include "utils/opengl_utils.hpp"
 #include "utils/opengl_state.hpp"
@@ -20,6 +35,7 @@
 
 #include "logger.hpp"
 #include "config.hpp"
+#include "diagnostics.hpp"
 
 #include <imgui.h>
 
@@ -41,27 +57,27 @@ void Repeater::initialize()
 
     // Override default angle
     if(settings.hasKey("xmultiplier"))
-        m_Context.m_cameraParameters.m_XShiftMultiplier = settings.getAsFloat("xmultiplier");
+        m_Context.getCameraParameters().m_XShiftMultiplier = settings.getAsFloat("xmultiplier");
     // Override default center of rotation
     if(settings.hasKey("distance"))
-        m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance = settings.getAsFloat("distance");
+        m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance = settings.getAsFloat("distance");
     // if ENHANCER_NOW is provided, then start with multiple views right now
     if(settings.hasKey("now"))
         m_Context.m_IsMultiviewActivated = true;
     if(settings.hasKey("exitAfterFrames"))
-        m_Context.m_diagnostics.setTerminationAfterFrame(settings.getAsSizet("exitAfterFrames"));
+        m_Context.getDiagnostics().setTerminationAfterFrame(settings.getAsSizet("exitAfterFrames"));
 
     /*
      * DIAGNOSTIC
      */
     if(settings.hasKey("onlyShownCameraID"))
-        m_Context.m_diagnostics.setOnlyVirtualCamera(settings.getAsSizet("onlyShownCameraID"));
+        m_Context.getDiagnostics().setOnlyVirtualCamera(settings.getAsSizet("onlyShownCameraID"));
 
     if(settings.hasKey("screenshotFormatString"))
-        m_Context.m_diagnostics.setScreenshotFormat(settings.getAsString("screenshotFormatString"));
+        m_Context.getDiagnostics().setScreenshotFormat(settings.getAsString("screenshotFormatString"));
 
     if(settings.hasKey("shouldBeNonIntrusive"))
-        m_Context.m_diagnostics.setNonIntrusiveness(true);
+        m_Context.getDiagnostics().setNonIntrusiveness(true);
 
     // Initialize oputput FBO
     ve::pipeline::OutputFBOParameters outParameters;
@@ -76,99 +92,99 @@ void Repeater::initialize()
         outParameters.gridYSize = settings.getAsSizet("gridYSize");
 
     // Initialize hidden FBO for redirecting draws to back-buffer
-    m_Context.m_OutputFBO.initialize(outParameters);
+    m_Context.getOutputFBO().initialize(outParameters);
     assert(OpenglRedirectorBase::glGetError() == GL_NO_ERROR);
 
-    const auto layers = m_Context.m_OutputFBO.getParams().getLayers();
-    const auto gridXSize = m_Context.m_OutputFBO.getParams().getGridSizeX();
+    const auto layers = m_Context.getOutputFBO().getParams().getLayers();
+    const auto gridXSize = m_Context.getOutputFBO().getParams().getGridSizeX();
     // Fill viewports
-    OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, m_Context.currentViewport.getDataPtr());
-    OpenglRedirectorBase::glGetIntegerv(GL_SCISSOR_BOX, m_Context.currentScissorArea.getDataPtr());
+    OpenglRedirectorBase::glGetIntegerv(GL_VIEWPORT, m_Context.getCurrentViewport().getDataPtr());
+    OpenglRedirectorBase::glGetIntegerv(GL_SCISSOR_BOX, m_Context.getCurrentScissorArea().getDataPtr());
     // Initialize a cache of windows's subviews
-    m_Context.m_cameras.setupWindows(layers, gridXSize);
-    m_Context.m_cameras.updateViewports(m_Context.currentViewport);
-    m_Context.m_cameras.updateParamaters(m_Context.m_cameraParameters);
+    m_Context.getCameras().setupWindows(layers, gridXSize);
+    m_Context.getCameras().updateViewports(m_Context.getCurrentViewport());
+    m_Context.getCameras().updateParamaters(m_Context.getCameraParameters());
 
     // Initialize GUI
-    m_Context.m_gui.initialize();
+    m_Context.getGui().initialize();
 
     // Register settings UI
-    m_Context.m_settingsWidget.registerInputItem<bool>([this](auto newValue)
+    m_Context.getSettingsWidget().registerInputItem<bool>([this](auto newValue)
     {
-        m_Context.m_x11Sniffer.turnFullscreen();
+        m_Context.getX11Sniffer().turnFullscreen();
     }, "Toggle fullscreen")->setValue(false);
 
-    m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
+    m_Context.getSettingsWidget().registerSliderItem<float>([this](auto newValue)
     {
-        m_Context.m_gui.setScaling(newValue);
+        m_Context.getGui().setScaling(newValue);
     }, "UI font scaling",0.5, 5, "Scale IMGUI window to fit high DPI displays")->setValue(1.0);
 
-    m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
+    m_Context.getSettingsWidget().registerSliderItem<float>([this](auto newValue)
     {
-        m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance = newValue;
+        m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance = newValue;
     }, "Near plane",0.0, 40, "Define distance of near plane");
 
-    m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
+    m_Context.getSettingsWidget().registerSliderItem<float>([this](auto newValue)
     {
-        m_Context.m_cameraParameters.m_XShiftMultiplier = newValue;
+        m_Context.getCameraParameters().m_XShiftMultiplier = newValue;
     }, "Horizontal shift",0.0, 8, "Define horizontal distance of left-most side view from the original point of view");
 
-    m_Context.m_settingsWidget.registerInputItem<bool>([this](auto newValue)
+    m_Context.getSettingsWidget().registerInputItem<bool>([this](auto newValue)
     {
-        m_Context.m_OutputFBO.toggleGridView();
+        m_Context.getOutputFBO().toggleGridView();
     }, "Toggle quilt/native format", "Toggle between transformed native format, suitable for 3D Displays, and quilt format, showing all views into scene in a grid.");
 
-    m_Context.m_settingsWidget.registerInputItem<bool>([this](auto newValue)
+    m_Context.getSettingsWidget().registerInputItem<bool>([this](auto newValue)
     {
-        m_Context.m_OutputFBO.toggleSingleViewGridView();
+        m_Context.getOutputFBO().toggleSingleViewGridView();
     }, "Toggle single view vs quilt view", "Toggle between quilt grid and single view");
-    m_Context.m_settingsWidget.registerSliderItem<int>([this](auto newValue)
+    m_Context.getSettingsWidget().registerSliderItem<int>([this](auto newValue)
     {
-        m_Context.m_OutputFBO.setOnlyQuiltImageID(newValue);
+        m_Context.getOutputFBO().setOnlyQuiltImageID(newValue);
     }, "Single view ID",0, 45, "Select one of quilt views");
 
-    const auto params = m_Context.m_OutputFBO.getHoloDisplayParameters();
-    auto pitchItem = m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
+    const auto params = m_Context.getOutputFBO().getHoloDisplayParameters();
+    auto pitchItem = m_Context.getSettingsWidget().registerSliderItem<float>([this](auto newValue)
     {
-        auto params = m_Context.m_OutputFBO.getHoloDisplayParameters();
+        auto params = m_Context.getOutputFBO().getHoloDisplayParameters();
         params.m_Pitch = newValue;
-        m_Context.m_OutputFBO.setHoloDisplayParameters(params);
+        m_Context.getOutputFBO().setHoloDisplayParameters(params);
     }, "Pitch",0.0, 400, "");
     pitchItem->setValue(params.m_Pitch);
 
-    auto tiltItem = m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
+    auto tiltItem = m_Context.getSettingsWidget().registerSliderItem<float>([this](auto newValue)
     {
-        auto params = m_Context.m_OutputFBO.getHoloDisplayParameters();
+        auto params = m_Context.getOutputFBO().getHoloDisplayParameters();
         params.m_Pitch = newValue;
-        m_Context.m_OutputFBO.setHoloDisplayParameters(params);
+        m_Context.getOutputFBO().setHoloDisplayParameters(params);
     }, "Tilt",-1.0, 1, "");
     tiltItem->setValue(params.m_Tilt);
 
-    auto centerItem = m_Context.m_settingsWidget.registerSliderItem<float>([this](auto newValue)
+    auto centerItem = m_Context.getSettingsWidget().registerSliderItem<float>([this](auto newValue)
     {
-        auto params = m_Context.m_OutputFBO.getHoloDisplayParameters();
+        auto params = m_Context.getOutputFBO().getHoloDisplayParameters();
         params.m_Center = newValue;
-        m_Context.m_OutputFBO.setHoloDisplayParameters(params);
+        m_Context.getOutputFBO().setHoloDisplayParameters(params);
     }, "Center",-1.0, 1, "");
     centerItem->setValue(params.m_Center);
 
-    m_Context.m_settingsWidget.registerInputItem<void*>([this,params,pitchItem, tiltItem, centerItem] (auto)
+    m_Context.getSettingsWidget().registerInputItem<void*>([this,params,pitchItem, tiltItem, centerItem] (auto)
     {
         pitchItem->setValue(params.m_Pitch);
         tiltItem->setValue(params.m_Tilt);
         centerItem->setValue(params.m_Center);
-        m_Context.m_OutputFBO.setHoloDisplayParameters(params);
+        m_Context.getOutputFBO().setHoloDisplayParameters(params);
     }, "Reset default holo parameters","");
 
-    m_Context.m_settingsWidget.registerInputItem<void*>([this] (auto)
+    m_Context.getSettingsWidget().registerInputItem<void*>([this] (auto)
     {
-        m_Context.m_gui.setVisibility(!m_Context.m_gui.isVisible());
+        m_Context.getGui().setVisibility(!m_Context.getGui().isVisible());
     }, "Hide GUI","");
 
     /* 
      * Register input callbacks 
      */
-    m_Context.m_x11Sniffer.registerOnKeyCallback([&](size_t keySym, bool isDown)->bool
+    m_Context.getX11Sniffer().registerOnKeyCallback([&](size_t keySym, bool isDown)->bool
     {
         bool shouldBlockInput = false;
         if(isDown)
@@ -177,28 +193,28 @@ void Repeater::initialize()
             
         }
         // If GUI is active, propagate input to GUI and block
-        if(m_Context.m_gui.isVisible())
+        if(m_Context.getGui().isVisible())
         {
-            m_Context.m_gui.onKey(keySym,isDown);
+            m_Context.getGui().onKey(keySym,isDown);
             shouldBlockInput = true;
         }
         return shouldBlockInput;
     });
-    m_Context.m_x11Sniffer.registerOnMouseMoveCallback([&](float dx, float dy)
+    m_Context.getX11Sniffer().registerOnMouseMoveCallback([&](float dx, float dy)
     {
-        if(m_Context.m_gui.isVisible())
+        if(m_Context.getGui().isVisible())
         {
-            m_Context.m_gui.onMousePosition(dx,dy);
+            m_Context.getGui().onMousePosition(dx,dy);
             return true;
         }
         return false;
     });
 
-    m_Context.m_x11Sniffer.registerOnButtonCallback([&](size_t buttonID, bool isPressed)
+    m_Context.getX11Sniffer().registerOnButtonCallback([&](size_t buttonID, bool isPressed)
     {
-        if(m_Context.m_gui.isVisible())
+        if(m_Context.getGui().isVisible())
         {
-            m_Context.m_gui.onButton(buttonID, isPressed);
+            m_Context.getGui().onButton(buttonID, isPressed);
             return true;
         }
         return false;
@@ -209,9 +225,9 @@ void Repeater::initialize()
 void Repeater::deinitialize()
 {
     // Clean up layered FBO & shaders
-    m_Context.m_OutputFBO.deinitialize();
+    m_Context.getOutputFBO().deinitialize();
     // Clean up texture views & etc
-    m_Context.m_TextureTracker.deinitialize();
+    m_Context.getTextureTracker().deinitialize();
 }
 
 GLint Repeater::getCurrentID(GLenum target)
@@ -223,14 +239,14 @@ GLint Repeater::getCurrentID(GLenum target)
 
 void Repeater::glClear(GLbitfield mask)
 {
-    if(m_Context.m_IsMultiviewActivated && m_Context.m_FBOTracker.isFBODefault() &&  m_Context.m_OutputFBO.hasImage())
+    if(m_Context.m_IsMultiviewActivated && m_Context.getFBOTracker().isFBODefault() &&  m_Context.getOutputFBO().hasImage())
     {
         OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         OpenglRedirectorBase::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
-                    m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
-        m_Context.m_OutputFBO.renderToBackbuffer(m_Context.m_cameraParameters);
-        m_Context.m_OutputFBO.clearBuffers();
+        OpenglRedirectorBase::glViewport(m_Context.getCurrentViewport().getX(), m_Context.getCurrentViewport().getY(),
+                    m_Context.getCurrentViewport().getWidth(), m_Context.getCurrentViewport().getHeight());
+        m_Context.getOutputFBO().renderToBackbuffer(m_Context.getCameraParameters());
+        m_Context.getOutputFBO().clearBuffers();
     }
 
     OpenglRedirectorBase::glClear(mask);
@@ -307,22 +323,22 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_SCISSOR_TEST);
         OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        if(m_Context.m_IsMultiviewActivated && m_Context.m_OutputFBO.hasImage())
+        if(m_Context.m_IsMultiviewActivated && m_Context.getOutputFBO().hasImage())
         {
             OpenglRedirectorBase::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
-            m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
-            m_Context.m_OutputFBO.renderToBackbuffer(m_Context.m_cameraParameters);
-            m_Context.m_OutputFBO.clearBuffers();
+            OpenglRedirectorBase::glViewport(m_Context.getCurrentViewport().getX(), m_Context.getCurrentViewport().getY(),
+            m_Context.getCurrentViewport().getWidth(), m_Context.getCurrentViewport().getHeight());
+            m_Context.getOutputFBO().renderToBackbuffer(m_Context.getCameraParameters());
+            m_Context.getOutputFBO().clearBuffers();
         }
     });
 
     OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
     // Draw GUI overlay if GUI is visible
-    if(m_Context.m_gui.isVisible())
+    if(m_Context.getGui().isVisible())
     {
-        m_Context.m_gui.beginFrame(m_Context);
+        m_Context.getGui().beginFrame(m_Context);
         ImGui::TextUnformatted(reinterpret_cast<const char*>(glGetString(GL_VERSION)));
         static char versionStr[256];
         static bool hasVersion = false;
@@ -337,18 +353,18 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
         ImGui::TextUnformatted(versionStr);
         //bool shouldShow = true;
         //ImGui::ShowDemoWindow(&shouldShow);
-        m_Context.m_settingsWidget.draw();
-        m_Context.m_gui.endFrame();
-        m_Context.m_gui.renderCurrentFrame();
+        m_Context.getSettingsWidget().draw();
+        m_Context.getGui().endFrame();
+        m_Context.getGui().renderCurrentFrame();
     }
 
     // Physically do swap buffer
     OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
-    m_Context.m_diagnostics.incrementFrameCount();
-    if(m_Context.m_diagnostics.hasReachedLastFrame())
+    m_Context.getDiagnostics().incrementFrameCount();
+    if(m_Context.getDiagnostics().hasReachedLastFrame())
     {
         // Note: this is debug only, leaves mem. leaks and uncleaned objects
-        takeScreenshot(std::string(m_Context.m_diagnostics.getScreenshotName()));
+        takeScreenshot(std::string(m_Context.getDiagnostics().getScreenshotName()));
         exit(5);
     }
 }
@@ -378,7 +394,7 @@ void Repeater::glGenTextures(GLsizei n,GLuint* textures)
     for(size_t i = 0; i < n; i++)
     {
         auto texture = std::make_shared<ve::trackers::TextureMetadata>(textures[i]);
-	m_Context.m_TextureTracker.add(textures[i], texture);
+	m_Context.getTextureTracker().add(textures[i], texture);
     }
 }
 
@@ -386,52 +402,52 @@ void Repeater::glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsiz
 {
     OpenglRedirectorBase::glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
     auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat)?internalFormat:ve::trackers::TextureTracker::convertToSizedFormat(format,type);
-    m_Context.m_TextureTracker.get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, 0, level, 0, finalFormat);
+    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, 0, level, 0, finalFormat);
 }
 void Repeater::glTexImage2D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLsizei height,GLint border,GLenum format,GLenum type,const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
     auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat)?internalFormat:ve::trackers::TextureTracker::convertToSizedFormat(format,type);
-    m_Context.m_TextureTracker.get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
+    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
 }
 
 void Repeater::glTexImage3D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels)
 {
     OpenglRedirectorBase::glTexImage3D(target, level, internalformat, width, height, depth, border, format, type, pixels);
     auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalformat)?internalformat:ve::trackers::TextureTracker::convertToSizedFormat(format,type);
-    m_Context.m_TextureTracker.get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
+    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
 }
 
 void Repeater::glTexStorage1D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
 {
     OpenglRedirectorBase::glTexStorage1D(target,levels,internalformat,width);
-    m_Context.m_TextureTracker.get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, 0, levels, 0, internalformat);
+    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, 0, levels, 0, internalformat);
 }
 void Repeater::glTexStorage2D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
 {
     OpenglRedirectorBase::glTexStorage2D(target,levels,internalformat,width,height);
-    m_Context.m_TextureTracker.get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, levels, 0, internalformat);
+    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, levels, 0, internalformat);
 }
 void Repeater::glTexStorage3D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
 {
     OpenglRedirectorBase::glTexStorage3D(target,levels,internalformat,width,height, depth);
-    m_Context.m_TextureTracker.get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, levels, depth, internalformat);
+    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, levels, depth, internalformat);
 }
 
 void Repeater::glTextureStorage1D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width)
 {
     OpenglRedirectorBase::glTextureStorage1D(texture,levels,internalformat,width);
-    m_Context.m_TextureTracker.get(texture)->setStorage(GL_TEXTURE_1D,width, 0, levels, 0, internalformat);
+    m_Context.getTextureTracker().get(texture)->setStorage(GL_TEXTURE_1D,width, 0, levels, 0, internalformat);
 }
 void Repeater::glTextureStorage2D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
 {
     OpenglRedirectorBase::glTextureStorage2D(texture,levels,internalformat,width,height);
-    m_Context.m_TextureTracker.get(texture)->setStorage(GL_TEXTURE_2D,width, height, levels, 0, internalformat);
+    m_Context.getTextureTracker().get(texture)->setStorage(GL_TEXTURE_2D,width, height, levels, 0, internalformat);
 }
 void Repeater::glTextureStorage3D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
 {
     OpenglRedirectorBase::glTextureStorage3D(texture,levels,internalformat,width,height,depth);
-    m_Context.m_TextureTracker.get(texture)->setStorage(GL_TEXTURE_3D,width, height, levels, depth, internalformat);
+    m_Context.getTextureTracker().get(texture)->setStorage(GL_TEXTURE_3D,width, height, levels, depth, internalformat);
 }
 
 void Repeater::glGenRenderbuffers (GLsizei n, GLuint* renderbuffers)
@@ -440,7 +456,7 @@ void Repeater::glGenRenderbuffers (GLsizei n, GLuint* renderbuffers)
 
     for(size_t i = 0; i < n; i++)
     {
-        m_Context.m_RenderbufferTracker.add(renderbuffers[i],std::make_shared<ve::trackers::RenderbufferMetadata>(renderbuffers[i]));
+        m_Context.getRenderbufferTracker().add(renderbuffers[i],std::make_shared<ve::trackers::RenderbufferMetadata>(renderbuffers[i]));
     }
 }
 void Repeater::glRenderbufferStorage (GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
@@ -448,17 +464,17 @@ void Repeater::glRenderbufferStorage (GLenum target, GLenum internalformat, GLsi
     OpenglRedirectorBase::glRenderbufferStorage(target,internalformat, width, height);
     // Fix internal format when transfering renderbuffer to texture
     internalformat = (internalformat == GL_DEPTH_COMPONENT?GL_DEPTH_COMPONENT32:internalformat);
-    m_Context.m_RenderbufferTracker.get(getCurrentID(GL_RENDERBUFFER_BINDING))->setStorage(target,width, height, 0, 0, internalformat);
+    m_Context.getRenderbufferTracker().get(getCurrentID(GL_RENDERBUFFER_BINDING))->setStorage(target,width, height, 0, 0, internalformat);
 }
 
 
 void Repeater::glBindTexture(GLenum target,GLuint texture)
 {
-    m_Context.m_TextureTracker.bind(target,texture);
+    m_Context.getTextureTracker().bind(target,texture);
     auto fakeTextureId = texture;
-    if(m_Context.m_TextureTracker.has(texture) && m_Context.m_TextureTracker.get(texture)->hasShadowTexture())
+    if(m_Context.getTextureTracker().has(texture) && m_Context.getTextureTracker().get(texture)->hasShadowTexture())
     {
-        fakeTextureId = m_Context.m_TextureTracker.get(texture)->getTextureViewIdOfShadowedTexture();
+        fakeTextureId = m_Context.getTextureTracker().get(texture)->getTextureViewIdOfShadowedTexture();
     }
     OpenglRedirectorBase::glBindTexture(target,fakeTextureId);
 }
@@ -466,14 +482,14 @@ void Repeater::glBindTexture(GLenum target,GLuint texture)
 void Repeater::glActiveTexture (GLenum texture)
 {
     OpenglRedirectorBase::glActiveTexture(texture);
-    m_Context.m_TextureTracker.activate(texture-GL_TEXTURE0);
+    m_Context.getTextureTracker().activate(texture-GL_TEXTURE0);
 }
 
 GLuint Repeater::glCreateShader(GLenum shaderType)
 {
     auto id = OpenglRedirectorBase::glCreateShader(shaderType);
     auto shaderDesc = std::make_shared<ve::trackers::ShaderMetadata>(id,shaderType);
-    m_Context.m_Manager.shaders.add(id, shaderDesc);
+    m_Context.getManager().shaders.add(id, shaderDesc);
     return id;
 }
 
@@ -481,9 +497,9 @@ void Repeater::glShaderSource (GLuint shaderId, GLsizei count, const GLchar* con
 {
     auto concatenatedShader = glsl_preprocess::joinGLSLshaders(count, string, length);
     Logger::log("[Repeater] glShaderSource: [",shaderId,"] SOURCE END");
-    if(m_Context.m_Manager.shaders.has(shaderId))
+    if(m_Context.getManager().shaders.has(shaderId))
     {
-        auto shader = m_Context.m_Manager.shaders.get(shaderId);
+        auto shader = m_Context.getManager().shaders.get(shaderId);
         auto preprocessedShader = glsl_preprocess::preprocessGLSLCode(concatenatedShader);
         shader->preprocessedSourceCode = preprocessedShader;
     }
@@ -498,10 +514,10 @@ void Repeater::glLinkProgram (GLuint programId)
     //OpenglRedirectorBase::glLinkProgram(programId);
 
     // Note: this should never happen (if we handle all glCreateProgram/Shader)
-    if(!m_Context.m_Manager.has(programId))
+    if(!m_Context.getManager().has(programId))
         return;
 
-    auto program = m_Context.m_Manager.get(programId);
+    auto program = m_Context.getManager().get(programId);
 
     /*
      *  Create pipeline injector with correct parameters (number of vies)
@@ -511,7 +527,7 @@ void Repeater::glLinkProgram (GLuint programId)
     ve::pipeline::PipelineParams parameters;
 
     // TODO: detect if number of invocations is supported
-    parameters.countOfInvocations = m_Context.m_OutputFBO.getParams().getLayers();
+    parameters.countOfInvocations = m_Context.getOutputFBO().getParams().getLayers();
     if(parameters.countOfInvocations > 32)
     {
         parameters.countOfPrimitivesDuplicates = floor(parameters.countOfInvocations/32)+1;
@@ -595,9 +611,9 @@ void Repeater::glAttachShader (GLuint program, GLuint shader)
     Logger::log("[Repeater] attaching shader ",shader," to program ", program);
     //OpenglRedirectorBase::glAttachShader(program,shader);
 
-    if(!m_Context.m_Manager.has(program) || !m_Context.m_Manager.shaders.has(shader))
+    if(!m_Context.getManager().has(program) || !m_Context.getManager().shaders.has(shader))
         return;
-    m_Context.m_Manager.get(program)->attachShaderToProgram(m_Context.m_Manager.shaders.get(shader));
+    m_Context.getManager().get(program)->attachShaderToProgram(m_Context.getManager().shaders.get(shader));
 }
 
 
@@ -606,9 +622,9 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     OpenglRedirectorBase::glUniformMatrix4fv (location, count, transpose, value);
 
     // get current's program transformation matrix name
-    if(!m_Context.m_Manager.hasBounded())
+    if(!m_Context.getManager().hasBounded())
         return;
-    auto program = m_Context.m_Manager.getBound();
+    auto program = m_Context.getManager().getBound();
     if(!program->m_Metadata)
         return;
     auto metaData = program->m_Metadata.get();
@@ -616,7 +632,7 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     if(!metaData->hasDetectedTransformation())
         return;
 
-    auto programID = m_Context.m_Manager.getBoundId();
+    auto programID = m_Context.getManager().getBoundId();
     // get original MVP matrix location
     auto originalLocation = OpenglRedirectorBase::glGetUniformLocation(programID, metaData->m_TransformationMatrixName.c_str());
     
@@ -640,28 +656,28 @@ GLuint Repeater::glCreateProgram (void)
     auto result = OpenglRedirectorBase::glCreateProgram();
 
     auto program = std::make_shared<ve::trackers::ShaderProgram>();
-    m_Context.m_Manager.add(result, program);
+    m_Context.getManager().add(result, program);
     return result;
 }
 
 void Repeater::glUseProgram (GLuint program)
 {
     OpenglRedirectorBase::glUseProgram(program);
-    m_Context.m_Manager.bind(program);
+    m_Context.getManager().bind(program);
 }
 
 
 void Repeater::glViewport(GLint x,GLint y,GLsizei width,GLsizei height)
 {
     OpenglRedirectorBase::glViewport(x,y,width,height);
-    m_Context.currentViewport.set(x,y,width,height);
-    m_Context.m_cameras.updateViewports(m_Context.currentViewport);
+    m_Context.getCurrentViewport().set(x,y,width,height);
+    m_Context.getCameras().updateViewports(m_Context.getCurrentViewport());
 }
 
 void Repeater::glScissor(GLint x,GLint y,GLsizei width,GLsizei height)
 {
     OpenglRedirectorBase::glScissor(x,y,width,height);
-    m_Context.currentScissorArea.set(x,y,width,height);
+    m_Context.getCurrentScissorArea().set(x,y,width,height);
 }
 
 
@@ -720,49 +736,49 @@ void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
     for(size_t i=0;i < n; i++)
     {
         auto fbo = std::make_shared<ve::trackers::FramebufferMetadata>();
-        m_Context.m_FBOTracker.add(framebuffers[i],fbo);
+        m_Context.getFBOTracker().add(framebuffers[i],fbo);
     }
 }
 
 void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
 {
-    m_Context.m_FBOTracker.bind(framebuffer);
+    m_Context.getFBOTracker().bind(framebuffer);
     if(framebuffer == 0)
     {
         if(m_Context.m_IsMultiviewActivated)
         {
-            OpenglRedirectorBase::glBindFramebuffer(target, m_Context.m_OutputFBO.getFBOId());
-            OpenglRedirectorBase::glViewport(0,0,m_Context.m_OutputFBO.getParams().getTextureWidth(), m_Context.m_OutputFBO.getParams().getTextureHeight());
+            OpenglRedirectorBase::glBindFramebuffer(target, m_Context.getOutputFBO().getFBOId());
+            OpenglRedirectorBase::glViewport(0,0,m_Context.getOutputFBO().getParams().getTextureWidth(), m_Context.getOutputFBO().getParams().getTextureHeight());
         } else {
             OpenglRedirectorBase::glBindFramebuffer(target, 0);
-            OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
-                    m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
+            OpenglRedirectorBase::glViewport(m_Context.getCurrentViewport().getX(), m_Context.getCurrentViewport().getY(),
+                    m_Context.getCurrentViewport().getWidth(), m_Context.getCurrentViewport().getHeight());
         }
     } else {
         if(m_Context.m_IsMultiviewActivated)
         {
             auto id = framebuffer;
-            auto fbo = m_Context.m_FBOTracker.getBound();
+            auto fbo = m_Context.getFBOTracker().getBound();
             /*
              * Only create & bind shadow FBO when original FBO is complete (thus has any attachment)
              */
             if(fbo->hasAnyAttachment())
             {
-                if(!fbo->hasShadowFBO() && m_Context.m_FBOTracker.isSuitableForRepeating())
-                    fbo->createShadowedFBO(m_Context.m_OutputFBO.getParams().getLayers());
+                if(!fbo->hasShadowFBO() && m_Context.getFBOTracker().isSuitableForRepeating())
+                    fbo->createShadowedFBO(m_Context.getOutputFBO().getParams().getLayers());
                 // Creation of shadow FBO should never fail
                 assert(fbo->hasShadowFBO());
                 id = fbo->getShadowFBO();
             }
 
             OpenglRedirectorBase::glBindFramebuffer(target,id);
-            OpenglRedirectorBase::glViewport(m_Context.currentViewport.getX(), m_Context.currentViewport.getY(),
-                    m_Context.currentViewport.getWidth(), m_Context.currentViewport.getHeight());
+            OpenglRedirectorBase::glViewport(m_Context.getCurrentViewport().getX(), m_Context.getCurrentViewport().getY(),
+                    m_Context.getCurrentViewport().getWidth(), m_Context.getCurrentViewport().getHeight());
 
             // TODO: shadowed textures are the same size as OutputFBO
             if(m_Context.m_IsMultiviewActivated)
             {
-                OpenglRedirectorBase::glViewport(0,0,m_Context.m_OutputFBO.getParams().getTextureWidth(), m_Context.m_OutputFBO.getParams().getTextureHeight());
+                OpenglRedirectorBase::glViewport(0,0,m_Context.getOutputFBO().getParams().getTextureWidth(), m_Context.getOutputFBO().getParams().getTextureHeight());
             }
         } else {
             OpenglRedirectorBase::glBindFramebuffer(target, framebuffer);
@@ -774,38 +790,38 @@ void Repeater::glFramebufferTexture (GLenum target, GLenum attachment, GLuint te
 {
     OpenglRedirectorBase::glFramebufferTexture(target,attachment, texture,level);
 
-    assert(m_Context.m_TextureTracker.has(texture));
-    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_TextureTracker.get(texture));
+    assert(m_Context.getTextureTracker().has(texture));
+    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture));
 }
 
 void Repeater::glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture1D(target,attachment,textarget, texture,level);
-    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_TextureTracker.get(texture),ve::trackers::FramebufferAttachment::ATTACHMENT_1D);
+    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture),ve::trackers::FramebufferAttachment::ATTACHMENT_1D);
 }
 void Repeater::glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture2D(target,attachment,textarget, texture,level);
-    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_TextureTracker.get(texture),ve::trackers::FramebufferAttachment::ATTACHMENT_2D);
+    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture),ve::trackers::FramebufferAttachment::ATTACHMENT_2D);
 }
 void Repeater::glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset)
 {
     OpenglRedirectorBase::glFramebufferTexture3D(target,attachment,textarget, texture,level,zoffset);
-    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_TextureTracker.get(texture),ve::trackers::FramebufferAttachment::ATTACHMENT_3D);
+    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture),ve::trackers::FramebufferAttachment::ATTACHMENT_3D);
 }
 
 void Repeater::glFramebufferRenderbuffer (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
 {
     OpenglRedirectorBase::glFramebufferRenderbuffer(target,attachment,renderbuffertarget, renderbuffer);
-    m_Context.m_FBOTracker.getBound()->attach(attachment, m_Context.m_RenderbufferTracker.get(renderbuffer),ve::trackers::FramebufferAttachment::ATTACHMENT_2D);
+    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getRenderbufferTracker().get(renderbuffer),ve::trackers::FramebufferAttachment::ATTACHMENT_2D);
 }
 // ----------------------------------------------------------------------------
 GLuint Repeater::glGetUniformBlockIndex (GLuint program, const GLchar* uniformBlockName)
 {
     auto result = OpenglRedirectorBase::glGetUniformBlockIndex(program, uniformBlockName);
-    if(!m_Context.m_Manager.has(program))
+    if(!m_Context.getManager().has(program))
         return result;
-    auto record = m_Context.m_Manager.get(program);
+    auto record = m_Context.getManager().get(program);
     if(record->m_UniformBlocks.count(uniformBlockName) == 0)
     {
         ve::trackers::ShaderProgram::UniformBlock block;
@@ -818,10 +834,10 @@ GLuint Repeater::glGetUniformBlockIndex (GLuint program, const GLchar* uniformBl
 void Repeater::glUniformBlockBinding (GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding) 
 {
     OpenglRedirectorBase::glUniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding);
-    if(!m_Context.m_Manager.has(program))
+    if(!m_Context.getManager().has(program))
         return;
 
-    auto record = m_Context.m_Manager.get(program);
+    auto record = m_Context.getManager().get(program);
     record->updateUniformBlock(uniformBlockIndex, uniformBlockBinding);
 
     // Add binding index's transformation metadata
@@ -833,7 +849,7 @@ void Repeater::glUniformBlockBinding (GLuint program, GLuint uniformBlockIndex, 
             auto& block = record->m_UniformBlocks[desc->m_InterfaceBlockName];
             if(OpenglRedirectorBase::glGetUniformBlockIndex(program,desc->m_InterfaceBlockName.c_str())  == uniformBlockIndex)
             {
-                auto& index = m_Context.m_UniformBlocksTracker.getBindingIndex(block.bindingIndex);
+                auto& index = m_Context.getUniformBlocksTracker().getBindingIndex(block.bindingIndex);
 
                 std::array<const GLchar*, 1> uniformList = {desc->m_TransformationMatrixName.c_str()};
                 std::array<GLuint, 1> resultIndex;
@@ -852,13 +868,13 @@ void Repeater::glBindBufferRange (GLenum target, GLuint index, GLuint buffer, GL
 {
     OpenglRedirectorBase::glBindBufferRange(target, index, buffer, offset, size);
     if(target == GL_UNIFORM_BUFFER)
-        m_Context.m_UniformBlocksTracker.setUniformBinding(buffer,index);
+        m_Context.getUniformBlocksTracker().setUniformBinding(buffer,index);
 }
 void Repeater::glBindBufferBase (GLenum target, GLuint index, GLuint buffer)
 {
     OpenglRedirectorBase::glBindBufferBase(target, index, buffer);
     if(target == GL_UNIFORM_BUFFER)
-        m_Context.m_UniformBlocksTracker.setUniformBinding(buffer,index);
+        m_Context.getUniformBlocksTracker().setUniformBinding(buffer,index);
 }
 
 void Repeater::glBindBuffersBase (GLenum target, GLuint first, GLsizei count, const GLuint* buffers)
@@ -869,7 +885,7 @@ void Repeater::glBindBuffersBase (GLenum target, GLuint first, GLsizei count, co
     {
         for(size_t i = 0; i < count; i++)
         {
-            m_Context.m_UniformBlocksTracker.setUniformBinding(buffers[i],first+i);
+            m_Context.getUniformBlocksTracker().setUniformBinding(buffers[i],first+i);
         }
     }
 }
@@ -882,7 +898,7 @@ void Repeater::glBindBuffersRange (GLenum target, GLuint first, GLsizei count, c
     {
         for(size_t i = 0; i < count; i++)
         {
-            m_Context.m_UniformBlocksTracker.setUniformBinding(buffers[i],first+i);
+            m_Context.getUniformBlocksTracker().setUniformBinding(buffers[i],first+i);
         }
     }
 }
@@ -896,14 +912,14 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
         return;
 
     GLint bufferID = getCurrentID(GL_UNIFORM_BUFFER_BINDING);
-    if(!m_Context.m_UniformBlocksTracker.hasBufferBindingIndex(bufferID))
+    if(!m_Context.getUniformBlocksTracker().hasBufferBindingIndex(bufferID))
         return;
-    auto index = m_Context.m_UniformBlocksTracker.getBufferBindingIndex(bufferID);
-    auto& metadata = m_Context.m_UniformBlocksTracker.getBindingIndex(index);
+    auto index = m_Context.getUniformBlocksTracker().getBufferBindingIndex(bufferID);
+    auto& metadata = m_Context.getUniformBlocksTracker().getBindingIndex(index);
     if(metadata.transformationOffset == -1)
     {
         // Find a program whose uniform iterface contains transformation matrix
-        for(auto& [programID, program]: m_Context.m_Manager.getMap())
+        for(auto& [programID, program]: m_Context.getManager().getMap())
         {
             auto& blocks = program->m_UniformBlocks;
             
@@ -963,10 +979,10 @@ void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size,
 
     GLint bufferID = 0;
     OpenglRedirectorBase::glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &bufferID);
-    if(!m_Context.m_UniformBlocksTracker.hasBufferBindingIndex(bufferID))
+    if(!m_Context.getUniformBlocksTracker().hasBufferBindingIndex(bufferID))
         return;
-    auto index = m_Context.m_UniformBlocksTracker.getBufferBindingIndex(bufferID);
-    auto& metadata = m_Context.m_UniformBlocksTracker.getBindingIndex(index);
+    auto index = m_Context.getUniformBlocksTracker().getBufferBindingIndex(bufferID);
+    auto& metadata = m_Context.getUniformBlocksTracker().getBindingIndex(index);
     if(metadata.transformationOffset != -1 && offset <= metadata.transformationOffset)
     {
         if(offset+size >= metadata.transformationOffset+sizeof(float)*16)
@@ -987,26 +1003,26 @@ void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size,
 void Repeater::glMatrixMode(GLenum mode)
 {
     OpenglRedirectorBase::glMatrixMode(mode);
-    m_Context.m_LegacyTracker.matrixMode(mode);
+    m_Context.getLegacyTracker().matrixMode(mode);
     //Logger::log("[Repeater] glMatrixMode ", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
 }
 void Repeater::glLoadMatrixd(const GLdouble* m)
 {
     OpenglRedirectorBase::glLoadMatrixd(m);
-    if(m_Context.m_LegacyTracker.getMatrixMode() == GL_PROJECTION)
+    if(m_Context.getLegacyTracker().getMatrixMode() == GL_PROJECTION)
     {
         const auto result = opengl_utils::createMatrixFromRawGL(m);
-        m_Context.m_LegacyTracker.loadMatrix(std::move(result));
+        m_Context.getLegacyTracker().loadMatrix(std::move(result));
     }
     //helper::dumpOpenglMatrix(m);
 }
 void Repeater::glLoadMatrixf(const GLfloat* m)
 {
     OpenglRedirectorBase::glLoadMatrixf(m);
-    if(m_Context.m_LegacyTracker.getMatrixMode() == GL_PROJECTION)
+    if(m_Context.getLegacyTracker().getMatrixMode() == GL_PROJECTION)
     {
         const auto result = opengl_utils::createMatrixFromRawGL(m);
-        m_Context.m_LegacyTracker.loadMatrix(std::move(result));
+        m_Context.getLegacyTracker().loadMatrix(std::move(result));
     }
     //helper::dumpOpenglMatrix(m);
 }
@@ -1014,30 +1030,30 @@ void Repeater::glLoadMatrixf(const GLfloat* m)
 void Repeater::glLoadIdentity(void)
 {
     OpenglRedirectorBase::glLoadIdentity();
-    if(m_Context.m_LegacyTracker.getMatrixMode() == GL_PROJECTION)
+    if(m_Context.getLegacyTracker().getMatrixMode() == GL_PROJECTION)
     {
         glm::mat4 identity = glm::mat4(1.0);
-        m_Context.m_LegacyTracker.loadMatrix(std::move(identity));
+        m_Context.getLegacyTracker().loadMatrix(std::move(identity));
     }
 }
 
 void Repeater::glMultMatrixd(const GLdouble* m)
 {
     OpenglRedirectorBase::glMultMatrixd(m);
-    if(m_Context.m_LegacyTracker.getMatrixMode() == GL_PROJECTION)
+    if(m_Context.getLegacyTracker().getMatrixMode() == GL_PROJECTION)
     {
         const auto result = opengl_utils::createMatrixFromRawGL(m);
-        m_Context.m_LegacyTracker.loadMatrix(std::move(result));
+        m_Context.getLegacyTracker().loadMatrix(std::move(result));
     }
 }
 
 void Repeater::glMultMatrixf(const GLfloat* m)
 {
     OpenglRedirectorBase::glMultMatrixf(m);
-    if(m_Context.m_LegacyTracker.getMatrixMode() == GL_PROJECTION)
+    if(m_Context.getLegacyTracker().getMatrixMode() == GL_PROJECTION)
     {
         const auto result = opengl_utils::createMatrixFromRawGL(m);
-        m_Context.m_LegacyTracker.loadMatrix(std::move(result));
+        m_Context.getLegacyTracker().loadMatrix(std::move(result));
     }
 }
 
@@ -1045,13 +1061,13 @@ void Repeater::glMultMatrixf(const GLfloat* m)
 void Repeater::glOrtho(GLdouble left,GLdouble right,GLdouble bottom,GLdouble top,GLdouble near_val,GLdouble far_val)
 {
     OpenglRedirectorBase::glOrtho(left,right,bottom,top,near_val,far_val);
-    m_Context.m_LegacyTracker.multMatrix(glm::ortho(left,right,bottom,top,near_val,far_val));
+    m_Context.getLegacyTracker().multMatrix(glm::ortho(left,right,bottom,top,near_val,far_val));
 }
 
 void Repeater::glFrustum(GLdouble left,GLdouble right,GLdouble bottom,GLdouble top,GLdouble near_val,GLdouble far_val)
 {
     OpenglRedirectorBase::glFrustum(left,right,bottom,top,near_val,far_val);
-    m_Context.m_LegacyTracker.multMatrix(glm::frustum(left,right,bottom,top,near_val,far_val));
+    m_Context.getLegacyTracker().multMatrix(glm::frustum(left,right,bottom,top,near_val,far_val));
 }
 
 void Repeater::glBegin(GLenum mode)
@@ -1093,7 +1109,7 @@ void Repeater::glCallLists(GLsizei n,GLenum type,const GLvoid* lists)
 int Repeater::XNextEvent(Display *display, XEvent *event_return)
 {
     //return OpenglRedirectorBase::XNextEvent(display, event_return);
-    return m_Context.m_x11Sniffer.onXNextEvent(display, event_return);
+    return m_Context.getX11Sniffer().onXNextEvent(display, event_return);
 }
 
 int Repeater::XWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y)
@@ -1132,8 +1148,8 @@ void Repeater::XSetWMNormalHints(Display *display, Window w, XSizeHints* hints)
 
 void Repeater::takeScreenshot(const std::string filename)
 {
-    const auto width = m_Context.currentViewport.getWidth();
-    const auto height = m_Context.currentViewport.getHeight();
+    const auto width = m_Context.getCurrentViewport().getWidth();
+    const auto height = m_Context.getCurrentViewport().getHeight();
     // Make the BYTE array, factor of 3 because it's RBG.
     BYTE* pixels = new BYTE[3 * width * height];
 
@@ -1156,27 +1172,27 @@ void Repeater::onKeyPress(size_t keySym)
         switch(keySym)
         {
             case XK_F1: case XK_F2:
-                m_Context.m_cameraParameters.m_XShiftMultiplier += (keySym == XK_F1?1.0:-1.0)*increment;
+                m_Context.getCameraParameters().m_XShiftMultiplier += (keySym == XK_F1?1.0:-1.0)*increment;
             break;
             case XK_F3: case XK_F4:
-                m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance += (keySym == XK_F3?1.0:-1.0)*0.5;
+                m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance += (keySym == XK_F3?1.0:-1.0)*0.5;
             break; 
             case XK_F5:
-                m_Context.m_cameraParameters = ve::pipeline::CameraParameters();
+                m_Context.getCameraParameters() = ve::pipeline::CameraParameters();
             break;
             case XK_F11:
-                m_Context.m_gui.setVisibility(!m_Context.m_gui.isVisible());
+                m_Context.getGui().setVisibility(!m_Context.getGui().isVisible());
             break;
             case XK_F12:
                 m_Context.m_IsMultiviewActivated = !m_Context.m_IsMultiviewActivated;
             break;
             case XK_F10:
-                m_Context.m_x11Sniffer.turnFullscreen();
+                m_Context.getX11Sniffer().turnFullscreen();
             break;
             default:
             break;
         }
-        Logger::log("[Repeater] Setting: frontDistance (",m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance, "), X multiplier(",
-                m_Context.m_cameraParameters.m_XShiftMultiplier, ")");
-        m_Context.m_cameras.updateParamaters(m_Context.m_cameraParameters);
+        Logger::log("[Repeater] Setting: frontDistance (",m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance, "), X multiplier(",
+                m_Context.getCameraParameters().m_XShiftMultiplier, ")");
+        m_Context.getCameras().updateParamaters(m_Context.getCameraParameters());
 }
