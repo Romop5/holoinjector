@@ -2,7 +2,7 @@
 #define LOGGER_HPP
 
 #include <string>
-#include <fmt/format.h>
+#include <sstream>
 
 namespace ve
 {
@@ -42,10 +42,33 @@ namespace ve
          */
         void printLog(const std::string& msg, LogLevel level = LogLevel::INFO_LOG);
 
-        template<typename ...ARGS, unsigned _Level = LogLevel::INFO_LOG>
-        inline static void log(const std::string& msg, ARGS... types)
+
+        inline static const std::string ToString() { return ""; }
+        inline static const std::string ToString(const char* str) { return str; }
+        inline static const std::string ToString(const std::string str) { return str; }
+        inline static const std::string ToString(int arg) { return std::to_string(arg); }
+        inline static const std::string ToString(unsigned int arg) { return std::to_string(arg); }
+        inline static const std::string ToString(unsigned long int arg) { return std::to_string(arg); }
+        inline static const std::string ToString(double arg) { return std::to_string(arg); }
+        inline static const std::string ToString(void* ptr)
         {
-            const auto logResult = fmt::format(msg, types...);
+            std::ostringstream out;
+            out << ptr;
+            return out.str();
+        }
+
+        inline static const std::string ToStringVariadic() { return ""; };
+
+        template<typename T, typename ...ARGS>
+        inline static const std::string ToStringVariadic(T arg, ARGS... args)
+        {
+            return ToString(arg) + " " + ToStringVariadic(args...);
+        }
+
+        template<typename ...ARGS, unsigned _Level = LogLevel::INFO_LOG>
+        inline static void log(ARGS... msgParts)
+        {
+            const auto logResult = ToStringVariadic(msgParts...);
             getInstance().printLog(logResult, static_cast<LogLevel>(_Level));
         }
         private:
