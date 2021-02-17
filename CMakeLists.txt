@@ -54,7 +54,7 @@ get_filename_component(SIMPLECPP_INCL ${SIMPLECPP_H} DIRECTORY)
 
 find_package(glm REQUIRED)
 find_package(FreeImage REQUIRED)
-find_package(fmt REQUIRED)
+#find_package(fmt REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 find_library(IMGUI_LIB libimgui.so PATHS lib lib64 REQUIRED)
@@ -150,7 +150,7 @@ add_library(enhancer_core
 # => Position Independent Code is thus required
 target_compile_options(enhancer_core PRIVATE "-fPIC")
 
-target_link_libraries(enhancer_core PUBLIC GL glm ${FREEIMAGE_LIBRARIES} fmt::fmt-header-only
+target_link_libraries(enhancer_core PUBLIC GL glm ${FREEIMAGE_LIBRARIES} 
     yaml-cpp )
 target_include_directories(enhancer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${FREEIMAGE_INCLUDE_DIR})
