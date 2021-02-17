@@ -29,7 +29,7 @@ using namespace ve;
 
 void Repeater::initialize()
 {
-    Logger::log("Repeater::initialize\n");
+    Logger::log("Repeater::initialize");
     static bool isInitialzed = false;
     if(isInitialzed)
         return;
@@ -480,7 +480,7 @@ GLuint Repeater::glCreateShader(GLenum shaderType)
 void Repeater::glShaderSource (GLuint shaderId, GLsizei count, const GLchar* const*string, const GLint* length)
 {
     auto concatenatedShader = glsl_preprocess::joinGLSLshaders(count, string, length);
-    Logger::log("[Repeater] glShaderSource: [{}]\n",shaderId);
+    Logger::log("[Repeater] glShaderSource: [",shaderId,"] SOURCE END");
     if(m_Context.m_Manager.shaders.has(shaderId))
     {
         auto shader = m_Context.m_Manager.shaders.get(shaderId);
@@ -528,7 +528,7 @@ void Repeater::glLinkProgram (GLuint programId)
         OpenglRedirectorBase::glDetachShader(programId, shader->m_Id);
         // store source code for given shader type
         pipeline[shader->m_Type] = shader->preprocessedSourceCode;
-        Logger::log("[Repeater] Detaching: {} {}\n", shader->m_Type, shader->m_Id);
+        Logger::log("[Repeater] Detaching:", shader->m_Type, shader->m_Id);
     }
 
     /*
@@ -542,7 +542,7 @@ void Repeater::glLinkProgram (GLuint programId)
         auto newShader = OpenglRedirectorBase::glCreateShader(type);
         const GLchar* sources[1] = {reinterpret_cast<const GLchar*>(sourceCode.data())}; 
         OpenglRedirectorBase::glShaderSource(newShader, 1, sources , nullptr);
-	Logger::log("[Repeater] Compiling shader: \n {}\n", sourceCode.c_str());
+	Logger::log("[Repeater] Compiling shader:", sourceCode.c_str());
         fflush(stdout);
         OpenglRedirectorBase::glCompileShader(newShader);
         GLint status;
@@ -555,13 +555,13 @@ void Repeater::glLinkProgram (GLuint programId)
             GLsizei realLogLength = 0;
             GLchar log[5120] = {0,};
             OpenglRedirectorBase::glGetShaderInfoLog(newShader, logSize, &realLogLength, log);
-            Logger::log("[Repeater] Error while compiling new shader type {}: {}\n", type,log);
-            Logger::log("Shade source: {}\n", sourceCode.c_str());
+            Logger::log("[Repeater] Error while compiling new shader type", type,log);
+            Logger::log("Shader source:", sourceCode.c_str());
             return;
         }
         OpenglRedirectorBase::glAttachShader(programId, newShader);
     }
-    Logger::log("[Repeater] Relink program with new shaders\n");
+    Logger::log("[Repeater] Relink program with new shaders");
     OpenglRedirectorBase::glLinkProgram(programId);
     GLint linkStatus = 0;
     OpenglRedirectorBase::glGetProgramiv(programId, GL_LINK_STATUS, &linkStatus);
@@ -573,26 +573,26 @@ void Repeater::glLinkProgram (GLuint programId)
         GLsizei realLogLength = 0;
         GLchar log[5120] = {0,};
         OpenglRedirectorBase::glGetProgramInfoLog(programId, logSize, &realLogLength, log);
-        Logger::log("[Repeater] Link failed with log: {}\n",log);
+        Logger::log("[Repeater] Link failed with log:",log);
     }
     assert(linkStatus == GL_TRUE);
 }
 
 void Repeater::glCompileShader (GLuint shader)
 {
-    Logger::log("[Repeater] glCompileShader\n");
+    Logger::log("[Repeater] glCompileShader");
     OpenglRedirectorBase::glCompileShader(shader);
     GLint status;
     OpenglRedirectorBase::glGetShaderiv(shader, GL_COMPILE_STATUS,&status);
     if(status == GL_FALSE)
     {
-        Logger::log("[Repeater] Error while comping shader [{}]\n", shader);
+        Logger::log("[Repeater] Error while comping shader [", shader, "]");
     }
 }
 
 void Repeater::glAttachShader (GLuint program, GLuint shader)
 {
-    Logger::log("[Repeater] attaching shader [{}] to program [{}] \n", shader, program);
+    Logger::log("[Repeater] attaching shader ",shader," to program ", program);
     //OpenglRedirectorBase::glAttachShader(program,shader);
 
     if(!m_Context.m_Manager.has(program) || !m_Context.m_Manager.shaders.has(shader))
@@ -628,8 +628,9 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     const auto mat = opengl_utils::createMatrixFromRawGL(value);
     auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(mat);
 
-    Logger::log("[Repeater] estimating parameters from uniform matrix\n");
-    Logger::log("[Repeater] parameters: fx({}) fy({}) near ({}) near({}) isPerspective ({}) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane, estimatedParameters.isPerspective);
+    Logger::log("[Repeater] estimating parameters from uniform matrix");
+    auto& ep = estimatedParameters;
+    Logger::log("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
 
     m_DrawManager.setEnhancerDecodedProjection(m_Context,programID, estimatedParameters);
 }
@@ -942,8 +943,10 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data)+metadata.transformationOffset, sizeof(float)*16);
             auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(metadata.transformation);
 
-            Logger::log("[Repeater] estimating parameters from UBO\n");
-            Logger::log("[Repeater] parameters: fx({}) fy({}) near ({}) near({}) isPerspective ({}) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane, estimatedParameters.isPerspective);
+            Logger::log("[Repeater] estimating parameters from UBO");
+
+            auto& ep = estimatedParameters;
+            Logger::log("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
 
             // TODO: refactor into class method of Binding index structure
             metadata.projection = estimatedParameters;
@@ -970,8 +973,9 @@ void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size,
         {
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data)+metadata.transformationOffset, sizeof(float)*16);
             auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(metadata.transformation);
-            Logger::log("[Repeater] estimating parameters from UBO\n");
-            Logger::log("[Repeater] parameters: fx({}) fy({}) near ({}) near({}) \n", estimatedParameters.fx, estimatedParameters.fy, estimatedParameters.nearPlane, estimatedParameters.farPlane);
+            Logger::log("[Repeater] estimating parameters from UBO");
+            auto& ep = estimatedParameters;
+            Logger::log("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") near(",ep.farPlane,")");
 
             metadata.projection = estimatedParameters;
             metadata.hasTransformation = true;
@@ -984,7 +988,7 @@ void Repeater::glMatrixMode(GLenum mode)
 {
     OpenglRedirectorBase::glMatrixMode(mode);
     m_Context.m_LegacyTracker.matrixMode(mode);
-    //Logger::log("[Repeater] glMatrixMode {}\n", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
+    //Logger::log("[Repeater] glMatrixMode ", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
 }
 void Repeater::glLoadMatrixd(const GLdouble* m)
 {
@@ -1139,7 +1143,7 @@ void Repeater::takeScreenshot(const std::string filename)
     FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF, 0xFF00, 0xFF0000, false);
     if(!FreeImage_Save(FIF_BMP, image, filename.c_str(), 0))
     {
-        Logger::log("[Repeater] Failed to save screenshot {}\n", filename.c_str());
+        Logger::log("[Repeater] Failed to save screenshot:", filename.c_str());
     }
     // Free resources
     FreeImage_Unload(image);
@@ -1172,7 +1176,7 @@ void Repeater::onKeyPress(size_t keySym)
             default:
             break;
         }
-        Logger::log("[Repeater] Setting: frontDistance ({}), X multiplier({})\n",
-                m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance, m_Context.m_cameraParameters.m_XShiftMultiplier);
+        Logger::log("[Repeater] Setting: frontDistance (",m_Context.m_cameraParameters.m_frontOpticalAxisCentreDistance, "), X multiplier(",
+                m_Context.m_cameraParameters.m_XShiftMultiplier, ")");
         m_Context.m_cameras.updateParamaters(m_Context.m_cameraParameters);
 }

@@ -68,7 +68,7 @@ namespace ve
         template<typename ...ARGS, unsigned _Level = LogLevel::INFO_LOG>
         inline static void log(ARGS... msgParts)
         {
-            const auto logResult = ToStringVariadic(msgParts...);
+            const auto logResult = ToStringVariadic(msgParts...)+"\n";
             getInstance().printLog(logResult, static_cast<LogLevel>(_Level));
         }
         private:

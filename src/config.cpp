@@ -13,7 +13,7 @@ const Config::ConfigDict Config::load()
 {
     ConfigDict dict;
     const auto configFile = getConfigPath();
-    Logger::log("Loading config from: {}\n", configFile);
+    Logger::log("Loading config from: ", configFile);
     if(!configFile.empty())
     {
         loadFromFile(dict,configFile);

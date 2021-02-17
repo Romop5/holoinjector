@@ -10,11 +10,11 @@
 template<typename T>
 void ve::opengl_utils::dumpOpenglMatrix(const T* m)
 {
-    Logger::log("[Repeater] Matrix: \n");
-    Logger::log("[Repeater] {} {} {} {}\n", m[0],m[4],m[8],m[12]);
-    Logger::log("[Repeater] {} {} {} {}\n", m[1],m[5],m[9],m[13]);
-    Logger::log("[Repeater] {} {} {} {}\n", m[2],m[6],m[10],m[14]);
-    Logger::log("[Repeater] {} {} {} {}\n", m[3],m[7],m[11],m[15]);
+    Logger::log("[Repeater] Matrix: ");
+    Logger::log("[Repeater] ", m[0],m[4],m[8],m[12]);
+    Logger::log("[Repeater] ", m[1],m[5],m[9],m[13]);
+    Logger::log("[Repeater] ", m[2],m[6],m[10],m[14]);
+    Logger::log("[Repeater] ", m[3],m[7],m[11],m[15]);
 }
 
 template<>
