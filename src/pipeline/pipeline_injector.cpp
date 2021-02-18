@@ -173,7 +173,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
      * +
      * create "enhancer_frag_name = name[i];
      */
-    for(auto& [type,name]: inputs)
+    for(const auto& [type,name]: inputs)
     {
         ioDefinitionString += "in " + type + " " + name + "[];\n";
         ioDefinitionString += "out " + type + " " + "enhancer_frag_"+name + ";\n";
@@ -195,7 +195,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
                 if(interfaceBlockDefinitionTokens[i] != ";")
                     continue;
                 std::stringstream ibRedirectionString;
-                ibRedirectionString << "enhancer_frag_" << name << "." << interfaceBlockDefinitionTokens[i-1] << 
+                ibRedirectionString << "enhancer_frag_" << name << "." << interfaceBlockDefinitionTokens[i-1] <<
                     " = " << name <<  "[i]." << interfaceBlockDefinitionTokens[i-1] << ";\n";
                 ioRedirections += ibRedirectionString.str();
             }
@@ -215,17 +215,18 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
      * Replace all in attributes with prefixed version
      */
     auto fragmentShader = result[GL_FRAGMENT_SHADER]; 
-    for(auto& [type,name]: inputs)
+    for(const auto& [type,name]: inputs)
     {
+        std::string inputName = name;
         bool isInterfaceBlock = type.find_first_of("{}") != std::string::npos;
         auto nameSuffix = (isInterfaceBlock?"_fs":"");
         //fragmentShader = std::regex_replace(fragmentShader, std::regex(name),"enhancer_frag_"+name+nameSuffix);
         auto replaceRegexSearch = std::regex(std::string("([a-zA-Z_-][a-zA-Z0-9_-]*)?")+name+std::string("[a-zA-Z0-9_-]*"));
         fragmentShader = helper::regex_replace_functor(fragmentShader, replaceRegexSearch,[&](auto str)->std::string
         {
-            if(str == name)
+            if(str == inputName)
             {
-                return "enhancer_frag_"+name+nameSuffix;
+                return "enhancer_frag_"+inputName+nameSuffix;
             }
             return str;
         });
