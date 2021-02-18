@@ -6,23 +6,14 @@
 namespace ve
 {
 class Context;
-namespace pipeline {
+
+namespace pipeline
+{
     class PerspectiveProjectionParameters;
 }
 namespace managers
 {
 
-class DrawPipelineInterface
-{
-    public:
-    template<typename T>
-    void setParameter(const std::string& name, const T value);
-
-    void setSingleViewMode(size_t cameraID);
-    void setMultiViewMode(size_t cameraID);
-    void push();
-    void pop();
-};
 class DrawManager
 {
     public:

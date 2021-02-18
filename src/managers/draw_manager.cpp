@@ -2,7 +2,6 @@
 #include <GL/gl.h>
 
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/transform.hpp>
 
 #include "logger.hpp"
 #include "context.hpp"
