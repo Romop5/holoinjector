@@ -18,6 +18,8 @@ namespace opengl_utils
      * @brief Convert OpenGL enum 'type' into string representation
      */
     std::string getEnumStringRepresentation(GLenum type);
+
+    bool takeScreenshot(const std::string& path);
 } //namespace opengl_utils
 } //namespace ve
 #endif

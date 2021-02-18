@@ -155,7 +155,6 @@ namespace ve
         void initialize();
         void deinitialize();
 
-        void takeScreenshot(const std::string filename);
         void drawMultiviewed(const std::function<void(void)>& code);
 
         ///////////////////////////////////////////////////////////////////////

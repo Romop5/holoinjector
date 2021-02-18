@@ -7,7 +7,6 @@
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
-#include "FreeImage.h" // FreeImage image storing
 
 #include "pipeline/shader_inspector.hpp"
 #include "pipeline/projection_estimator.hpp"
@@ -292,7 +291,7 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
     if(m_Context.getDiagnostics().hasReachedLastFrame())
     {
         // Note: this is debug only, leaves mem. leaks and uncleaned objects
-        takeScreenshot(std::string(m_Context.getDiagnostics().getScreenshotName()));
+        opengl_utils::takeScreenshot(std::string(m_Context.getDiagnostics().getScreenshotName()));
         exit(5);
     }
 }
@@ -1070,26 +1069,3 @@ void Repeater::XSetWMNormalHints(Display *display, Window w, XSizeHints* hints)
     OpenglRedirectorBase::XSetWMNormalHints(display, w, hints);
 }
 
-//-----------------------------------------------------------------------------
-// Utils
-//-----------------------------------------------------------------------------
-
-void Repeater::takeScreenshot(const std::string filename)
-{
-    const auto width = m_Context.getCurrentViewport().getWidth();
-    const auto height = m_Context.getCurrentViewport().getHeight();
-    // Make the BYTE array, factor of 3 because it's RBG.
-    BYTE* pixels = new BYTE[3 * width * height];
-
-    OpenglRedirectorBase::glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, pixels);
-
-    // Convert to FreeImage format & save to file
-    FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF, 0xFF00, 0xFF0000, false);
-    if(!FreeImage_Save(FIF_BMP, image, filename.c_str(), 0))
-    {
-        Logger::log("[Repeater] Failed to save screenshot:", filename.c_str());
-    }
-    // Free resources
-    FreeImage_Unload(image);
-    delete [] pixels;
-}
