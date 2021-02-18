@@ -20,9 +20,9 @@ namespace ve
     {
         class ShaderManager; 
         class FramebufferTracker; 
-        class LegacyTracker; 
+        class LegacyTracker;
         class TextureTracker; 
-        class RenderbufferTracker; 
+        class RenderbufferTracker;
         class UniformBlockTracing;
     }
 
@@ -46,6 +46,11 @@ class Context
     ve::pipeline::VirtualCameras& getCameras();
     /// Provides interface for system testing
     Diagnostics& getDiagnostics();
+
+    /* ------------------------------------------------------------------------
+     *  UI
+     * ----------------------------------------------------------------------*/
+
 
     /// Dear ImGUI Adapter
     ImguiAdapter& getGui();

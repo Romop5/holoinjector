@@ -108,79 +108,6 @@ void Repeater::initialize()
     // Initialize GUI
     m_Context.getGui().initialize();
 
-    // Register settings UI
-    m_Context.getSettingsWidget().registerInputItem<bool>([this](auto newValue)
-    {
-        m_Context.getX11Sniffer().turnFullscreen();
-    }, "Toggle fullscreen")->setValue(false);
-
-    m_Context.getSettingsWidget().registerSliderItem<float>([this](auto newValue)
-    {
-        m_Context.getGui().setScaling(newValue);
-    }, "UI font scaling",0.5, 5, "Scale IMGUI window to fit high DPI displays")->setValue(1.0);
-
-    m_Context.getSettingsWidget().registerSliderItem<float>([this](auto newValue)
-    {
-        m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance = newValue;
-    }, "Near plane",0.0, 40, "Define distance of near plane");
-
-    m_Context.getSettingsWidget().registerSliderItem<float>([this](auto newValue)
-    {
-        m_Context.getCameraParameters().m_XShiftMultiplier = newValue;
-    }, "Horizontal shift",0.0, 8, "Define horizontal distance of left-most side view from the original point of view");
-
-    m_Context.getSettingsWidget().registerInputItem<bool>([this](auto newValue)
-    {
-        m_Context.getOutputFBO().toggleGridView();
-    }, "Toggle quilt/native format", "Toggle between transformed native format, suitable for 3D Displays, and quilt format, showing all views into scene in a grid.");
-
-    m_Context.getSettingsWidget().registerInputItem<bool>([this](auto newValue)
-    {
-        m_Context.getOutputFBO().toggleSingleViewGridView();
-    }, "Toggle single view vs quilt view", "Toggle between quilt grid and single view");
-    m_Context.getSettingsWidget().registerSliderItem<int>([this](auto newValue)
-    {
-        m_Context.getOutputFBO().setOnlyQuiltImageID(newValue);
-    }, "Single view ID",0, 45, "Select one of quilt views");
-
-    const auto params = m_Context.getOutputFBO().getHoloDisplayParameters();
-    auto pitchItem = m_Context.getSettingsWidget().registerSliderItem<float>([this](auto newValue)
-    {
-        auto params = m_Context.getOutputFBO().getHoloDisplayParameters();
-        params.m_Pitch = newValue;
-        m_Context.getOutputFBO().setHoloDisplayParameters(params);
-    }, "Pitch",0.0, 400, "");
-    pitchItem->setValue(params.m_Pitch);
-
-    auto tiltItem = m_Context.getSettingsWidget().registerSliderItem<float>([this](auto newValue)
-    {
-        auto params = m_Context.getOutputFBO().getHoloDisplayParameters();
-        params.m_Pitch = newValue;
-        m_Context.getOutputFBO().setHoloDisplayParameters(params);
-    }, "Tilt",-1.0, 1, "");
-    tiltItem->setValue(params.m_Tilt);
-
-    auto centerItem = m_Context.getSettingsWidget().registerSliderItem<float>([this](auto newValue)
-    {
-        auto params = m_Context.getOutputFBO().getHoloDisplayParameters();
-        params.m_Center = newValue;
-        m_Context.getOutputFBO().setHoloDisplayParameters(params);
-    }, "Center",-1.0, 1, "");
-    centerItem->setValue(params.m_Center);
-
-    m_Context.getSettingsWidget().registerInputItem<void*>([this,params,pitchItem, tiltItem, centerItem] (auto)
-    {
-        pitchItem->setValue(params.m_Pitch);
-        tiltItem->setValue(params.m_Tilt);
-        centerItem->setValue(params.m_Center);
-        m_Context.getOutputFBO().setHoloDisplayParameters(params);
-    }, "Reset default holo parameters","");
-
-    m_Context.getSettingsWidget().registerInputItem<void*>([this] (auto)
-    {
-        m_Context.getGui().setVisibility(!m_Context.getGui().isVisible());
-    }, "Hide GUI","");
-
     /* 
      * Register input callbacks 
      */
@@ -189,8 +116,7 @@ void Repeater::initialize()
         bool shouldBlockInput = false;
         if(isDown)
         {
-            onKeyPress(keySym);
-            
+            m_UIManager.onKeyPressed(m_Context, keySym);
         }
         // If GUI is active, propagate input to GUI and block
         if(m_Context.getGui().isVisible())
@@ -219,6 +145,8 @@ void Repeater::initialize()
         }
         return false;
     });
+    
+    m_UIManager.initialize(m_Context);
 }
 
 
@@ -1164,35 +1092,4 @@ void Repeater::takeScreenshot(const std::string filename)
     // Free resources
     FreeImage_Unload(image);
     delete [] pixels;
-}
-
-void Repeater::onKeyPress(size_t keySym)
-{
-        const float increment = 0.10f;
-        switch(keySym)
-        {
-            case XK_F1: case XK_F2:
-                m_Context.getCameraParameters().m_XShiftMultiplier += (keySym == XK_F1?1.0:-1.0)*increment;
-            break;
-            case XK_F3: case XK_F4:
-                m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance += (keySym == XK_F3?1.0:-1.0)*0.5;
-            break; 
-            case XK_F5:
-                m_Context.getCameraParameters() = ve::pipeline::CameraParameters();
-            break;
-            case XK_F11:
-                m_Context.getGui().setVisibility(!m_Context.getGui().isVisible());
-            break;
-            case XK_F12:
-                m_Context.m_IsMultiviewActivated = !m_Context.m_IsMultiviewActivated;
-            break;
-            case XK_F10:
-                m_Context.getX11Sniffer().turnFullscreen();
-            break;
-            default:
-            break;
-        }
-        Logger::log("[Repeater] Setting: frontDistance (",m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance, "), X multiplier(",
-                m_Context.getCameraParameters().m_XShiftMultiplier, ")");
-        m_Context.getCameras().updateParamaters(m_Context.getCameraParameters());
 }

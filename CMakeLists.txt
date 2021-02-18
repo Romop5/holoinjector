@@ -125,6 +125,8 @@ add_library(enhancer_core
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/draw_manager.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/draw_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/ui_manager.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/ui_manager.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/paralax/mapping.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/paralax/mapping.cpp

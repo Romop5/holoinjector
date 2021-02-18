@@ -4,7 +4,6 @@
 #include <unordered_map>
 namespace ve
 {
-    class Context;
     class Config
     {
         public:

@@ -6,6 +6,7 @@
 
 #include "hooking/opengl_redirector_base.hpp"
 #include "managers/draw_manager.hpp"
+#include "managers/ui_manager.hpp"
 #include "context.hpp"
 
 namespace ve
@@ -157,15 +158,13 @@ namespace ve
         void takeScreenshot(const std::string filename);
         void drawMultiviewed(const std::function<void(void)>& code);
 
-        // Handle settings
-        void onKeyPress(size_t key);
-
         ///////////////////////////////////////////////////////////////////////
         // OpenGL structures
         ///////////////////////////////////////////////////////////////////////
         Context m_Context;
 
         ve::managers::DrawManager m_DrawManager;
+        ve::managers::UIManager m_UIManager;
 
         struct {
             int m_LastXPosition = 0;
