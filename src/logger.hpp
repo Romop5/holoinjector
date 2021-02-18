@@ -71,8 +71,23 @@ namespace ve
             const auto logResult = ToStringVariadic(msgParts...)+"\n";
             getInstance().printLog(logResult, static_cast<LogLevel>(_Level));
         }
+
+        template<typename ...ARGS>
+        inline static void logError(ARGS... msgParts)
+        {
+            const auto logResult = ToStringVariadic(msgParts...)+"\n";
+            getInstance().printLog(logResult, static_cast<LogLevel>(LogLevel::ERROR_LOG));
+        }
+
+        template<typename ...ARGS>
+        inline static void logDebug(ARGS... msgParts)
+        {
+            const auto logResult = ToStringVariadic(msgParts...)+"\n";
+            getInstance().printLog(logResult, static_cast<LogLevel>(LogLevel::DEBUG_LOG));
+        }
+
         private:
-        LogLevel m_maximalLogLevel = INFO_LOG;
+        LogLevel m_maximalLogLevel = ERROR_LOG;
     };
 } //namespace ve
 

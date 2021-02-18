@@ -571,8 +571,8 @@ void Repeater::glLinkProgram (GLuint programId)
             GLsizei realLogLength = 0;
             GLchar log[5120] = {0,};
             OpenglRedirectorBase::glGetShaderInfoLog(newShader, logSize, &realLogLength, log);
-            Logger::log("[Repeater] Error while compiling new shader type", type,log);
-            Logger::log("Shader source:", sourceCode.c_str());
+            Logger::logError("[Repeater] Error while compiling new shader type", type,log);
+            Logger::logError("Shader source:", sourceCode.c_str());
             return;
         }
         OpenglRedirectorBase::glAttachShader(programId, newShader);
@@ -602,7 +602,7 @@ void Repeater::glCompileShader (GLuint shader)
     OpenglRedirectorBase::glGetShaderiv(shader, GL_COMPILE_STATUS,&status);
     if(status == GL_FALSE)
     {
-        Logger::log("[Repeater] Error while comping shader [", shader, "]");
+        Logger::logError("[Repeater] Error while comping shader [", shader, "]");
     }
 }
 
@@ -644,9 +644,9 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     const auto mat = opengl_utils::createMatrixFromRawGL(value);
     auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(mat);
 
-    Logger::log("[Repeater] estimating parameters from uniform matrix");
     auto& ep = estimatedParameters;
-    Logger::log("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
+    Logger::logDebug("[Repeater] estimating parameters from uniform matrix");
+    Logger::logDebug("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
 
     m_DrawManager.setEnhancerDecodedProjection(m_Context,programID, estimatedParameters);
 }
@@ -959,10 +959,10 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data)+metadata.transformationOffset, sizeof(float)*16);
             auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(metadata.transformation);
 
-            Logger::log("[Repeater] estimating parameters from UBO");
+            Logger::logDebug("[Repeater] estimating parameters from UBO");
 
             auto& ep = estimatedParameters;
-            Logger::log("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
+            Logger::logDebug("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
 
             // TODO: refactor into class method of Binding index structure
             metadata.projection = estimatedParameters;
@@ -989,9 +989,9 @@ void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size,
         {
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data)+metadata.transformationOffset, sizeof(float)*16);
             auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(metadata.transformation);
-            Logger::log("[Repeater] estimating parameters from UBO");
+            Logger::logDebug("[Repeater] estimating parameters from UBO");
             auto& ep = estimatedParameters;
-            Logger::log("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") near(",ep.farPlane,")");
+            Logger::logDebug("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") near(",ep.farPlane,")");
 
             metadata.projection = estimatedParameters;
             metadata.hasTransformation = true;

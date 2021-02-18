@@ -77,7 +77,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
     auto error = glGetError();
     if(error != GL_NO_ERROR)
     {
-        Logger::log("[Repeater] error:", error);
+        Logger::logError("[Repeater] error:", error);
     }
     assert(error == GL_NO_ERROR);
 
@@ -95,7 +95,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(status != GL_FRAMEBUFFER_COMPLETE)
     {
-        Logger::log("[Repeater] Failed to create FBO for layered rendering: Status: glEnum: ", status);
+        Logger::logError("[Repeater] Failed to create FBO for layered rendering: Status: glEnum: ", status);
     }
     assert(status == GL_FRAMEBUFFER_COMPLETE);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
