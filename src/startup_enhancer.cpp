@@ -26,6 +26,21 @@ static std::unique_ptr<EnhancerContext> context = nullptr;
 extern "C" void * __libc_dlopen_mode(const char * filename, int flag);
 extern "C" void * __libc_dlsym(void * handle, const char * symbol);
 
+namespace helper
+{
+    bool shouldLogApiCall()
+    {
+        static bool shouldLogApiCall = false;
+        static bool isQueried = false;
+        if(!isQueried)
+        {
+            shouldLogApiCall = (getenv("ENHANCER_LOG_LOAD") != nullptr);
+            isQueried = true;
+        }
+        return shouldLogApiCall;
+    }
+
+}
 namespace ve
 {
     /*
@@ -43,7 +58,10 @@ namespace ve
                 dlsym_sym = (PFN_DLSYM)__libc_dlsym(libdl_handle, "dlsym");
             }
             if (!dlsym_sym) {
-                printf("[Enhancer] error: failed to look up real dlsym\n");
+                if(helper::shouldLogApiCall())
+                {
+                    printf("[Enhancer] error: failed to look up real dlsym\n");
+                }
                 return NULL;
             }
         }
@@ -96,7 +114,11 @@ namespace ve
         static std::mutex dlsym_mutex;
         auto lock = std::unique_lock<std::mutex>(dlsym_mutex);
 
-        printf("[Enhancer dlsym] '%s'\n", symbol);
+
+        if(helper::shouldLogApiCall())
+        {
+            printf("[Enhancer dlsym] '%s'\n", symbol);
+        }
 
         assert(context != nullptr);
         const auto& functions = context->redirector->getRedirectedFunctions();
@@ -120,7 +142,11 @@ namespace ve
         {
             return m_OriginalCalls[symbol];
         }
-        printf("[Enhancer- symbol getter] Calling original dlsym with symbo %s\n",symbol.c_str());
+
+        if(helper::shouldLogApiCall())
+        {
+            printf("[Enhancer- symbol getter] Calling original dlsym with symbo %s\n",symbol.c_str());
+        }
         auto addr = ve::original_dlsym(RTLD_NEXT,symbol.c_str());
         if(addr == NULL)
         {

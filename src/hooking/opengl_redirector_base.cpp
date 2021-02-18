@@ -1,7 +1,7 @@
 /*
  * BEWARE !!!
  *
- * Following .cpp file is heavily overusing macros. 
+ * Following .cpp file is heavily overusing macros.
  * In order not to loose your head, use following sequence of commands
  * to get expanded C++ code in reasonable format:
  *
@@ -39,6 +39,27 @@ OpenglRedirectorBase::~OpenglRedirectorBase()
 
 namespace helper
 {
+    bool shouldLogApiMessages()
+    {
+        static bool shouldLogApiCall = false;
+        static bool isQueried = false;
+        if(!isQueried)
+        {
+            shouldLogApiCall = (getenv("ENHANCER_LOG_LOAD") != nullptr);
+            isQueried = true;
+        }
+        return shouldLogApiCall;
+    }
+
+    void log_api_call(const std::string apiName, const std::string serializedArguments = "")
+    {
+        if(shouldLogApiMessages())
+        {
+            printf("[Enhancer API CALL: %s] %s\n", apiName.c_str(), serializedArguments.c_str());
+        }
+    }
+
+
     static std::unordered_map<std::string, void*> definedAPIFunctions;
     /// Register corresponding OpenGL API rediction into definedAPIFunctions
     class RegisterAPIFunction
@@ -48,10 +69,16 @@ namespace helper
         {
             if(!g_OpenGLRedirector)
             {
-                printf("[Enhancer] Error: g_OpenGLRedirector == nullptr\nenhancer_startup() was not called before C++ initialization. (%s)\n", name.c_str());
+                if(shouldLogApiMessages())
+                {
+                    printf("[Enhancer] Error: g_OpenGLRedirector == nullptr\nenhancer_startup() was not called before C++ initialization. (%s)\n", name.c_str());
+                }
                 return;
             }
-            printf("[Enhancer] Registering redirection for %s\n", name.c_str());
+            if(shouldLogApiMessages())
+            {
+                printf("[Enhancer] Registering redirection for %s\n", name.c_str());
+            }
             g_OpenGLRedirector->redirector.addRedirection(name,address);
             //definedAPIFunctions[name] = address;
         }
@@ -160,11 +187,6 @@ namespace helper
         if(sizeof...(args) == 0)
             return serialize(head);
         return serialize(head)+", "+packArgs(args...);
-    }
-
-    void log_api_call(const std::string apiName, const std::string serializedArguments = "")
-    {
-        printf("[Enhancer API CALL: %s] %s\n", apiName.c_str(), serializedArguments.c_str());
     }
 
     using ReturnFunctionType = void(*)();
