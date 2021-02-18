@@ -3,6 +3,8 @@
  * and having ability to enumerate these attributes when compiled.
  */
 //-----------------------------------------------------------------------------
+
+#define ENHANCER_API_EXPORT __attribute__((visibility("default")))
 // ARG_COUNT determines what is the size of list
 // e.g. ARG_COUNT(a,b) should return 2
 #define ARG_COUNT_IMPL(a,b,c,d,e,f,h,i,j,k,l,m,n,o,p,r,s,t,v,u,w,z,aa,ab,ac,ad,ae,af,ag,ah,ai,aj,ak,al,am,an,ao,ap,ar,as,at,av,au,aw,az,ba,bb,bc,...) bc
@@ -125,7 +127,7 @@
 
 /// Redirect glXYZ to OpenglRedirectorBase's method
 #define OPENGL_REDIRECTOR_API(_retType, _name, _handler, ...)\
-_retType _name( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ) \
+_retType ENHANCER_API_EXPORT _name( OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__) ) \
 { \
     OPENGL_LOG_API_CALL (""#_name, OPENGL_PACK_ARGS(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__))); \
     if(!g_IsAlreadyInsideWrapper)\

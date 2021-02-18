@@ -6,6 +6,8 @@ project(enhancer
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
+add_compile_options("-ftime-trace")
+
 ###############################################################################
 # Get options from user
 ###############################################################################
@@ -150,6 +152,8 @@ add_library(enhancer_core
 # Hack: we would like a static library to be linked into shared library later
 # => Position Independent Code is thus required
 target_compile_options(enhancer_core PRIVATE "-fPIC")
+set_target_properties(enhancer_core PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+set_target_properties(enhancer_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
 target_link_libraries(enhancer_core PUBLIC GL glm ${FREEIMAGE_LIBRARIES} 
     yaml-cpp )
@@ -183,6 +187,8 @@ macro(createEnhancerApplication name)
     )
     target_link_libraries(${APPLICATION_NAME} PRIVATE ${ENHANCER_PROJECT_NAME})
     target_link_libraries(${APPLICATION_NAME} PUBLIC ${SIMPLECPP_SO} ${IMGUI_LIB})
+    set_target_properties(${APPLICATION_NAME} PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+    set_target_properties(${APPLICATION_NAME} PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
     if(${ENHANCER_32})
         set_target_properties(${APPLICATION_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")

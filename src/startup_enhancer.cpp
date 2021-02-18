@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <cassert>
 
+#define ENHANCER_API_EXPORT __attribute__((visibility("default")))
+
 using namespace ve;
 
 struct EnhancerContext
@@ -158,7 +160,7 @@ namespace ve
 } // namespace ve
 
 // Hooked
-void* dlsym(void* params, const char* symbol)
+ENHANCER_API_EXPORT void* dlsym(void* params, const char* symbol)
 {
     if(context == nullptr)
         return ve::original_dlsym(params,symbol);
