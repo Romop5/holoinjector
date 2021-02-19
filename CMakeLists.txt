@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
+
 project(enhancer
     VERSION 1.0
     DESCRIPTION "A conversion layer for legacy OpenGL apps to multiview, wide-angle 3D display"
@@ -6,7 +7,20 @@ project(enhancer
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
-add_compile_options("-ftime-trace")
+###############################################################################
+# Compiler-specific
+###############################################################################
+# Clang-only
+#add_compile_options("-ftime-trace")
+
+option (FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." FALSE)
+if (${FORCE_COLORED_OUTPUT})
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+       add_compile_options (-fdiagnostics-color=always)
+    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+       add_compile_options (-fcolor-diagnostics)
+    endif ()
+endif ()
 
 ###############################################################################
 # Get options from user
