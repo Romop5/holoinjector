@@ -1,7 +1,10 @@
 #include "managers/ui_manager.hpp"
+
 #include "context.hpp"
 #include "ui/settings_widget.hpp"
+#include "ui/inspector_widget.hpp"
 #include "ui/x11_sniffer.hpp"
+
 #include "imgui_adapter.hpp"
 #include "pipeline/output_fbo.hpp"
 #include "pipeline/camera_parameters.hpp"
@@ -11,7 +14,17 @@
 using namespace ve;
 using namespace ve::managers;
 
+
+UIManager::UIManager() = default;
+UIManager::~UIManager() = default;
+
 void UIManager::initialize(Context& context)
+{
+    inspectorWidget = std::make_unique<InspectorWidget>(context.getManager());
+    registerCallbacks(context);
+}
+
+void UIManager::registerCallbacks(Context& context)
 {
     // Register settings UI
     context.getSettingsWidget().registerInputItem<bool>([this,&context](auto newValue)
@@ -116,6 +129,15 @@ void UIManager::onKeyPressed(Context& context, size_t keySym)
     Logger::log("[Repeater] Setting: frontDistance (",context.getCameraParameters().m_frontOpticalAxisCentreDistance, "), X multiplier(",
             context.getCameraParameters().m_XShiftMultiplier, ")");
     context.getCameras().updateParamaters(context.getCameraParameters());
+}
+
+void UIManager::onDraw(Context& context)
+{
+    context.getSettingsWidget().draw();
+    if(inspectorWidget)
+    {
+        inspectorWidget->onDraw();
+    }
 }
 
 

@@ -140,7 +140,6 @@ namespace ve
         virtual void glCallList(GLuint list) override;
         virtual void glCallLists(GLsizei n,GLenum type,const GLvoid* lists) override;
 
-
         // Legacy OpenGL fixed-pipeline wihout VBO and VAO
         virtual void glBegin(GLenum mode) override;
         virtual void glEnd() override;

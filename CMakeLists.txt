@@ -77,7 +77,7 @@ endif()
 # Create core library (enhancer)
 ###############################################################################
 
-add_library(enhancer_core 
+add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_manager.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/framebuffer_tracker.hpp
@@ -149,6 +149,9 @@ add_library(enhancer_core
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/settings_widget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/settings_widget.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/inspector_widget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/inspector_widget.cpp
 )
 
 # Hack: we would like a static library to be linked into shared library later

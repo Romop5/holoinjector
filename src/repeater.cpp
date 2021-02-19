@@ -23,7 +23,6 @@
 #include "trackers/framebuffer_tracker.hpp"
 
 #include "ui/x11_sniffer.hpp"
-#include "ui/settings_widget.hpp"
 
 #include "imgui_adapter.hpp"
 
@@ -280,7 +279,7 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
         ImGui::TextUnformatted(versionStr);
         //bool shouldShow = true;
         //ImGui::ShowDemoWindow(&shouldShow);
-        m_Context.getSettingsWidget().draw();
+        m_UIManager.onDraw(m_Context);
         m_Context.getGui().endFrame();
         m_Context.getGui().renderCurrentFrame();
     }
