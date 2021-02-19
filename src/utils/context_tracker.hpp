@@ -16,8 +16,8 @@ class ContextTracker
     using MapType = std::unordered_map<size_t, T>;
     ContextTracker() = default;
     bool has(size_t id) const;
-    T get(size_t id);
-    T const getConst(size_t id) const;
+    T& get(size_t id);
+    const T& getConst(size_t id) const;
     void add(size_t id, T object);
     void remove(size_t id);
     size_t size() const;
@@ -41,8 +41,8 @@ class BindableContextTracker: public ContextTracker<T>
     void unbind();
 
     bool hasBounded() const;
-    T getBound();
-    T const getBoundConst() const;
+    T& getBound();
+    const T& getBoundConst() const;
 
     size_t getBoundId() const;
 
@@ -64,14 +64,14 @@ bool ContextTracker<T>::has(size_t id) const
 }
 
 template<typename T>
-T ContextTracker<T>::get(size_t id)
+T& ContextTracker<T>::get(size_t id)
 {
     assert(this->has(id) == true);
     return m_storage.at(id);
 }
 
 template<typename T>
-T const ContextTracker<T>::getConst(size_t id) const
+const T& ContextTracker<T>::getConst(size_t id) const
 {
     assert(this->has(id) == true);
     return m_storage.at(id);
@@ -131,14 +131,14 @@ bool BindableContextTracker<T,IS_ZERO_RESERVED>::hasBounded() const
 }
 
 template<typename T, bool IS_ZERO_RESERVED>
-T BindableContextTracker<T,IS_ZERO_RESERVED>::getBound()
+T& BindableContextTracker<T,IS_ZERO_RESERVED>::getBound()
 {
     assert(this->has(m_currentlyBoundObjectId));
     return this->get(m_currentlyBoundObjectId);
 }
 
 template<typename T, bool IS_ZERO_RESERVED>
-T const BindableContextTracker<T,IS_ZERO_RESERVED>::getBoundConst() const
+const T& BindableContextTracker<T,IS_ZERO_RESERVED>::getBoundConst() const
 {
     assert(this->has(m_currentlyBoundObjectId));
     return this->getConst(m_currentlyBoundObjectId);
