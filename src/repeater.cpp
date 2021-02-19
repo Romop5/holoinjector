@@ -19,7 +19,7 @@
 #include "trackers/uniform_block_tracing.hpp"
 #include "trackers/uniform_block_tracing.hpp"
 #include "trackers/renderbuffer_tracker.hpp"
-#include "trackers/shader_manager.hpp"
+#include "trackers/shader_tracker.hpp"
 #include "trackers/framebuffer_tracker.hpp"
 
 #include "ui/x11_sniffer.hpp"

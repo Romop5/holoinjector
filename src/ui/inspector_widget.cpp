@@ -1,5 +1,5 @@
 #include "ui/inspector_widget.hpp"
-#include "trackers/shader_manager.hpp"
+#include "trackers/shader_tracker.hpp"
 #include <imgui.h>
 #include <sstream>
 
@@ -71,7 +71,7 @@ namespace helper
     
 }
 
-InspectorWidget::InspectorWidget(trackers::ShaderManager& manager)
+InspectorWidget::InspectorWidget(trackers::ShaderTracker& manager)
     : interface(manager)
 {
 }

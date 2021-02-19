@@ -10,7 +10,7 @@
 #include "pipeline/output_fbo.hpp"
 #include "pipeline/camera_parameters.hpp"
 #include "pipeline/virtual_cameras.hpp"
-#include "trackers/shader_manager.hpp"
+#include "trackers/shader_tracker.hpp"
 #include "trackers/legacy_tracker.hpp"
 #include "trackers/framebuffer_tracker.hpp"
 #include "trackers/uniform_block_tracing.hpp"

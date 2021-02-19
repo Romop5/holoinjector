@@ -1,6 +1,6 @@
 #include "context.hpp"
 
-#include "trackers/shader_manager.hpp"
+#include "trackers/shader_tracker.hpp"
 #include "trackers/uniform_block_tracing.hpp"
 #include "trackers/framebuffer_tracker.hpp"
 #include "trackers/legacy_tracker.hpp"
@@ -48,7 +48,7 @@ namespace ve
          *  TRACKERS
          * ----------------------------------------------------------------------*/
         /// Store metadata about application's shaders and programs
-        ve::trackers::ShaderManager m_Manager;
+        ve::trackers::ShaderTracker m_Manager;
         /// Store metadata about create Frame Buffer Objects
         ve::trackers::FramebufferTracker m_FBOTracker;
         /// Keeps track of OpenGL fixed-pipeline calls
@@ -112,7 +112,7 @@ namespace ve
         return pimpl->m_x11Sniffer;
     }
 
-    ve::trackers::ShaderManager& Context::getManager()
+    ve::trackers::ShaderTracker& Context::getManager()
     {
         return pimpl->m_Manager;
     }

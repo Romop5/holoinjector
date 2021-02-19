@@ -1,4 +1,4 @@
-#include "trackers/shader_manager.hpp"
+#include "trackers/shader_tracker.hpp"
 #include <algorithm>
 
 #include <cassert>
@@ -59,7 +59,7 @@ void ShaderProgram::attachShaderToProgram(std::shared_ptr<ShaderMetadata> shader
     switch(shader->m_Type)
     {
         case GL_GEOMETRY_SHADER:
-            m_GeometryShader = shader; 
+            m_GeometryShader = shader;
             break;
         case GL_VERTEX_SHADER:
             m_VertexShader = shader; 
@@ -79,17 +79,17 @@ void ShaderProgram::attachShaderToProgram(std::shared_ptr<ShaderMetadata> shader
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// ShaderManager
+// ShaderTracker
 ///////////////////////////////////////////////////////////////////////////////
 
-bool ShaderManager::isVSBound() const
+bool ShaderTracker::isVSBound() const
 {
     if(!hasBounded())
         return false;
     return getBoundConst()->shaders.has(GL_VERTEX_SHADER);
 }
 
-bool ShaderManager::isGSBound() const
+bool ShaderTracker::isGSBound() const
 {
     if(!hasBounded())
         return false;
@@ -97,13 +97,13 @@ bool ShaderManager::isGSBound() const
 }
 
 /// Get metadata for currently bounded program
-std::shared_ptr<ShaderMetadata> ShaderManager::getBoundVS()
+std::shared_ptr<ShaderMetadata> ShaderTracker::getBoundVS()
 {
     assert(hasBounded() != 0);
     return getBound()->shaders.get(GL_VERTEX_SHADER);
 }
 
-std::shared_ptr<ShaderMetadata> ShaderManager::getBoundGS()
+std::shared_ptr<ShaderMetadata> ShaderTracker::getBoundGS()
 {
     assert(hasBounded() != 0);
     return getBound()->shaders.get(GL_GEOMETRY_SHADER);

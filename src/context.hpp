@@ -18,7 +18,7 @@ namespace ve
 
     namespace trackers
     {
-        class ShaderManager; 
+        class ShaderTracker; 
         class FramebufferTracker; 
         class LegacyTracker;
         class TextureTracker; 
@@ -63,7 +63,7 @@ class Context
      *  TRACKERS
      * ----------------------------------------------------------------------*/
     /// Store metadata about application's shaders and programs
-    ve::trackers::ShaderManager& getManager();
+    ve::trackers::ShaderTracker& getManager();
     /// Store metadata about create Frame Buffer Objects
     ve::trackers::FramebufferTracker& getFBOTracker();
     /// Keeps track of OpenGL fixed-pipeline calls

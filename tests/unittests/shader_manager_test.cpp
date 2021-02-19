@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "trackers/shader_manager.hpp"
+#include "trackers/shader_tracker.hpp"
 
 #include <unordered_set>
 
@@ -7,9 +7,9 @@ using namespace ve;
 using namespace ve::trackers;
 
 namespace {
-TEST(ShaderManager, Basic) 
+TEST(ShaderTracker, Basic) 
 {
-    ShaderManager m;
+    ShaderTracker m;
     ASSERT_EQ(m.getBoundId(), 0);
     ASSERT_FALSE(m.hasBounded());
     ASSERT_FALSE(m.isVSBound());
@@ -27,9 +27,9 @@ TEST(ShaderManager, Basic)
     ASSERT_FALSE(program->shaders.has(GL_GEOMETRY_SHADER));
 }
 
-TEST(ShaderManager, VertexShaderCreation) 
+TEST(ShaderTracker, VertexShaderCreation) 
 {
-    ShaderManager m;
+    ShaderTracker m;
     m.add(1,std::make_shared<ShaderProgram>());
     m.bind(1);
     ASSERT_EQ(m.getBoundId(), 1);
@@ -50,9 +50,9 @@ TEST(ShaderManager, VertexShaderCreation)
     ASSERT_FALSE(program->m_Metadata);
 }
 
-TEST(ShaderManager, GeometryShader) 
+TEST(ShaderTracker, GeometryShader) 
 {
-    ShaderManager m;
+    ShaderTracker m;
     m.add(1,std::make_shared<ShaderProgram>());
     m.bind(1);
 
@@ -71,9 +71,9 @@ TEST(ShaderManager, GeometryShader)
     ASSERT_FALSE(m.get(1)->m_Metadata);
 }
 
-TEST(ShaderManager, IsShaderOneOf) 
+TEST(ShaderTracker, IsShaderOneOf) 
 {
-    ShaderManager m;
+    ShaderTracker m;
 
     std::unordered_set<GLenum> types =
     {
@@ -95,9 +95,9 @@ TEST(ShaderManager, IsShaderOneOf)
 }
 
 // Generic shaders (such as fragment shader) are not interesting for us
-TEST(ShaderManager, GenericShaderCreation) 
+TEST(ShaderTracker, GenericShaderCreation) 
 {
-    ShaderManager m;
+    ShaderTracker m;
     m.add(1,std::make_shared<ShaderProgram>());
     m.bind(1);
 
@@ -111,9 +111,9 @@ TEST(ShaderManager, GenericShaderCreation)
 }
 
 
-TEST(ShaderManager, ProgramEnumeration) 
+TEST(ShaderTracker, ProgramEnumeration) 
 {
-    ShaderManager m;
+    ShaderTracker m;
     m.add(1,std::make_shared<ShaderProgram>());
     ASSERT_EQ(m.getMap().size(),1);
     ASSERT_EQ(m.getMap().size(),1);

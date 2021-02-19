@@ -51,7 +51,7 @@ namespace trackers
     };
 
 
-    class ShaderManager: public BindableContextTracker<std::shared_ptr<ShaderProgram>>
+    class ShaderTracker: public BindableContextTracker<std::shared_ptr<ShaderProgram>>
     {
         public:
         ContextTracker<std::shared_ptr<ShaderMetadata>> shaders;

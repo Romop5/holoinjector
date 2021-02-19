@@ -5,16 +5,16 @@ namespace ve
 {
     namespace trackers
     {
-        class ShaderManager;
+        class ShaderTracker;
     }
 
     class InspectorWidget
     {
     public:
-        InspectorWidget(trackers::ShaderManager& manager);
+        InspectorWidget(trackers::ShaderTracker& manager);
         void onDraw();
     private:
-        trackers::ShaderManager& interface;
+        trackers::ShaderTracker& interface;
     };
 }
 #endif
