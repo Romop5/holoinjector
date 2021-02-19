@@ -25,6 +25,7 @@ namespace trackers
 
         std::string preprocessedSourceCode;
         bool isShaderOneOf(const std::unordered_set<GLenum>& allowedTypes);
+        const std::string getTypeAsString() const;
     };
 
 

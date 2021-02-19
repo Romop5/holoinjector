@@ -14,6 +14,24 @@ bool ShaderMetadata::isShaderOneOf(const std::unordered_set<GLenum>& allowedType
     return (allowedTypes.count(m_Type) > 0);
 }
 
+const std::string ShaderMetadata::ShaderMetadata::getTypeAsString() const
+{
+    switch(m_Type)
+    {
+        case GL_VERTEX_SHADER:
+            return "VertexShader";
+        case GL_FRAGMENT_SHADER:
+            return "FragmentShader";
+        case GL_GEOMETRY_SHADER:
+            return "GeometryShader";
+        case GL_COMPUTE_SHADER:
+            return "GeometryShader";
+        default:
+            break;
+    }
+    return "UknownShader";
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // ShaderProgram
 ///////////////////////////////////////////////////////////////////////////////
