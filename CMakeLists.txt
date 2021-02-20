@@ -270,8 +270,8 @@ if(${ENHANCER_BUILD_TESTS})
         include(CodeCoverage)
         append_coverage_compiler_flags()
 
-        setup_target_for_coverage_lcov(NAME unittest-cc EXECUTABLE unittests DEPENDENCIES unittests
-            EXCLUDE "/usr/*" "${CMAKE_CURRENT_SOURCE_DIR}/src/opengl_redirector*")
+        setup_target_for_coverage_lcov(NAME coverage EXECUTABLE unittests DEPENDENCIES unittests
+            EXCLUDE "/usr/*" "src/opengl_redirector*" "3rd/*" )
     endif()
 
 
