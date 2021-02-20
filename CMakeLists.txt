@@ -143,6 +143,8 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/shader_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/ui_manager.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/ui_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/framebuffer_manager.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/framebuffer_manager.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/paralax/mapping.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/paralax/mapping.cpp

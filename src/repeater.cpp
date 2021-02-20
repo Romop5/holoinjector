@@ -163,17 +163,7 @@ GLint Repeater::getCurrentID(GLenum target)
 
 void Repeater::glClear(GLbitfield mask)
 {
-    if(m_Context.m_IsMultiviewActivated && m_Context.getFBOTracker().isFBODefault() &&  m_Context.getOutputFBO().hasImage())
-    {
-        OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        OpenglRedirectorBase::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        OpenglRedirectorBase::glViewport(m_Context.getCurrentViewport().getX(), m_Context.getCurrentViewport().getY(),
-                    m_Context.getCurrentViewport().getWidth(), m_Context.getCurrentViewport().getHeight());
-        m_Context.getOutputFBO().renderToBackbuffer(m_Context.getCameraParameters());
-        m_Context.getOutputFBO().clearBuffers();
-    }
-
-    OpenglRedirectorBase::glClear(mask);
+    m_FramebufferManager.clear(m_Context,mask);
 }
 
 void Repeater::registerCallbacks() 
@@ -242,49 +232,23 @@ GLXContext Repeater::glXCreateContext(Display * dpy, XVisualInfo * vis, GLXConte
 
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
-    ve::utils::restoreStateFunctor({GL_CULL_FACE, GL_DEPTH_TEST, GL_SCISSOR_TEST},[this]()
+    m_FramebufferManager.swapBuffers(m_Context,
+    [&]()
     {
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_SCISSOR_TEST);
-        OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        if(m_Context.m_IsMultiviewActivated && m_Context.getOutputFBO().hasImage())
+        ::glXSwapBuffers(dpy,drawable);
+    }, 
+    [this]()
+    {
+        // Draw GUI overlay if GUI is visible
+        if(m_Context.getGui().isVisible())
         {
-            OpenglRedirectorBase::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            OpenglRedirectorBase::glViewport(m_Context.getCurrentViewport().getX(), m_Context.getCurrentViewport().getY(),
-            m_Context.getCurrentViewport().getWidth(), m_Context.getCurrentViewport().getHeight());
-            m_Context.getOutputFBO().renderToBackbuffer(m_Context.getCameraParameters());
-            m_Context.getOutputFBO().clearBuffers();
+            m_Context.getGui().beginFrame(m_Context);
+            m_UIManager.onDraw(m_Context);
+            m_Context.getGui().endFrame();
+            m_Context.getGui().renderCurrentFrame();
         }
     });
 
-    OpenglRedirectorBase::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-    // Draw GUI overlay if GUI is visible
-    if(m_Context.getGui().isVisible())
-    {
-        m_Context.getGui().beginFrame(m_Context);
-        ImGui::TextUnformatted(reinterpret_cast<const char*>(glGetString(GL_VERSION)));
-        static char versionStr[256];
-        static bool hasVersion = false;
-        if(!hasVersion)
-        {
-            int major = 0, minor = 0;
-            glGetIntegerv(GL_MAJOR_VERSION, &major);
-            glGetIntegerv(GL_MINOR_VERSION, &minor);
-            sprintf(versionStr, "V: %d.%d",major, minor);
-            hasVersion = true;
-        }
-        ImGui::TextUnformatted(versionStr);
-        //bool shouldShow = true;
-        //ImGui::ShowDemoWindow(&shouldShow);
-        m_UIManager.onDraw(m_Context);
-        m_Context.getGui().endFrame();
-        m_Context.getGui().renderCurrentFrame();
-    }
-
-    // Physically do swap buffer
-    OpenglRedirectorBase::glXSwapBuffers(dpy, drawable);
     m_Context.getDiagnostics().incrementFrameCount();
     if(m_Context.getDiagnostics().hasReachedLastFrame())
     {
@@ -554,48 +518,7 @@ void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
 
 void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)
 {
-    m_Context.getFBOTracker().bind(framebuffer);
-    if(framebuffer == 0)
-    {
-        if(m_Context.m_IsMultiviewActivated)
-        {
-            OpenglRedirectorBase::glBindFramebuffer(target, m_Context.getOutputFBO().getFBOId());
-            OpenglRedirectorBase::glViewport(0,0,m_Context.getOutputFBO().getParams().getTextureWidth(), m_Context.getOutputFBO().getParams().getTextureHeight());
-        } else {
-            OpenglRedirectorBase::glBindFramebuffer(target, 0);
-            OpenglRedirectorBase::glViewport(m_Context.getCurrentViewport().getX(), m_Context.getCurrentViewport().getY(),
-                    m_Context.getCurrentViewport().getWidth(), m_Context.getCurrentViewport().getHeight());
-        }
-    } else {
-        if(m_Context.m_IsMultiviewActivated)
-        {
-            auto id = framebuffer;
-            auto fbo = m_Context.getFBOTracker().getBound();
-            /*
-             * Only create & bind shadow FBO when original FBO is complete (thus has any attachment)
-             */
-            if(fbo->hasAnyAttachment())
-            {
-                if(!fbo->hasShadowFBO() && m_Context.getFBOTracker().isSuitableForRepeating())
-                    fbo->createShadowedFBO(m_Context.getOutputFBO().getParams().getLayers());
-                // Creation of shadow FBO should never fail
-                assert(fbo->hasShadowFBO());
-                id = fbo->getShadowFBO();
-            }
-
-            OpenglRedirectorBase::glBindFramebuffer(target,id);
-            OpenglRedirectorBase::glViewport(m_Context.getCurrentViewport().getX(), m_Context.getCurrentViewport().getY(),
-                    m_Context.getCurrentViewport().getWidth(), m_Context.getCurrentViewport().getHeight());
-
-            // TODO: shadowed textures are the same size as OutputFBO
-            if(m_Context.m_IsMultiviewActivated)
-            {
-                OpenglRedirectorBase::glViewport(0,0,m_Context.getOutputFBO().getParams().getTextureWidth(), m_Context.getOutputFBO().getParams().getTextureHeight());
-            }
-        } else {
-            OpenglRedirectorBase::glBindFramebuffer(target, framebuffer);
-        }
-    }
+    m_FramebufferManager.bindFramebuffer(m_Context, target, framebuffer);
 }
 
 void Repeater::glFramebufferTexture (GLenum target, GLenum attachment, GLuint texture, GLint level)
@@ -714,7 +637,6 @@ void Repeater::glBindBuffersRange (GLenum target, GLuint first, GLsizei count, c
         }
     }
 }
-
 
 void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, GLenum usage)
 {

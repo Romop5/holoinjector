@@ -6,6 +6,8 @@
 
 #include "hooking/opengl_redirector_base.hpp"
 #include "managers/draw_manager.hpp"
+#include "managers/shader_manager.hpp"
+#include "managers/framebuffer_manager.hpp"
 #include "managers/ui_manager.hpp"
 #include "context.hpp"
 
@@ -162,6 +164,8 @@ namespace ve
         Context m_Context;
 
         ve::managers::DrawManager m_DrawManager;
+        ve::managers::ShaderManager m_ShaderManager;
+        ve::managers::FramebufferManager m_FramebufferManager;
         ve::managers::UIManager m_UIManager;
 
         struct {
