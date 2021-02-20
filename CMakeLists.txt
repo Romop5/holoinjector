@@ -92,8 +92,8 @@ endif()
 ###############################################################################
 
 add_library(enhancer_core
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_manager.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_tracker.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_tracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/framebuffer_tracker.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/framebuffer_tracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/legacy_tracker.hpp
@@ -139,6 +139,8 @@ add_library(enhancer_core
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/draw_manager.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/draw_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/shader_manager.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/shader_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/ui_manager.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/managers/ui_manager.cpp
 

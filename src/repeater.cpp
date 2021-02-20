@@ -10,7 +10,6 @@
 
 #include "pipeline/shader_inspector.hpp"
 #include "pipeline/projection_estimator.hpp"
-#include "pipeline/pipeline_injector.hpp"
 #include "pipeline/virtual_cameras.hpp"
 #include "pipeline/camera_parameters.hpp"
 #include "pipeline/output_fbo.hpp"
@@ -29,7 +28,6 @@
 #include "utils/opengl_utils.hpp"
 #include "utils/opengl_state.hpp"
 #include "utils/enviroment.hpp"
-#include "utils/glsl_preprocess.hpp"
 
 #include "logger.hpp"
 #include "config.hpp"
@@ -177,6 +175,7 @@ void Repeater::glClear(GLbitfield mask)
 
     OpenglRedirectorBase::glClear(mask);
 }
+
 void Repeater::registerCallbacks() 
 {
     registerOpenGLSymbols();
@@ -413,135 +412,38 @@ void Repeater::glActiveTexture (GLenum texture)
 
 GLuint Repeater::glCreateShader(GLenum shaderType)
 {
-    auto id = OpenglRedirectorBase::glCreateShader(shaderType);
-    auto shaderDesc = std::make_shared<ve::trackers::ShaderMetadata>(id,shaderType);
-    m_Context.getManager().shaders.add(id, shaderDesc);
-    return id;
+    return m_ShaderManager.createShader(m_Context, shaderType);
 }
 
 void Repeater::glShaderSource (GLuint shaderId, GLsizei count, const GLchar* const*string, const GLint* length)
 {
-    auto concatenatedShader = glsl_preprocess::joinGLSLshaders(count, string, length);
-    Logger::log("[Repeater] glShaderSource: [",shaderId,"] SOURCE END");
-    if(m_Context.getManager().shaders.has(shaderId))
-    {
-        auto shader = m_Context.getManager().shaders.get(shaderId);
-        auto preprocessedShader = glsl_preprocess::preprocessGLSLCode(concatenatedShader);
-        shader->preprocessedSourceCode = preprocessedShader;
-    }
-    std::vector<const char*> shaders = {concatenatedShader.c_str(),};
-    OpenglRedirectorBase::glShaderSource(shaderId,1,shaders.data(),nullptr);
+    m_ShaderManager.shaderSource(m_Context, shaderId, count, string, length);
 }
 
 void Repeater::glLinkProgram (GLuint programId)
 {
-    // Link the program for 1st time
-    // => we can use native GLSL compiler to detect active uniforms
-    //OpenglRedirectorBase::glLinkProgram(programId);
-
-    // Note: this should never happen (if we handle all glCreateProgram/Shader)
-    if(!m_Context.getManager().has(programId))
-        return;
-
-    auto program = m_Context.getManager().get(programId);
-
-    /*
-     *  Create pipeline injector with correct parameters (number of vies)
-     */
-    ve::pipeline::PipelineInjector plInjector;
-    ve::pipeline::PipelineInjector::PipelineType pipeline;
-    ve::pipeline::PipelineParams parameters;
-
-    // TODO: detect if number of invocations is supported
-    parameters.countOfInvocations = m_Context.getOutputFBO().getParams().getLayers();
-    if(parameters.countOfInvocations > 32)
-    {
-        parameters.countOfPrimitivesDuplicates = floor(parameters.countOfInvocations/32)+1;
-        parameters.countOfInvocations = 32;
-    }
-
-    /*
-     * Deregister all attached shaders (they're going to be changed in any case)
-     * and fill pipeline structure out of them
-     */
-    for(auto [type,shader]: program->shaders.getMap())
-    {
-        // detach shader from program
-        OpenglRedirectorBase::glDetachShader(programId, shader->m_Id);
-        // store source code for given shader type
-        pipeline[shader->m_Type] = shader->preprocessedSourceCode;
-        Logger::log("[Repeater] Detaching:", shader->m_Type, shader->m_Id);
-    }
-
-    /*
-     * Inject pipeline
-     */
-    auto resultPipeline = plInjector.process(pipeline,parameters);
-    program->m_Metadata = std::move(resultPipeline.metadata);
-
-    for(auto& [type, sourceCode]: resultPipeline.pipeline)
-    {
-        auto newShader = OpenglRedirectorBase::glCreateShader(type);
-        const GLchar* sources[1] = {reinterpret_cast<const GLchar*>(sourceCode.data())}; 
-        OpenglRedirectorBase::glShaderSource(newShader, 1, sources , nullptr);
-	Logger::log("[Repeater] Compiling shader:", sourceCode.c_str());
-        fflush(stdout);
-        OpenglRedirectorBase::glCompileShader(newShader);
-        GLint status;
-        OpenglRedirectorBase::glGetShaderiv(newShader,GL_COMPILE_STATUS, &status);
-        if(status == GL_FALSE)
-        {
-            GLint logSize = 0;
-            OpenglRedirectorBase::glGetShaderiv(newShader, GL_INFO_LOG_LENGTH, &logSize);
-            
-            GLsizei realLogLength = 0;
-            GLchar log[5120] = {0,};
-            OpenglRedirectorBase::glGetShaderInfoLog(newShader, logSize, &realLogLength, log);
-            Logger::logError("[Repeater] Error while compiling new shader type", type,log);
-            Logger::logError("Shader source:", sourceCode.c_str());
-            return;
-        }
-        OpenglRedirectorBase::glAttachShader(programId, newShader);
-    }
-    Logger::log("[Repeater] Relink program with new shaders");
-    OpenglRedirectorBase::glLinkProgram(programId);
-    GLint linkStatus = 0;
-    OpenglRedirectorBase::glGetProgramiv(programId, GL_LINK_STATUS, &linkStatus);
-    if(linkStatus == GL_FALSE)
-    {
-        GLint logSize = 0;
-        OpenglRedirectorBase::glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &logSize);
-
-        GLsizei realLogLength = 0;
-        GLchar log[5120] = {0,};
-        OpenglRedirectorBase::glGetProgramInfoLog(programId, logSize, &realLogLength, log);
-        Logger::log("[Repeater] Link failed with log:",log);
-    }
-    assert(linkStatus == GL_TRUE);
+    m_ShaderManager.linkProgram(m_Context, programId);
 }
 
 void Repeater::glCompileShader (GLuint shader)
 {
-    Logger::log("[Repeater] glCompileShader");
-    OpenglRedirectorBase::glCompileShader(shader);
-    GLint status;
-    OpenglRedirectorBase::glGetShaderiv(shader, GL_COMPILE_STATUS,&status);
-    if(status == GL_FALSE)
-    {
-        Logger::logError("[Repeater] Error while comping shader [", shader, "]");
-    }
+    m_ShaderManager.compileShader(m_Context, shader);
 }
 
 void Repeater::glAttachShader (GLuint program, GLuint shader)
 {
-    Logger::log("[Repeater] attaching shader ",shader," to program ", program);
-    //OpenglRedirectorBase::glAttachShader(program,shader);
-
-    if(!m_Context.getManager().has(program) || !m_Context.getManager().shaders.has(shader))
-        return;
-    m_Context.getManager().get(program)->attachShaderToProgram(m_Context.getManager().shaders.get(shader));
+    m_ShaderManager.attachShader(m_Context, program, shader);
 }
 
+GLuint Repeater::glCreateProgram (void)
+{
+    return m_ShaderManager.createProgram(m_Context);
+}
+
+void Repeater::glUseProgram (GLuint program)
+{
+    m_ShaderManager.useProgram(m_Context, program);
+}
 
 void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
@@ -576,22 +478,6 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
 
     m_DrawManager.setEnhancerDecodedProjection(m_Context,programID, estimatedParameters);
 }
-
-GLuint Repeater::glCreateProgram (void)
-{
-    auto result = OpenglRedirectorBase::glCreateProgram();
-
-    auto program = std::make_shared<ve::trackers::ShaderProgram>();
-    m_Context.getManager().add(result, program);
-    return result;
-}
-
-void Repeater::glUseProgram (GLuint program)
-{
-    OpenglRedirectorBase::glUseProgram(program);
-    m_Context.getManager().bind(program);
-}
-
 
 void Repeater::glViewport(GLint x,GLint y,GLsizei width,GLsizei height)
 {
