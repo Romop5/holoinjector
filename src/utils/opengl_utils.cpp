@@ -63,10 +63,11 @@ bool ve::opengl_utils::takeScreenshot(const std::string& path)
     FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF, 0xFF00, 0xFF0000, false);
     if(!FreeImage_Save(FIF_BMP, image, path.c_str(), 0))
     {
-        Logger::log("[Repeater] Failed to save screenshot:", path.c_str());
+        Logger::logError("[Repeater] Failed to save screenshot:", path.c_str());
+        return false;
     }
     // Free resources
     FreeImage_Unload(image);
     delete [] pixels;
-
+    return true;
 }

@@ -249,7 +249,7 @@ if(${ENHANCER_BUILD_TESTS})
     #===========================================================================
     set(GTEST_ROOT "${CMAKE_BINARY_DIR}/")
     #===========================================================================
-    file(GLOB UNITTEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/*.cpp)
+    file(GLOB_RECURSE UNITTEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/*)
     add_executable(unittests 
         ${UNITTEST_FILES}
     )
@@ -271,7 +271,7 @@ if(${ENHANCER_BUILD_TESTS})
         append_coverage_compiler_flags()
 
         setup_target_for_coverage_lcov(NAME coverage EXECUTABLE unittests DEPENDENCIES unittests
-            EXCLUDE "/usr/*" "src/opengl_redirector*" "3rd/*" )
+            EXCLUDE "/usr/*" "src/opengl_redirector*" "3rd/*" "tests/*" )
     endif()
 
 
