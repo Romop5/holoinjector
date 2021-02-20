@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "pipeline/shader_parser.hpp"
+#include "utils/glsl_preprocess.hpp"
 
 using namespace ve;
 using namespace ve::pipeline;
@@ -265,7 +266,7 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
     std::smatch m;
     static auto inDefinition = std::regex("[\f\n\r\t\v ]in[\f\n\r\t\v ][^;]+");
 
-    auto searchIn = sourceCode;
+    auto searchIn = glsl_preprocess::removeComments(sourceCode);
     while(std::regex_search(searchIn, m, inDefinition))
     {
         for(auto& match: m)
@@ -314,7 +315,7 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
     std::smatch m;
     static auto inDefinition = std::regex("[\f\n\r\t\v ]out[\f\n\r\t\v ][^;]+");
 
-    auto searchIn = sourceCode;
+    auto searchIn = glsl_preprocess::removeComments(sourceCode);
     while(std::regex_search(searchIn, m, inDefinition))
     {
         for(auto& match: m)

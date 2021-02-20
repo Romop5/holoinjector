@@ -52,8 +52,8 @@ bool ve::opengl_utils::takeScreenshot(const std::string& path)
     GLfloat viewport[4];
     glGetFloatv(GL_VIEWPORT,viewport);
 
-    const auto width = viewport[2];
-    const auto height = viewport[3];
+    const auto width = size_t(viewport[2]);
+    const auto height = size_t(viewport[3]);
     // Make the BYTE array, factor of 3 because it's RBG.
     BYTE* pixels = new BYTE[3 * width * height];
 
