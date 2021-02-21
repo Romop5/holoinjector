@@ -117,9 +117,19 @@ void ShaderManager::linkProgram (Context& context, GLuint programId)
         GLsizei realLogLength = 0;
         GLchar log[5120] = {0,};
         glGetProgramInfoLog(programId, logSize, &realLogLength, log);
-        Logger::log("[Repeater] Link failed with log:",log);
+
+        // Dump shaders
+        for(auto& [type, sourceCode]: resultPipeline.pipeline)
+        {
+            Logger::logError("Shader source:", sourceCode.c_str(), "END_OF_SHADER");
+        }
+        Logger::logError("[Repeater] Link failed with log:",log);
     }
     assert(linkStatus == GL_TRUE);
+    if(program->m_Metadata)
+    {
+        program->m_Metadata->m_IsLinkedCorrectly = (linkStatus == GL_TRUE);
+    }
 }
 
 void ShaderManager::compileShader (Context& context, GLuint shader)

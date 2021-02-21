@@ -23,4 +23,7 @@ bool ProgramMetadata::usesGeometryShader() const
     return m_IsGeometryShaderUsed;
 }
 
-
+bool ProgramMetadata::isLinked() const
+{
+    return m_IsLinkedCorrectly;
+}

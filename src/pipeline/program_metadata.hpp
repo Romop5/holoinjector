@@ -25,11 +25,14 @@ struct ProgramMetadata
     // Is geometry shader user
     bool m_IsGeometryShaderUsed = true;
 
+    // Is linked by enhancer correctly
+    bool m_IsLinkedCorrectly = false;
     // Queries
     bool isUBOused() const;
     bool hasDetectedTransformation() const;
     bool hasFtransform() const;
     bool usesGeometryShader() const;
+    bool isLinked() const;
 };
 
 } //namespace pipeline

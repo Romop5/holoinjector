@@ -30,14 +30,19 @@ namespace helper
     {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        ImGui::Text(first);
+        ImGui::TextColored(ImColor(0.9f,0.9f,0.9f),first);
         ImGui::TableNextColumn();
         ImGui::Text(second);
     }
 
     void tableLine(const char* first, bool second)
     {
-        tableLine(first,getAsString(second));
+        ImVec4 boolColor = (second?ImColor(0.0f,1.0f,0.0f):ImColor(1.0f,0.0f,0.0f));
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::TextColored(ImColor(0.9f,0.9f,0.9f),first);
+        ImGui::TableNextColumn();
+        ImGui::TextColored(boolColor,getAsString(second));
     }
 
     void drawProgram(size_t programID, trackers::ShaderProgram& program)
@@ -50,6 +55,7 @@ namespace helper
             {
                 const auto& meta = *program.m_Metadata;
                 ImGui::BeginTable("Metadata",2);
+                tableLine("Is linked:", meta.m_IsGeometryShaderUsed);
                 if(meta.hasDetectedTransformation())
                 {
                     tableLine("Using transform:", meta.m_TransformationMatrixName.c_str());
