@@ -42,6 +42,7 @@ void ShaderManager::linkProgram (Context& context, GLuint programId)
     //glLinkProgram(programId);
 
     // Note: this should never happen (if we handle all glCreateProgram/Shader)
+    assert(context.getManager().has(programId));
     if(!context.getManager().has(programId))
         return;
 

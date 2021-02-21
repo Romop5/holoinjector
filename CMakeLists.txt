@@ -271,7 +271,7 @@ if(${ENHANCER_BUILD_TESTS})
         append_coverage_compiler_flags()
 
         setup_target_for_coverage_lcov(NAME coverage EXECUTABLE unittests DEPENDENCIES unittests
-            EXCLUDE "/usr/*" "src/opengl_redirector*" "3rd/*" "tests/*" )
+            EXCLUDE "/usr/*" "src/opengl_redirector*" "3rd/*" "tests/*" "src/hooking")
     endif()
 
 
