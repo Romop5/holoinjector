@@ -69,9 +69,13 @@ namespace pipeline
         size_t getCountOfUniforms() const;
 
         /// List uniforms pairs <type, name>
-        std::vector<std::pair<std::string, std::string>>getListOfUniforms() const;
-        std::vector<std::pair<std::string, std::string>>getListOfInputs() const;
-        std::vector<std::pair<std::string, std::string>>getListOfOutputs() const;
+        using TypeNamePairList = std::vector<std::pair<std::string, std::string>>;
+        TypeNamePairList getListOfUniforms() const;
+        TypeNamePairList getListOfInputs() const;
+        TypeNamePairList getListOfOutputs() const;
+        TypeNamePairList getListOfVaryings() const;
+        TypeNamePairList mergeList(const TypeNamePairList a, const TypeNamePairList b) const;
+
 
         Analysis analyzeGLPositionAssignment(std::string& assignment) const;
         std::string replaceGLPositionAssignment(VertextAssignment assignment) const;

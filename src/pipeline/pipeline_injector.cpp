@@ -12,6 +12,7 @@ constexpr bool shouldUseOnlyVS = false;
 
 namespace helper
 {
+    /// Iterate&replace over generic text, matched by regex
     std::string regex_replace_functor(const std::string str, const std::regex reg, std::function<std::string(std::string)> functor)
     {
         std::string result = str;
@@ -32,6 +33,19 @@ namespace helper
         } while (startPosition < currentLength);
         return result;
     }
+    
+    /// Iterate&replace over all identifiers in text
+    std::string regex_replace_identifiers(const std::string str, const std::string identifierName, std::function<std::string()> functor)
+    {
+        auto replaceRegexSearch = std::regex(std::string("([a-zA-Z_-][a-zA-Z0-9_-]*)?")+identifierName+std::string("[a-zA-Z0-9_-]*"));
+        return helper::regex_replace_functor(str, replaceRegexSearch,[&](auto str)->std::string
+        {
+            if(str == identifierName)
+                return functor();
+            return str;
+        });
+    }
+
 }
 
 PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType input, const PipelineParams& params)
@@ -39,6 +53,15 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
     PipelineType output = input;
     auto metadata = std::make_unique<ProgramMetadata>();
     bool hasFilledMetadata = false;
+
+    /*
+     * Detect if pipeline is drawable
+     */
+    if(output.count(GL_VERTEX_SHADER) == 0 || output.count(GL_FRAGMENT_SHADER) == 0)
+    {
+        // Identity: pipeline is not drawable, so it's return as it is.
+        return {input, nullptr};
+    }
 
     assert(output.count(GL_FRAGMENT_SHADER) > 0);
     assert(output.count(GL_VERTEX_SHADER) > 0);
@@ -76,7 +99,7 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
     auto updatedParams = params;
     if(metadata)
     {
-        updatedParams.shouldRenderToClipspace = metadata->m_IsClipSpaceTransform; 
+        updatedParams.shouldRenderToClipspace = metadata->m_IsClipSpaceTransform;
     }
     /*
      * In any case, inject geometry shader
@@ -162,10 +185,19 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
     geometryShaderStream << "//------------ Enhancer Insert Header end\n";
     auto geometryShader = std::move(geometryShaderStream.str());
 
-    auto FS = pipeline.at(GL_FRAGMENT_SHADER);
-    ShaderInspector inspector(FS);
+    /*
+     * Remap 'varying' to out (VS) and in (FS) before replacing in/out
+     */
+    auto vertexShader = result[GL_VERTEX_SHADER];
+    vertexShader= helper::regex_replace_identifiers(vertexShader,"varying", []{ return "out"; });
+
+    auto fragmentShader = result[GL_FRAGMENT_SHADER];
+    fragmentShader = helper::regex_replace_identifiers(fragmentShader,"varying", [] { return "in"; });
+
+    ShaderInspector inspector(fragmentShader);
+
     auto inputs = inspector.getListOfInputs();
-    std::string ioDefinitionString; 
+    std::string ioDefinitionString;
     std::string ioRedirections;
     /*
      * For each "in type name;" in Fragment Shader
@@ -214,22 +246,12 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
     /*
      * Replace all in attributes with prefixed version
      */
-    auto fragmentShader = result[GL_FRAGMENT_SHADER]; 
     for(const auto& [type,name]: inputs)
     {
         std::string inputName = name;
         bool isInterfaceBlock = type.find_first_of("{}") != std::string::npos;
         auto nameSuffix = (isInterfaceBlock?"_fs":"");
-        //fragmentShader = std::regex_replace(fragmentShader, std::regex(name),"enhancer_frag_"+name+nameSuffix);
-        auto replaceRegexSearch = std::regex(std::string("([a-zA-Z_-][a-zA-Z0-9_-]*)?")+name+std::string("[a-zA-Z0-9_-]*"));
-        fragmentShader = helper::regex_replace_functor(fragmentShader, replaceRegexSearch,[&](auto str)->std::string
-        {
-            if(str == inputName)
-            {
-                return "enhancer_frag_"+inputName+nameSuffix;
-            }
-            return str;
-        });
+        fragmentShader = helper::regex_replace_identifiers(fragmentShader,inputName, [inputName, nameSuffix] { return "enhancer_frag_"+inputName+nameSuffix; });
     }
      
     /*
@@ -237,6 +259,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
      */
     result[GL_GEOMETRY_SHADER] = geometryShader;
     result[GL_FRAGMENT_SHADER] = fragmentShader;
+    result[GL_VERTEX_SHADER] = vertexShader;
     return result;
 }
 

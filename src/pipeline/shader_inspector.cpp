@@ -335,6 +335,40 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
     return result;
 }
 
+std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::getListOfVaryings() const
+{
+    std::vector<std::pair<std::string, std::string>> result;
+
+    std::smatch m;
+    static auto inDefinition = std::regex("[\f\n\r\t\v ]varying[\f\n\r\t\v ][^;]+");
+
+    auto searchIn = glsl_preprocess::removeComments(sourceCode);
+    while(std::regex_search(searchIn, m, inDefinition))
+    {
+        for(auto& match: m)
+        {
+            std::string s = match.str();
+            auto definitionTokens = ve::pipeline::tokenize(s);
+            assert(definitionTokens.size() >= 2);
+            const auto& type = definitionTokens[definitionTokens.size()-2];
+            const auto& name = definitionTokens[definitionTokens.size()-1];
+
+            assert(type.find_first_of(")(,;") == std::string::npos);
+            assert(name.find_first_of(")(,;") == std::string::npos);
+            result.emplace_back(std::make_pair(type, name));
+        }
+        searchIn = m.suffix();
+    }
+    return result;
+}
+
+ve::pipeline::ShaderInspector::TypeNamePairList ve::pipeline::ShaderInspector::mergeList(const TypeNamePairList a, const TypeNamePairList b) const
+{
+    auto outlist = a;
+    std::copy(b.begin(),b.end(),std::back_inserter(outlist));
+    return outlist;
+}
+
 ShaderInspector::Analysis ve::pipeline::ShaderInspector::analyzeGLPositionAssignment(std::string& assignment) const
 {
     auto tokens = ve::pipeline::tokenize(assignment);
