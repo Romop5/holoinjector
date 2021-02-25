@@ -128,6 +128,14 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
             continue;
         shaderSourceCode = std::regex_replace(shaderSourceCode, std::regex("version[\f\n\r\t\v ]*[0-9]*"), "version 450");
     }
+    // Place version with GLSL 4.6 if no version found
+    for(auto& [type, shaderSourceCode]: output)
+    {
+        if(shaderSourceCode.find("#version") == std::string::npos)
+        {
+            shaderSourceCode = "#version 450\n" + shaderSourceCode;
+        }
+    }
 
     return {output, (hasFilledMetadata)?std::move(metadata):nullptr};
 }
