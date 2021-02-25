@@ -63,6 +63,11 @@ SettingsWidget::SettingsWidget()
 {
 }
 
+void SettingsWidget::freeItems()
+{
+    items.clear();
+}
+
 void SettingsWidget::draw()
 {
     ImGuiWindowFlags window_flags = 0;

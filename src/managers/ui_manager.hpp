@@ -17,6 +17,7 @@ namespace managers
             UIManager();
             ~UIManager();
             void initialize(Context& context);
+            void deinitialize(Context& context);
             void onKeyPressed(Context& context, size_t key);
             void onDraw(Context& context);
 

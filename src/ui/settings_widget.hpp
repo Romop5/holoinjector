@@ -65,6 +65,7 @@ namespace ve
     {
         public:
             SettingsWidget();
+            void freeItems();
             void draw();
 
             std::shared_ptr<SettingsWidgetItemBase> getItemByName(const std::string name);

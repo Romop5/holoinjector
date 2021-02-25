@@ -152,6 +152,9 @@ void Repeater::deinitialize()
     m_Context.getOutputFBO().deinitialize();
     // Clean up texture views & etc
     m_Context.getTextureTracker().deinitialize();
+
+    m_UIManager.deinitialize(m_Context);
+    m_Context.getGui().destroy();
 }
 
 GLint Repeater::getCurrentID(GLenum target)

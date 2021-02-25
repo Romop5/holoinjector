@@ -24,6 +24,12 @@ void UIManager::initialize(Context& context)
     registerCallbacks(context);
 }
 
+void UIManager::deinitialize(Context& context)
+{
+    inspectorWidget.reset();
+    context.getSettingsWidget().freeItems();
+}
+
 void UIManager::registerCallbacks(Context& context)
 {
     // Register settings UI
