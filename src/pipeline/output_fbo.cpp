@@ -3,6 +3,7 @@
 
 #define GL_GLEXT_PROTOTYPES 1
 #include "GL/gl.h"
+#include "GL/glu.h"
 
 #include "pipeline/output_fbo.hpp"
 #include "pipeline/camera_parameters.hpp"
@@ -13,6 +14,19 @@
 
 using namespace ve;
 using namespace ve::pipeline;
+
+#define CLEAR_GL_ERROR()\
+    glGetError();
+
+#define ASSERT_GL_ERROR()\
+{\
+    auto error = glGetError();\
+    if(error != GL_NO_ERROR)\
+    {\
+        Logger::logError("[Repeater] OpenGL error:", error,"(",reinterpret_cast<const char*>(gluErrorString(error)),")", " at ",__FILE__,":",__LINE__);\
+        assert(false);\
+    }\
+}
 
 //-----------------------------------------------------------------------------
 // OutputFBOParameters
@@ -55,42 +69,37 @@ void OutputFBO::initialize(OutputFBOParameters params)
         m_proxyFBO.push_back(std::move(ve::utils::FBORAII(0)));
 
     glGenFramebuffers(1, &m_FBOId);
-    assert(glGetError() == GL_NO_ERROR);
+    ASSERT_GL_ERROR()
     glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
-    assert(glGetError() == GL_NO_ERROR);
+    ASSERT_GL_ERROR()
 
     glGenTextures(1, &m_LayeredColorBuffer);
-    assert(glGetError() == GL_NO_ERROR);
+    ASSERT_GL_ERROR()
     glGenTextures(1, &m_LayeredDepthStencilBuffer);
-    assert(glGetError() == GL_NO_ERROR);
+    ASSERT_GL_ERROR()
 
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
-    assert(glGetError() == GL_NO_ERROR);
+    ASSERT_GL_ERROR()
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, params.getTextureWidth(),params.getTextureHeight(), countOfLayers);
-    assert(glGetError() == GL_NO_ERROR);
+    ASSERT_GL_ERROR()
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_LayeredColorBuffer, 0);
-    auto error = glGetError();
-    if(error != GL_NO_ERROR)
-    {
-        Logger::logError("[Repeater] error:", error);
-    }
-    assert(error == GL_NO_ERROR);
-
+    ASSERT_GL_ERROR()
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredDepthStencilBuffer);
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, params.getTextureWidth(),params.getTextureHeight(), countOfLayers);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    assert(glGetError() == GL_NO_ERROR);
+    ASSERT_GL_ERROR()
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, m_LayeredDepthStencilBuffer, 0);
-    assert(glGetError() == GL_NO_ERROR);
+    ASSERT_GL_ERROR()
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    ASSERT_GL_ERROR()
 
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(status != GL_FRAMEBUFFER_COMPLETE)
@@ -99,6 +108,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
     }
     assert(status == GL_FRAMEBUFFER_COMPLETE);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
+    ASSERT_GL_ERROR()
 
 
     /*
@@ -296,6 +306,9 @@ void OutputFBO::clearImageFlag()
 
 GLuint OutputFBO::createProxyFBO(size_t layer)
 {
+    assert(m_Params.getLayers() > layer);
+    // Clear GlError
+    glGetError();
     // Use cache
     if(layer < m_proxyFBO.size() && m_proxyFBO[layer].getID() != 0)
     {
@@ -309,12 +322,17 @@ GLuint OutputFBO::createProxyFBO(size_t layer)
 
     GLuint proxyFBO;
     glGenFramebuffers(1,&proxyFBO);
+    ASSERT_GL_ERROR()
     // Hack: OpenGL require at least one bind before attaching
     glBindFramebuffer(GL_FRAMEBUFFER,proxyFBO);
-    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_LayeredColorBuffer,0, layer);
-
+    ASSERT_GL_ERROR()
+    //glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_LayeredColorBuffer,0, layer);
+    glNamedFramebufferTextureLayer(proxyFBO, GL_COLOR_ATTACHMENT0, m_LayeredColorBuffer,0, layer);
+    ASSERT_GL_ERROR()
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredDepthStencilBuffer);
     glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,m_LayeredDepthStencilBuffer,0,layer);
+    ASSERT_GL_ERROR()
+
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     assert(status == GL_FRAMEBUFFER_COMPLETE);

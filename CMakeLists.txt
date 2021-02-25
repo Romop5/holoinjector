@@ -178,7 +178,7 @@ target_compile_options(enhancer_core PRIVATE "-fPIC")
 set_target_properties(enhancer_core PROPERTIES CXX_VISIBILITY_PRESET "hidden")
 set_target_properties(enhancer_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
-target_link_libraries(enhancer_core PUBLIC GL glm ${FREEIMAGE_LIBRARIES} 
+target_link_libraries(enhancer_core PUBLIC GL GLU glm ${FREEIMAGE_LIBRARIES}
     yaml-cpp )
 target_include_directories(enhancer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${FREEIMAGE_INCLUDE_DIR})
