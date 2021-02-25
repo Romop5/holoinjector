@@ -151,6 +151,7 @@ namespace ve
         // Internal routines
         ///////////////////////////////////////////////////////////////////////
         private:
+        bool m_IsInitialized = false;
         GLint getCurrentID(GLenum target);
         /// Initialize parameters, caches etc
         void initialize();

@@ -41,11 +41,9 @@ using namespace ve;
 
 void Repeater::initialize()
 {
+    m_IsInitialized = true;
+
     Logger::log("Repeater::initialize");
-    static bool isInitialzed = false;
-    if(isInitialzed)
-        return;
-    isInitialzed = true;
 
     // Load config
     Config cfg;
@@ -155,6 +153,10 @@ void Repeater::deinitialize()
 
     m_UIManager.deinitialize(m_Context);
     m_Context.getGui().destroy();
+
+
+    m_Context.reset();
+    m_IsInitialized = false;
 }
 
 GLint Repeater::getCurrentID(GLenum target)
@@ -268,12 +270,17 @@ Bool Repeater::glXMakeCurrent(Display * dpy, GLXDrawable drawable,GLXContext con
 
 Bool Repeater::glXMakeContextCurrent(Display * dpy, GLXDrawable draw, GLXDrawable read,GLXContext context)
 {
+    if(m_IsInitialized)
+    {
+        deinitialize();
+    }
+
     if(draw == None && context == nullptr)
-    { // release our resources
-        //deinitialize();
+    { 
         return OpenglRedirectorBase::glXMakeContextCurrent(dpy,draw,read,context);
     } else {
         auto result = OpenglRedirectorBase::glXMakeContextCurrent(dpy,draw,read,context);
+        glGetError();
         initialize();
         return result;
     }

@@ -83,6 +83,11 @@ namespace ve
 
     Context::~Context() = default;
 
+    void Context::reset()
+    {
+        pimpl = std::make_unique<ContextPimpl>();
+    }
+
 
     ve::pipeline::CameraParameters& Context::getCameraParameters()
     {
