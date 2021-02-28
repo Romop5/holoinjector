@@ -17,6 +17,9 @@ namespace pipeline
         // True when original VS was dividing by 1.0
         bool shouldRenderToClipspace = false;
 
+        // When true, inject VertexShader instead of inserting Geometry Shader
+        bool shouldPreventGeometryShaderInsertion = false;
+
         size_t countOfPrimitivesDuplicates = 1;
         size_t countOfInvocations = 9;
     };
@@ -39,6 +42,7 @@ namespace pipeline
             {
                 PipelineType pipeline;
                 std::unique_ptr<ProgramMetadata> metadata;
+                std::optional<std::string> failReason;
             };
             /**
              * @brief

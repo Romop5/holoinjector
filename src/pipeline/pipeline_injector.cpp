@@ -8,8 +8,6 @@
 using namespace ve;
 using namespace ve::pipeline;
 
-constexpr bool shouldUseOnlyVS = false;
-
 namespace helper
 {
     /// Iterate&replace over generic text, matched by regex
@@ -60,7 +58,7 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
     if(output.count(GL_VERTEX_SHADER) == 0 || output.count(GL_FRAGMENT_SHADER) == 0)
     {
         // Identity: pipeline is not drawable, so it's return as it is.
-        return {input, nullptr};
+        return {input, nullptr, "Program does not contain either VS or FS"};
     }
 
     assert(output.count(GL_FRAGMENT_SHADER) > 0);
@@ -76,7 +74,7 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
         if(isLayeredProgram)
         {   // if original geometry shader already uses gl_Position, it's probably cube map rendering
             // so we can't change the structure of program
-            return {input, nullptr};
+            return {input, nullptr, "Geometry Shader is already layered -> processing not implemented"};
         }
         // does Geometry Shader calculate MVP transformation?
         if(injectShader(GS, *metadata))
@@ -104,13 +102,13 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
     /*
      * In any case, inject geometry shader
      */
-    
+
     metadata->m_IsGeometryShaderUsed = true;
 
     // Inject new GS if none is provided
     if(input.count(GL_GEOMETRY_SHADER) == 0)
     {
-        if(shouldUseOnlyVS)
+        if(params.shouldPreventGeometryShaderInsertion)
         {
             metadata->m_IsGeometryShaderUsed = false;
             output = injectVertexShader(output,updatedParams);
