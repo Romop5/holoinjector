@@ -3,30 +3,17 @@
 
 #define GL_GLEXT_PROTOTYPES 1
 #include "GL/gl.h"
-#include "GL/glu.h"
 
 #include "pipeline/output_fbo.hpp"
 #include "pipeline/camera_parameters.hpp"
 #include "utils/opengl_objects.hpp"
+#include "utils/opengl_debug.hpp"
 
 #include "logger.hpp"
 
 
 using namespace ve;
 using namespace ve::pipeline;
-
-#define CLEAR_GL_ERROR()\
-    glGetError();
-
-#define ASSERT_GL_ERROR()\
-{\
-    auto error = glGetError();\
-    if(error != GL_NO_ERROR)\
-    {\
-        Logger::logError("[Repeater] OpenGL error:", error,"(",reinterpret_cast<const char*>(gluErrorString(error)),")", " at ",__FILE__,":",__LINE__);\
-        assert(false);\
-    }\
-}
 
 //-----------------------------------------------------------------------------
 // OutputFBOParameters

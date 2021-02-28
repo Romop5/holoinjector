@@ -163,6 +163,8 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/glsl_preprocess.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/string_utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/string_utils.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_debug.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/opengl_debug.hpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/x11_sniffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/x11_sniffer.cpp

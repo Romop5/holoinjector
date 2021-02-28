@@ -4,6 +4,7 @@
 #include "texture_tracker.hpp"
 #include <cassert>
 #include "logger.hpp"
+#include "utils/opengl_debug.hpp"
 
 using namespace ve;
 using namespace ve::trackers;
@@ -91,18 +92,19 @@ size_t TextureMetadata::getTextureViewIdOfShadowedTexture() const
 }
 void TextureMetadata::createShadowedTexture(size_t numOfLayers)
 {
-    glGetError();
+    CLEAR_GL_ERROR();
     GLuint textures[2];
     glGenTextures(1, textures);
-    assert(glGetError() == GL_NO_ERROR);
+    ASSERT_GL_ERROR();
     assert(getType() == GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, textures[0]);
-    assert(glGetError() == GL_NO_ERROR);
+    ASSERT_GL_ERROR();
     assert(getLevels() == 1);
     assert(getFormat() != GL_ZERO);
+    // TODO: change dims of texture
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, getFormat(), 256,256, numOfLayers);
-    assert(glGetError() == GL_NO_ERROR);
+    ASSERT_GL_ERROR();
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     m_shadowedLayerVersionId = textures[0];
