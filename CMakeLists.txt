@@ -161,6 +161,8 @@ add_library(enhancer_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/enviroment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/glsl_preprocess.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/glsl_preprocess.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/string_utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/string_utils.hpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/x11_sniffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/x11_sniffer.cpp
@@ -249,7 +251,8 @@ if(${ENHANCER_BUILD_TESTS})
     #===========================================================================
     set(GTEST_ROOT "${CMAKE_BINARY_DIR}/")
     #===========================================================================
-    file(GLOB_RECURSE UNITTEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/*)
+    file(GLOB_RECURSE UNITTEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/*
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/unittests/*/*)
     add_executable(unittests 
         ${UNITTEST_FILES}
     )

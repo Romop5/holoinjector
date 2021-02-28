@@ -2,49 +2,14 @@
 #include "pipeline/shader_inspector.hpp"
 #include "pipeline/shader_parser.hpp"
 
+#include "utils/string_utils.hpp"
+
 #include <regex>
 #include <cassert>
 
 using namespace ve;
 using namespace ve::pipeline;
 
-namespace helper
-{
-    /// Iterate&replace over generic text, matched by regex
-    std::string regex_replace_functor(const std::string str, const std::regex reg, std::function<std::string(std::string)> functor)
-    {
-        std::string result = str;
-        size_t startPosition = 0;
-        size_t currentLength = result.size();
-        auto end= std::sregex_iterator();
-        do {
-            auto it = std::sregex_iterator(result.begin()+startPosition, result.end(), reg);
-            if(it == end)
-                break;
-            auto& match = *it;
-            auto newString = functor(match.str(0));
-            // replace original with new
-            result.replace(startPosition+match.position(0), match.str(0).size(), newString);
-            // advance pass the replaced string
-            startPosition += match.position(0)+newString.size();
-            size_t currentLength = result.size();
-        } while (startPosition < currentLength);
-        return result;
-    }
-    
-    /// Iterate&replace over all identifiers in text
-    std::string regex_replace_identifiers(const std::string str, const std::string identifierName, std::function<std::string()> functor)
-    {
-        auto replaceRegexSearch = std::regex(std::string("([a-zA-Z_-][a-zA-Z0-9_-]*)?")+identifierName+std::string("[a-zA-Z0-9_-]*"));
-        return helper::regex_replace_functor(str, replaceRegexSearch,[&](auto str)->std::string
-        {
-            if(str == identifierName)
-                return functor();
-            return str;
-        });
-    }
-
-}
 
 PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType input, const PipelineParams& params)
 {
@@ -195,10 +160,10 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
      * Remap 'varying' to out (VS) and in (FS) before replacing in/out
      */
     auto vertexShader = result[GL_VERTEX_SHADER];
-    vertexShader= helper::regex_replace_identifiers(vertexShader,"varying", []{ return "out"; });
+    vertexShader= utils::regex_replace_identifiers(vertexShader,"varying", []{ return "out"; });
 
     auto fragmentShader = result[GL_FRAGMENT_SHADER];
-    fragmentShader = helper::regex_replace_identifiers(fragmentShader,"varying", [] { return "in"; });
+    fragmentShader = utils::regex_replace_identifiers(fragmentShader,"varying", [] { return "in"; });
 
     ShaderInspector inspector(fragmentShader);
 
@@ -257,7 +222,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
         std::string inputName = name;
         bool isInterfaceBlock = type.find_first_of("{}") != std::string::npos;
         auto nameSuffix = (isInterfaceBlock?"_fs":"");
-        fragmentShader = helper::regex_replace_identifiers(fragmentShader,inputName, [inputName, nameSuffix] { return "enhancer_frag_"+inputName+nameSuffix; });
+        fragmentShader = utils::regex_replace_identifiers(fragmentShader,inputName, [inputName, nameSuffix] { return "enhancer_frag_"+inputName+nameSuffix; });
     }
      
     /*
