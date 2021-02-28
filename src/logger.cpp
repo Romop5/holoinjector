@@ -22,3 +22,8 @@ void ve::Logger::printLog(const std::string& msg, LogLevel level)
         return;
     printf("%s", msg.c_str());
 }
+
+void ve::Logger::flush()
+{
+    fflush(stdout);
+}

@@ -42,6 +42,9 @@ namespace ve
          */
         void printLog(const std::string& msg, LogLevel level = LogLevel::INFO_LOG);
 
+        /// Force flush
+        void flush();
+
 
         inline static const std::string ToString() { return ""; }
         inline static const std::string ToString(const char* str) { return str; }
@@ -77,6 +80,7 @@ namespace ve
         {
             const auto logResult = ToStringVariadic(msgParts...)+"\n";
             getInstance().printLog(logResult, static_cast<LogLevel>(LogLevel::ERROR_LOG));
+            getInstance().flush();
         }
 
         template<typename ...ARGS>
