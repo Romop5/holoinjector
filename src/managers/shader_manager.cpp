@@ -12,6 +12,81 @@
 #include "pipeline/output_fbo.hpp"
 
 using namespace ve::managers;
+using namespace ve::pipeline;
+
+namespace helper
+{
+    struct ShaderCompilationResult
+    {
+        bool hasCompiledSuccessfully;
+        std::string sourceCode;
+        std::optional<std::string> errorMessage;
+    };
+
+    struct CompilationResult
+    {
+        bool hasLinkedSuccessfully;
+        std::vector<ShaderCompilationResult> shaders;
+        std::optional<std::string> linkErrorMessage;
+    };
+
+    CompilationResult tryCompilingShaderProgram(const PipelineInjector::PipelineType pipeline, GLuint programId)
+    {
+        helper::CompilationResult output;
+        std::vector<GLuint> newShaderIDs;
+        bool hasError = false;
+        for(auto& [type, sourceCode]: pipeline)
+        {
+            auto newShader = glCreateShader(type);
+            const GLchar* sources[1] = {reinterpret_cast<const GLchar*>(sourceCode.data())};
+            glShaderSource(newShader, 1, sources , nullptr);
+            fflush(stdout);
+            glCompileShader(newShader);
+            GLint status;
+            glGetShaderiv(newShader,GL_COMPILE_STATUS, &status);
+            if(status == GL_FALSE)
+            {
+                GLint logSize = 0;
+                glGetShaderiv(newShader, GL_INFO_LOG_LENGTH, &logSize);
+                
+                GLsizei realLogLength = 0;
+                GLchar log[5120] = {0,};
+                glGetShaderInfoLog(newShader, logSize, &realLogLength, log);
+
+                hasError = true;
+            }
+            glAttachShader(programId, newShader);
+            newShaderIDs.push_back(newShader);
+        }
+
+        GLint linkStatus = 0;
+        if(!hasError)
+        {
+            glLinkProgram(programId);
+            glGetProgramiv(programId, GL_LINK_STATUS, &linkStatus);
+            if(linkStatus == GL_FALSE)
+            {
+                GLint logSize = 0;
+                glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &logSize);
+
+                GLsizei realLogLength = 0;
+                GLchar log[5120] = {0,};
+                glGetProgramInfoLog(programId, logSize, &realLogLength, log);
+                output.linkErrorMessage = std::string(log);
+                hasError = true;
+            }
+        }
+        for(auto id: newShaderIDs)
+        {
+            // Detach shaders from program when linking/compilation fails
+            glDetachShader(programId, id);
+            // Delete shader
+            glDeleteShader(id);
+        }
+        output.hasLinkedSuccessfully = (linkStatus != GL_FALSE && hasError == false);
+        return output;
+    }
+}
 
 GLuint ShaderManager::createShader(Context& context, GLenum shaderType)
 {
@@ -42,7 +117,7 @@ void ShaderManager::linkProgram (Context& context, GLuint programId)
     //glLinkProgram(programId);
 
     // Note: this should never happen (if we handle all glCreateProgram/Shader)
-    assert(context.getManager().has(programId));
+    assert(context.getManager().has(programId) && "Fatal fail: we missed glCreateShader or it's extension version");
     if(!context.getManager().has(programId))
         return;
 
@@ -85,7 +160,7 @@ void ShaderManager::linkProgram (Context& context, GLuint programId)
     for(auto& [type, sourceCode]: resultPipeline.pipeline)
     {
         auto newShader = glCreateShader(type);
-        const GLchar* sources[1] = {reinterpret_cast<const GLchar*>(sourceCode.data())}; 
+        const GLchar* sources[1] = {reinterpret_cast<const GLchar*>(sourceCode.data())};
         glShaderSource(newShader, 1, sources , nullptr);
 	Logger::log("[Repeater] Compiling shader:", sourceCode.c_str());
         fflush(stdout);
