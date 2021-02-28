@@ -96,7 +96,7 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
     GLuint textures[2];
     glGenTextures(1, textures);
     ASSERT_GL_ERROR();
-    assert(getType() == GL_TEXTURE_2D);
+    ASSERT_GL_EQ(getType(),GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, textures[0]);
     ASSERT_GL_ERROR();

@@ -4,6 +4,8 @@
 #include "trackers/framebuffer_tracker.hpp"
 #include "trackers/texture_tracker.hpp"
 
+#include "utils/opengl_debug.hpp"
+
 #include <cassert>
 #include <unordered_set>
 
@@ -56,6 +58,7 @@ void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
             texture->createShadowedTexture(numLayers);
         }
         auto shadowedTexture = texture->getShadowedTextureId();
+        ASSERT_GL_NEQ(shadowedTexture,0);
         glFramebufferTexture(GL_FRAMEBUFFER, attachmentType, shadowedTexture,metadata.level);
         assert(glGetError() == GL_NO_ERROR);
     }
