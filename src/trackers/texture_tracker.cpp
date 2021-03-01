@@ -98,6 +98,13 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
     ASSERT_GL_ERROR();
     ASSERT_GL_EQ(getType(),GL_TEXTURE_2D);
 
+    if(getType() != GL_TEXTURE_2D)
+    {
+        CLEAR_GL_ERROR();
+        m_shadowedLayerVersionId = m_Id;
+        m_shadowTextureViewId = m_Id;
+        return;
+    }
     glBindTexture(GL_TEXTURE_2D_ARRAY, textures[0]);
     ASSERT_GL_ERROR();
     assert(getLevels() == 1);

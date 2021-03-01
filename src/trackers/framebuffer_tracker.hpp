@@ -18,13 +18,7 @@ namespace trackers
 
     struct FramebufferAttachment
     {
-        enum DType
-        {
-            ATTACHMENT_0D,
-            ATTACHMENT_1D,
-            ATTACHMENT_2D,
-            ATTACHMENT_3D,
-        } type;
+        GLenum type;
         size_t level = 0;
         size_t layer = 0;
         std::shared_ptr<TextureMetadata> texture;
@@ -32,7 +26,7 @@ namespace trackers
 
     struct FramebufferMetadata
     {
-        void attach(GLenum attachmentType, std::shared_ptr<TextureMetadata> texture, FramebufferAttachment::DType type = FramebufferAttachment::DType::ATTACHMENT_0D, size_t level = 0, size_t layer = 0);
+        void attach(GLenum attachmentType, std::shared_ptr<TextureMetadata> texture, GLenum type = GL_COLOR_ATTACHMENT0, size_t level = 0, size_t layer = 0);
         bool hasAttachment(GLenum attachmentType) const;
 
         bool hasShadowFBO() const;
@@ -48,6 +42,10 @@ namespace trackers
          */
         /// Has only depth buffer attachment
         bool isShadowMapFBO() const;
+
+        /// Is layered
+        bool isLayeredRendering() const;
+
         /// Has attachment of CUBEMAP type
         bool isEnvironmentMapFBO() const;
 

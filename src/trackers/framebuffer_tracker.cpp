@@ -15,7 +15,7 @@ using namespace ve::trackers;
 ///////////////////////////////////////////////////////////////////////////////
 // FramebufferMetadata 
 ///////////////////////////////////////////////////////////////////////////////
-void ve::trackers::FramebufferMetadata::attach(GLenum attachmentType, std::shared_ptr<TextureMetadata> texture, FramebufferAttachment::DType type, size_t level, size_t layer)
+void ve::trackers::FramebufferMetadata::attach(GLenum attachmentType, std::shared_ptr<TextureMetadata> texture, GLenum type, size_t level, size_t layer)
 {
     FramebufferAttachment attachment;
     attachment.type = type;
@@ -111,6 +111,11 @@ bool ve::trackers::FramebufferMetadata::isShadowMapFBO() const
             (m_attachments.has(GL_DEPTH_ATTACHMENT) || m_attachments.has(GL_DEPTH_STENCIL_ATTACHMENT)) &&
             m_attachments.size() == 1;
 }
+
+bool ve::trackers::FramebufferMetadata::isLayeredRendering() const
+{
+    return m_attachments.has(GL_COLOR_ATTACHMENT0) && m_attachments.has(GL_COLOR_ATTACHMENT1);
+}
 bool ve::trackers::FramebufferMetadata::isEnvironmentMapFBO() const
 {
     const static auto cubeMapTypes = std::unordered_set<GLenum>{GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BINDING_CUBE_MAP,GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_PROXY_TEXTURE_CUBE_MAP};
@@ -148,7 +153,7 @@ bool ve::trackers::FramebufferTracker::isSuitableForRepeating() const
     if(isFBODefault())
         return true;
     auto fbo = getBoundConst();
-    return !fbo->isShadowMapFBO() && !fbo->isEnvironmentMapFBO();
+    return !fbo->isShadowMapFBO() && !fbo->isEnvironmentMapFBO() && !fbo->isLayeredRendering();
 }
 
 

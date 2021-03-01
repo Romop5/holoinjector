@@ -542,23 +542,23 @@ void Repeater::glFramebufferTexture (GLenum target, GLenum attachment, GLuint te
 void Repeater::glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture1D(target,attachment,textarget, texture,level);
-    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture),ve::trackers::FramebufferAttachment::ATTACHMENT_1D);
+    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture),attachment);
 }
 void Repeater::glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture2D(target,attachment,textarget, texture,level);
-    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture),ve::trackers::FramebufferAttachment::ATTACHMENT_2D);
+    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture),attachment);
 }
 void Repeater::glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset)
 {
     OpenglRedirectorBase::glFramebufferTexture3D(target,attachment,textarget, texture,level,zoffset);
-    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture),ve::trackers::FramebufferAttachment::ATTACHMENT_3D);
+    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture),attachment);
 }
 
 void Repeater::glFramebufferRenderbuffer (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
 {
     OpenglRedirectorBase::glFramebufferRenderbuffer(target,attachment,renderbuffertarget, renderbuffer);
-    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getRenderbufferTracker().get(renderbuffer),ve::trackers::FramebufferAttachment::ATTACHMENT_2D);
+    m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getRenderbufferTracker().get(renderbuffer),attachment);
 }
 // ----------------------------------------------------------------------------
 GLuint Repeater::glGetUniformBlockIndex (GLuint program, const GLchar* uniformBlockName)
