@@ -53,6 +53,7 @@ namespace trackers
         /* Queries */
         bool hasMetadata() const;
         bool isLinked() const;
+        bool isInjected() const;
     };
 
 

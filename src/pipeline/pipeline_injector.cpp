@@ -23,7 +23,7 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
     if(output.count(GL_VERTEX_SHADER) == 0 || output.count(GL_FRAGMENT_SHADER) == 0)
     {
         // Identity: pipeline is not drawable, so it's return as it is.
-        return {input, nullptr, "Program does not contain either VS or FS"};
+        return {false, input, std::move(metadata), "Program does not contain either VS or FS"};
     }
 
     assert(output.count(GL_FRAGMENT_SHADER) > 0);
@@ -39,7 +39,7 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
         if(isLayeredProgram)
         {   // if original geometry shader already uses gl_Position, it's probably cube map rendering
             // so we can't change the structure of program
-            return {input, nullptr, "Geometry Shader is already layered -> processing not implemented"};
+            return {false, input, std::move(metadata), "Geometry Shader is already layered -> processing not implemented"};
         }
         // does Geometry Shader calculate MVP transformation?
         if(injectShader(GS, *metadata))
@@ -100,7 +100,8 @@ PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType i
         }
     }
 
-    return {output, (hasFilledMetadata)?std::move(metadata):nullptr};
+    metadata->m_IsInjected = hasFilledMetadata;
+    return {true, output, std::move(metadata)};
 }
 
 PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const PipelineType& pipeline, const PipelineParams params)
@@ -386,8 +387,8 @@ bool PipelineInjector::injectShader(std::string& sourceCode, ProgramMetadata& ou
     ShaderInspector inspector(sourceCode);
     auto statements = inspector.findAllOutVertexAssignments();
     auto transformationName = inspector.getTransformationUniformName(statements);
-    if(transformationName.empty())
-        return false;
+    //if(transformationName.empty())
+    //    return false;
     
     outMetadata.m_TransformationMatrixName = transformationName;
     outMetadata.m_IsClipSpaceTransform = inspector.isClipSpaceShader();
@@ -395,6 +396,10 @@ bool PipelineInjector::injectShader(std::string& sourceCode, ProgramMetadata& ou
     outMetadata.m_InterfaceBlockName = inspector.getUniformBlockName(outMetadata.m_TransformationMatrixName);
     outMetadata.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
 
-    sourceCode = inspector.injectShader(statements);
-    return true;
+    if(!transformationName.empty())
+    {
+        sourceCode = inspector.injectShader(statements);
+        return true;
+    }
+    return false;
 }

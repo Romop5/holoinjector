@@ -9,6 +9,8 @@ namespace pipeline
 {
 struct ProgramMetadata
 {
+    bool m_IsInvisible = false;
+    bool m_IsInjected = false;
     bool m_IsUniformInInterfaceBlock = false;
     /// If transformation is in block, stores block name
     std::string m_InterfaceBlockName;

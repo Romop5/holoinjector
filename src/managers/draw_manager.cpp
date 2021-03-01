@@ -21,6 +21,12 @@ using namespace ve::managers;
 
 void DrawManager::draw(Context& context, const std::function<void(void)>& drawCallLambda)
 {
+   if(context.getManager().hasBounded())
+   {
+        const auto& program = context.getManager().getBound();
+        if(program->hasMetadata() && program->m_Metadata->m_IsInvisible)
+            return;
+   }
    if(!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
     {
         setEnhancerIdentity(context);
@@ -77,7 +83,7 @@ void DrawManager::drawGeneric(Context& context, const std::function<void(void)>&
 {
     const auto& programs = context.getManager();
     /// If application is using shaders and shader program has enhancer's GS capabilities
-    if(programs.hasBounded() && programs.getBoundConst()->m_Metadata)
+    if(programs.hasBounded() && programs.getBoundConst()->isInjected())
     {
         const auto& metadata = *programs.getBoundConst()->m_Metadata;
         if(metadata.usesGeometryShader())
@@ -290,7 +296,7 @@ void DrawManager::setEnhancerUniforms(size_t shaderID, Context& context)
 
     loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_identity");
 
-    bool shouldNotUseIdentity = (context.getManager().getBound()->m_Metadata && context.getManager().getBound()->m_Metadata->hasDetectedTransformation());
+    bool shouldNotUseIdentity = (context.getManager().getBound()->isInjected());
     glUniform1i(loc, !shouldNotUseIdentity);
 
 }

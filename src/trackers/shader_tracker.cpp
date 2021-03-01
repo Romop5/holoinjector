@@ -88,6 +88,12 @@ bool ShaderProgram::isLinked() const
     return hasMetadata() && m_Metadata->isLinked();
 }
 
+bool ShaderProgram::isInjected() const
+{
+    return hasMetadata() && m_Metadata->m_IsInjected;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // ShaderTracker
 ///////////////////////////////////////////////////////////////////////////////

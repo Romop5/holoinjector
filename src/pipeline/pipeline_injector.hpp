@@ -37,9 +37,11 @@ namespace pipeline
     class PipelineInjector
     {
         public:
+            PipelineInjector() = default;
             using PipelineType = std::unordered_map<GLenum, std::string>;
             struct PipelineProcessResult
             {
+                bool wasSuccessfull;
                 PipelineType pipeline;
                 std::unique_ptr<ProgramMetadata> metadata;
                 std::optional<std::string> failReason;

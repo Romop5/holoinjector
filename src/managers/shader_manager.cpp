@@ -156,6 +156,8 @@ void ShaderManager::linkProgram (Context& context, GLuint programId)
      */
     auto resultPipeline = plInjector.process(pipeline,parameters);
     program->m_Metadata = std::move(resultPipeline.metadata);
+    program->m_Metadata->m_IsLinkedCorrectly = false;
+    Logger::log("[Repeater] Pipeline process succeeded?: ", resultPipeline.wasSuccessfull);
 
     for(auto& [type, sourceCode]: resultPipeline.pipeline)
     {

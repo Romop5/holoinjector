@@ -427,7 +427,7 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     if(!m_Context.getManager().hasBounded())
         return;
     auto program = m_Context.getManager().getBound();
-    if(!program->m_Metadata)
+    if(!program->isInjected())
         return;
     auto metaData = program->m_Metadata.get();
 

@@ -2,6 +2,7 @@
 #include "trackers/shader_tracker.hpp"
 #include <imgui.h>
 #include <sstream>
+#include <string>
 
 using namespace ve;
 
@@ -14,18 +15,6 @@ namespace helper
         return "false";
     }
 
-    void drawShader(trackers::ShaderMetadata& shader)
-    {
-        auto shaderId = std::to_string(shader.m_Id);
-        std::ostringstream title;
-        title << shader.getTypeAsString() << " " << shaderId;
-        if(ImGui::TreeNode(title.str().c_str()))
-        {
-            ImGui::Text(shader.preprocessedSourceCode.c_str());
-            ImGui::TreePop();
-        }
-    }
-
     void tableLine(const char* first, const char* second)
     {
         ImGui::TableNextRow();
@@ -35,7 +24,7 @@ namespace helper
         ImGui::Text(second);
     }
 
-    void tableLine(const char* first, bool second)
+    void tableLine(const char* first, bool& second)
     {
         ImVec4 boolColor = (second?ImColor(0.0f,1.0f,0.0f):ImColor(1.0f,0.0f,0.0f));
         ImGui::TableNextRow();
@@ -43,7 +32,31 @@ namespace helper
         ImGui::TextColored(ImColor(0.9f,0.9f,0.9f),first);
         ImGui::TableNextColumn();
         ImGui::TextColored(boolColor,getAsString(second));
+        ImGui::SameLine();
+        ImGui::PushID(&second);
+        if(ImGui::Button("Toggle"))
+        {
+            second = !second;
+        }
+        ImGui::PopID();
     }
+
+    void drawShader(trackers::ShaderMetadata& shader)
+    {
+        auto shaderId = std::to_string(shader.m_Id);
+        std::ostringstream title;
+        title << shader.getTypeAsString() << " " << shaderId;
+        if(ImGui::TreeNode(title.str().c_str()))
+        {
+            ImGui::BeginTable("Metadata",2);
+            tableLine("Hash: ", std::to_string(std::hash<std::string>()(shader.preprocessedSourceCode)).c_str());
+            ImGui::EndTable();
+            ImGui::Text(shader.preprocessedSourceCode.c_str());
+            ImGui::TreePop();
+        }
+    }
+
+
 
     void drawProgram(size_t programID, trackers::ShaderProgram& program)
     {
@@ -53,18 +66,21 @@ namespace helper
         {
             if(program.m_Metadata)
             {
-                const auto& meta = *program.m_Metadata;
+                auto& meta = *program.m_Metadata;
                 ImGui::BeginTable("Metadata",2);
-                tableLine("Is linked:", meta.m_IsGeometryShaderUsed);
+                tableLine("Is invisible:", meta.m_IsInvisible);
+                tableLine("Is injected:", meta.m_IsInjected);
+                tableLine("Is linked:", meta.m_IsLinkedCorrectly);
+                tableLine("Is GeometryShader():", meta.m_IsGeometryShaderUsed);
                 if(meta.hasDetectedTransformation())
                 {
                     tableLine("Using transform:", meta.m_TransformationMatrixName.c_str());
                 } else {
-                    ImGui::Text("No transform detected");
+                    tableLine("Using transform: ", "No transform");
                 }
-                tableLine("Is clipspace:", meta.m_IsGeometryShaderUsed);
+                ImGui::Separator();
+                tableLine("Is clipspace:", meta.m_IsClipSpaceTransform);
                 tableLine("Is ftransform():", meta.m_HasAnyFtransform);
-                tableLine("Is GeometryShader():", meta.m_IsGeometryShaderUsed);
                 ImGui::EndTable();
             }
             for(auto& [id, shader]: program.shaders.getMap())
@@ -73,8 +89,8 @@ namespace helper
             }
             ImGui::TreePop();
         }
+        ImGui::Separator();
     }
-    
 }
 
 InspectorWidget::InspectorWidget(trackers::ShaderTracker& manager)
