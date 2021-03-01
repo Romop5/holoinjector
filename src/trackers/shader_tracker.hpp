@@ -48,6 +48,11 @@ namespace trackers
         bool hasUniformBlock(const std::string& name) const;
 
         void attachShaderToProgram(std::shared_ptr<ShaderMetadata> shader);
+
+
+        /* Queries */
+        bool hasMetadata() const;
+        bool isLinked() const;
     };
 
 

@@ -78,6 +78,16 @@ void ShaderProgram::attachShaderToProgram(std::shared_ptr<ShaderMetadata> shader
     */
 }
 
+bool ShaderProgram::hasMetadata() const
+{
+    return m_Metadata != nullptr;
+}
+
+bool ShaderProgram::isLinked() const
+{
+    return hasMetadata() && m_Metadata->isLinked();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // ShaderTracker
 ///////////////////////////////////////////////////////////////////////////////
