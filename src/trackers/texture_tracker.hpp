@@ -36,6 +36,7 @@ namespace trackers
         void setTextureViewToLayer(size_t layer);
 
         static std::string getTypeAsString(GLenum type);
+        static std::string getFormatAsString(GLenum type);
         protected:
         size_t m_Id = 0;
 
@@ -43,7 +44,7 @@ namespace trackers
         GLenum m_Format = 0;
         size_t m_Width = 0;
         size_t m_Height = 0;
-        size_t m_Levels = 0;
+        size_t m_Levels = 1;
         size_t m_Layers = 0;
 
         /*

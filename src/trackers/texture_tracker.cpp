@@ -9,6 +9,18 @@
 using namespace ve;
 using namespace ve::trackers;
 
+constexpr size_t minTextureWidth = 512;
+constexpr size_t minTextureHeight = 512;
+
+namespace helper
+{
+    template <typename T>
+    inline T max(T a, T b)
+    {
+        return (a > b)?a:b;
+    }
+}
+
 //-----------------------------------------------------------------------------
 // TextureMetadata
 //-----------------------------------------------------------------------------
@@ -37,6 +49,7 @@ void TextureMetadata::deinitialize()
 void TextureMetadata::setStorage(GLenum type, size_t width, size_t height, size_t levels, size_t layers, GLenum internalFormat)
 {
     m_Type = type;
+    m_Format = internalFormat;
     // Hack: ignore mipmaps
     if(levels > 0)
     {
@@ -47,7 +60,6 @@ void TextureMetadata::setStorage(GLenum type, size_t width, size_t height, size_
 
     m_Levels = (levels == 0)?1:levels;
     m_Layers = layers;
-    m_Format = internalFormat;
 }
 
 size_t TextureMetadata::getWidth() const
@@ -110,7 +122,12 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
     assert(getLevels() == 1);
     assert(getFormat() != GL_ZERO);
     // TODO: change dims of texture
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, getFormat(), 256,256, numOfLayers);
+
+    assert(getWidth() > 1);
+    assert(getHeight() > 1);
+    const auto shadowTextureWidth = helper::max(minTextureWidth, getWidth());
+    const auto shadowTextureHeight = helper::max(minTextureWidth, getHeight());
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, getFormat(), shadowTextureWidth,  shadowTextureHeight, numOfLayers);
     ASSERT_GL_ERROR();
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -155,6 +172,26 @@ std::string TextureMetadata::getTypeAsString(GLenum type)
         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: return "GL_TEXTURE_CUBE_MAP_POSITIVE_Z";
         default:
         return "UKNOWN_TYPE_"+std::to_string(type);
+    }
+}
+
+
+std::string TextureMetadata::getFormatAsString(GLenum type)
+{
+    switch(type)
+    {
+        case GL_DEPTH_COMPONENT32F: return "GL_DEPTH_COMPONENT32F";
+        case GL_R16: return "GL_R16";
+        case GL_R32F: return "GL_R32F";
+        case GL_R8: return "GL_R8";
+        case GL_RGB16: return "GL_RGB16";
+        case GL_RGB32F: return "GL_RGB32F";
+        case GL_RGB8: return "GL_RGB8";
+        case GL_RGBA16: return "GL_RGBA16";
+        case GL_RGBA32F: return "GL_RGBA32F";
+        case GL_RGBA8: return "GL_RGBA8";
+        default:
+            return "UNKNOWN_FORMAT_"+std::to_string(type);
     }
 }
 
@@ -275,6 +312,7 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
                    return 0;
             }
 
+        case GL_BGR: [[fallthrough]];
         case GL_RGB:
             switch(size)
             {
@@ -288,6 +326,7 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
                 default:
                    return 0;
             }
+        case GL_BGRA: [[fallthrough]];
         case GL_RGBA:
         {
             switch(size)
@@ -315,13 +354,15 @@ bool TextureTracker::isSizedFormat(GLenum format)
 {
     switch(format)
     {
+        case GL_BGRA:
+        case GL_BGR:
         case GL_RGB:
         case GL_RGBA:
         case GL_RED:
-            return false;
+            return true;
     }
     // TODO: add all cases
-    return true;
+    return false;
 }
 
 void TextureTracker::bind(GLenum target, size_t id)

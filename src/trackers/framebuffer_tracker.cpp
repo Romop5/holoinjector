@@ -179,7 +179,7 @@ bool ve::trackers::FramebufferTracker::isSuitableForRepeating() const
     if(isFBODefault())
         return true;
     auto fbo = getBoundConst();
-    return !fbo->isShadowMapFBO() && !fbo->isEnvironmentMapFBO() && !fbo->isLayeredRendering();
+    return !fbo->isShadowMapFBO() && !fbo->isEnvironmentMapFBO();
 }
 
 

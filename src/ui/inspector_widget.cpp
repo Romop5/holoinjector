@@ -118,7 +118,10 @@ namespace helper
 
             for(auto& [type,attachment]: fbo.getAttachmentMap().getMap())
             {
-                tableLine("Attachment:", (trackers::FramebufferMetadata::getAttachmentTypeAsString(type) + " - " + attachment.texture->getTypeAsString(attachment.texture->getType())).c_str());
+                tableLine("Attachment:", (trackers::FramebufferMetadata::getAttachmentTypeAsString(type) +
+                    " - " + attachment.texture->getTypeAsString(attachment.texture->getType()) +
+                    " - " + attachment.texture->getFormatAsString(attachment.texture->getFormat())).c_str());
+
             }
             ImGui::EndTable();
             ImGui::TreePop();
@@ -145,7 +148,7 @@ void InspectorWidget::onDraw()
     }
     ImGui::End();
 
-    ImGui::SetNextWindowSizeConstraints(ImVec2(800, 400), ImVec2(2000,1000));
+    ImGui::SetNextWindowSizeConstraints(ImVec2(1200, 400), ImVec2(2000,1000));
     ImGui::Begin("InspectorFBO");
     for(auto& [id,fbo]: interfaceFBO.getMap())
     {
