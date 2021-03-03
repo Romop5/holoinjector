@@ -36,6 +36,7 @@ void TextureMetadata::deinitialize()
 
 void TextureMetadata::setStorage(GLenum type, size_t width, size_t height, size_t levels, size_t layers, GLenum internalFormat)
 {
+    m_Type = type;
     // Hack: ignore mipmaps
     if(levels > 0)
     {
@@ -47,7 +48,6 @@ void TextureMetadata::setStorage(GLenum type, size_t width, size_t height, size_
     m_Levels = (levels == 0)?1:levels;
     m_Layers = layers;
     m_Format = internalFormat;
-    m_Type = type;
 }
 
 size_t TextureMetadata::getWidth() const
@@ -131,6 +131,31 @@ void TextureMetadata::setTextureViewToLayer(size_t layer)
     Logger::log("[Repeater] viewID: ", viewId);
     glTextureView(viewId, GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, getLevels(), layer, 1);
     m_shadowTextureViewId = viewId;
+}
+
+std::string TextureMetadata::getTypeAsString(GLenum type)
+{
+    switch(type)
+    {
+        case GL_TEXTURE_1D: return "GL_TEXTURE_1D";
+        case GL_TEXTURE_1D_ARRAY: return "GL_TEXTURE_1D_ARRAY";
+        case GL_TEXTURE_2D: return "GL_TEXTURE_2D";
+        case GL_PROXY_TEXTURE_2D: return "GL_PROXY_TEXTURE_2D";
+        case GL_TEXTURE_2D_ARRAY: return "GL_TEXTURE_2D_ARRAY";
+        case GL_TEXTURE_2D_MULTISAMPLE: return "GL_TEXTURE_2D_MULTISAMPLE";
+        case GL_TEXTURE_2D_MULTISAMPLE_ARRAY: return "GL_TEXTURE_2D_MULTISAMPLE_ARRAY";
+        case GL_TEXTURE_3D: return "GL_TEXTURE_3D";
+
+        case GL_TEXTURE_CUBE_MAP: return "GL_TEXTURE_CUBE_MAP";
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_X: return "GL_TEXTURE_CUBE_MAP_POSITIVE_X";
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_Y: return "GL_TEXTURE_CUBE_MAP_POSITIVE_Y";
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_Z: return "GL_TEXTURE_CUBE_MAP_POSITIVE_Z";
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_X: return "GL_TEXTURE_CUBE_MAP_POSITIVE_X";
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: return "GL_TEXTURE_CUBE_MAP_POSITIVE_Y";
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: return "GL_TEXTURE_CUBE_MAP_POSITIVE_Z";
+        default:
+        return "UKNOWN_TYPE_"+std::to_string(type);
+    }
 }
 
 //-----------------------------------------------------------------------------

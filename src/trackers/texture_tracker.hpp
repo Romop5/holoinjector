@@ -34,6 +34,8 @@ namespace trackers
         size_t getTextureViewIdOfShadowedTexture() const;
         virtual void createShadowedTexture(size_t numOfLayers = 9);
         void setTextureViewToLayer(size_t layer);
+
+        static std::string getTypeAsString(GLenum type);
         protected:
         size_t m_Id = 0;
 

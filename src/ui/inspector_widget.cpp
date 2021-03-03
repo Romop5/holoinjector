@@ -1,5 +1,7 @@
 #include "ui/inspector_widget.hpp"
 #include "trackers/shader_tracker.hpp"
+#include "trackers/framebuffer_tracker.hpp"
+#include "trackers/texture_tracker.hpp"
 #include <imgui.h>
 #include <sstream>
 #include <string>
@@ -41,6 +43,19 @@ namespace helper
         ImGui::PopID();
     }
 
+    void tableLineInfo(const char* first, bool second)
+    {
+        ImVec4 boolColor = (second?ImColor(0.0f,1.0f,0.0f):ImColor(1.0f,0.0f,0.0f));
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::TextColored(ImColor(0.9f,0.9f,0.9f),first);
+        ImGui::TableNextColumn();
+        ImGui::TextColored(boolColor,getAsString(second));
+        ImGui::SameLine();
+    }
+
+
+
     void drawShader(trackers::ShaderMetadata& shader)
     {
         auto shaderId = std::to_string(shader.m_Id);
@@ -55,8 +70,6 @@ namespace helper
             ImGui::TreePop();
         }
     }
-
-
 
     void drawProgram(size_t programID, trackers::ShaderProgram& program)
     {
@@ -91,24 +104,53 @@ namespace helper
         }
         ImGui::Separator();
     }
+
+    void drawFBO(size_t fboID, trackers::FramebufferMetadata& fbo)
+    {
+        std::ostringstream title;
+        title << "Program with ID " << fboID << " ";
+        if(ImGui::TreeNode(title.str().c_str()))
+        {
+            ImGui::BeginTable("Metadata",2);
+            tableLineInfo("Is shadow map:", fbo.isShadowMapFBO());
+            tableLineInfo("Is enviromental map:", fbo.isEnvironmentMapFBO());
+            tableLineInfo("Is layered rendering:", fbo.isLayeredRendering());
+
+            for(auto& [type,attachment]: fbo.getAttachmentMap().getMap())
+            {
+                tableLine("Attachment:", (trackers::FramebufferMetadata::getAttachmentTypeAsString(type) + " - " + attachment.texture->getTypeAsString(attachment.texture->getType())).c_str());
+            }
+            ImGui::EndTable();
+            ImGui::TreePop();
+        }
+        ImGui::Separator();
+    }
+
 }
 
-InspectorWidget::InspectorWidget(trackers::ShaderTracker& manager)
-    : interface(manager)
+InspectorWidget::InspectorWidget(trackers::ShaderTracker& manager, trackers::FramebufferTracker& fbo)
+    : shaderInterface(manager), interfaceFBO(fbo)
 {
 }
 
 void InspectorWidget::onDraw()
 {
+    ImGui::SetNextWindowSizeConstraints(ImVec2(400, 400), ImVec2(2000,1000));
     ImGui::Begin("Inspector");
-    auto shadersCount = std::to_string(interface.shaders.size());
+    auto shadersCount = std::to_string(shaderInterface.shaders.size());
     ImGui::Text(shadersCount.c_str());
-    for(auto& [id,shader]: interface.getMap())
+    for(auto& [id,shader]: shaderInterface.getMap())
     {
         helper::drawProgram(id,*shader);
     }
+    ImGui::End();
 
-    ImGui::ShowDemoWindow();
+    ImGui::SetNextWindowSizeConstraints(ImVec2(800, 400), ImVec2(2000,1000));
+    ImGui::Begin("InspectorFBO");
+    for(auto& [id,fbo]: interfaceFBO.getMap())
+    {
+        helper::drawFBO(id,*fbo);
+    }
     ImGui::End();
 }
 

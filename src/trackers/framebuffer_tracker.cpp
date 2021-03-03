@@ -140,6 +140,32 @@ bool ve::trackers::FramebufferMetadata::hasAnyAttachment() const
 {
     return m_attachments.size() > 0;
 }
+
+ContextTracker<FramebufferAttachment>& ve::trackers::FramebufferMetadata::getAttachmentMap()
+{
+    return m_attachments;
+}
+
+std::string ve::trackers::FramebufferMetadata::getAttachmentTypeAsString(GLenum attachmentType)
+{
+    switch(attachmentType)
+    {
+        case GL_COLOR_ATTACHMENT0: return "GL_COLOR_ATTACHMENT0";
+        case GL_COLOR_ATTACHMENT1: return "GL_COLOR_ATTACHMENT1";
+        case GL_COLOR_ATTACHMENT2: return "GL_COLOR_ATTACHMENT2";
+        case GL_COLOR_ATTACHMENT3: return "GL_COLOR_ATTACHMENT3";
+        case GL_COLOR_ATTACHMENT4: return "GL_COLOR_ATTACHMENT4";
+        case GL_COLOR_ATTACHMENT5: return "GL_COLOR_ATTACHMENT5";
+        case GL_COLOR_ATTACHMENT6: return "GL_COLOR_ATTACHMENT6";
+        case GL_COLOR_ATTACHMENT7: return "GL_COLOR_ATTACHMENT7";
+        case GL_COLOR_ATTACHMENT8: return "GL_COLOR_ATTACHMENT8";
+        case GL_DEPTH_ATTACHMENT: return "GL_DEPTH_ATTACHMENT";
+        case GL_STENCIL_ATTACHMENT: return "GL_STENCIL_ATTACHMENT";
+        case GL_DEPTH_STENCIL_ATTACHMENT: return "GL_DEPTH_STENCIL_ATTACHMENT";
+        default:
+            return "UNKNOWN_ATTACHMENT"+std::to_string(attachmentType);
+    }
+}
 ///////////////////////////////////////////////////////////////////////////////
 // FramebufferTracker
 ///////////////////////////////////////////////////////////////////////////////

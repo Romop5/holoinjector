@@ -6,15 +6,17 @@ namespace ve
     namespace trackers
     {
         class ShaderTracker;
+        class FramebufferTracker;
     }
 
     class InspectorWidget
     {
     public:
-        InspectorWidget(trackers::ShaderTracker& manager);
+        InspectorWidget(trackers::ShaderTracker& shaderTracker, trackers::FramebufferTracker& fboTracker);
         void onDraw();
     private:
-        trackers::ShaderTracker& interface;
+        trackers::ShaderTracker& shaderInterface;
+        trackers::FramebufferTracker& interfaceFBO;
     };
 }
 #endif

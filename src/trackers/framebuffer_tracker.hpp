@@ -51,6 +51,10 @@ namespace trackers
 
         /// Has any attachment
         bool hasAnyAttachment() const;
+
+        ContextTracker<FramebufferAttachment>& getAttachmentMap();
+
+        static std::string getAttachmentTypeAsString(GLenum attachmentType);
         private:
         ContextTracker<FramebufferAttachment> m_attachments;
         std::vector<utils::FBORAII> m_proxyFBO;
