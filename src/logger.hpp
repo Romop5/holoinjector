@@ -4,6 +4,8 @@
 #include <string>
 #include <sstream>
 
+#define ENHANCER_POS (__FILE__ ":" + std::to_string(__LINE__))
+
 namespace ve
 {
     class Logger
