@@ -197,6 +197,8 @@ std::string TextureMetadata::getFormatAsString(GLenum type)
 {
     switch(type)
     {
+        case GL_DEPTH_COMPONENT16: return "GL_DEPTH_COMPONENT16";
+        case GL_DEPTH_COMPONENT32: return "GL_DEPTH_COMPONENT32";
         case GL_DEPTH_COMPONENT32F: return "GL_DEPTH_COMPONENT32F";
         case GL_DEPTH24_STENCIL8: return "GL_DEPTH24_STENCIL8";
         case GL_R11F_G11F_B10F: return "GL_R11F_G11F_B10F";
