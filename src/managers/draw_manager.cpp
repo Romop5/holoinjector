@@ -27,6 +27,11 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
         if(program->hasMetadata() && program->m_Metadata->m_IsInvisible)
             return;
    }
+   if(context.m_IsMultiviewActivated && !isSingleViewPossible(context))
+   {
+       // don't draw anything
+       return;
+   }
    if(!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
     {
         setEnhancerIdentity(context);
@@ -45,11 +50,10 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
         glViewport(0,0,context.getOutputFBO().getParams().getTextureWidth(),context.getOutputFBO().getParams().getTextureHeight());
     } else {
         auto fbo = context.getFBOTracker().getBound();
+        auto fboId = context.getFBOTracker().getBoundId();
         if(context.getFBOTracker().isSuitableForRepeating())
         {
-            // should be available since binding
-            assert(fbo->hasShadowFBO());
-            glBindFramebuffer(GL_FRAMEBUFFER, fbo->getShadowFBO());
+            glBindFramebuffer(GL_FRAMEBUFFER, (fbo->hasShadowFBO()? fbo->getShadowFBO() : fboId));
         }
     }
 
@@ -271,10 +275,29 @@ GLuint DrawManager::createSingleViewFBO(Context& context, size_t layer)
 {
     if(context.getFBOTracker().hasBounded())
     {
-        return context.getFBOTracker().getBound()->createProxyFBO(layer);
+        auto& fbo = context.getFBOTracker().getBound();
+        if(fbo->hasShadowFBO())
+        {
+            return fbo->createProxyFBO(layer);
+        }
+        return context.getFBOTracker().getBoundId();
     } else {
         return context.getOutputFBO().createProxyFBO(layer);
     }
+}
+bool DrawManager::isSingleViewPossible(Context& context)
+{
+    if(context.getFBOTracker().hasBounded())
+    {
+        auto& fbo = context.getFBOTracker().getBound();
+        if(fbo->hasShadowFBO())
+        {
+            return true;
+        }
+        return false;
+    }
+    // For OutputFBO, it's always true
+    return true;
 }
 
 void DrawManager::setEnhancerUniforms(size_t shaderID, Context& context)

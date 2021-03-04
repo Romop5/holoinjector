@@ -39,6 +39,7 @@ class DrawManager
 
     // Legacy OpenGL - Create single-view FBO from current FBO
     GLuint createSingleViewFBO(Context& contex, size_t layer);
+    bool isSingleViewPossible(Context& context);
 
     void setEnhancerUniforms(size_t shaderID, Context& context);
 };
