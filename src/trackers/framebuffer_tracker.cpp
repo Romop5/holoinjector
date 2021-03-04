@@ -56,6 +56,11 @@ void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
         if(!texture->hasShadowTexture())
         {
             texture->createShadowedTexture(numLayers);
+            if(!texture->hasShadowTexture())
+            {
+                Logger::logError("[Repeater] Failed to create shadow texture for FBO. ", ENHANCER_POS);
+                return;
+            }
         }
         auto shadowedTexture = texture->getShadowedTextureId();
         ASSERT_GL_NEQ(shadowedTexture,0);

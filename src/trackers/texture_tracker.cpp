@@ -112,6 +112,7 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
 
     if(getType() != GL_TEXTURE_2D)
     {
+        Logger::logError("[Repeater]: Expected GL_TEXTURE_2D as texture type of FBO's attachment, got ",getTypeAsString(getType()), " instead",ENHANCER_POS);
         CLEAR_GL_ERROR();
         m_shadowedLayerVersionId = m_Id;
         m_shadowTextureViewId = m_Id;
@@ -123,12 +124,23 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
     assert(getFormat() != GL_ZERO);
     // TODO: change dims of texture
 
-    assert(getWidth() > 1);
-    assert(getHeight() > 1);
+    if(getWidth() == 0 || getHeight() == 0)
+    {
+        Logger::logError("[Repeater]: Failed to get texture size. Got ",getWidth(),"x",getHeight(), ENHANCER_POS);
+        return;
+    }
+ 
+    assert(getWidth() > 0);
+    assert(getHeight() > 0);
     const auto shadowTextureWidth = helper::max(minTextureWidth, getWidth());
     const auto shadowTextureHeight = helper::max(minTextureWidth, getHeight());
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, getFormat(), shadowTextureWidth,  shadowTextureHeight, numOfLayers);
-    ASSERT_GL_ERROR();
+    if(glGetError() != GL_NO_ERROR)
+    {
+        Logger::logError("[Repeater] Failed to create layered shadow texture.", ENHANCER_POS);
+        return;
+    }
+
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     m_shadowedLayerVersionId = textures[0];
@@ -147,6 +159,11 @@ void TextureMetadata::setTextureViewToLayer(size_t layer)
     glGenTextures(1, &viewId);
     Logger::log("[Repeater] viewID: ", viewId);
     glTextureView(viewId, GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, getLevels(), layer, 1);
+    if(glGetError() != GL_NO_ERROR)
+    {
+        Logger::logError("[Repeater]: Failed to create texture view.", ENHANCER_POS);
+        return;
+    }
     m_shadowTextureViewId = viewId;
 }
 
@@ -181,7 +198,12 @@ std::string TextureMetadata::getFormatAsString(GLenum type)
     switch(type)
     {
         case GL_DEPTH_COMPONENT32F: return "GL_DEPTH_COMPONENT32F";
+        case GL_DEPTH24_STENCIL8: return "GL_DEPTH24_STENCIL8";
+        case GL_R11F_G11F_B10F: return "GL_R11F_G11F_B10F";
+        case GL_UNSIGNED_INT_10F_11F_11F_REV: return "GL_UNSIGNED_INT_10F_11F_11F_REV";
+        case GL_RGBA16F: return "GL_RGBA16F";
         case GL_R16: return "GL_R16";
+        case GL_R16F: return "GL_R16F";
         case GL_R32F: return "GL_R32F";
         case GL_R8: return "GL_R8";
         case GL_RGB16: return "GL_RGB16";
