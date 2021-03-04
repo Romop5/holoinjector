@@ -300,13 +300,13 @@ void Repeater::glGenTextures(GLsizei n,GLuint* textures)
 void Repeater::glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLint border,GLenum format,GLenum type,const GLvoid* pixels) 
 {
     OpenglRedirectorBase::glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
-    auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat)?internalFormat:ve::trackers::TextureTracker::convertToSizedFormat(format,type);
+    auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat)?ve::trackers::TextureTracker::convertToSizedFormat(format,type):internalFormat;
     m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, 0, level, 0, finalFormat);
 }
 void Repeater::glTexImage2D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLsizei height,GLint border,GLenum format,GLenum type,const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
-    auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat)?internalFormat:ve::trackers::TextureTracker::convertToSizedFormat(format,type);
+    auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat)?ve::trackers::TextureTracker::convertToSizedFormat(format,type):internalFormat;
     m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
 }
 
