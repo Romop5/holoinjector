@@ -70,10 +70,10 @@ void FramebufferManager::bindFramebuffer (Context& context, GLenum target, GLuin
                     context.getCurrentViewport().getWidth(), context.getCurrentViewport().getHeight());
 
             // TODO: shadowed textures are the same size as OutputFBO
-            if(context.m_IsMultiviewActivated)
-            {
-                glViewport(0,0,context.getOutputFBO().getParams().getTextureWidth(), context.getOutputFBO().getParams().getTextureHeight());
-            }
+            /* if(context.m_IsMultiviewActivated) */
+            /* { */
+            /*     glViewport(0,0,context.getOutputFBO().getParams().getTextureWidth(), context.getOutputFBO().getParams().getTextureHeight()); */
+            /* } */
         } else {
             glBindFramebuffer(target, framebuffer);
         }
@@ -87,10 +87,11 @@ void FramebufferManager::swapBuffers(Context& context, std::function<void(void)>
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_SCISSOR_TEST);
+        glDisable(GL_STENCIL_TEST);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         if(context.m_IsMultiviewActivated && context.getOutputFBO().hasImage())
         {
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
             glViewport(context.getCurrentViewport().getX(), context.getCurrentViewport().getY(),
             context.getCurrentViewport().getWidth(), context.getCurrentViewport().getHeight());
             context.getOutputFBO().renderToBackbuffer(context.getCameraParameters());

@@ -29,6 +29,7 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
    }
    if(context.m_IsMultiviewActivated && !isSingleViewPossible(context))
    {
+       Logger::logDebug("[Repeater] Shadowing not possible -> terminating draw call");
        // don't draw anything
        return;
    }

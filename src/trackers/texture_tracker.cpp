@@ -9,9 +9,6 @@
 using namespace ve;
 using namespace ve::trackers;
 
-constexpr size_t minTextureWidth = 512;
-constexpr size_t minTextureHeight = 512;
-
 namespace helper
 {
     template <typename T>
@@ -104,40 +101,38 @@ size_t TextureMetadata::getTextureViewIdOfShadowedTexture() const
 }
 void TextureMetadata::createShadowedTexture(size_t numOfLayers)
 {
-    CLEAR_GL_ERROR();
-    GLuint textures[2];
-    glGenTextures(1, textures);
-    ASSERT_GL_ERROR();
-    ASSERT_GL_EQ(getType(),GL_TEXTURE_2D);
-
     if(getType() != GL_TEXTURE_2D)
     {
         Logger::logError("[Repeater]: Expected GL_TEXTURE_2D as texture type of FBO's attachment, got ",getTypeAsString(getType()), " instead",ENHANCER_POS);
         CLEAR_GL_ERROR();
-        m_shadowedLayerVersionId = m_Id;
-        m_shadowTextureViewId = m_Id;
         return;
     }
-    glBindTexture(GL_TEXTURE_2D_ARRAY, textures[0]);
-    ASSERT_GL_ERROR();
-    assert(getLevels() == 1);
-    assert(getFormat() != GL_ZERO);
-    // TODO: change dims of texture
 
     if(getWidth() == 0 || getHeight() == 0)
     {
         Logger::logError("[Repeater]: Failed to get texture size. Got ",getWidth(),"x",getHeight(), ENHANCER_POS);
         return;
     }
- 
+
+    CLEAR_GL_ERROR();
+    GLuint textures[2];
+    glGenTextures(1, textures);
+    ASSERT_GL_ERROR();
+    ASSERT_GL_EQ(getType(),GL_TEXTURE_2D);
+    
+    glBindTexture(GL_TEXTURE_2D_ARRAY, textures[0]);
+    ASSERT_GL_ERROR();
+    assert(getLevels() == 1);
+    assert(getFormat() != GL_ZERO);
+
     assert(getWidth() > 0);
     assert(getHeight() > 0);
-    const auto shadowTextureWidth = helper::max(minTextureWidth, getWidth());
-    const auto shadowTextureHeight = helper::max(minTextureWidth, getHeight());
+    const auto shadowTextureWidth = getWidth();
+    const auto shadowTextureHeight = getHeight();
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, getFormat(), shadowTextureWidth,  shadowTextureHeight, numOfLayers);
     if(glGetError() != GL_NO_ERROR)
     {
-        Logger::logError("[Repeater] Failed to create layered shadow texture.", ENHANCER_POS);
+        Logger::logError("[Repeater] Failed to set layered shadow texture's storage", ENHANCER_POS);
         return;
     }
 
@@ -157,7 +152,6 @@ void TextureMetadata::setTextureViewToLayer(size_t layer)
     if(m_shadowTextureViewId)
         glDeleteTextures(1, &viewId);
     glGenTextures(1, &viewId);
-    Logger::log("[Repeater] viewID: ", viewId);
     glTextureView(viewId, GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, getLevels(), layer, 1);
     if(glGetError() != GL_NO_ERROR)
     {
@@ -171,6 +165,7 @@ std::string TextureMetadata::getTypeAsString(GLenum type)
 {
     switch(type)
     {
+        case GL_RENDERBUFFER: return "GL_RENDERBUFFER";
         case GL_TEXTURE_1D: return "GL_TEXTURE_1D";
         case GL_TEXTURE_1D_ARRAY: return "GL_TEXTURE_1D_ARRAY";
         case GL_TEXTURE_2D: return "GL_TEXTURE_2D";
