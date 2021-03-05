@@ -48,6 +48,7 @@ void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
     assert(hasAnyAttachment());
     GLuint shadowFBO;
     glGenFramebuffers(1,&shadowFBO);
+    ASSERT_GL_NEQ(shadowFBO,0);
     // Hack: OpenGL require at least one bind before attaching
     glBindFramebuffer(GL_FRAMEBUFFER,shadowFBO);
     for(auto& [attachmentType, metadata]: m_attachments.getMap())
@@ -69,8 +70,13 @@ void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
     }
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
-    assert(status == GL_FRAMEBUFFER_COMPLETE);
-    m_shadowFBOId = shadowFBO;
+    ASSERT_GL_NEQ(status,GL_FRAMEBUFFER_COMPLETE);
+    if(status == GL_FRAMEBUFFER_COMPLETE)
+    {
+        m_shadowFBOId = shadowFBO;
+    } else {
+        glDeleteFramebuffers(1, &shadowFBO);
+    }
 }
 
 GLuint ve::trackers::FramebufferMetadata::createProxyFBO(size_t layer)
@@ -85,7 +91,10 @@ GLuint ve::trackers::FramebufferMetadata::createProxyFBO(size_t layer)
         return m_proxyFBO[layer].getID();
     }
 
-    m_proxyFBO.reserve(layer+1);
+    Logger::logDebug("[Repeater] proxy FBO for layer ",layer," not found in cache -> creating");
+    Logger::logDebug("[Repeater] cache size:", m_proxyFBO.size(), " elements");
+
+    m_proxyFBO.resize(layer+1);
 
     GLuint proxyFBO;
     glGenFramebuffers(1,&proxyFBO);
@@ -99,13 +108,14 @@ GLuint ve::trackers::FramebufferMetadata::createProxyFBO(size_t layer)
         auto shadowedTexture = texture->getShadowedTextureId();
         assert(shadowedTexture != 0);
         glFramebufferTextureLayer(GL_FRAMEBUFFER, attachmentType, shadowedTexture,metadata.level, layer);
-        //glFramebufferTexture3D(GL_FRAMEBUFFER, attachmentType, GL_TEXTURE_2D_ARRAY,shadowedTexture,metadata.level, layer);
         assert(glGetError() == GL_NO_ERROR);
     }
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     assert(status == GL_FRAMEBUFFER_COMPLETE);
+    Logger::logDebug("[Repeater] storing proxy FBO for layer ",layer);
     m_proxyFBO[layer] = std::move(utils::FBORAII(proxyFBO));
+    Logger::logDebug("[Repeater] post cache size:", m_proxyFBO.size(), " elements");
     return proxyFBO;
 }
 
