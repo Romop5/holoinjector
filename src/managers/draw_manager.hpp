@@ -20,6 +20,8 @@ class DrawManager
     void draw(Context& context, const std::function<void(void)>& code);
     void setEnhancerDecodedProjection(Context& context, GLuint program, const ve::pipeline::PerspectiveProjectionParameters& projection);
     private:
+    /// Decide if current draw call is dispached in suitable settings
+    bool shouldSkipDrawCall(Context& context);
     /// Decide which draw methods should be used
     void drawGeneric(Context& context, const std::function<void(void)>& code);
     /// Draw without support of GS, or when shaderless fixed-pipeline is used

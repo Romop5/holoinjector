@@ -9,6 +9,7 @@
 
 #include "utils/opengl_utils.hpp"
 #include "utils/opengl_state.hpp"
+#include "utils/opengl_debug.hpp"
 
 using namespace ve;
 using namespace ve::managers;
@@ -30,6 +31,7 @@ void FramebufferManager::clear(Context& context, GLbitfield mask)
 
 void FramebufferManager::bindFramebuffer (Context& context, GLenum target, GLuint framebuffer)
 {
+    CLEAR_GL_ERROR();
     context.getFBOTracker().bind(framebuffer);
     if(framebuffer == 0)
     {
@@ -41,6 +43,7 @@ void FramebufferManager::bindFramebuffer (Context& context, GLenum target, GLuin
             glBindFramebuffer(target, 0);
             glViewport(context.getCurrentViewport().getX(), context.getCurrentViewport().getY(),
                     context.getCurrentViewport().getWidth(), context.getCurrentViewport().getHeight());
+            ASSERT_GL_ERROR();
         }
     } else {
         if(context.m_IsMultiviewActivated)
@@ -62,7 +65,9 @@ void FramebufferManager::bindFramebuffer (Context& context, GLenum target, GLuin
                 }
                 // Creation of shadow FBO should never fail
                 //assert(fbo->hasShadowFBO());
-                id = fbo->getShadowFBO();
+                id = (fbo->hasShadowFBO()?fbo->getShadowFBO():id);
+            } else {
+                Logger::logDebug("Missing any attachment for FBOTracker::bind()");
             }
 
             glBindFramebuffer(target,id);

@@ -46,11 +46,14 @@ size_t ve::trackers::FramebufferMetadata::getShadowFBO() const
 void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
 {
     assert(hasAnyAttachment());
+    ASSERT_GL_ERROR();
     GLuint shadowFBO;
     glGenFramebuffers(1,&shadowFBO);
+    ASSERT_GL_ERROR();
     ASSERT_GL_NEQ(shadowFBO,0);
     // Hack: OpenGL require at least one bind before attaching
     glBindFramebuffer(GL_FRAMEBUFFER,shadowFBO);
+    ASSERT_GL_ERROR();
     for(auto& [attachmentType, metadata]: m_attachments.getMap())
     {
         auto texture = metadata.texture;
@@ -69,12 +72,20 @@ void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
         assert(glGetError() == GL_NO_ERROR);
     }
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    ASSERT_GL_EQ(status,GL_FRAMEBUFFER_COMPLETE);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
-    ASSERT_GL_NEQ(status,GL_FRAMEBUFFER_COMPLETE);
     if(status == GL_FRAMEBUFFER_COMPLETE)
     {
         m_shadowFBOId = shadowFBO;
     } else {
+        std::string attachmentsDump;
+        for(auto& [attachmentType, metadata]: m_attachments.getMap())
+        {
+            attachmentsDump += (" ") + FramebufferMetadata::getAttachmentTypeAsString
+                (attachmentType);
+        }
+        Logger::logError("Failed to create shadow FBO. Count of attachments: ", m_attachments.size(), "\n",
+                attachmentsDump);
         glDeleteFramebuffers(1, &shadowFBO);
     }
 }
@@ -98,8 +109,10 @@ GLuint ve::trackers::FramebufferMetadata::createProxyFBO(size_t layer)
 
     GLuint proxyFBO;
     glGenFramebuffers(1,&proxyFBO);
+    ASSERT_GL_ERROR();
     // Hack: OpenGL require at least one bind before attaching
     glBindFramebuffer(GL_FRAMEBUFFER,proxyFBO);
+    ASSERT_GL_ERROR();
     for(auto& [attachmentType, metadata]: m_attachments.getMap())
     {
         auto texture = metadata.texture;
@@ -108,11 +121,12 @@ GLuint ve::trackers::FramebufferMetadata::createProxyFBO(size_t layer)
         auto shadowedTexture = texture->getShadowedTextureId();
         assert(shadowedTexture != 0);
         glFramebufferTextureLayer(GL_FRAMEBUFFER, attachmentType, shadowedTexture,metadata.level, layer);
-        assert(glGetError() == GL_NO_ERROR);
+        ASSERT_GL_ERROR();
     }
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    ASSERT_GL_EQ(status, GL_FRAMEBUFFER_COMPLETE);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
-    assert(status == GL_FRAMEBUFFER_COMPLETE);
+    ASSERT_GL_ERROR();
     Logger::logDebug("[Repeater] storing proxy FBO for layer ",layer);
     m_proxyFBO[layer] = std::move(utils::FBORAII(proxyFBO));
     Logger::logDebug("[Repeater] post cache size:", m_proxyFBO.size(), " elements");

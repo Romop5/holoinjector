@@ -21,19 +21,11 @@ using namespace ve::managers;
 
 void DrawManager::draw(Context& context, const std::function<void(void)>& drawCallLambda)
 {
-   if(context.getManager().hasBounded())
-   {
-        const auto& program = context.getManager().getBound();
-        if(program->hasMetadata() && program->m_Metadata->m_IsInvisible)
-            return;
-   }
-   if(context.m_IsMultiviewActivated && !isSingleViewPossible(context))
-   {
-       Logger::logDebug("[Repeater] Shadowing not possible -> terminating draw call");
-       // don't draw anything
-       return;
-   }
-   if(!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
+    // Determine if shader is bound, if FBO is correctly bound, etc
+    if(shouldSkipDrawCall(context))
+        return;
+
+    if(!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
     {
         setEnhancerIdentity(context);
         drawGeneric(context,drawCallLambda);
@@ -55,6 +47,10 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
         if(context.getFBOTracker().isSuitableForRepeating())
         {
             glBindFramebuffer(GL_FRAMEBUFFER, (fbo->hasShadowFBO()? fbo->getShadowFBO() : fboId));
+            if(!fbo->hasShadowFBO())
+            {
+                Logger::logError("Shadow FBO not found for given FBO -> draw call may not effect output");
+            }
         }
     }
 
@@ -84,6 +80,22 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
     return;
 }
 
+bool DrawManager::shouldSkipDrawCall(Context& context)
+{
+   if(context.getManager().hasBounded())
+   {
+        const auto& program = context.getManager().getBound();
+        if(program->hasMetadata() && program->m_Metadata->m_IsInvisible)
+            return true;
+   }
+   if(context.m_IsMultiviewActivated && !isSingleViewPossible(context))
+   {
+       Logger::logDebug("[Repeater] Shadowing not possible -> terminating draw call");
+       return true;
+   }
+   return false;
+}
+
 void DrawManager::drawGeneric(Context& context, const std::function<void(void)>& drawCallLambda)
 {
     const auto& programs = context.getManager();
@@ -101,6 +113,7 @@ void DrawManager::drawGeneric(Context& context, const std::function<void(void)>&
         drawLegacy(context, drawCallLambda);
     }
 }
+
 void DrawManager::drawWithGeometryShader(Context& context, const std::function<void(void)>& drawCallLambda)
 {
     if(!context.getTextureTracker().getTextureUnits().hasShadowedTextureBinded())
@@ -280,6 +293,8 @@ GLuint DrawManager::createSingleViewFBO(Context& context, size_t layer)
         if(fbo->hasShadowFBO())
         {
             return fbo->createProxyFBO(layer);
+        } else {
+            Logger::logError("Single-layer proxy FBO failed due to missing Shadow FBO");
         }
         return context.getFBOTracker().getBoundId();
     } else {
