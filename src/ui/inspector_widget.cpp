@@ -111,19 +111,30 @@ namespace helper
         title << "Program with ID " << fboID << " ";
         if(ImGui::TreeNode(title.str().c_str()))
         {
-            ImGui::BeginTable("Metadata",2);
-            tableLineInfo("Is shadow map:", fbo.isShadowMapFBO());
-            tableLineInfo("Is enviromental map:", fbo.isEnvironmentMapFBO());
-            tableLineInfo("Is layered rendering:", fbo.isLayeredRendering());
+            if(ImGui::BeginTable("Metadata",2))
+            {
+                tableLineInfo("Is shadow map:", fbo.isShadowMapFBO());
+                tableLineInfo("Is enviromental map:", fbo.isEnvironmentMapFBO());
+                tableLineInfo("Is layered rendering:", fbo.isLayeredRendering());
+                ImGui::EndTable();
+            }
 
             for(auto& [type,attachment]: fbo.getAttachmentMap().getMap())
             {
-                tableLine("Attachment:", (trackers::FramebufferMetadata::getAttachmentTypeAsString(type) +
-                    " - " + attachment.texture->getTypeAsString(attachment.texture->getType()) +
-                    " - " + attachment.texture->getFormatAsString(attachment.texture->getFormat())).c_str());
+                if(ImGui::BeginTable("Metadata",2))
+                {
+                    tableLine("Attachment:", (trackers::FramebufferMetadata::getAttachmentTypeAsString(type) +
+                        " - " + attachment.texture->getTypeAsString(attachment.texture->getType()) +
+                        " - " + attachment.texture->getFormatAsString(attachment.texture->getFormat())).c_str());
 
+                    ImGui::EndTable();
+                }
+                ImGui::Image((void*)(intptr_t) attachment.texture->getID(), ImVec2(50,50));
+                if(attachment.texture->hasShadowTexture())
+                {
+                    ImGui::Image((void*)(intptr_t) attachment.texture->getShadowedTextureId(), ImVec2(50,50));
+                }
             }
-            ImGui::EndTable();
             ImGui::TreePop();
         }
         ImGui::Separator();
