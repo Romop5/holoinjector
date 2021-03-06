@@ -129,8 +129,17 @@ void ve::ImguiAdapter::onButton(size_t buttonID, bool isPressed)
 {
     assert(buttonID < 5);
     ImGuiIO& io = ImGui::GetIO();
-    io.MouseDown[buttonID] = isPressed;
     io.MousePos = ImVec2(posX,posY);
+    if(buttonID == 3)
+    {
+        io.MouseWheel = 1.0;
+    } else if(buttonID == 4)
+    {
+        io.MouseWheel = -1.0;
+    } else 
+    {
+        io.MouseDown[buttonID] = isPressed;
+    }
 }
 
 bool ve::ImguiAdapter::isVisible()
