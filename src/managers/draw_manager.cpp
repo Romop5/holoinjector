@@ -16,6 +16,8 @@
 #include "trackers/uniform_block_tracing.hpp"
 #include "trackers/texture_tracker.hpp"
 
+#include "utils/opengl_debug.hpp"
+
 using namespace ve;
 using namespace ve::managers;
 
@@ -116,6 +118,7 @@ void DrawManager::drawGeneric(Context& context, const std::function<void(void)>&
 
 void DrawManager::drawWithGeometryShader(Context& context, const std::function<void(void)>& drawCallLambda)
 {
+    debug::logTrace("drawWithGeometryShader");
     if(!context.getTextureTracker().getTextureUnits().hasShadowedTextureBinded())
     {
         auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_isSingleViewActivated");
@@ -136,10 +139,12 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
         glUniform1i(loc, l);
         drawCallLambda();
     }
+    context.getTextureTracker().getTextureUnits().unbindShadowedTextures();
 }
 
 void DrawManager::drawWithVertexShader(Context& context, const std::function<void(void)>& drawCallLambda)
 {
+    debug::logTrace("drawWithVertexShader");
     const auto middleCamera = (context.getCameras().getCameras().size()/2);
     if(!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
     {
@@ -168,6 +173,7 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
 
         drawCallLambda();
     }
+    context.getTextureTracker().getTextureUnits().unbindShadowedTextures();
 }
 
 void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& drawCallLambda)
