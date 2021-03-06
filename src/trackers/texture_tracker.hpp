@@ -25,6 +25,7 @@ namespace trackers
 
         GLenum getType();
         GLenum getFormat();
+        size_t getID();
 
         /*
          * Shadowing facility
@@ -66,6 +67,7 @@ namespace trackers
         public:
         bool hasShadowedTextureBinded() const;
         void bindShadowedTexturesToLayer(size_t layer);
+        void unbindShadowedTextures();
         protected:
         void activate(size_t id);
         void bind(size_t target, std::shared_ptr<TextureMetadata> texture);

@@ -402,6 +402,7 @@ void OutputFBO::renderGridLayout()
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
     m_VAO->draw();
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
     glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
 
 };
@@ -445,5 +446,11 @@ void OutputFBO::renderParalax(const CameraParameters& params)
     const auto disparityRatio = std::max(0.0,1.0-1.0/params.m_XShiftMultiplier);
     const auto centerRatio = std::max(0.0,1.0-1.0/params.m_frontOpticalAxisCentreDistance);
     m_Pm.draw(m_Params.getGridSizeX(), m_Params.getGridSizeY(), disparityRatio, centerRatio);
+
+
+    glActiveTexture(GL_TEXTURE0+79);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE0+78);
+    glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
 }

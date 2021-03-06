@@ -26,6 +26,7 @@ void RenderbufferMetadata::createShadowedTexture(size_t numOfLayers)
     assert(glGetError() == GL_NO_ERROR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
     m_shadowedLayerVersionId = textures[0];
 
     // By definition, Renderbuffer is not suited for sampling

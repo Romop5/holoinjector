@@ -96,6 +96,7 @@ void FramebufferManager::swapBuffers(Context& context, std::function<void(void)>
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         if(context.m_IsMultiviewActivated && context.getOutputFBO().hasImage())
         {
+            debug::logTrace("Dumping OutputFBO to backbuffer");
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
             glViewport(context.getCurrentViewport().getX(), context.getCurrentViewport().getY(),
             context.getCurrentViewport().getWidth(), context.getCurrentViewport().getHeight());

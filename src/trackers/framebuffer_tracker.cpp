@@ -74,6 +74,9 @@ void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     ASSERT_GL_EQ(status,GL_FRAMEBUFFER_COMPLETE);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
+    glBindFramebuffer(GL_FRAMEBUFFER,shadowFBO);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
     if(status == GL_FRAMEBUFFER_COMPLETE)
     {
         m_shadowFBOId = shadowFBO;

@@ -85,6 +85,10 @@ GLenum TextureMetadata::getFormat()
     return m_Format;
 }
 
+size_t TextureMetadata::getID()
+{
+    return m_Id;
+}
 
 bool TextureMetadata::hasShadowTexture() const
 {
@@ -138,6 +142,7 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
 
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
     m_shadowedLayerVersionId = textures[0];
 
     // set texture view as original texture
@@ -246,6 +251,22 @@ void TextureUnitTracker::bindShadowedTexturesToLayer(size_t layer)
             auto textureView = texture->getTextureViewIdOfShadowedTexture();
             if(textureView)
                 glBindTexture(target, textureView);
+        }
+    }
+    glActiveTexture(id);
+}
+
+void TextureUnitTracker::unbindShadowedTextures()
+{
+    GLint id;
+    glGetIntegerv(GL_ACTIVE_TEXTURE, &id);
+    for(auto& [id, unit]: getMap())
+    {
+        assert(id <= 80);
+        for(auto& [target, texture]: unit->getMap())
+        {
+            glActiveTexture(GL_TEXTURE0+id);
+            glBindTexture(target, texture->getID());
         }
     }
     glActiveTexture(id);
