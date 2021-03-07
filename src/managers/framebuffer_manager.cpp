@@ -55,18 +55,18 @@ void FramebufferManager::bindFramebuffer (Context& context, GLenum target, GLuin
              */
             if(fbo->hasAnyAttachment())
             {
-                if(!fbo->hasShadowFBO() && context.getFBOTracker().isSuitableForRepeating())
-                {
-                    fbo->createShadowedFBO(context.getOutputFBO().getParams().getLayers());
-                    if(!fbo->hasShadowFBO())
+                    if(!fbo->hasShadowFBO() && context.getFBOTracker().isSuitableForRepeating())
                     {
-                        Logger::logError("[Repeater] Failed to create shadow FBO for FBO: ",id, ENHANCER_POS);
+                        fbo->createShadowedFBO(context.getOutputFBO().getParams().getLayers());
+                        if(!fbo->hasShadowFBO())
+                        {
+                            Logger::logError("[Repeater] Failed to create shadow FBO for FBO: ",id, ENHANCER_POS);
+                        }
                     }
-                }
-                // Creation of shadow FBO should never fail
-                id = (fbo->hasShadowFBO()?fbo->getShadowFBO():id);
-            } else {
-                Logger::logDebug("Missing any attachment for FBOTracker::bind()");
+                    // Creation of shadow FBO should never fail
+                    id = (fbo->hasShadowFBO()?fbo->getShadowFBO():id);
+                } else {
+                    Logger::logDebug("Missing any attachment for FBOTracker::bind()");
             }
 
             glBindFramebuffer(target,id);

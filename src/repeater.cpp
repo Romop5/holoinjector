@@ -272,6 +272,7 @@ Bool Repeater::glXMakeContextCurrent(Display * dpy, GLXDrawable draw, GLXDrawabl
 {
     if(m_IsInitialized)
     {
+        Logger::log("[Repeater] Deinitializing for context: ", static_cast<void*>(context));
         deinitialize();
     }
 
@@ -362,7 +363,7 @@ void Repeater::glRenderbufferStorage (GLenum target, GLenum internalformat, GLsi
 {
     OpenglRedirectorBase::glRenderbufferStorage(target,internalformat, width, height);
     // Fix internal format when transfering renderbuffer to texture
-    internalformat = (internalformat == GL_DEPTH_COMPONENT?GL_DEPTH_COMPONENT32:internalformat);
+    internalformat = (internalformat == GL_DEPTH_COMPONENT?GL_DEPTH_COMPONENT32F:internalformat);
     m_Context.getRenderbufferTracker().get(getCurrentID(GL_RENDERBUFFER_BINDING))->setStorage(target,width, height, 0, 0, internalformat);
 }
 
@@ -425,7 +426,10 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
 
     // get current's program transformation matrix name
     if(!m_Context.getManager().hasBounded())
+    {
+        Logger::logDebugPerFrame("[Repeater] glUniformMatrix4fv called without bound program!", ENHANCER_POS);
         return;
+    }
     auto program = m_Context.getManager().getBound();
     if(!program->isInjected())
         return;
@@ -872,6 +876,8 @@ Window Repeater::XCreateWindow(Display *display, Window parent, int x, int y, un
             attributes->do_not_propagate_mask = NoEventMask;
             //attributes->override_redirect = True;
         }
+    } else {
+        Logger::logDebug("[Repeater] XCreateWindow called with resolution ", width, "x",height,", assuming input window");
     }
     return OpenglRedirectorBase::XCreateWindow(display, parent, x,y,width, height, border_width, depth, classInstance, visual, valuemask, attributes);
 }
