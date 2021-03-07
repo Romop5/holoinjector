@@ -3,12 +3,18 @@
 
 #include "renderbuffer_tracker.hpp"
 #include "logger.hpp"
+#include "utils/opengl_debug.hpp"
 
 using namespace ve;
 using namespace ve::trackers;
 //-----------------------------------------------------------------------------
 // RenderbufferMetadata
 //-----------------------------------------------------------------------------
+TextureType RenderbufferMetadata::getPhysicalTextureType()
+{
+    return TextureType::RENDERBUFFER;
+}
+
 void RenderbufferMetadata::createShadowedTexture(size_t numOfLayers)
 {
     if(getWidth() == 0 || getHeight() == 0)
@@ -17,17 +23,19 @@ void RenderbufferMetadata::createShadowedTexture(size_t numOfLayers)
         return;
     }
     glGetError();
-    GLuint textures[2];
-    glGenTextures(1, textures);
+    GLuint layeredTexture;
+    glGenTextures(1, &layeredTexture);
+    ASSERT_GL_ERROR();
 
-    glBindTexture(GL_TEXTURE_2D_ARRAY, textures[0]);
-    assert(getFormat() != GL_ZERO);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, layeredTexture);
+    ASSERT_GL_ERROR();
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, getFormat(), getWidth(), getHeight(), numOfLayers);
-    assert(glGetError() == GL_NO_ERROR);
+    ASSERT_GL_ERROR();
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-    m_shadowedLayerVersionId = textures[0];
+    m_shadowedLayerVersionId = layeredTexture;
+    assert(m_shadowedLayerVersionId != 0);
 
     // By definition, Renderbuffer is not suited for sampling
     // => no need to set up a texture view as renderbuffer is always coupled with FBO

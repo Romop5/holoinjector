@@ -26,6 +26,11 @@ TextureMetadata::~TextureMetadata()
     deinitialize();
 }
 
+TextureType TextureMetadata::getPhysicalTextureType()
+{
+    return TextureType::TEXTURE;
+}
+
 void TextureMetadata::deinitialize()
 {
     GLuint textures[2];
@@ -105,6 +110,11 @@ size_t TextureMetadata::getTextureViewIdOfShadowedTexture() const
 }
 void TextureMetadata::createShadowedTexture(size_t numOfLayers)
 {
+    if(m_shadowedLayerVersionId != 0)
+    {
+        Logger::logDebug("Shadow texture already exist for texture: ",getID(), ENHANCER_POS);
+        return;
+    }
     if(getType() != GL_TEXTURE_2D)
     {
         Logger::logError("[Repeater]: Expected GL_TEXTURE_2D as texture type of FBO's attachment, got ",getTypeAsString(getType()), " instead",ENHANCER_POS);
@@ -256,7 +266,10 @@ void TextureUnitTracker::bindShadowedTexturesToLayer(size_t layer)
             glActiveTexture(GL_TEXTURE0+id);
             auto textureView = texture->getTextureViewIdOfShadowedTexture();
             if(textureView)
+            {
                 glBindTexture(target, textureView);
+                ASSERT_GL_ERROR();
+            }
         }
     }
     glActiveTexture(id);

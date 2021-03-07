@@ -10,11 +10,17 @@ namespace ve
 {
 namespace trackers
 {
+    enum class TextureType
+    {
+        TEXTURE,
+        RENDERBUFFER
+    };
     class TextureMetadata
     {
         public:
         TextureMetadata(size_t id): m_Id(id) {}
         virtual ~TextureMetadata();
+        virtual TextureType getPhysicalTextureType();
         void deinitialize();
         void setStorage(GLenum type, size_t width, size_t height, size_t levels, size_t layers, GLenum internalFormat);
 

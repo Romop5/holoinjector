@@ -14,6 +14,7 @@ namespace trackers
     {
         public:
         RenderbufferMetadata(size_t id): TextureMetadata(id) {}
+        virtual TextureType getPhysicalTextureType() override;
         // Override creation of shadow renderbuffer
         virtual void createShadowedTexture(size_t numOfLayers = 9) override;
     };

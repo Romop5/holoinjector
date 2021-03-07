@@ -105,10 +105,23 @@ namespace helper
         ImGui::Separator();
     }
 
+    std::string physicalTypeToString(trackers::TextureType type)
+    {
+        switch(type)
+        {
+            case trackers::TextureType::RENDERBUFFER:
+                return "RENDERBUFFER";
+            case trackers::TextureType::TEXTURE:
+                return "TEXTURE";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
     void drawFBO(size_t fboID, trackers::FramebufferMetadata& fbo)
     {
         std::ostringstream title;
-        title << "Program with ID " << fboID << " ";
+        title << "FBO ID " << fboID << " ";
         if(ImGui::TreeNode(title.str().c_str()))
         {
             if(ImGui::BeginTable("Metadata",2))
@@ -121,18 +134,20 @@ namespace helper
 
             for(auto& [type,attachment]: fbo.getAttachmentMap().getMap())
             {
+                auto& texture = attachment.texture;
                 if(ImGui::BeginTable("Metadata",2))
                 {
-                    tableLine("Attachment:", (trackers::FramebufferMetadata::getAttachmentTypeAsString(type) +
-                        " - " + attachment.texture->getTypeAsString(attachment.texture->getType()) +
-                        " - " + attachment.texture->getFormatAsString(attachment.texture->getFormat())).c_str());
-
+                    tableLine("Attachment:", (trackers::FramebufferMetadata::getAttachmentTypeAsString(type)).c_str());
+                    tableLine("Physical type:", physicalTypeToString(texture->getPhysicalTextureType()).c_str());
+                    tableLine("Type:", texture->getTypeAsString(texture->getType()).c_str());
+                    tableLine("Format:", texture->getFormatAsString(texture->getFormat()).c_str());
                     ImGui::EndTable();
                 }
-                ImGui::Image((void*)(intptr_t) attachment.texture->getID(), ImVec2(50,50));
-                if(attachment.texture->hasShadowTexture())
+                ImGui::Image((void*)(intptr_t) texture->getID(), ImVec2(50,50));
+                if(texture->hasShadowTexture())
                 {
-                    ImGui::Image((void*)(intptr_t) attachment.texture->getShadowedTextureId(), ImVec2(50,50));
+                    ImGui::SameLine();
+                    ImGui::Image((void*)(intptr_t) texture->getShadowedTextureId(), ImVec2(50,50));
                 }
             }
             ImGui::TreePop();
