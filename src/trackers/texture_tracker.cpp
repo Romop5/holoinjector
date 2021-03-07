@@ -360,12 +360,12 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
         case GL_RED:
             switch(size)
             {
-                case GL_BYTE: return GL_R8I;
-                case GL_UNSIGNED_BYTE: return GL_R8UI;
-                case GL_SHORT: return GL_R16I;
-                case GL_UNSIGNED_SHORT: return GL_R16UI;
-                case GL_INT: return GL_R32I;
-                case GL_UNSIGNED_INT: return GL_R32UI;
+                case GL_BYTE: return GL_R8;
+                case GL_UNSIGNED_BYTE: return GL_R8;
+                case GL_SHORT: return GL_R16;
+                case GL_UNSIGNED_SHORT: return GL_R16;
+                case GL_INT: return GL_R32F;
+                case GL_UNSIGNED_INT: return GL_R32F;
                 case GL_FLOAT: return GL_R32F;
                 default:
                    Logger::logDebug("Unknown internal format for GL_RED and size ",size, ENHANCER_POS);
@@ -376,12 +376,12 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
         case GL_RGB:
             switch(size)
             {
-                case GL_BYTE: return GL_RGB8I;
-                case GL_UNSIGNED_BYTE: return GL_RGB8UI;
-                case GL_SHORT: return GL_RGB16I;
-                case GL_UNSIGNED_SHORT: return GL_RGB16UI;
-                case GL_INT: return GL_RGB32I;
-                case GL_UNSIGNED_INT: return GL_RGB32UI;
+                case GL_BYTE: return GL_RGB8;
+                case GL_UNSIGNED_BYTE: return GL_RGB8;
+                case GL_SHORT: return GL_RGB16;
+                case GL_UNSIGNED_SHORT: return GL_RGB16;
+                case GL_INT: return GL_RGB32F;
+                case GL_UNSIGNED_INT: return GL_RGB32F;
                 case GL_FLOAT: return GL_RGB32F;
                 default:
                    Logger::logDebug("Unknown internal format for GL_RGB and size ",size, ENHANCER_POS);
@@ -392,12 +392,12 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
         {
             switch(size)
             {
-                case GL_BYTE: return GL_RGBA8I;
-                case GL_UNSIGNED_BYTE: return GL_RGBA8UI;
-                case GL_SHORT: return GL_RGBA16I;
-                case GL_UNSIGNED_SHORT: return GL_RGBA16UI;
-                case GL_INT: return GL_RGBA32I;
-                case GL_UNSIGNED_INT: return GL_RGBA32UI;
+                case GL_BYTE: return GL_RGBA8;
+                case GL_UNSIGNED_BYTE: return GL_RGBA8;
+                case GL_SHORT: return GL_RGBA16;
+                case GL_UNSIGNED_SHORT: return GL_RGBA16;
+                case GL_INT: return GL_RGBA32F;
+                case GL_UNSIGNED_INT: return GL_RGBA32F;
                 case GL_FLOAT: return GL_RGBA32F;
                 default:
                    Logger::logDebug("Unknown internal format for GL_RGBA and size ",size, ENHANCER_POS);
