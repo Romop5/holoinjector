@@ -119,7 +119,7 @@ void DrawManager::drawGeneric(Context& context, const std::function<void(void)>&
 void DrawManager::drawWithGeometryShader(Context& context, const std::function<void(void)>& drawCallLambda)
 {
     debug::logTrace("drawWithGeometryShader");
-    if(!context.getTextureTracker().getTextureUnits().hasShadowedTextureBinded())
+    if(!context.m_IsMultiviewActivated || !context.getTextureTracker().getTextureUnits().hasShadowedTextureBinded())
     {
         auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_isSingleViewActivated");
         glUniform1i(loc, false);
@@ -296,11 +296,14 @@ GLuint DrawManager::createSingleViewFBO(Context& context, size_t layer)
     if(context.getFBOTracker().hasBounded())
     {
         auto& fbo = context.getFBOTracker().getBound();
-        if(fbo->hasShadowFBO())
+        if(context.m_IsMultiviewActivated)
         {
-            return fbo->createProxyFBO(layer);
-        } else {
-            Logger::logError("Single-layer proxy FBO failed due to missing Shadow FBO");
+            if(fbo->hasShadowFBO())
+            {
+                return fbo->createProxyFBO(layer);
+            } else {
+                Logger::logError("Single-layer proxy FBO failed due to missing Shadow FBO");
+            }
         }
         return context.getFBOTracker().getBoundId();
     } else {
