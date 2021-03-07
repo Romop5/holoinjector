@@ -157,8 +157,8 @@ namespace helper
 
 }
 
-InspectorWidget::InspectorWidget(trackers::ShaderTracker& manager, trackers::FramebufferTracker& fbo)
-    : shaderInterface(manager), interfaceFBO(fbo)
+InspectorWidget::InspectorWidget(trackers::ShaderTracker& manager, trackers::FramebufferTracker& fbo, trackers::TextureTracker& textureTracker)
+    : shaderInterface(manager), interfaceFBO(fbo), interfaceTextureTracker(textureTracker)
 {
 }
 
@@ -166,20 +166,41 @@ void InspectorWidget::onDraw()
 {
     ImGui::SetNextWindowSizeConstraints(ImVec2(400, 400), ImVec2(2000,1000));
     ImGui::Begin("Inspector");
-    auto shadersCount = std::to_string(shaderInterface.shaders.size());
-    ImGui::Text(shadersCount.c_str());
-    for(auto& [id,shader]: shaderInterface.getMap())
-    {
-        helper::drawProgram(id,*shader);
-    }
-    ImGui::End();
 
-    ImGui::SetNextWindowSizeConstraints(ImVec2(1200, 400), ImVec2(2000,1000));
-    ImGui::Begin("InspectorFBO");
-    for(auto& [id,fbo]: interfaceFBO.getMap())
+    if(ImGui::Button("Delete shadow {textures, FBOs}"))
     {
-        helper::drawFBO(id,*fbo);
+        for(auto& [id, fbo]: interfaceFBO.getMap())
+        {
+            fbo->freeShadowedFBO();
+        }
+        for(auto& [id, texture]: interfaceTextureTracker.getMap())
+        {
+            texture->freeShadowedTexture();
+        }
     }
+
+    if(ImGui::BeginTabBar("Inspectables"))
+    {
+        if(ImGui::BeginTabItem("Programs"))
+        {
+            auto shadersCount = std::to_string(shaderInterface.shaders.size());
+            for(auto& [id,shader]: shaderInterface.getMap())
+            {
+                helper::drawProgram(id,*shader);
+            }
+            ImGui::EndTabItem();
+        }
+
+        if(ImGui::BeginTabItem("FBOs"))
+        {
+            for(auto& [id,fbo]: interfaceFBO.getMap())
+            {
+                helper::drawFBO(id,*fbo);
+            }
+            ImGui::EndTabItem();
+        }
+    }
+    ImGui::EndTabBar();
     ImGui::End();
 }
 

@@ -136,6 +136,23 @@ GLuint ve::trackers::FramebufferMetadata::createProxyFBO(size_t layer)
     return proxyFBO;
 }
 
+void ve::trackers::FramebufferMetadata::freeShadowedFBO()
+{
+    for(auto& fbo: m_proxyFBO)
+    {
+        GLuint id = fbo.getID();
+        glDeleteFramebuffers(1, &id);
+    }
+    m_proxyFBO.clear();
+    
+    if(m_shadowFBOId)
+    {
+        GLuint id = m_shadowFBOId;
+        glDeleteFramebuffers(1, &id);
+        m_shadowFBOId = 0;
+    }
+}
+
 
 bool ve::trackers::FramebufferMetadata::isShadowMapFBO() const
 {

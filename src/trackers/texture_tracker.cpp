@@ -159,6 +159,22 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
     setTextureViewToLayer(0);
 }
 
+void TextureMetadata::freeShadowedTexture()
+{
+    if(m_shadowTextureViewId)
+    {
+        GLuint id = m_shadowTextureViewId;
+        glDeleteTextures(1, &id);
+        m_shadowTextureViewId = 0;
+    }
+    if(m_shadowedLayerVersionId)
+    {
+        GLuint id = m_shadowedLayerVersionId;
+        glDeleteTextures(1, &id);
+        m_shadowedLayerVersionId = 0;
+    }
+}
+
 void TextureMetadata::setTextureViewToLayer(size_t layer)
 {
     GLuint viewId = m_shadowTextureViewId;

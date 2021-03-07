@@ -35,6 +35,8 @@ namespace trackers
         /// Create multi-layer shadow FBO
         void createShadowedFBO(size_t numLayers);
 
+        void freeShadowedFBO();
+
         /// Create proxy FBO from texture views to a single layer of shadow FBO
         GLuint createProxyFBO(size_t layer);
         /*
