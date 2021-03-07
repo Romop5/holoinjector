@@ -447,8 +447,8 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(mat);
 
     auto& ep = estimatedParameters;
-    Logger::logDebug("[Repeater] estimating parameters from uniform matrix");
-    Logger::logDebug("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
+    Logger::logDebugPerFrame("[Repeater] estimating parameters from uniform matrix");
+    Logger::logDebugPerFrame("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
 
     m_DrawManager.setEnhancerDecodedProjection(m_Context,programID, estimatedParameters);
 }
@@ -703,10 +703,10 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data)+metadata.transformationOffset, sizeof(float)*16);
             auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(metadata.transformation);
 
-            Logger::logDebug("[Repeater] estimating parameters from UBO");
+            Logger::logDebugPerFrame("[Repeater] estimating parameters from UBO");
 
             auto& ep = estimatedParameters;
-            Logger::logDebug("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
+            Logger::logDebugPerFrame("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
 
             // TODO: refactor into class method of Binding index structure
             metadata.projection = estimatedParameters;
@@ -733,9 +733,9 @@ void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size,
         {
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data)+metadata.transformationOffset, sizeof(float)*16);
             auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(metadata.transformation);
-            Logger::logDebug("[Repeater] estimating parameters from UBO");
+            Logger::logDebugPerFrame("[Repeater] estimating parameters from UBO");
             auto& ep = estimatedParameters;
-            Logger::logDebug("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") near(",ep.farPlane,")");
+            Logger::logDebugPerFrame("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") near(",ep.farPlane,")");
 
             metadata.projection = estimatedParameters;
             metadata.hasTransformation = true;

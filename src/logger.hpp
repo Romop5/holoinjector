@@ -22,7 +22,8 @@ namespace ve
         {
             ERROR_LOG = 0,
             INFO_LOG,
-            DEBUG_LOG
+            DEBUG_LOG,
+            DEBUG_PER_FRAME_LOG
         };
 
         /**
@@ -88,8 +89,14 @@ namespace ve
         template<typename ...ARGS>
         inline static void logDebug(ARGS... msgParts)
         {
-            const auto logResult = ToStringVariadic(msgParts...)+"\n";
+            const auto logResult = "Debug: "+ToStringVariadic(msgParts...)+"\n";
             getInstance().printLog(logResult, static_cast<LogLevel>(LogLevel::DEBUG_LOG));
+        }
+        template<typename ...ARGS>
+        inline static void logDebugPerFrame(ARGS... msgParts)
+        {
+            const auto logResult = "Debug: "+ToStringVariadic(msgParts...)+"\n";
+            getInstance().printLog(logResult, static_cast<LogLevel>(LogLevel::DEBUG_PER_FRAME_LOG));
         }
 
         private:
