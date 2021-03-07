@@ -90,7 +90,7 @@ bool DrawManager::shouldSkipDrawCall(Context& context)
         if(program->hasMetadata() && program->m_Metadata->m_IsInvisible)
             return true;
    }
-   if(context.m_IsMultiviewActivated && !isSingleViewPossible(context))
+   if(context.m_IsMultiviewActivated && isRepeatingSuitable(context) && (!isSingleViewPossible(context)))
    {
        Logger::logDebug("[Repeater] Shadowing not possible -> terminating draw call");
        return true;
@@ -319,6 +319,15 @@ bool DrawManager::isSingleViewPossible(Context& context)
         return false;
     }
     // For OutputFBO, it's always true
+    return true;
+}
+
+bool DrawManager::isRepeatingSuitable(Context& context)
+{
+    if(context.getFBOTracker().hasBounded())
+    {
+        return context.getFBOTracker().isSuitableForRepeating();
+    }
     return true;
 }
 

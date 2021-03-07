@@ -60,11 +60,10 @@ void FramebufferManager::bindFramebuffer (Context& context, GLenum target, GLuin
                     fbo->createShadowedFBO(context.getOutputFBO().getParams().getLayers());
                     if(!fbo->hasShadowFBO())
                     {
-                        Logger::logError("[Repeater] Failed to create shawow FBO for FBO: ",id, ENHANCER_POS);
+                        Logger::logError("[Repeater] Failed to create shadow FBO for FBO: ",id, ENHANCER_POS);
                     }
                 }
                 // Creation of shadow FBO should never fail
-                //assert(fbo->hasShadowFBO());
                 id = (fbo->hasShadowFBO()?fbo->getShadowFBO():id);
             } else {
                 Logger::logDebug("Missing any attachment for FBOTracker::bind()");

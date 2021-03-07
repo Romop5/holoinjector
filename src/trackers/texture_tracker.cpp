@@ -403,6 +403,7 @@ bool TextureTracker::isSizedFormat(GLenum format)
             return true;
     }
     // TODO: add all cases
+    Logger::logDebug("[Repeater] Texture's format ",TextureMetadata::getFormatAsString(format), " marked as non-sized");
     return false;
 }
 
