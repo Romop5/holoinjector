@@ -399,6 +399,7 @@ bool TextureTracker::isSizedFormat(GLenum format)
         case GL_RGB:
         case GL_RGBA:
         case GL_RED:
+        case GL_DEPTH_COMPONENT:
             return true;
     }
     // TODO: add all cases
