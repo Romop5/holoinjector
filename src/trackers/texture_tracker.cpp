@@ -203,8 +203,14 @@ std::string TextureMetadata::getFormatAsString(GLenum type)
         case GL_DEPTH24_STENCIL8: return "GL_DEPTH24_STENCIL8";
         case GL_R11F_G11F_B10F: return "GL_R11F_G11F_B10F";
         case GL_UNSIGNED_INT_10F_11F_11F_REV: return "GL_UNSIGNED_INT_10F_11F_11F_REV";
+        case GL_RGBA8I: return "GL_RGBA8I";
+        case GL_RGBA8UI: return "GL_RGBA8UI";
+        case GL_RGBA16I: return "GL_RGBA16I";
+        case GL_RGBA16UI: return "GL_RGBA16UI";
         case GL_RGBA16F: return "GL_RGBA16F";
         case GL_R16: return "GL_R16";
+        case GL_R16I: return "GL_R16I";
+        case GL_R16UI: return "GL_R16UI";
         case GL_R16F: return "GL_R16F";
         case GL_R32F: return "GL_R32F";
         case GL_R8: return "GL_R8";
@@ -341,14 +347,15 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
         case GL_RED:
             switch(size)
             {
-                case GL_BYTE: return GL_R8;
-                case GL_UNSIGNED_BYTE: return GL_R8;
-                case GL_SHORT: return GL_R16;
-                case GL_UNSIGNED_SHORT: return GL_R16;
-                case GL_INT: return GL_R32F;
-                case GL_UNSIGNED_INT: return GL_R32F;
+                case GL_BYTE: return GL_R8I;
+                case GL_UNSIGNED_BYTE: return GL_R8UI;
+                case GL_SHORT: return GL_R16I;
+                case GL_UNSIGNED_SHORT: return GL_R16UI;
+                case GL_INT: return GL_R32I;
+                case GL_UNSIGNED_INT: return GL_R32UI;
                 case GL_FLOAT: return GL_R32F;
                 default:
+                   Logger::logDebug("Unknown internal format for GL_RED and size ",size, ENHANCER_POS);
                    return 0;
             }
 
@@ -356,14 +363,15 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
         case GL_RGB:
             switch(size)
             {
-                case GL_BYTE: return GL_RGB8;
-                case GL_UNSIGNED_BYTE: return GL_RGB8;
-                case GL_SHORT: return GL_RGB16;
-                case GL_UNSIGNED_SHORT: return GL_RGB16;
-                case GL_INT: return GL_RGB32F;
-                case GL_UNSIGNED_INT: return GL_RGB32F;
+                case GL_BYTE: return GL_RGB8I;
+                case GL_UNSIGNED_BYTE: return GL_RGB8UI;
+                case GL_SHORT: return GL_RGB16I;
+                case GL_UNSIGNED_SHORT: return GL_RGB16UI;
+                case GL_INT: return GL_RGB32I;
+                case GL_UNSIGNED_INT: return GL_RGB32UI;
                 case GL_FLOAT: return GL_RGB32F;
                 default:
+                   Logger::logDebug("Unknown internal format for GL_RGB and size ",size, ENHANCER_POS);
                    return 0;
             }
         case GL_BGRA: [[fallthrough]];
@@ -371,20 +379,22 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
         {
             switch(size)
             {
-                case GL_BYTE: return GL_RGBA8;
-                case GL_UNSIGNED_BYTE: return GL_RGBA8;
-                case GL_SHORT: return GL_RGBA16;
-                case GL_UNSIGNED_SHORT: return GL_RGBA16;
-                case GL_INT: return GL_RGBA32F;
-                case GL_UNSIGNED_INT: return GL_RGBA32F;
+                case GL_BYTE: return GL_RGBA8I;
+                case GL_UNSIGNED_BYTE: return GL_RGBA8UI;
+                case GL_SHORT: return GL_RGBA16I;
+                case GL_UNSIGNED_SHORT: return GL_RGBA16UI;
+                case GL_INT: return GL_RGBA32I;
+                case GL_UNSIGNED_INT: return GL_RGBA32UI;
                 case GL_FLOAT: return GL_RGBA32F;
                 default:
+                   Logger::logDebug("Unknown internal format for GL_RGBA and size ",size, ENHANCER_POS);
                    return 0;
             }
         }
         case GL_DEPTH_COMPONENT:
             return GL_DEPTH_COMPONENT32F;
         default:
+           Logger::logDebug("Unknown internal format: ", internalFormat, " with size: ",size, ENHANCER_POS);
             return 0;
     }
     return 0;
