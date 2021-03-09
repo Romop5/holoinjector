@@ -52,14 +52,13 @@ void TextureMetadata::setStorage(GLenum type, size_t width, size_t height, size_
 {
     m_Type = type;
     m_Format = internalFormat;
+    m_Width = std::max(m_Width, width);
+    m_Height = std::max(m_Height, height);
     // Hack: ignore mipmaps
     if(levels > 0)
     {
         return;
     }
-    m_Width = width;
-    m_Height = height;
-
     m_Levels = (levels == 0)?1:levels;
     m_Layers = layers;
 }
