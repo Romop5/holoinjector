@@ -17,7 +17,7 @@ namespace helper
         return "false";
     }
 
-    void tableLine(const char* first, const char* second)
+    inline void tableLine(const char* first, const char* second)
     {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
@@ -26,7 +26,7 @@ namespace helper
         ImGui::Text(second);
     }
 
-    void tableLine(const char* first, bool& second)
+    inline void tableLine(const char* first, bool& second)
     {
         ImVec4 boolColor = (second?ImColor(0.0f,1.0f,0.0f):ImColor(1.0f,0.0f,0.0f));
         ImGui::TableNextRow();
@@ -43,7 +43,7 @@ namespace helper
         ImGui::PopID();
     }
 
-    void tableLineInfo(const char* first, bool second)
+    inline void tableLineInfo(const char* first, bool second)
     {
         ImVec4 boolColor = (second?ImColor(0.0f,1.0f,0.0f):ImColor(1.0f,0.0f,0.0f));
         ImGui::TableNextRow();
@@ -56,7 +56,7 @@ namespace helper
 
 
 
-    void drawShader(trackers::ShaderMetadata& shader)
+    inline void drawShader(trackers::ShaderMetadata& shader)
     {
         auto shaderId = std::to_string(shader.m_Id);
         std::ostringstream title;
@@ -71,7 +71,7 @@ namespace helper
         }
     }
 
-    void drawProgram(size_t programID, trackers::ShaderProgram& program)
+    inline void drawProgram(size_t programID, trackers::ShaderProgram& program)
     {
         std::ostringstream title;
         title << "Program with ID " << programID << " ";
@@ -105,7 +105,7 @@ namespace helper
         ImGui::Separator();
     }
 
-    std::string physicalTypeToString(trackers::TextureType type)
+    inline std::string physicalTypeToString(trackers::TextureType type)
     {
         switch(type)
         {
@@ -118,7 +118,7 @@ namespace helper
         }
     }
 
-    void drawFBO(size_t fboID, trackers::FramebufferMetadata& fbo)
+    inline void drawFBO(size_t fboID, trackers::FramebufferMetadata& fbo)
     {
         std::ostringstream title;
         title << "FBO ID " << fboID << " ";
@@ -140,6 +140,7 @@ namespace helper
                     tableLine("Attachment:", (trackers::FramebufferMetadata::getAttachmentTypeAsString(type)).c_str());
                     tableLine("Physical type:", physicalTypeToString(texture->getPhysicalTextureType()).c_str());
                     tableLine("Type:", texture->getTypeAsString(texture->getType()).c_str());
+                    tableLine("Resolution:", (std::to_string(texture->getWidth())+"x"+std::to_string(texture->getHeight())).c_str());
                     tableLine("Format:", texture->getFormatAsString(texture->getFormat()).c_str());
                     ImGui::EndTable();
                 }
@@ -207,9 +208,22 @@ void InspectorWidget::onDraw()
             texture->freeShadowedTexture();
         }
     }
+    if(ImGui::Button("Delete shadow FBOs"))
+    {
+        for(auto& [id, fbo]: interfaceFBO.getMap())
+        {
+            fbo->freeShadowedFBO();
+        }
+    }
 
     if(ImGui::BeginTabBar("Inspectables"))
     {
+        if(ImGui::BeginTabItem("Settings"))
+        {
+            helper::drawLoggerSettings(Logger::getInstance());
+            ImGui::EndTabItem();
+        }
+
         if(ImGui::BeginTabItem("Programs"))
         {
             auto shadersCount = std::to_string(shaderInterface.shaders.size());
