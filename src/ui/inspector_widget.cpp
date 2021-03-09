@@ -155,6 +155,35 @@ namespace helper
         ImGui::Separator();
     }
 
+    inline void drawLoggerSettings(Logger& logger)
+    {
+        const auto options = std::vector<std::pair<Logger::LogLevel, std::string>>{
+            { Logger::LogLevel::ERROR_LOG, "Error"},
+            { Logger::LogLevel::INFO_LOG, "Info"},
+            { Logger::LogLevel::DEBUG_LOG, "Debug"},
+            { Logger::LogLevel::DEBUG_PER_FRAME_LOG, "Debug - per frame"},
+        };
+
+        if(ImGui::BeginCombo("Output log verbosity", "Maximum level"))
+        {
+            size_t item_current_idx = static_cast<size_t>(logger.getMaximumLevel());
+            for (int n = 0; n < options.size(); n++)
+            {
+                const bool is_selected = (item_current_idx == n);
+                if (ImGui::Selectable(options[n].second.c_str(), is_selected))
+                {
+                    item_current_idx = n;
+                    logger.setMaximumLevel(options[n].first);
+                    Logger::logDebug("Changed maximum log level to: ", options[n].second);
+                }
+
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+    }
+
 }
 
 InspectorWidget::InspectorWidget(trackers::ShaderTracker& manager, trackers::FramebufferTracker& fbo, trackers::TextureTracker& textureTracker)

@@ -32,6 +32,10 @@ namespace ve
          * @param level new maxima
          */
         void setMaximumLevel(LogLevel level);
+
+        /// Get currently set maximum
+        LogLevel getMaximumLevel() const;
+
         /**
          * @brief Writes message into log stream
          *
@@ -100,7 +104,7 @@ namespace ve
         }
 
         private:
-        LogLevel m_maximalLogLevel = ERROR_LOG;
+        LogLevel m_maximalLogLevel = DEBUG_PER_FRAME_LOG;
     };
 } //namespace ve
 

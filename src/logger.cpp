@@ -16,6 +16,11 @@ void ve::Logger::setMaximumLevel(ve::Logger::LogLevel level)
     m_maximalLogLevel = level;
 }
 
+ve::Logger::LogLevel ve::Logger::getMaximumLevel() const
+{
+    return m_maximalLogLevel;
+}
+
 void ve::Logger::printLog(const std::string& msg, LogLevel level)
 {
     if(m_maximalLogLevel < level)
