@@ -298,7 +298,7 @@ void Repeater::glGenTextures(GLsizei n,GLuint* textures)
     }
 }
 
-void Repeater::glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLint border,GLenum format,GLenum type,const GLvoid* pixels) 
+void Repeater::glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLint border,GLenum format,GLenum type,const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
     auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat)?ve::trackers::TextureTracker::convertToSizedFormat(format,type):internalFormat;
@@ -314,8 +314,44 @@ void Repeater::glTexImage2D(GLenum target,GLint level,GLint internalFormat,GLsiz
 void Repeater::glTexImage3D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels)
 {
     OpenglRedirectorBase::glTexImage3D(target, level, internalformat, width, height, depth, border, format, type, pixels);
-    auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalformat)?internalformat:ve::trackers::TextureTracker::convertToSizedFormat(format,type);
+    auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalformat)?ve::trackers::TextureTracker::convertToSizedFormat(format,type):internalformat;
     m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
+}
+
+void Repeater::glTexSubImage1D(GLenum target,GLint level,GLint xoffset,GLsizei width,GLenum format,GLenum type,const GLvoid* pixels)
+{
+    OpenglRedirectorBase::glTexSubImage1D(target,level,xoffset,width,format,type,pixels);
+    if(xoffset > 0)
+    {
+        Logger::logDebug("[Repeater] Skipping setStorage() due to xoffset != 0");
+        return;
+    }
+    auto finalFormat = ve::trackers::TextureTracker::convertToSizedFormat(format,type);
+    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, 0, level, 0, finalFormat);
+}
+
+void Repeater::glTexSubImage2D(GLenum target,GLint level,GLint xoffset,GLint yoffset,GLsizei width,GLsizei height,GLenum format,GLenum type,const GLvoid* pixels)
+{
+    OpenglRedirectorBase::glTexSubImage2D(target,level,xoffset,yoffset,width,height,format,type,pixels);
+    if(xoffset > 0 || yoffset > 0)
+    {
+        Logger::logDebug("[Repeater] Skipping setStorage() due to xoffset != 0 || yoffset != 0");
+        return;
+    }
+    auto finalFormat = ve::trackers::TextureTracker::convertToSizedFormat(format,type);
+    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, 0, finalFormat);
+}
+
+void Repeater::glTexSubImage3D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels)
+{
+    OpenglRedirectorBase::glTexSubImage3D(target,level,xoffset,yoffset,zoffset,width,height,depth,format,type,pixels);
+    if(xoffset > 0 || yoffset > 0 || zoffset > 0)
+    {
+        Logger::logDebug("[Repeater] Skipping setStorage() due to xoffset != 0 || yoffset != 0 || zoffset != 0");
+        return;
+    }
+    auto finalFormat = ve::trackers::TextureTracker::convertToSizedFormat(format,type);
+    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target,width, height, level, depth,  finalFormat);
 }
 
 void Repeater::glTexStorage1D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
