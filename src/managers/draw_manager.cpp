@@ -190,6 +190,7 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
 
     for(size_t cameraID = 0; cameraID < context.getCameras().getCameras().size(); cameraID++)
     {
+        context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(cameraID);
         const auto& camera = context.getCameras().getCameras()[cameraID];
 
         auto shadowFBO = createSingleViewFBO(context, cameraID);
@@ -204,6 +205,7 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
         drawCallLambda();
         resetEnhancerShift(context);
     }
+    context.getTextureTracker().getTextureUnits().unbindShadowedTextures();
 }
 
 /*

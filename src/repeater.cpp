@@ -409,13 +409,13 @@ void Repeater::glBindTexture(GLenum target,GLuint texture)
     m_Context.getTextureTracker().bind(target,texture);
     auto fakeTextureId = texture;
 
-    if(m_Context.m_IsMultiviewActivated)
+    /*if(m_Context.m_IsMultiviewActivated)
     {
         if(m_Context.getTextureTracker().has(texture) && m_Context.getTextureTracker().get(texture)->hasShadowTexture())
         {
             fakeTextureId = m_Context.getTextureTracker().get(texture)->getTextureViewIdOfShadowedTexture();
         }
-    }
+    }*/
     OpenglRedirectorBase::glBindTexture(target,fakeTextureId);
 }
 
