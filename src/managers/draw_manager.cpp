@@ -148,6 +148,10 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
     const auto middleCamera = (context.getCameras().getCameras().size()/2);
     if(!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
     {
+        if(context.m_IsMultiviewActivated)
+        {
+            context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(0);
+        }
         auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
         glUniform1i(loc, middleCamera);
 
@@ -181,6 +185,10 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
     const auto middleCamera = (context.getCameras().getCameras().size()/2);
     if(!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
     {
+        if(context.m_IsMultiviewActivated)
+        {
+            context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(0);
+        }
         auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
         glUniform1i(loc, middleCamera);
 
