@@ -2,6 +2,7 @@
 #include "trackers/shader_tracker.hpp"
 #include "trackers/framebuffer_tracker.hpp"
 #include "trackers/texture_tracker.hpp"
+#include "trackers/renderbuffer_tracker.hpp"
 #include <imgui.h>
 #include <sstream>
 #include <string>
@@ -36,10 +37,12 @@ namespace helper
         ImGui::TextColored(boolColor,getAsString(second));
         ImGui::SameLine();
         ImGui::PushID(&second);
-        if(ImGui::Button("Toggle"))
+        /*if(ImGui::Button("Toggle"))
         {
             second = !second;
         }
+        */
+        ImGui::Checkbox("", &second);
         ImGui::PopID();
     }
 
@@ -50,7 +53,8 @@ namespace helper
         ImGui::TableNextColumn();
         ImGui::TextColored(ImColor(0.9f,0.9f,0.9f),first);
         ImGui::TableNextColumn();
-        ImGui::TextColored(boolColor,getAsString(second));
+        ImGui::Checkbox("", &second);
+        //ImGui::TextColored(boolColor,getAsString(second));
         ImGui::SameLine();
     }
 
@@ -126,6 +130,8 @@ namespace helper
         {
             if(ImGui::BeginTable("Metadata",2))
             {
+                tableLineInfo("Is hasShadowFBO:", fbo.hasShadowFBO());
+                tableLineInfo("Has ShadowFBO failed:", fbo.hasFailedToCreateShadowFBO());
                 tableLineInfo("Is shadow map:", fbo.isShadowMapFBO());
                 tableLineInfo("Is enviromental map:", fbo.isEnvironmentMapFBO());
                 tableLineInfo("Is layered rendering:", fbo.isLayeredRendering());
@@ -138,6 +144,7 @@ namespace helper
                 if(ImGui::BeginTable("Metadata",2))
                 {
                     tableLine("Attachment:", (trackers::FramebufferMetadata::getAttachmentTypeAsString(type)).c_str());
+                    tableLineInfo("Has shadow texture:", texture->hasShadowTexture());
                     tableLine("Physical type:", physicalTypeToString(texture->getPhysicalTextureType()).c_str());
                     tableLine("Type:", texture->getTypeAsString(texture->getType()).c_str());
                     tableLine("Resolution:", (std::to_string(texture->getWidth())+"x"+std::to_string(texture->getHeight())).c_str());
@@ -148,7 +155,7 @@ namespace helper
                 if(texture->hasShadowTexture())
                 {
                     ImGui::SameLine();
-                    ImGui::Image((void*)(intptr_t) texture->getShadowedTextureId(), ImVec2(50,50));
+                    ImGui::Image((void*)(intptr_t) texture->getTextureViewIdOfShadowedTexture(), ImVec2(50,50));
                 }
             }
             ImGui::TreePop();
@@ -187,8 +194,8 @@ namespace helper
 
 }
 
-InspectorWidget::InspectorWidget(trackers::ShaderTracker& manager, trackers::FramebufferTracker& fbo, trackers::TextureTracker& textureTracker)
-    : shaderInterface(manager), interfaceFBO(fbo), interfaceTextureTracker(textureTracker)
+InspectorWidget::InspectorWidget(trackers::ShaderTracker& manager, trackers::FramebufferTracker& fbo, trackers::TextureTracker& textureTracker, trackers::RenderbufferTracker& renderbufferTracker)
+    : shaderInterface(manager), interfaceFBO(fbo), interfaceTextureTracker(textureTracker), interfaceRenderbufferTracker(renderbufferTracker)
 {
 }
 
@@ -204,6 +211,10 @@ void InspectorWidget::onDraw()
             fbo->freeShadowedFBO();
         }
         for(auto& [id, texture]: interfaceTextureTracker.getMap())
+        {
+            texture->freeShadowedTexture();
+        }
+        for(auto& [id, texture]: interfaceRenderbufferTracker.getMap())
         {
             texture->freeShadowedTexture();
         }

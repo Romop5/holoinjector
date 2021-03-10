@@ -20,7 +20,7 @@ UIManager::~UIManager() = default;
 
 void UIManager::initialize(Context& context)
 {
-    inspectorWidget = std::make_unique<InspectorWidget>(context.getManager(), context.getFBOTracker(),context.getTextureTracker());
+    inspectorWidget = std::make_unique<InspectorWidget>(context.getManager(), context.getFBOTracker(),context.getTextureTracker(), context.getRenderbufferTracker());
     registerCallbacks(context);
 }
 

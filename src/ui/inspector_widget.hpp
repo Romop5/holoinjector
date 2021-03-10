@@ -8,17 +8,19 @@ namespace ve
         class ShaderTracker;
         class FramebufferTracker;
         class TextureTracker;
+        class RenderbufferTracker;
     }
 
     class InspectorWidget
     {
     public:
-        InspectorWidget(trackers::ShaderTracker& shaderTracker, trackers::FramebufferTracker& fboTracker, trackers::TextureTracker& textureTracker);
+        InspectorWidget(trackers::ShaderTracker& shaderTracker, trackers::FramebufferTracker& fboTracker, trackers::TextureTracker& textureTracker, trackers::RenderbufferTracker& renderbufferTracker);
         void onDraw();
     private:
         trackers::ShaderTracker& shaderInterface;
         trackers::FramebufferTracker& interfaceFBO;
         trackers::TextureTracker& interfaceTextureTracker;
+        trackers::RenderbufferTracker& interfaceRenderbufferTracker;
     };
 }
 #endif
