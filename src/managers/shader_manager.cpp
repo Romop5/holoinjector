@@ -12,6 +12,7 @@
 #include "pipeline/pipeline_injector.hpp"
 #include "pipeline/output_fbo.hpp"
 
+using namespace ve;
 using namespace ve::managers;
 using namespace ve::pipeline;
 using namespace ve::opengl_utils;
@@ -36,6 +37,36 @@ namespace helper
         std::optional<std::string> linkErrorMessage;
     };
 
+    void dumpCompilationResult(const CompilationResult& result)
+    {
+        if(result.hasLinkedSuccessfully)
+        {
+            Logger::logDebug("[Repeater] Program creation succeeded");
+            return;
+        }
+        Logger::logDebug("========================================================================");
+        Logger::logDebug("START OF COMPILATION RESULT");
+        Logger::logDebug("========================================================================");
+        Logger::logDebug("[Repeater] Program compilation & link failed. Precise reasons:");
+        Logger::logDebug("           Has program linked: ", result.hasLinkedSuccessfully);
+        Logger::logDebug("           Link error message ", result.linkErrorMessage.value_or("Unknown"),"\n");
+        Logger::logDebug("           Attached shaders", result.shaders.size());
+
+        for(const auto& shader: result.shaders)
+        {
+            Logger::logDebug("========================================================================");
+            Logger::logDebug(" Shader error message ", shader.errorMessage.value_or("Unknown"));
+            Logger::logDebug("========================================================================");
+            Logger::logDebug(" Shader source code", shader.sourceCode);
+            Logger::logDebug("========================================================================");
+            Logger::logDebug("END OF SHADER");
+            Logger::logDebug("========================================================================");
+        }
+        Logger::logDebug("========================================================================");
+        Logger::logDebug("END OF COMPILATION RESULT");
+        Logger::logDebug("========================================================================");
+    }
+
     CompilationResult tryCompilingShaderProgram(const PipelineInjector::PipelineType pipeline, GLuint programId)
     {
         helper::CompilationResult output;
@@ -43,6 +74,7 @@ namespace helper
         bool hasError = false;
         for(auto& [type, sourceCode]: pipeline)
         {
+            ShaderCompilationResult result;
             auto newShader = glCreateShader(type);
             const GLchar* sources[1] = {reinterpret_cast<const GLchar*>(sourceCode.data())};
             glShaderSource(newShader, 1, sources , nullptr);
@@ -50,11 +82,18 @@ namespace helper
             glCompileShader(newShader);
             GLint status;
             glGetShaderiv(newShader,GL_COMPILE_STATUS, &status);
+
             if(status == GL_FALSE)
             {
                 const auto message = getShaderLogMessage(newShader);
+                result.errorMessage = message;
                 hasError = true;
             }
+
+            result.hasCompiledSuccessfully = status;
+            result.sourceCode = sourceCode;
+            output.shaders.push_back(result);
+
             glAttachShader(programId, newShader);
             newShaderIDs.push_back(newShader);
         }
@@ -67,7 +106,7 @@ namespace helper
             if(linkStatus == GL_FALSE)
             {
                 auto optionalLog = getProgramLogMessage(programId);
-                output.linkErrorMessage = (optionalLog ? optionalLog.value() : std::string("Unable to get log"));
+                output.linkErrorMessage = optionalLog.value_or("Unable to get log");
                 hasError = true;
             }
         }
@@ -154,45 +193,17 @@ void ShaderManager::linkProgram (Context& context, GLuint programId)
     program->m_Metadata->m_IsLinkedCorrectly = false;
     Logger::log("[Repeater] Pipeline process succeeded?: ", resultPipeline.wasSuccessfull);
 
-    for(auto& [type, sourceCode]: resultPipeline.pipeline)
+    auto status = helper::tryCompilingShaderProgram(resultPipeline.pipeline, programId);
+    if(!status.hasLinkedSuccessfully)
     {
-        auto newShader = glCreateShader(type);
-        const GLchar* sources[1] = {reinterpret_cast<const GLchar*>(sourceCode.data())};
-        glShaderSource(newShader, 1, sources , nullptr);
-	Logger::log("[Repeater] Compiling shader:", sourceCode.c_str());
-        fflush(stdout);
-        glCompileShader(newShader);
-        GLint status;
-        glGetShaderiv(newShader,GL_COMPILE_STATUS, &status);
-        if(status == GL_FALSE)
-        {
-            const auto optionalLog = getShaderLogMessage(newShader);
-            const auto outputLog = (optionalLog ? optionalLog.value() : "Unable to get log message");
-            Logger::logError("[Repeater] Error while compiling new shader type", type, outputLog);
-            Logger::logError("Shader source:", sourceCode.c_str());
-            return;
-        }
-        glAttachShader(programId, newShader);
+        dumpCompilationResult(status);
+        // At least compile original pipeline
+        auto statusOriginal = helper::tryCompilingShaderProgram(pipeline, programId);
     }
-    Logger::log("[Repeater] Relink program with new shaders");
-    glLinkProgram(programId);
-    auto linkStatus = isProgramLinked(programId);
-    if(linkStatus == GL_FALSE)
-    {
-        const auto optionalLog = getProgramLogMessage(programId);
-        const auto outputLog = (optionalLog ? optionalLog.value() : "Unable to get log message");
-        // Dump shaders
-        Logger::logError("[Repeater] Link failed, dumping shader codes\nDUMP_START\n");
-        for(auto& [type, sourceCode]: resultPipeline.pipeline)
-        {
-            Logger::logError("Shader source:", sourceCode.c_str(), "END_OF_SHADER");
-        }
-        Logger::logError("[Repeater] Link failed with log:", outputLog, "\nEND_OF_DUMP");
-    }
-    assert(linkStatus == GL_TRUE);
+
     if(program->m_Metadata)
     {
-        program->m_Metadata->m_IsLinkedCorrectly = (linkStatus == GL_TRUE);
+        program->m_Metadata->m_IsLinkedCorrectly = (status.hasLinkedSuccessfully == GL_TRUE);
     }
 }
 
