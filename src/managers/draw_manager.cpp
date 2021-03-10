@@ -43,7 +43,8 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
         context.getOutputFBO().setContainsImageFlag();
         glBindFramebuffer(GL_FRAMEBUFFER, context.getOutputFBO().getFBOId());
         glViewport(0,0,context.getOutputFBO().getParams().getTextureWidth(),context.getOutputFBO().getParams().getTextureHeight());
-    } else {
+    } 
+    /*else {
         auto fbo = context.getFBOTracker().getBound();
         auto fboId = context.getFBOTracker().getBoundId();
         if(context.getFBOTracker().isSuitableForRepeating())
@@ -54,7 +55,7 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
                 Logger::logError("Shadow FBO not found for given FBO -> draw call may not effect output");
             }
         }
-    }
+    }*/
 
     /// If Uniform Buffer Object (UBO) is used, then load values to uniforms
     if(context.getManager().hasBounded() && context.getManager().getBound()->m_Metadata && context.getManager().getBound()->m_Metadata->isUBOused())
@@ -312,7 +313,13 @@ GLuint DrawManager::createSingleViewFBO(Context& context, size_t layer)
             {
                 return fbo->createProxyFBO(layer);
             } else {
-                Logger::logError("Single-layer proxy FBO failed due to missing Shadow FBO");
+                if(fbo->hasFailedToCreateShadowFBO())
+                {
+                    Logger::logDebug("[Repeater] Drawing to FBO without shadow FBO due to failed init", ENHANCER_POS);
+
+                } else {
+                    Logger::logError("Single-layer proxy FBO failed due to missing Shadow FBO");
+                }
             }
         }
         return context.getFBOTracker().getBoundId();

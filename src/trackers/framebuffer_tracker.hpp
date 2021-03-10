@@ -29,6 +29,7 @@ namespace trackers
         void attach(GLenum attachmentType, std::shared_ptr<TextureMetadata> texture, GLenum type = GL_COLOR_ATTACHMENT0, size_t level = 0, size_t layer = 0);
         bool hasAttachment(GLenum attachmentType) const;
 
+        bool hasFailedToCreateShadowFBO() const;
         bool hasShadowFBO() const;
         size_t getShadowFBO() const;
 
@@ -62,6 +63,7 @@ namespace trackers
         std::vector<utils::FBORAII> m_proxyFBO;
 
         size_t m_shadowFBOId = 0;
+        bool m_hasCreationOfShadowFBOFailed = false;
     };
 
     class FramebufferTracker: public BindableContextTracker<std::shared_ptr<FramebufferMetadata>>

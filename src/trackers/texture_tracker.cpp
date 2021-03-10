@@ -127,6 +127,9 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
         return;
     }
 
+    Logger::logDebug("Creating shadow texture with resolution: ", getWidth(), "x", 
+            getHeight(), " and format: ", TextureMetadata::getFormatAsString(getFormat()), ENHANCER_POS);
+
     CLEAR_GL_ERROR();
     GLuint textures[2];
     glGenTextures(1, textures);
@@ -135,11 +138,11 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
     
     glBindTexture(GL_TEXTURE_2D_ARRAY, textures[0]);
     ASSERT_GL_ERROR();
-    assert(getLevels() == 1);
-    assert(getFormat() != GL_ZERO);
+    ASSERT_GL_EQ(getLevels(),1);
+    ASSERT_GL_NEQ(getFormat(),GL_ZERO);
 
-    assert(getWidth() > 0);
-    assert(getHeight() > 0);
+    ASSERT_GL_NEQ(getWidth(),0);
+    ASSERT_GL_NEQ(getHeight(),0);
     const auto shadowTextureWidth = getWidth();
     const auto shadowTextureHeight = getHeight();
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, getFormat(), shadowTextureWidth,  shadowTextureHeight, numOfLayers);

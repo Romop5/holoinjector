@@ -33,6 +33,11 @@ bool ve::trackers::FramebufferMetadata::hasAttachment(GLenum attachmentType) con
     return m_attachments.has(attachmentType);
 }
 
+bool ve::trackers::FramebufferMetadata::hasFailedToCreateShadowFBO() const
+{
+    return m_hasCreationOfShadowFBOFailed;
+}
+
 bool ve::trackers::FramebufferMetadata::hasShadowFBO() const
 {
     return m_shadowFBOId;
@@ -90,6 +95,8 @@ void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
         Logger::logError("Failed to create shadow FBO. Count of attachments: ", m_attachments.size(), "\n",
                 attachmentsDump);
         glDeleteFramebuffers(1, &shadowFBO);
+
+        m_hasCreationOfShadowFBOFailed = true;
     }
 }
 
