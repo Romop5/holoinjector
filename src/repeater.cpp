@@ -298,6 +298,16 @@ void Repeater::glGenTextures(GLsizei n,GLuint* textures)
     }
 }
 
+void Repeater::glDeleteTextures(GLsizei n,const GLuint* textures)
+{
+    OpenglRedirectorBase::glDeleteTextures(n, textures);
+
+    for(size_t i = 0; i < n; i++)
+    {
+	m_Context.getTextureTracker().remove(textures[i]);
+    }
+}
+
 void Repeater::glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLint border,GLenum format,GLenum type,const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
@@ -395,14 +405,32 @@ void Repeater::glGenRenderbuffers (GLsizei n, GLuint* renderbuffers)
         m_Context.getRenderbufferTracker().add(renderbuffers[i],std::make_shared<ve::trackers::RenderbufferMetadata>(renderbuffers[i]));
     }
 }
+
+void Repeater::glDeleteRenderbuffers (GLsizei n, const GLuint* renderbuffers)
+{
+    OpenglRedirectorBase::glDeleteRenderbuffers(n,renderbuffers);
+    for(size_t i = 0; i < n; i++)
+    {
+        m_Context.getRenderbufferTracker().remove(renderbuffers[i]);
+    }
+}
+
 void Repeater::glRenderbufferStorage (GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
 {
     OpenglRedirectorBase::glRenderbufferStorage(target,internalformat, width, height);
     // Fix internal format when transfering renderbuffer to texture
-    internalformat = (internalformat == GL_DEPTH_COMPONENT?GL_DEPTH_COMPONENT32F:internalformat);
+    //internalformat = (internalformat == GL_DEPTH_COMPONENT?GL_DEPTH_COMPONENT32:internalformat);
     m_Context.getRenderbufferTracker().get(getCurrentID(GL_RENDERBUFFER_BINDING))->setStorage(target,width, height, 0, 0, internalformat);
 }
 
+
+void Repeater::glRenderbufferStorageMultisample (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
+{
+    OpenglRedirectorBase::glRenderbufferStorage(target,internalformat, width, height);
+    // Fix internal format when transfering renderbuffer to texture
+    //internalformat = (internalformat == GL_DEPTH_COMPONENT?GL_DEPTH_COMPONENT32:internalformat);
+    m_Context.getRenderbufferTracker().get(getCurrentID(GL_RENDERBUFFER_BINDING))->setStorage(target,width, height, 0, 0, internalformat);
+}
 
 void Repeater::glBindTexture(GLenum target,GLuint texture)
 {
@@ -430,6 +458,11 @@ GLuint Repeater::glCreateShader(GLenum shaderType)
     return m_ShaderManager.createShader(m_Context, shaderType);
 }
 
+void Repeater::glDeleteShader(GLuint shader)
+{
+    m_ShaderManager.deleteShader(m_Context, shader);
+}
+
 void Repeater::glShaderSource (GLuint shaderId, GLsizei count, const GLchar* const*string, const GLint* length)
 {
     m_ShaderManager.shaderSource(m_Context, shaderId, count, string, length);
@@ -453,6 +486,11 @@ void Repeater::glAttachShader (GLuint program, GLuint shader)
 GLuint Repeater::glCreateProgram (void)
 {
     return m_ShaderManager.createProgram(m_Context);
+}
+
+void Repeater::glDeleteProgram (GLuint program)
+{
+    return m_ShaderManager.deleteProgram(m_Context, program);
 }
 
 void Repeater::glUseProgram (GLuint program)
@@ -568,6 +606,16 @@ void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
         auto fbo = std::make_shared<ve::trackers::FramebufferMetadata>();
         m_Context.getFBOTracker().add(framebuffers[i],fbo);
     }
+}
+
+void Repeater::glDeleteFramebuffers (GLsizei n, const GLuint* framebuffers)
+{
+    OpenglRedirectorBase::glDeleteFramebuffers(n, framebuffers);
+    for(size_t i=0;i < n; i++)
+    {
+        m_Context.getFBOTracker().remove(framebuffers[i]);
+    }
+
 }
 
 void Repeater::glBindFramebuffer (GLenum target, GLuint framebuffer)

@@ -13,6 +13,7 @@ namespace managers
     {
     public:
         GLuint createShader(Context& context, GLenum shaderType);
+        void deleteShader(Context& context, GLuint shader);
         void shaderSource (Context& context, GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length);
         void compileShader (Context& context, GLuint shader);
 
@@ -21,6 +22,7 @@ namespace managers
         // Shader end 
 
         GLuint createProgram (Context& context);
+        void deleteProgram (Context& context, GLuint program);
         void useProgram (Context& context, GLuint program);
         void linkProgram (Context& context, GLuint program);
 

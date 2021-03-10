@@ -130,6 +130,12 @@ GLuint ShaderManager::createShader(Context& context, GLenum shaderType)
     return id;
 }
 
+void ShaderManager::deleteShader(Context& context, GLuint shader)
+{
+    context.getManager().shaders.remove(shader);
+    glDeleteShader(shader);
+}
+
 void ShaderManager::shaderSource (Context& context, GLuint shaderId, GLsizei count, const GLchar* const*string, const GLint* length)
 {
     auto concatenatedShader = glsl_preprocess::joinGLSLshaders(count, string, length);
@@ -236,6 +242,12 @@ GLuint ShaderManager::createProgram (Context& context)
     auto program = std::make_shared<ve::trackers::ShaderProgram>();
     context.getManager().add(result, program);
     return result;
+}
+
+void ShaderManager::deleteProgram (Context& context, GLuint program)
+{
+    context.getManager().remove(program);
+    glDeleteProgram(program);
 }
 
 void ShaderManager::useProgram (Context& context, GLuint program)

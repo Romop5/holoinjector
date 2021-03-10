@@ -45,6 +45,7 @@ namespace ve
 
         // Textures
         virtual void glGenTextures(GLsizei n,GLuint* textures) override;
+        virtual void glDeleteTextures(GLsizei n,const GLuint* textures) override;
 
         virtual void glTexImage1D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLint border,GLenum format,GLenum type,const GLvoid* pixels) override;
         virtual void glTexImage2D(GLenum target,GLint level,GLint internalFormat,GLsizei width,GLsizei height,GLint border,GLenum format,GLenum type,const GLvoid* pixels) override;
@@ -67,25 +68,30 @@ namespace ve
 
         // Renderbuffers
         virtual void glGenRenderbuffers (GLsizei n, GLuint* renderbuffers) override;
+        virtual void glDeleteRenderbuffers (GLsizei n, const GLuint* renderbuffers) override;
         virtual void glRenderbufferStorage (GLenum target, GLenum internalformat, GLsizei width, GLsizei height) override;
+        virtual void glRenderbufferStorageMultisample (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
         
 
         // Shader start
         virtual  GLuint glCreateShader(GLenum shaderType) override;
-        virtual  void glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length) override;
+        virtual void glDeleteShader (GLuint shader);
+        virtual void glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length) override;
 
         virtual void glCompileShader (GLuint shader) override;
 
         // Map program to vertex shader
         virtual  void glAttachShader (GLuint program, GLuint shader) override;
-        // Shader end 
+        // Shader end
 
         virtual  GLuint glCreateProgram (void) override;
-        virtual  void glUseProgram (GLuint program) override;
+        virtual void glDeleteProgram (GLuint program);
+        virtual void glUseProgram (GLuint program) override;
         virtual void glLinkProgram (GLuint program) override;
 
         // Framebuffers
         virtual  void glGenFramebuffers (GLsizei n, GLuint* framebuffers) override;
+        virtual  void glDeleteFramebuffers (GLsizei n, const GLuint* framebuffers) override;
         virtual  void glBindFramebuffer (GLenum target, GLuint framebuffer) override;
         virtual  void glFramebufferTexture (GLenum target, GLenum attachment, GLuint texture, GLint level) override;
         virtual  void glFramebufferTexture1D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) override;
