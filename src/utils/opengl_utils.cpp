@@ -81,10 +81,9 @@ std::optional<std::string> ve::opengl_utils::getShaderLogMessage(size_t shaderID
     glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &logSize);
     if(logSize)
     {
-        std::string log(' ', logSize+1);
+        std::string log(logSize+1, ' ');
         GLsizei realLogLength = 0;
         glGetShaderInfoLog(shaderID, logSize, &realLogLength, log.data());
-        log.resize(realLogLength);
         if(realLogLength)
         {
             return log;
@@ -99,10 +98,9 @@ std::optional<std::string> ve::opengl_utils::getProgramLogMessage(size_t program
     glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &logSize);
     if(logSize)
     {
-        std::string log(' ', logSize+1);
+        std::string log(logSize+1, ' ');
         GLsizei realLogLength = 0;
         glGetProgramInfoLog(programID, logSize, &realLogLength, log.data());
-        log.resize(realLogLength);
         if(realLogLength)
         {
             return log;
