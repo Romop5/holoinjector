@@ -1,3 +1,6 @@
+#define GL_GLEXT_PROTOTYPES 1
+#include <GL/gl.h>
+
 #include <string>
 #include <unordered_map>
 
@@ -70,4 +73,47 @@ bool ve::opengl_utils::takeScreenshot(const std::string& path)
     FreeImage_Unload(image);
     delete [] pixels;
     return true;
+}
+
+std::optional<std::string> ve::opengl_utils::getShaderLogMessage(size_t shaderID)
+{
+    GLint logSize = 0;
+    glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &logSize);
+    if(logSize)
+    {
+        std::string log(' ', logSize+1);
+        GLsizei realLogLength = 0;
+        glGetShaderInfoLog(shaderID, logSize, &realLogLength, log.data());
+        log.resize(realLogLength);
+        if(realLogLength)
+        {
+            return log;
+        }
+    }
+    return {};
+}
+
+std::optional<std::string> ve::opengl_utils::getProgramLogMessage(size_t programID)
+{
+    GLint logSize = 0;
+    glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &logSize);
+    if(logSize)
+    {
+        std::string log(' ', logSize+1);
+        GLsizei realLogLength = 0;
+        glGetProgramInfoLog(programID, logSize, &realLogLength, log.data());
+        log.resize(realLogLength);
+        if(realLogLength)
+        {
+            return log;
+        }
+    }
+    return {};
+}
+
+bool ve::opengl_utils::isProgramLinked(size_t programID)
+{
+    GLint linkStatus = 0;
+    glGetProgramiv(programID, GL_LINK_STATUS, &linkStatus);
+    return linkStatus;
 }

@@ -3,6 +3,7 @@
 #include <string>
 #include <GL/gl.h>
 #include <glm/glm.hpp>
+#include <optional>
 
 namespace ve 
 {
@@ -20,6 +21,11 @@ namespace opengl_utils
     std::string getEnumStringRepresentation(GLenum type);
 
     bool takeScreenshot(const std::string& path);
+
+    std::optional<std::string> getShaderLogMessage(size_t shaderID);
+    std::optional<std::string> getProgramLogMessage(size_t programID);
+
+    bool isProgramLinked(size_t programID);
 } //namespace opengl_utils
 } //namespace ve
 #endif

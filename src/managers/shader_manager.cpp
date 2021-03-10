@@ -8,11 +8,17 @@
 
 #include <cmath>
 #include "utils/glsl_preprocess.hpp"
+#include "utils/opengl_utils.hpp"
 #include "pipeline/pipeline_injector.hpp"
 #include "pipeline/output_fbo.hpp"
 
 using namespace ve::managers;
 using namespace ve::pipeline;
+using namespace ve::opengl_utils;
+
+/// Default maximal Geometry Shader invocations, defined by OpenGL standard
+constexpr auto defaultMaximumGSInvocations = 32;
+constexpr auto maximalOpenGLLogSize = 2048;
 
 namespace helper
 {
@@ -46,13 +52,7 @@ namespace helper
             glGetShaderiv(newShader,GL_COMPILE_STATUS, &status);
             if(status == GL_FALSE)
             {
-                GLint logSize = 0;
-                glGetShaderiv(newShader, GL_INFO_LOG_LENGTH, &logSize);
-                
-                GLsizei realLogLength = 0;
-                GLchar log[5120] = {0,};
-                glGetShaderInfoLog(newShader, logSize, &realLogLength, log);
-
+                const auto message = getShaderLogMessage(newShader);
                 hasError = true;
             }
             glAttachShader(programId, newShader);
@@ -66,13 +66,8 @@ namespace helper
             glGetProgramiv(programId, GL_LINK_STATUS, &linkStatus);
             if(linkStatus == GL_FALSE)
             {
-                GLint logSize = 0;
-                glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &logSize);
-
-                GLsizei realLogLength = 0;
-                GLchar log[5120] = {0,};
-                glGetProgramInfoLog(programId, logSize, &realLogLength, log);
-                output.linkErrorMessage = std::string(log);
+                auto optionalLog = getProgramLogMessage(programId);
+                output.linkErrorMessage = (optionalLog ? optionalLog.value() : std::string("Unable to get log"));
                 hasError = true;
             }
         }
@@ -132,10 +127,10 @@ void ShaderManager::linkProgram (Context& context, GLuint programId)
 
     // TODO: detect if number of invocations is supported
     parameters.countOfInvocations = context.getOutputFBO().getParams().getLayers();
-    if(parameters.countOfInvocations > 32)
+    if(parameters.countOfInvocations > defaultMaximumGSInvocations)
     {
-        parameters.countOfPrimitivesDuplicates = floor(parameters.countOfInvocations/32)+1;
-        parameters.countOfInvocations = 32;
+        parameters.countOfPrimitivesDuplicates = floor(parameters.countOfInvocations/defaultMaximumGSInvocations)+1;
+        parameters.countOfInvocations = defaultMaximumGSInvocations;
     }
 
     /*
@@ -171,13 +166,9 @@ void ShaderManager::linkProgram (Context& context, GLuint programId)
         glGetShaderiv(newShader,GL_COMPILE_STATUS, &status);
         if(status == GL_FALSE)
         {
-            GLint logSize = 0;
-            glGetShaderiv(newShader, GL_INFO_LOG_LENGTH, &logSize);
-            
-            GLsizei realLogLength = 0;
-            GLchar log[5120] = {0,};
-            glGetShaderInfoLog(newShader, logSize, &realLogLength, log);
-            Logger::logError("[Repeater] Error while compiling new shader type", type,log);
+            const auto optionalLog = getShaderLogMessage(newShader);
+            const auto outputLog = (optionalLog ? optionalLog.value() : "Unable to get log message");
+            Logger::logError("[Repeater] Error while compiling new shader type", type, outputLog);
             Logger::logError("Shader source:", sourceCode.c_str());
             return;
         }
@@ -185,23 +176,18 @@ void ShaderManager::linkProgram (Context& context, GLuint programId)
     }
     Logger::log("[Repeater] Relink program with new shaders");
     glLinkProgram(programId);
-    GLint linkStatus = 0;
-    glGetProgramiv(programId, GL_LINK_STATUS, &linkStatus);
+    auto linkStatus = isProgramLinked(programId);
     if(linkStatus == GL_FALSE)
     {
-        GLint logSize = 0;
-        glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &logSize);
-
-        GLsizei realLogLength = 0;
-        GLchar log[5120] = {0,};
-        glGetProgramInfoLog(programId, logSize, &realLogLength, log);
-
+        const auto optionalLog = getProgramLogMessage(programId);
+        const auto outputLog = (optionalLog ? optionalLog.value() : "Unable to get log message");
         // Dump shaders
+        Logger::logError("[Repeater] Link failed, dumping shader codes\nDUMP_START\n");
         for(auto& [type, sourceCode]: resultPipeline.pipeline)
         {
             Logger::logError("Shader source:", sourceCode.c_str(), "END_OF_SHADER");
         }
-        Logger::logError("[Repeater] Link failed with log:",log);
+        Logger::logError("[Repeater] Link failed with log:", outputLog, "\nEND_OF_DUMP");
     }
     assert(linkStatus == GL_TRUE);
     if(program->m_Metadata)
