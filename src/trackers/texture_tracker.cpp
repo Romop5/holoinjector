@@ -179,16 +179,22 @@ void TextureMetadata::freeShadowedTexture()
 
 void TextureMetadata::setTextureViewToLayer(size_t layer)
 {
+    CLEAR_GL_ERROR();
     GLuint viewId = m_shadowTextureViewId;
     assert(m_shadowedLayerVersionId != 0);
     // If view already exists, delete it
     if(m_shadowTextureViewId)
-        glDeleteTextures(1, &viewId);
-    glGenTextures(1, &viewId);
-    glTextureView(viewId, GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, getLevels(), layer, 1);
-    if(glGetError() != GL_NO_ERROR)
     {
-        Logger::logError("[Repeater]: Failed to create texture view.", ENHANCER_POS);
+        glDeleteTextures(1, &viewId);
+    }
+    m_shadowTextureViewId = 0;
+    glGenTextures(1, &viewId);
+    Logger::logDebugPerFrame("Creating texture view (layer = ",layer,") for ", TextureMetadata::getFormatAsString(getFormat()), " with res: ",getWidth(),"x",getHeight());
+    glTextureView(viewId, GL_TEXTURE_2D, m_shadowedLayerVersionId, getFormat(), 0, 1, layer, 1);
+    auto textureViewError =  glGetError();
+    if(textureViewError != GL_NO_ERROR)
+    {
+        Logger::logError("[Repeater]: Failed to create texture view.: ",ve::debug::convertErrorToString(textureViewError), ENHANCER_POS);
         return;
     }
     m_shadowTextureViewId = viewId;
@@ -287,6 +293,8 @@ void TextureUnitTracker::bindShadowedTexturesToLayer(size_t layer)
             {
                 glBindTexture(target, textureView);
                 ASSERT_GL_ERROR();
+            } else {
+                Logger::logError("[Repeater] TU: Texture has shadowed texture,but not view", ENHANCER_POS);
             }
         }
     }

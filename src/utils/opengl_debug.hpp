@@ -39,6 +39,7 @@ namespace debug
     void logOpenglDebugMessage(std::string file,size_t location, GLenum errorCode);
     void logOpenglDebugMessageStr(std::string file,size_t location, std::string error);
     void logTrace(const std::string msg);
+    std::string convertErrorToString(GLenum errorCode);
 }
 }
 

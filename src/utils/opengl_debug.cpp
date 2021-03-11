@@ -15,6 +15,11 @@ namespace ve::debug
         Logger::logError("[Repeater] OpenGL error:", errorCode,"(",reinterpret_cast<const char*>(gluErrorString(errorCode)),")", " at ",file,":",location);\
     }
 
+    std::string convertErrorToString(GLenum errorCode)
+    {
+        return reinterpret_cast<const char*>(gluErrorString(errorCode));
+    }
+
     void logOpenglDebugMessageStr(std::string file,size_t location, std::string error)
     {
         Logger::logError("[Repeater] OpenGL error:", error, " at ",file,":",location);\

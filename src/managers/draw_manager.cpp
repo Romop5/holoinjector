@@ -318,7 +318,7 @@ GLuint DrawManager::createSingleViewFBO(Context& context, size_t layer)
                     Logger::logDebug("[Repeater] Drawing to FBO without shadow FBO due to failed init", ENHANCER_POS);
 
                 } else {
-                    Logger::logError("Single-layer proxy FBO failed due to missing Shadow FBO");
+                    Logger::logError("[Repeater] Single-layer proxy FBO failed due to missing Shadow FBO");
                 }
             }
         }
