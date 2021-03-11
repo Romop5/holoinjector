@@ -129,6 +129,11 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
     geometryShaderStream << R"(
         void identity_main(int layer)
         {
+            // Only render once per draw call for singleViewID
+            if(enhancer_isSingleViewActivated && enhancer_singleViewID != layer)
+            {
+                return;
+            }
             // identity shader
             for(int i = 0; i < 3; i++)
             {
