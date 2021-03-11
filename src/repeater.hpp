@@ -62,7 +62,7 @@ namespace ve
         virtual void glTextureStorage1D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width) override;
         virtual void glTextureStorage2D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height) override;
         virtual void glTextureStorage3D (GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth) override;
- 
+
         virtual void glBindTexture(GLenum target,GLuint texture) override;
         virtual void glActiveTexture (GLenum texture) override;
 
@@ -98,6 +98,8 @@ namespace ve
         virtual  void glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) override;
         virtual  void glFramebufferTexture3D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset) override;
         virtual void glFramebufferRenderbuffer (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer) override;
+
+        virtual void glDrawBuffers (GLsizei n, const GLenum* bufs) override;
         // Framebuffers end
 
         

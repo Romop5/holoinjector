@@ -437,13 +437,13 @@ void Repeater::glBindTexture(GLenum target,GLuint texture)
     m_Context.getTextureTracker().bind(target,texture);
     auto fakeTextureId = texture;
 
-    /*if(m_Context.m_IsMultiviewActivated)
+    if(m_Context.m_IsMultiviewActivated)
     {
         if(m_Context.getTextureTracker().has(texture) && m_Context.getTextureTracker().get(texture)->hasShadowTexture())
         {
             fakeTextureId = m_Context.getTextureTracker().get(texture)->getTextureViewIdOfShadowedTexture();
         }
-    }*/
+    }
     OpenglRedirectorBase::glBindTexture(target,fakeTextureId);
 }
 
@@ -603,7 +603,7 @@ void Repeater::glGenFramebuffers (GLsizei n, GLuint* framebuffers)
     OpenglRedirectorBase::glGenFramebuffers(n, framebuffers);
     for(size_t i=0;i < n; i++)
     {
-        auto fbo = std::make_shared<ve::trackers::FramebufferMetadata>();
+        auto fbo = std::make_shared<ve::trackers::FramebufferMetadata>(framebuffers[i]);
         m_Context.getFBOTracker().add(framebuffers[i],fbo);
     }
 }
@@ -666,6 +666,18 @@ GLuint Repeater::glGetUniformBlockIndex (GLuint program, const GLchar* uniformBl
         record->m_UniformBlocks[std::string(uniformBlockName)] = block;
     }
     return result;
+}
+
+void Repeater::glDrawBuffers (GLsizei n, const GLenum* bufs)
+{
+    OpenglRedirectorBase::glDrawBuffers(n, bufs);
+    if(m_Context.getFBOTracker().hasBounded())
+    {
+        auto fbo = m_Context.getFBOTracker().getBound();
+        std::vector<GLenum> buffers;
+        buffers.assign(bufs, bufs+n);
+        fbo->setDrawBuffers(buffers);
+    }
 }
 
 void Repeater::glUniformBlockBinding (GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding) 

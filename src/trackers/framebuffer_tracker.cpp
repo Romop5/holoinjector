@@ -15,6 +15,12 @@ using namespace ve::trackers;
 ///////////////////////////////////////////////////////////////////////////////
 // FramebufferMetadata 
 ///////////////////////////////////////////////////////////////////////////////
+
+FramebufferMetadata::FramebufferMetadata(size_t id)
+    : m_id(id)
+{
+
+}
 void ve::trackers::FramebufferMetadata::attach(GLenum attachmentType, std::shared_ptr<TextureMetadata> texture, GLenum type, size_t level, size_t layer)
 {
     FramebufferAttachment attachment;
@@ -48,6 +54,16 @@ size_t ve::trackers::FramebufferMetadata::getShadowFBO() const
     return m_shadowFBOId;
 }
 
+
+void ve::trackers::FramebufferMetadata::setDrawBuffers(std::vector<GLenum> buffers)
+{
+    m_drawBuffers = buffers;
+    if(hasShadowFBO())
+    {
+        glNamedFramebufferDrawBuffers(m_shadowFBOId, buffers.size(), buffers.data());
+    }
+}
+
 void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
 {
     assert(hasAnyAttachment());
@@ -78,6 +94,10 @@ void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
     }
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     ASSERT_GL_EQ(status,GL_FRAMEBUFFER_COMPLETE);
+
+    glDrawBuffers(m_drawBuffers.size(), m_drawBuffers.data());
+    ASSERT_GL_ERROR();
+
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     glBindFramebuffer(GL_FRAMEBUFFER,shadowFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);

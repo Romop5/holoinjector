@@ -26,12 +26,15 @@ namespace trackers
 
     struct FramebufferMetadata
     {
+        explicit FramebufferMetadata(size_t id);
         void attach(GLenum attachmentType, std::shared_ptr<TextureMetadata> texture, GLenum type = GL_COLOR_ATTACHMENT0, size_t level = 0, size_t layer = 0);
         bool hasAttachment(GLenum attachmentType) const;
 
         bool hasFailedToCreateShadowFBO() const;
         bool hasShadowFBO() const;
         size_t getShadowFBO() const;
+
+        void setDrawBuffers(std::vector<GLenum> buffers);
 
         /// Create multi-layer shadow FBO
         void createShadowedFBO(size_t numLayers);
@@ -58,7 +61,10 @@ namespace trackers
         ContextTracker<FramebufferAttachment>& getAttachmentMap();
 
         static std::string getAttachmentTypeAsString(GLenum attachmentType);
+
         private:
+        size_t m_id;
+        std::vector<GLenum> m_drawBuffers;
         ContextTracker<FramebufferAttachment> m_attachments;
         std::vector<utils::FBORAII> m_proxyFBO;
 

@@ -20,7 +20,7 @@ TEST(FramebufferTracker, Basic) {
     /*
      * Create new FBO and only attach depth buffer
      */
-    ft.add(1, std::make_shared<FramebufferMetadata>());
+    ft.add(1, std::make_shared<FramebufferMetadata>(1));
     // Not binded yet, still default
     EXPECT_TRUE(ft.isFBODefault());
     // Bind new FBO
@@ -71,7 +71,7 @@ TEST(FramebufferTracker, NonDefaultAttachment) {
 
     for(size_t i = 0; i < 8; i++)
     {
-        ft.add(i+1, std::make_shared<FramebufferMetadata>());
+        ft.add(i+1, std::make_shared<FramebufferMetadata>(i+1));
         EXPECT_EQ(ft.getBoundId(),i);
         ft.bind(i+1);
         EXPECT_EQ(ft.getBoundId(),i+1);
@@ -83,14 +83,14 @@ TEST(FramebufferTracker, NonDefaultAttachment) {
 }
 TEST(FramebufferTracker, Stencil) {
     FramebufferTracker ft;
-    ft.add(1, std::make_shared<FramebufferMetadata>());
+    ft.add(1, std::make_shared<FramebufferMetadata>(1));
     ft.bind(1);
     ft.getBound()->attach(GL_STENCIL_ATTACHMENT, 0);
     EXPECT_FALSE(ft.getBound()->isShadowMapFBO());
 }
 TEST(FramebufferTracker, DepthStencil) {
     FramebufferTracker ft;
-    ft.add(1, std::make_shared<FramebufferMetadata>());
+    ft.add(1, std::make_shared<FramebufferMetadata>(1));
     ft.bind(1);
     ft.getBound()->attach(GL_DEPTH_STENCIL_ATTACHMENT, 0);
     EXPECT_TRUE(ft.getBound()->isShadowMapFBO());
@@ -98,7 +98,7 @@ TEST(FramebufferTracker, DepthStencil) {
 
 TEST(FramebufferTracker, DeleteFBO) {
     FramebufferTracker ft;
-    ft.add(1, std::make_shared<FramebufferMetadata>());
+    ft.add(1, std::make_shared<FramebufferMetadata>(1));
     ft.bind(1);
     ft.getBound()->attach(GL_DEPTH_ATTACHMENT, 0);
     EXPECT_TRUE(ft.getBound()->isShadowMapFBO());
