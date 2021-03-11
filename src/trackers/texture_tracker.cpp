@@ -116,14 +116,14 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
     }
     if(getType() != GL_TEXTURE_2D)
     {
-        Logger::logError("[Repeater]: Expected GL_TEXTURE_2D as texture type of FBO's attachment, got ",getTypeAsString(getType()), " instead",ENHANCER_POS);
+        Logger::logError(" Expected GL_TEXTURE_2D as texture type of FBO's attachment, got ",getTypeAsString(getType()), " instead",ENHANCER_POS);
         CLEAR_GL_ERROR();
         return;
     }
 
     if(getWidth() == 0 || getHeight() == 0)
     {
-        Logger::logError("[Repeater]: Failed to get texture size. Got ",getWidth(),"x",getHeight(), ENHANCER_POS);
+        Logger::logError(" Failed to get texture size. Got ",getWidth(),"x",getHeight(), ENHANCER_POS);
         return;
     }
 
@@ -148,7 +148,7 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, getFormat(), shadowTextureWidth,  shadowTextureHeight, numOfLayers);
     if(glGetError() != GL_NO_ERROR)
     {
-        Logger::logError("[Repeater] Failed to set layered shadow texture's storage", ENHANCER_POS);
+        Logger::logError("Failed to set layered shadow texture's storage", ENHANCER_POS);
         return;
     }
 
@@ -194,7 +194,7 @@ void TextureMetadata::setTextureViewToLayer(size_t layer)
     auto textureViewError =  glGetError();
     if(textureViewError != GL_NO_ERROR)
     {
-        Logger::logError("[Repeater]: Failed to create texture view.: ",ve::debug::convertErrorToString(textureViewError), ENHANCER_POS);
+        Logger::logError(" Failed to create texture view.: ",ve::debug::convertErrorToString(textureViewError), ENHANCER_POS);
         return;
     }
     m_shadowTextureViewId = viewId;
@@ -294,7 +294,7 @@ void TextureUnitTracker::bindShadowedTexturesToLayer(size_t layer)
                 glBindTexture(target, textureView);
                 ASSERT_GL_ERROR();
             } else {
-                Logger::logError("[Repeater] TU: Texture has shadowed texture,but not view", ENHANCER_POS);
+                Logger::logError("TU: Texture has shadowed texture,but not view", ENHANCER_POS);
             }
         }
     }
@@ -452,7 +452,7 @@ bool TextureTracker::isSizedFormat(GLenum format)
             return true;
     }
     // TODO: add all cases
-    Logger::logDebug("[Repeater] Texture's format ",TextureMetadata::getFormatAsString(format), " marked as non-sized");
+    Logger::logDebug("Texture's format ",TextureMetadata::getFormatAsString(format), " marked as non-sized");
     return false;
 }
 

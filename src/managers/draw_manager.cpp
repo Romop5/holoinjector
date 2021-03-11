@@ -67,7 +67,7 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
         {
             setEnhancerDecodedProjection(context,context.getManager().getBoundId(),indexStructure.projection);
         } else {
-            Logger::log("[Repeater] Unexpected state. Expected UBO, but not found. Falling back to identity\n");
+            Logger::log("Unexpected state. Expected UBO, but not found. Falling back to identity\n");
             setEnhancerIdentity(context);
         }
     }
@@ -93,7 +93,7 @@ bool DrawManager::shouldSkipDrawCall(Context& context)
    }
    if(context.m_IsMultiviewActivated && isRepeatingSuitable(context) && (!isSingleViewPossible(context)))
    {
-       Logger::logDebug("[Repeater] Shadowing not possible -> terminating draw call");
+       Logger::logDebug("Shadowing not possible -> terminating draw call");
        return true;
    }
    return false;
@@ -324,10 +324,10 @@ GLuint DrawManager::createSingleViewFBO(Context& context, size_t layer)
             } else {
                 if(fbo->hasFailedToCreateShadowFBO())
                 {
-                    Logger::logDebug("[Repeater] Drawing to FBO without shadow FBO due to failed init", ENHANCER_POS);
+                    Logger::logDebug("Drawing to FBO without shadow FBO due to failed init", ENHANCER_POS);
 
                 } else {
-                    Logger::logError("[Repeater] Single-layer proxy FBO failed due to missing Shadow FBO");
+                    Logger::logError("Single-layer proxy FBO failed due to missing Shadow FBO");
                 }
             }
         }

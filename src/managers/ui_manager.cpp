@@ -132,7 +132,7 @@ void UIManager::onKeyPressed(Context& context, size_t keySym)
         default:
         break;
     }
-    Logger::log("[Repeater] Setting: frontDistance (",context.getCameraParameters().m_frontOpticalAxisCentreDistance, "), X multiplier(",
+    Logger::log("Setting: frontDistance (",context.getCameraParameters().m_frontOpticalAxisCentreDistance, "), X multiplier(",
             context.getCameraParameters().m_XShiftMultiplier, ")");
     context.getCameras().updateParamaters(context.getCameraParameters());
 }

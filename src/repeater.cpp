@@ -229,7 +229,7 @@ GLXContext Repeater::glXCreateContext(Display * dpy, XVisualInfo * vis, GLXConte
             auto ctx = proc(dpy,bestFbc,shareList,direct, attrib_list);
             //if(ctx)
             //    return ctx;
-            Logger::log("[Repeater] Failed to create OpenGL 4.6 context, falling back to original glXCreateContext");
+            Logger::log("Failed to create OpenGL 4.6 context, falling back to original glXCreateContext");
         }
     }
     return OpenglRedirectorBase::glXCreateContext(dpy, vis, shareList, direct);
@@ -273,7 +273,7 @@ Bool Repeater::glXMakeContextCurrent(Display * dpy, GLXDrawable draw, GLXDrawabl
 {
     if(m_IsInitialized)
     {
-        Logger::log("[Repeater] Deinitializing for context: ", static_cast<void*>(context));
+        Logger::log("Deinitializing for context: ", static_cast<void*>(context));
         deinitialize();
     }
 
@@ -334,7 +334,7 @@ void Repeater::glTexSubImage1D(GLenum target,GLint level,GLint xoffset,GLsizei w
     OpenglRedirectorBase::glTexSubImage1D(target,level,xoffset,width,format,type,pixels);
     if(xoffset > 0)
     {
-        Logger::logDebug("[Repeater] Skipping setStorage() due to xoffset != 0");
+        Logger::logDebug("Skipping setStorage() due to xoffset != 0");
         return;
     }
     auto finalFormat = ve::trackers::TextureTracker::convertToSizedFormat(format,type);
@@ -346,7 +346,7 @@ void Repeater::glTexSubImage2D(GLenum target,GLint level,GLint xoffset,GLint yof
     OpenglRedirectorBase::glTexSubImage2D(target,level,xoffset,yoffset,width,height,format,type,pixels);
     if(xoffset > 0 || yoffset > 0)
     {
-        Logger::logDebug("[Repeater] Skipping setStorage() due to xoffset != 0 || yoffset != 0");
+        Logger::logDebug("Skipping setStorage() due to xoffset != 0 || yoffset != 0");
         return;
     }
     auto finalFormat = ve::trackers::TextureTracker::convertToSizedFormat(format,type);
@@ -358,7 +358,7 @@ void Repeater::glTexSubImage3D (GLenum target, GLint level, GLint xoffset, GLint
     OpenglRedirectorBase::glTexSubImage3D(target,level,xoffset,yoffset,zoffset,width,height,depth,format,type,pixels);
     if(xoffset > 0 || yoffset > 0 || zoffset > 0)
     {
-        Logger::logDebug("[Repeater] Skipping setStorage() due to xoffset != 0 || yoffset != 0 || zoffset != 0");
+        Logger::logDebug("Skipping setStorage() due to xoffset != 0 || yoffset != 0 || zoffset != 0");
         return;
     }
     auto finalFormat = ve::trackers::TextureTracker::convertToSizedFormat(format,type);
@@ -506,7 +506,7 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     // get current's program transformation matrix name
     if(!m_Context.getManager().hasBounded())
     {
-        Logger::logDebugPerFrame("[Repeater] glUniformMatrix4fv called without bound program!", ENHANCER_POS);
+        Logger::logDebugPerFrame("glUniformMatrix4fv called without bound program!", ENHANCER_POS);
         return;
     }
     auto program = m_Context.getManager().getBound();
@@ -530,8 +530,8 @@ void Repeater::glUniformMatrix4fv (GLint location, GLsizei count, GLboolean tran
     auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(mat);
 
     auto& ep = estimatedParameters;
-    Logger::logDebugPerFrame("[Repeater] estimating parameters from uniform matrix");
-    Logger::logDebugPerFrame("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
+    Logger::logDebugPerFrame("estimating parameters from uniform matrix");
+    Logger::logDebugPerFrame("parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
 
     m_DrawManager.setEnhancerDecodedProjection(m_Context,programID, estimatedParameters);
 }
@@ -808,10 +808,10 @@ void Repeater::glBufferData (GLenum target, GLsizeiptr size, const void* data, G
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data)+metadata.transformationOffset, sizeof(float)*16);
             auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(metadata.transformation);
 
-            Logger::logDebugPerFrame("[Repeater] estimating parameters from UBO");
+            Logger::logDebugPerFrame("estimating parameters from UBO");
 
             auto& ep = estimatedParameters;
-            Logger::logDebugPerFrame("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
+            Logger::logDebugPerFrame("parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") far (",ep.farPlane,") isPerspective (",ep.isPerspective,")");
 
             // TODO: refactor into class method of Binding index structure
             metadata.projection = estimatedParameters;
@@ -838,9 +838,9 @@ void Repeater::glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size,
         {
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data)+metadata.transformationOffset, sizeof(float)*16);
             auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(metadata.transformation);
-            Logger::logDebugPerFrame("[Repeater] estimating parameters from UBO");
+            Logger::logDebugPerFrame("estimating parameters from UBO");
             auto& ep = estimatedParameters;
-            Logger::logDebugPerFrame("[Repeater] parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") near(",ep.farPlane,")");
+            Logger::logDebugPerFrame("parameters: fx(",ep.fx,") fy(",ep.fy,") near (",ep.nearPlane,") near(",ep.farPlane,")");
 
             metadata.projection = estimatedParameters;
             metadata.hasTransformation = true;
@@ -853,7 +853,7 @@ void Repeater::glMatrixMode(GLenum mode)
 {
     OpenglRedirectorBase::glMatrixMode(mode);
     m_Context.getLegacyTracker().matrixMode(mode);
-    //Logger::log("[Repeater] glMatrixMode ", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
+    //Logger::log("glMatrixMode ", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
 }
 void Repeater::glLoadMatrixd(const GLdouble* m)
 {
@@ -978,7 +978,7 @@ Window Repeater::XCreateWindow(Display *display, Window parent, int x, int y, un
             //attributes->override_redirect = True;
         }
     } else {
-        Logger::logDebug("[Repeater] XCreateWindow called with resolution ", width, "x",height,", assuming input window");
+        Logger::logDebug("XCreateWindow called with resolution ", width, "x",height,", assuming input window");
     }
     return OpenglRedirectorBase::XCreateWindow(display, parent, x,y,width, height, border_width, depth, classInstance, visual, valuemask, attributes);
 }

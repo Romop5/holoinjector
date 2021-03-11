@@ -15,11 +15,11 @@
 template<typename T>
 void ve::opengl_utils::dumpOpenglMatrix(const T* m)
 {
-    Logger::log("[Repeater] Matrix: ");
-    Logger::log("[Repeater] ", m[0],m[4],m[8],m[12]);
-    Logger::log("[Repeater] ", m[1],m[5],m[9],m[13]);
-    Logger::log("[Repeater] ", m[2],m[6],m[10],m[14]);
-    Logger::log("[Repeater] ", m[3],m[7],m[11],m[15]);
+    Logger::log("Matrix: ");
+    Logger::log("", m[0],m[4],m[8],m[12]);
+    Logger::log("", m[1],m[5],m[9],m[13]);
+    Logger::log("", m[2],m[6],m[10],m[14]);
+    Logger::log("", m[3],m[7],m[11],m[15]);
 }
 
 template<>
@@ -66,7 +66,7 @@ bool ve::opengl_utils::takeScreenshot(const std::string& path)
     FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF, 0xFF00, 0xFF0000, false);
     if(!FreeImage_Save(FIF_BMP, image, path.c_str(), 0))
     {
-        Logger::logError("[Repeater] Failed to save screenshot:", path.c_str());
+        Logger::logError("Failed to save screenshot:", path.c_str());
         return false;
     }
     // Free resources

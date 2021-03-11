@@ -41,13 +41,13 @@ namespace helper
     {
         if(result.hasLinkedSuccessfully)
         {
-            Logger::logDebug("[Repeater] Program creation succeeded");
+            Logger::logDebug("Program creation succeeded");
             return;
         }
         Logger::logDebug("========================================================================");
         Logger::logDebug("START OF COMPILATION RESULT");
         Logger::logDebug("========================================================================");
-        Logger::logDebug("[Repeater] Program compilation & link failed. Precise reasons:");
+        Logger::logDebug("Program compilation & link failed. Precise reasons:");
         Logger::logDebug("           Has program linked: ", result.hasLinkedSuccessfully);
         Logger::logDebug("           Link error message ", result.linkErrorMessage.value_or("Unknown"),"\n");
         Logger::logDebug("           Attached shaders", result.shaders.size());
@@ -139,7 +139,7 @@ void ShaderManager::deleteShader(Context& context, GLuint shader)
 void ShaderManager::shaderSource (Context& context, GLuint shaderId, GLsizei count, const GLchar* const*string, const GLint* length)
 {
     auto concatenatedShader = glsl_preprocess::joinGLSLshaders(count, string, length);
-    Logger::log("[Repeater] glShaderSource: [",shaderId,"] SOURCE END");
+    Logger::log("glShaderSource: [",shaderId,"] SOURCE END");
     if(context.getManager().shaders.has(shaderId))
     {
         auto shader = context.getManager().shaders.get(shaderId);
@@ -188,7 +188,7 @@ void ShaderManager::linkProgram (Context& context, GLuint programId)
         glDetachShader(programId, shader->m_Id);
         // store source code for given shader type
         pipeline[shader->m_Type] = shader->preprocessedSourceCode;
-        Logger::log("[Repeater] Detaching:", shader->m_Type, shader->m_Id);
+        Logger::log("Detaching:", shader->m_Type, shader->m_Id);
     }
 
     /*
@@ -197,7 +197,7 @@ void ShaderManager::linkProgram (Context& context, GLuint programId)
     auto resultPipeline = plInjector.process(pipeline,parameters);
     program->m_Metadata = std::move(resultPipeline.metadata);
     program->m_Metadata->m_IsLinkedCorrectly = false;
-    Logger::log("[Repeater] Pipeline process succeeded?: ", resultPipeline.wasSuccessfull);
+    Logger::log("Pipeline process succeeded?: ", resultPipeline.wasSuccessfull);
 
     auto status = helper::tryCompilingShaderProgram(resultPipeline.pipeline, programId);
     if(!status.hasLinkedSuccessfully)
@@ -215,19 +215,19 @@ void ShaderManager::linkProgram (Context& context, GLuint programId)
 
 void ShaderManager::compileShader (Context& context, GLuint shader)
 {
-    Logger::log("[Repeater] glCompileShader");
+    Logger::log("glCompileShader");
     glCompileShader(shader);
     GLint status;
     glGetShaderiv(shader, GL_COMPILE_STATUS,&status);
     if(status == GL_FALSE)
     {
-        Logger::logError("[Repeater] Error while comping shader [", shader, "]");
+        Logger::logError("Error while comping shader [", shader, "]");
     }
 }
 
 void ShaderManager::attachShader (Context& context, GLuint program, GLuint shader)
 {
-    Logger::log("[Repeater] attaching shader ",shader," to program ", program);
+    Logger::log("attaching shader ",shader," to program ", program);
     //glAttachShader(program,shader);
 
     if(!context.getManager().has(program) || !context.getManager().shaders.has(shader))

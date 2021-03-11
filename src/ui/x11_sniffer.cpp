@@ -47,7 +47,7 @@ int ve::X11Sniffer::onXNextEvent(Display *display, XEvent* event_return)
         if(keyEvent->serial != lastSerial)
         {
             lastSerial = keyEvent->serial;
-            Logger::logDebugPerFrame("[Repeater] XNextEvent KeyPress",
+            Logger::logDebugPerFrame("XNextEvent KeyPress",
                     keyEvent->type,keyEvent->serial, keyEvent->send_event,
                     static_cast<void*>(keyEvent->display),
                     keyEvent->x,keyEvent->y,keyEvent->state,keyEvent->keycode, keyEvent->same_screen);
@@ -72,7 +72,7 @@ int ve::X11Sniffer::onXNextEvent(Display *display, XEvent* event_return)
             std::swap(X11MouseHook.m_LastXPosition,mouseEvent->x);
             std::swap(X11MouseHook.m_LastYPosition,mouseEvent->y);
 
-            Logger::logDebugPerFrame("[Repeater] MotionNotify", dx, dy);
+            Logger::logDebugPerFrame("MotionNotify", dx, dy);
 
             fillEmptyEvent(event_return);
         }

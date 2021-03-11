@@ -46,8 +46,8 @@ bool ve::utils::glShader::create(const std::string& src, GLenum type)
         GLsizei realLogLength = 0;
         GLchar log[5120] = {0,};
         glGetShaderInfoLog(shaderId, logSize, &realLogLength, log);
-        Logger::log("[Repeater] Failed to compile", log);
-        Logger::log("[Repeater] code", src.c_str());
+        Logger::log("Failed to compile", log);
+        Logger::log("code", src.c_str());
         std::fflush(stdout);
     }
     setID(shaderId);

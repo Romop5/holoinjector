@@ -19,7 +19,7 @@ void RenderbufferMetadata::createShadowedTexture(size_t numOfLayers)
 {
     if(getWidth() == 0 || getHeight() == 0)
     {
-        Logger::logError("[Repeater]: Failed to get texture size. Got ",getWidth(),"x",getHeight(), ENHANCER_POS);
+        Logger::logError(" Failed to get texture size. Got ",getWidth(),"x",getHeight(), ENHANCER_POS);
         return;
     }
     Logger::logDebug("Creating shadow texture: renderbuffer: with resolution: ", getWidth(), "x",
@@ -38,10 +38,10 @@ void RenderbufferMetadata::createShadowedTexture(size_t numOfLayers)
     auto storageError = glGetError();
     if(storageError == GL_INVALID_ENUM)
     {
-        Logger::logError("[Repeater] Failed to create renderbuffer with intercepted format. Falling back to GL_DEPTH_COMPONENT32");
+        Logger::logError("Failed to create renderbuffer with intercepted format. Falling back to GL_DEPTH_COMPONENT32");
         glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH_COMPONENT32, getWidth(), getHeight(), numOfLayers);
     } else {
-        Logger::logError("[Repeater] Error while creating texture for renderbuffer texture", ENHANCER_POS);
+        Logger::logError("Error while creating texture for renderbuffer texture", ENHANCER_POS);
     }
 
     ASSERT_GL_ERROR();

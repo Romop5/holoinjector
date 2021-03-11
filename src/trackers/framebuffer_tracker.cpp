@@ -83,7 +83,7 @@ void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
             texture->createShadowedTexture(numLayers);
             if(!texture->hasShadowTexture())
             {
-                Logger::logError("[Repeater] Failed to create shadow texture for FBO. ", ENHANCER_POS);
+                Logger::logError("Failed to create shadow texture for FBO. ", ENHANCER_POS);
                 return;
             }
         }
@@ -132,8 +132,8 @@ GLuint ve::trackers::FramebufferMetadata::createProxyFBO(size_t layer)
         return m_proxyFBO[layer].getID();
     }
 
-    Logger::logDebug("[Repeater] proxy FBO for layer ",layer," not found in cache -> creating");
-    Logger::logDebug("[Repeater] cache size:", m_proxyFBO.size(), " elements");
+    Logger::logDebug("proxy FBO for layer ",layer," not found in cache -> creating");
+    Logger::logDebug("cache size:", m_proxyFBO.size(), " elements");
 
     m_proxyFBO.resize(layer+1);
 
@@ -157,9 +157,9 @@ GLuint ve::trackers::FramebufferMetadata::createProxyFBO(size_t layer)
     ASSERT_GL_EQ(status, GL_FRAMEBUFFER_COMPLETE);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     ASSERT_GL_ERROR();
-    Logger::logDebug("[Repeater] storing proxy FBO for layer ",layer);
+    Logger::logDebug("storing proxy FBO for layer ",layer);
     m_proxyFBO[layer] = std::move(utils::FBORAII(proxyFBO));
-    Logger::logDebug("[Repeater] post cache size:", m_proxyFBO.size(), " elements");
+    Logger::logDebug("post cache size:", m_proxyFBO.size(), " elements");
     return proxyFBO;
 }
 
