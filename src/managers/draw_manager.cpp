@@ -131,6 +131,9 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
     const auto numOfLayers = context.getOutputFBO().getParams().getLayers();
     for(size_t l = 0; l < numOfLayers; l++)
     {
+        // Only render once if FBO can not be turend to layered
+        if(!isSingleViewPossible(context) && l> 0)
+            break;
         context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(l);
 
         auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_isSingleViewActivated");
@@ -161,6 +164,9 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
     }
     for(size_t cameraID = 0; cameraID < context.getCameras().getCameras().size(); cameraID++)
     {
+        // Only render once if FBO can not be turend to layered
+        if(!isSingleViewPossible(context) && cameraID > 0)
+            break;
         // Bind correct layered texture
         context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(cameraID);
 
@@ -199,6 +205,9 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
 
     for(size_t cameraID = 0; cameraID < context.getCameras().getCameras().size(); cameraID++)
     {
+        // Only render once if FBO can not be turend to layered
+        if(!isSingleViewPossible(context) && cameraID > 0)
+            break;
         context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(cameraID);
         const auto& camera = context.getCameras().getCameras()[cameraID];
 
@@ -327,6 +336,7 @@ GLuint DrawManager::createSingleViewFBO(Context& context, size_t layer)
         return context.getOutputFBO().createProxyFBO(layer);
     }
 }
+
 bool DrawManager::isSingleViewPossible(Context& context)
 {
     if(context.getFBOTracker().hasBounded())
