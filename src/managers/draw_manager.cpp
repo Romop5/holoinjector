@@ -125,6 +125,7 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
         auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_isSingleViewActivated");
         glUniform1i(loc, false);
         drawCallLambda();
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawGS: single view", ENHANCER_POS);
         return;
     }
 
@@ -142,6 +143,7 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
         loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
         glUniform1i(loc, l);
         drawCallLambda();
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawGS: layer ",l, ENHANCER_POS);
     }
     context.getTextureTracker().getTextureUnits().unbindShadowedTextures();
 }
@@ -160,6 +162,7 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
         glUniform1i(loc, middleCamera);
 
         drawCallLambda();
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawVS: single", ENHANCER_POS);
         return;
     }
     for(size_t cameraID = 0; cameraID < context.getCameras().getCameras().size(); cameraID++)
@@ -183,6 +186,8 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
         glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 
         drawCallLambda();
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawVS: layer: ",cameraID,
+                "shadowFBO: ", shadowFBO, ENHANCER_POS);
     }
     context.getTextureTracker().getTextureUnits().unbindShadowedTextures();
 }
@@ -200,6 +205,7 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
         glUniform1i(loc, middleCamera);
 
         drawCallLambda();
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawLegacy: single", ENHANCER_POS);
         return;
     }
 
@@ -221,11 +227,21 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
         const auto& t = camera.getViewMatrix();
         setEnhancerShift(context,t,camera.getAngle()*context.getCameraParameters().m_XShiftMultiplier/context.getCameraParameters().m_frontOpticalAxisCentreDistance);
         drawCallLambda();
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawLegacy: layer", cameraID,
+                "shadowFBO: ", shadowFBO, ENHANCER_POS);
         resetEnhancerShift(context);
     }
     context.getTextureTracker().getTextureUnits().unbindShadowedTextures();
 }
 
+
+std::string DrawManager::dumpDrawContext(Context& context) const
+{
+    std::stringstream ss;
+    ss << "[FBO: "      << context.getFBOTracker().getBoundId() << "] ";
+    ss << "[Program: "  << context.getManager().getBoundId() << "] ";
+    return ss.str();
+}
 /*
  * ----------------------------------------------------------------------------
  */

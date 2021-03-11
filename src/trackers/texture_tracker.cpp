@@ -291,6 +291,7 @@ void TextureUnitTracker::bindShadowedTexturesToLayer(size_t layer)
             auto textureView = texture->getTextureViewIdOfShadowedTexture();
             if(textureView)
             {
+                Logger::logDebugPerFrame("TU: bindShadowTexture (",texture->getID()," -> ",textureView, ENHANCER_POS);
                 glBindTexture(target, textureView);
                 ASSERT_GL_ERROR();
             } else {

@@ -31,6 +31,8 @@ class DrawManager
     /// Draw without, just using Vertex Shader + repeating
     void drawWithVertexShader(Context& context, const std::function<void(void)>& code);
 
+    std::string dumpDrawContext(Context& context) const;
+
     // TODO: Replace setters with separate class, devoted for intershader communication
     void setEnhancerShift(Context& context, const glm::mat4& viewSpaceTransform, float projectionAdjust = 0.0);
     void resetEnhancerShift(Context& context);
