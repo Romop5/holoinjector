@@ -21,14 +21,33 @@ ve::Logger::LogLevel ve::Logger::getMaximumLevel() const
     return m_maximalLogLevel;
 }
 
+void ve::Logger::incrementFrameNumber()
+{
+    m_currentFrameID++;
+}
+
 void ve::Logger::printLog(const std::string& msg, LogLevel level)
 {
     if(m_maximalLogLevel < level)
         return;
+    printLogBanner(level);
     printf("%s", msg.c_str());
 }
 
 void ve::Logger::flush()
 {
     fflush(stdout);
+}
+
+void ve::Logger::printLogBanner(LogLevel level)
+{
+    printf("[Repeater]");
+    switch(level)
+    {
+        case DEBUG_PER_FRAME_LOG:
+            printf("[Frm: %u]", m_currentFrameID);
+            break;
+        default:
+            break;
+    }
 }

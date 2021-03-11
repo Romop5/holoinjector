@@ -255,6 +255,7 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
     });
 
     m_Context.getDiagnostics().incrementFrameCount();
+    Logger::getInstance().incrementFrameNumber();
     if(m_Context.getDiagnostics().hasReachedLastFrame())
     {
         // Note: this is debug only, leaves mem. leaks and uncleaned objects

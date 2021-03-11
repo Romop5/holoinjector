@@ -36,6 +36,9 @@ namespace ve
         /// Get currently set maximum
         LogLevel getMaximumLevel() const;
 
+        /// Debug Per-Frame: Increment current frame number
+        void incrementFrameNumber();
+
         /**
          * @brief Writes message into log stream
          *
@@ -104,7 +107,11 @@ namespace ve
         }
 
         private:
+        void printLogBanner(LogLevel level);
+
         LogLevel m_maximalLogLevel = DEBUG_PER_FRAME_LOG;
+
+        size_t m_currentFrameID = 0;
     };
 } //namespace ve
 
