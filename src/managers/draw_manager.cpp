@@ -21,6 +21,36 @@
 using namespace ve;
 using namespace ve::managers;
 
+namespace helpers
+{
+    namespace uniforms
+    {
+        /*
+         * \brief Enhancer internal: don't repeat draw calls and render to a single output layer of
+         * bounded FBO
+         */
+        void renderToSingleLayer(size_t shaderId, size_t layerID)
+        {
+            auto loc = glGetUniformLocation(shaderId, "enhancer_isSingleViewActivated");
+            glUniform1i(loc, true);
+            ASSERT_GL_ERROR();
+
+            loc = glGetUniformLocation(shaderId, "enhancer_singleViewID");
+            glUniform1i(loc, layerID);
+            ASSERT_GL_ERROR();
+        }
+        /*
+         * \brief Enhancer internal: replicate transformed geometry to all output layers of bound FBO
+         */
+        void renderToAllLayers(size_t shaderId)
+        {
+            auto loc = glGetUniformLocation(shaderId, "enhancer_isSingleViewActivated");
+            glUniform1i(loc, false);
+            ASSERT_GL_ERROR();
+        }
+    }
+}
+
 void DrawManager::draw(Context& context, const std::function<void(void)>& drawCallLambda)
 {
     // Determine if shader is bound, if FBO is correctly bound, etc
@@ -94,7 +124,7 @@ bool DrawManager::shouldSkipDrawCall(Context& context)
    if(context.m_IsMultiviewActivated && isRepeatingSuitable(context) && (!isSingleViewPossible(context)))
    {
        Logger::logDebug("Shadowing not possible -> terminating draw call");
-       return true;
+       //return true;
    }
    return false;
 }
@@ -120,10 +150,17 @@ void DrawManager::drawGeneric(Context& context, const std::function<void(void)>&
 void DrawManager::drawWithGeometryShader(Context& context, const std::function<void(void)>& drawCallLambda)
 {
     debug::logTrace("drawWithGeometryShader");
-    if(!context.m_IsMultiviewActivated || !context.getTextureTracker().getTextureUnits().hasShadowedTextureBinded())
+    if(!context.m_IsMultiviewActivated || !isSingleViewPossible(context))
     {
-        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_isSingleViewActivated");
-        glUniform1i(loc, false);
+        helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(),0);
+        drawCallLambda();
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawGS: multiview off", ENHANCER_POS);
+        return;
+    }
+
+    if(!context.getTextureTracker().getTextureUnits().hasShadowedTextureBinded())
+    {
+        helpers::uniforms::renderToAllLayers(context.getManager().getBoundId());
         drawCallLambda();
         Logger::logDebugPerFrame(dumpDrawContext(context), "drawGS: single view", ENHANCER_POS);
         return;
@@ -132,16 +169,9 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
     const auto numOfLayers = context.getOutputFBO().getParams().getLayers();
     for(size_t l = 0; l < numOfLayers; l++)
     {
-        // Only render once if FBO can not be turend to layered
-        if(!isSingleViewPossible(context) && l> 0)
-            break;
         context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(l);
 
-        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_isSingleViewActivated");
-        glUniform1i(loc, true);
-
-        loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
-        glUniform1i(loc, l);
+        helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), l);
         drawCallLambda();
         Logger::logDebugPerFrame(dumpDrawContext(context), "drawGS: layer ",l, ENHANCER_POS);
     }
@@ -152,38 +182,36 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
 {
     debug::logTrace("drawWithVertexShader");
     const auto middleCamera = (context.getCameras().getCameras().size()/2);
-    if(!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
+    if(!context.m_IsMultiviewActivated || !isSingleViewPossible(context))
     {
-        if(context.m_IsMultiviewActivated)
-        {
-            context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(0);
-        }
-        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
-        glUniform1i(loc, middleCamera);
+        helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
+        drawCallLambda();
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawVS: non-multiview", ENHANCER_POS);
+        return;
+    }
 
+    if(context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating())
+    {
+        context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(middleCamera);
+
+        helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
         drawCallLambda();
         Logger::logDebugPerFrame(dumpDrawContext(context), "drawVS: single", ENHANCER_POS);
         return;
     }
     for(size_t cameraID = 0; cameraID < context.getCameras().getCameras().size(); cameraID++)
     {
-        // Only render once if FBO can not be turend to layered
-        if(!isSingleViewPossible(context) && cameraID > 0)
-            break;
         // Bind correct layered texture
         context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(cameraID);
 
-        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_isSingleViewActivated");
-        glUniform1i(loc, true);
-
-        // Set correct cameraID
-        loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
-        glUniform1i(loc, cameraID);
  
         // Create & set single view for current render
         auto shadowFBO = createSingleViewFBO(context, cameraID);
         assert(shadowFBO != 0);
         glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+
+        // Single-view FBO only contains a single layer => 0
+        helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
 
         drawCallLambda();
         Logger::logDebugPerFrame(dumpDrawContext(context), "drawVS: layer: ",cameraID,
@@ -195,15 +223,17 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
 void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& drawCallLambda)
 {
     const auto middleCamera = (context.getCameras().getCameras().size()/2);
-    if(!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
+    if(!context.m_IsMultiviewActivated || !isSingleViewPossible(context))
     {
-        if(context.m_IsMultiviewActivated)
-        {
-            context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(0);
-        }
-        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
-        glUniform1i(loc, middleCamera);
-
+        helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
+        drawCallLambda();
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawLegacy: non-multiview", ENHANCER_POS);
+        return;
+    }
+    if((context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()) )
+    {
+        context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(0);
+        helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
         drawCallLambda();
         Logger::logDebugPerFrame(dumpDrawContext(context), "drawLegacy: single", ENHANCER_POS);
         return;
@@ -211,9 +241,6 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
 
     for(size_t cameraID = 0; cameraID < context.getCameras().getCameras().size(); cameraID++)
     {
-        // Only render once if FBO can not be turend to layered
-        if(!isSingleViewPossible(context) && cameraID > 0)
-            break;
         context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(cameraID);
         const auto& camera = context.getCameras().getCameras()[cameraID];
 
@@ -221,8 +248,7 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
         assert(shadowFBO != 0);
         glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 
-        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_singleViewID");
-        glUniform1i(loc, cameraID);
+        helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
 
         const auto& t = camera.getViewMatrix();
         setEnhancerShift(context,t,camera.getAngle()*context.getCameraParameters().m_XShiftMultiplier/context.getCameraParameters().m_frontOpticalAxisCentreDistance);
@@ -252,8 +278,7 @@ void DrawManager::setEnhancerShift(Context& context,const glm::mat4& viewSpaceTr
     auto program = context.getManager().getBoundId();
     if(program)
     {
-        auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_isSingleViewActivated");
-        glUniform1i(loc, true);
+        //helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
 
         auto location = glGetUniformLocation(program, "enhancer_identity");
         glUniform1i(location, GL_TRUE);

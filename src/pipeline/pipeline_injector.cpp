@@ -130,7 +130,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
         void identity_main(int layer)
         {
             // Only render once per draw call for singleViewID
-            if(enhancer_isSingleViewActivated && enhancer_singleViewID != layer)
+            if(enhancer_isSingleViewActivated == true && enhancer_singleViewID != layer)
             {
                 return;
             }
@@ -308,7 +308,13 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
         {
             enhancer_layer = gl_InvocationID*maxDuplications+duplicationId;
             if(enhancer_layer>= enhancer_max_views)
+            {
                 return;
+            }
+            if(enhancer_isSingleViewActivated && enhancer_singleViewID != enhancer_layer)
+            {
+                continue;
+            }
             old_main(enhancer_layer);
         }
     }
