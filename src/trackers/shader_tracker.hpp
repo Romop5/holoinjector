@@ -12,6 +12,9 @@ namespace ve
 {
 namespace trackers
 {
+    /**
+     * \brief Tracks shader metadata (mostly type & source code)
+     */
     struct ShaderMetadata
     {
         ShaderMetadata() = default;
@@ -23,16 +26,25 @@ namespace trackers
         size_t m_Id = 0;
         GLenum m_Type = 0;
 
+        /// Preprocessed (expanded macros) source code of original shader as created by application
         std::string preprocessedSourceCode;
+
+        /// Helper: is shader one of type {VS, GS, etc}
         bool isShaderOneOf(const std::unordered_set<GLenum>& allowedTypes);
+
+        /// Debug: serialize type (e.g. GL_VERTEX_SHADER) to string
         const std::string getTypeAsString() const;
     };
 
 
+    /**
+     * \brief Tracks program metadata (such as attached shaders and results of injection)
+     */
     struct ShaderProgram
     {
         BindableContextTracker<std::shared_ptr<ShaderMetadata>> shaders;
 
+        /// Metadata are created as a result of injection
         std::unique_ptr<ve::pipeline::ProgramMetadata> m_Metadata;
 
         struct UniformBlock
@@ -49,7 +61,6 @@ namespace trackers
 
         void attachShaderToProgram(std::shared_ptr<ShaderMetadata> shader);
 
-
         /* Queries */
         bool hasMetadata() const;
         bool isLinked() const;
@@ -57,9 +68,13 @@ namespace trackers
     };
 
 
+    /**
+     * \brief Tracks lifetime and binding of shader programs
+     */
     class ShaderTracker: public BindableContextTracker<std::shared_ptr<ShaderProgram>>
     {
         public:
+        /// Vector of all existing shaders
         ContextTracker<std::shared_ptr<ShaderMetadata>> shaders;
 
         /// Is VS bound

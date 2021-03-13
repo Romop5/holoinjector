@@ -40,6 +40,7 @@ void RenderbufferMetadata::createShadowedTexture(size_t numOfLayers)
     {
         Logger::logError("Failed to create renderbuffer with intercepted format. Falling back to GL_DEPTH_COMPONENT32");
         glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH_COMPONENT32, getWidth(), getHeight(), numOfLayers);
+        ASSERT_GL_ERROR();
     } else {
         Logger::logError("Error while creating texture for renderbuffer texture", ENHANCER_POS);
     }

@@ -17,6 +17,9 @@ namespace trackers
         ve::pipeline::PerspectiveProjectionParameters projection;
     };
 
+    /**
+     *
+     */
     class UniformBlockTracing
     {
         public:
