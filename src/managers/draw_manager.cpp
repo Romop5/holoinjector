@@ -31,6 +31,7 @@ namespace helpers
          */
         void renderToSingleLayer(size_t shaderId, size_t layerID)
         {
+            CLEAR_GL_ERROR();
             auto loc = glGetUniformLocation(shaderId, "enhancer_isSingleViewActivated");
             glUniform1i(loc, true);
             ASSERT_GL_ERROR();
