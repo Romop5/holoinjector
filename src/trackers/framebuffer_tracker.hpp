@@ -64,7 +64,8 @@ namespace trackers
 
         private:
         size_t m_id;
-        std::vector<GLenum> m_drawBuffers;
+        /// List of intercepted allowed colour attachments (glDrawBuffers), 0 by default
+        std::vector<GLenum> m_drawBuffers = {GL_COLOR_ATTACHMENT0};
         ContextTracker<FramebufferAttachment> m_attachments;
         std::vector<utils::FBORAII> m_proxyFBO;
 
