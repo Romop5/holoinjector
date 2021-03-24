@@ -1,9 +1,11 @@
 <div align="center">
-    <img src="https://raw.githubusercontent.com/Romop5/holoinjector/main/media/logo.svg" alt="app overview" height="100px"/><
+    <img src="https://github.com/Romop5/holoinjector/raw/master/media/logo.png" alt="Logo with anaglyph motive" height="100px"/><
 <br>
 <h1>HoloInjector</h1>
 </div>
+
 ### See things in real 3D
+
 <hr>
 
 ## About
