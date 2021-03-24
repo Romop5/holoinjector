@@ -1,1 +1,1 @@
-../../../examples/nehe-opengl/tracer.sh
+examples/nehe-opengl/tracer.sh

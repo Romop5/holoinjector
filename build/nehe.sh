@@ -1,1 +1,1 @@
-../../../examples/nehe-opengl/enhancer.sh
+examples/nehe-opengl/enhancer.sh

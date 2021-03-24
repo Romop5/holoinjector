@@ -1,1 +1,1 @@
-../../../examples/nehe-opengl/gdb.sh
+examples/nehe-opengl/gdb.sh
