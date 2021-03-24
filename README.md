@@ -34,8 +34,15 @@ Currently, this tool is directly outputing Looking Glass's native format.
 
 # Bulding & Installation
 
-**Pro tip:** use *cloneDeps.sh* script to get 3rd party dependencies \& create a CMake configuration
+A reasonable up-to-day version of CMake is required for building.
+
+Use *cloneDeps.sh* script to get 3rd party dependencies \& create a CMake configuration
 ready-to-compile.
+
+**NOTE**: Usage of the script above is highly recommended as some of dependencies must be configured
+& extended with CMake command, and this is done in the script.
+
+Upon successful run of the script, build is generated in *build* directory.
 
 ## Dependencies
 - [subhook](https://github.com/Romop5/subhook) - for run-time code patching

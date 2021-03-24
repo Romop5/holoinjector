@@ -63,6 +63,12 @@ target_link_libraries(imgui PRIVATE GLEW)
 install(TARGETS imgui DESTINATION lib)
 INSTALL(FILES "imgui.h imconfig.h backends/imgui_impl_opengl3.h" DESTINATION include)
 " > 3rd/imgui/CMakeLists.txt
+
+# Add GLEW as config
+echo "
+#define IMGUI_IMPL_OPENGL_LOADER_GLEW
+" >> 3rd/imgui/imconfig.h
+# Rebuild
 prepareRepo "imgui" "https://github.com/ocornut/imgui" 
 
 ###############################################################################
