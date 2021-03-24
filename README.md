@@ -1,11 +1,8 @@
 <div align="center">
-    <img src="https://github.com/Romop5/holoinjector/raw/master/media/logo.png" alt="Logo with anaglyph motive" height="100px"/><
+    <img src="https://github.com/Romop5/holoinjector/raw/master/media/logo.png" alt="Logo with anaglyph motive" height="100px"/>
 <br>
-<h1>HoloInjector</h1>
+<h1>HoloInjector - See things in real 3D </h1> 
 </div>
-
-### See things in real 3D
-
 <hr>
 
 ## About
@@ -19,11 +16,23 @@ Consider you have just bought a display from [Looking Glass Factory](https://loo
 In theory, you could install this conversion layer and run the app as-it-is on the display. In practise, this tool
 supports a subset of OpenGL-based 3D applications and some of them may require manual tweekings.
 
-## Documentation
-Link to master's thesis: SOON
-Link to paper: SOON
+Currently, this tool is directly outputing Looking Glass's native format. 
 
-# Bulding && Installation
+## Features
+- intercepting draw calls & dispatching duplicated draw calls 
+- automated detection of MVP or VP matrix uniforms in pipeline
+- almost 100% support of fixed-pipeline apps
+
+## Limitations
+
+- Linux & XServer & OpenGL only
+
+## Documentation
+- Link to master's thesis: SOON
+- Link to paper: SOON
+- Additionally, you can use Doxygen to generate an HTML representation of docs.
+
+# Bulding & Installation
 
 **Pro tip:** use *cloneDeps.sh* script to get 3rd party dependencies \& create a CMake configuration
 ready-to-compile.
@@ -34,8 +43,13 @@ ready-to-compile.
 - [yaml-cpp](https://github.com/jbeder/yaml-cpp) - for configuration
 - [imgui](https://github.com/ocornut/imgui) - for debugging / in-app menu
 
+## Future plans
+
+In case you are interested in further development of this tool, consider writing me directly in
+person.
+
 ## Author
-- Roman Dobias (xdobia11(at)stud.fit.vutbr.cz)
+- Roman [Romop5](https://github.com/Romop5) Dobias (xdobia11(at)stud.fit.vutbr.cz)
 ## Supervised by
-- Ing. Tomas Milet (imilet(at)fit.vutbr.cz)
+- Ing. Tomas [dormon](https://github.com/dormon) Milet (imilet(at)fit.vutbr.cz)
 
