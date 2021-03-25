@@ -1,10 +1,13 @@
-#include <cctype>
 #include "imgui_adapter.hpp"
+
+#include <GL/glew.h>
+#include <X11/keysym.h>
+#include <cctype>
 #include <imgui_impl_opengl3.h>
+
 #include "context.hpp"
 #include "pipeline/viewport_area.hpp"
 
-#include <X11/keysym.h>
 using namespace ve;
 
 namespace helper
@@ -37,6 +40,7 @@ namespace helper
 
 bool ve::ImguiAdapter::initialize()
 {
+    glewInit();
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); 
