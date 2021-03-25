@@ -84,6 +84,8 @@ void Config::loadFromEnvironment(ConfigDict& dict)
         {"ENHANCER_XMULTIPLIER", "xmultiplier"},
         {"ENHANCER_DISTANCE", "distance"},
         {"ENHANCER_NOW", "now"},
+        {"ENHANCER_QUILT", "quilt"},
+        {"ENHANCER_GRIDVIEW", "gridview"},
         {"ENHANCER_EXIT_AFTER", "exitAfterFrames"},
         {"ENHANCER_CAMERAID", "onlyShownCameraID"},
         {"ENHANCER_SCREENSHOT", "screenshotFormatString"},

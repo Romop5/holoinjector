@@ -51,39 +51,74 @@ void Repeater::initialize()
 
     // Override default angle
     if(settings.hasKey("xmultiplier"))
+    {
         m_Context.getCameraParameters().m_XShiftMultiplier = settings.getAsFloat("xmultiplier");
+    }
     // Override default center of rotation
     if(settings.hasKey("distance"))
+    {
         m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance = settings.getAsFloat("distance");
+    }
     // if ENHANCER_NOW is provided, then start with multiple views right now
     if(settings.hasKey("now"))
+    {
         m_Context.m_IsMultiviewActivated = true;
+    }
+    if(settings.hasKey("wide"))
+    {
+        m_Context.m_IsMultiviewActivated = true;
+        m_Context.getCameraParameters().m_XShiftMultiplier = 10.0;
+        m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance = 10.0;
+    }
+
+    if(settings.hasKey("quilt"))
+    {
+        m_Context.getOutputFBO().toggleGridView();
+    }
+
     if(settings.hasKey("exitAfterFrames"))
+    {
         m_Context.getDiagnostics().setTerminationAfterFrame(settings.getAsSizet("exitAfterFrames"));
+    }
 
     /*
      * DIAGNOSTIC
      */
     if(settings.hasKey("onlyShownCameraID"))
+    {
         m_Context.getDiagnostics().setOnlyVirtualCamera(settings.getAsSizet("onlyShownCameraID"));
+    }
 
     if(settings.hasKey("screenshotFormatString"))
+    {
         m_Context.getDiagnostics().setScreenshotFormat(settings.getAsString("screenshotFormatString"));
+    }
 
     if(settings.hasKey("shouldBeNonIntrusive"))
+    {
         m_Context.getDiagnostics().setNonIntrusiveness(true);
+    }
 
     // Initialize oputput FBO
     ve::pipeline::OutputFBOParameters outParameters;
     if(settings.hasKey("outputXSize"))
+    {
         outParameters.pixels_width = settings.getAsSizet("outputXSize");
+    }
+
     if(settings.hasKey("outputYSize"))
+    {
         outParameters.pixels_width = settings.getAsSizet("outputYSize");
+    }
 
     if(settings.hasKey("gridXSize"))
+    {
         outParameters.gridXSize = settings.getAsSizet("gridXSize");
+    }
     if(settings.hasKey("gridYSize"))
+    {
         outParameters.gridYSize = settings.getAsSizet("gridYSize");
+    }
 
     // Initialize hidden FBO for redirecting draws to back-buffer
     m_Context.getOutputFBO().initialize(outParameters);
