@@ -85,6 +85,7 @@ void Config::loadFromEnvironment(ConfigDict& dict)
         {"ENHANCER_DISTANCE", "distance"},
         {"ENHANCER_NOW", "now"},
         {"ENHANCER_QUILT", "quilt"},
+        {"ENHANCER_WIDE", "wide"},
         {"ENHANCER_GRIDVIEW", "gridview"},
         {"ENHANCER_EXIT_AFTER", "exitAfterFrames"},
         {"ENHANCER_CAMERAID", "onlyShownCameraID"},
