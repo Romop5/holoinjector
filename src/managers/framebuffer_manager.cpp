@@ -84,7 +84,12 @@ void FramebufferManager::bindFramebuffer (Context& context, GLenum target, GLuin
     }
 }
 
-void FramebufferManager::swapBuffers(Context& context, std::function<void(void)> swapit,std::function<void(void)> onOverlayRender)
+void FramebufferManager::swapBuffers(Context& context, std::function<void(void)> swapit)
+{
+    swapit();
+}
+
+void FramebufferManager::renderFromOutputFBO(Context& context)
 {
     ve::utils::restoreStateFunctor({GL_CULL_FACE, GL_DEPTH_TEST, GL_SCISSOR_TEST},[this, &context]()
     {
@@ -103,9 +108,4 @@ void FramebufferManager::swapBuffers(Context& context, std::function<void(void)>
             context.getOutputFBO().clearBuffers();
         }
     });
-
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    onOverlayRender();
-    // Physically do swap buffer
-    swapit();
 }

@@ -49,26 +49,32 @@ std::string ve::opengl_utils::getEnumStringRepresentation(GLenum type)
     return "UNKNOWN";
 }
 
-bool ve::opengl_utils::takeScreenshot(const std::string& path)
+bool ve::opengl_utils::takeScreenshot(const std::string& path, size_t screenWidth, size_t screenHeight)
 {
     using BYTE = uint8_t;
     GLfloat viewport[4];
     glGetFloatv(GL_VIEWPORT,viewport);
 
-    const auto width = size_t(viewport[2]);
-    const auto height = size_t(viewport[3]);
     // Make the BYTE array, factor of 3 because it's RBG.
-    BYTE* pixels = new BYTE[3 * width * height];
+    BYTE* pixels = new BYTE[3 * screenWidth * screenHeight];
 
-    glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, pixels);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glReadPixels(0, 0, screenWidth, screenHeight, GL_BGR, GL_UNSIGNED_BYTE, pixels);
+    auto errorStatus = glGetError();
+    if(errorStatus != GL_NO_ERROR)
+    {
+        Logger::logError("Failed to read framebuffer for screen (glReadPixels failed)");
+        return false;
+    }
 
     // Convert to FreeImage format & save to file
-    FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0xFF, 0xFF00, 0xFF0000, false);
+    FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, screenWidth, screenHeight, 3 * screenWidth, 24, 0xFF, 0xFF00, 0xFF0000, false);
     if(!FreeImage_Save(FIF_BMP, image, path.c_str(), 0))
     {
         Logger::logError("Failed to save screenshot:", path.c_str());
         return false;
     }
+    Logger::log("Saved screenshot:", path.c_str());
     // Free resources
     FreeImage_Unload(image);
     delete [] pixels;

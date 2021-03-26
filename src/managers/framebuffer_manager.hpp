@@ -13,7 +13,8 @@ namespace managers
         public:
         void clear(Context& context, GLbitfield mask);
         void bindFramebuffer (Context& context, GLenum target, GLuint framebuffer);
-        void swapBuffers(Context& context, std::function<void(void)> swapit, std::function<void(void)> onOverlayRender);
+        void swapBuffers(Context& context, std::function<void(void)> swapit);
+        void renderFromOutputFBO(Context& context);
     };
 }
 }

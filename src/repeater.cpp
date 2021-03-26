@@ -67,8 +67,8 @@ void Repeater::initialize()
     if(settings.hasKey("wide"))
     {
         m_Context.m_IsMultiviewActivated = true;
-        m_Context.getCameraParameters().m_XShiftMultiplier = 10.0;
-        m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance = 10.0;
+        m_Context.getCameraParameters().m_XShiftMultiplier = 4.0;
+        m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance = 4.0;
     }
 
     if(settings.hasKey("quilt"))
@@ -272,12 +272,9 @@ GLXContext Repeater::glXCreateContext(Display * dpy, XVisualInfo * vis, GLXConte
 
 void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
 {
-    m_FramebufferManager.swapBuffers(m_Context,
-    [&]()
-    {
-        ::glXSwapBuffers(dpy,drawable);
-    }, 
-    [this]()
+    // Render content of OutputFBO
+    m_FramebufferManager.renderFromOutputFBO(m_Context);
+    // Render overlay
     {
         // Draw GUI overlay if GUI is visible
         if(m_Context.getGui().isVisible())
@@ -286,17 +283,30 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
             m_UIManager.onDraw(m_Context);
             m_Context.getGui().endFrame();
             m_Context.getGui().renderCurrentFrame();
+            
         }
-    });
-
-    m_Context.getDiagnostics().incrementFrameCount();
-    Logger::getInstance().incrementFrameNumber();
-    if(m_Context.getDiagnostics().hasReachedLastFrame())
-    {
-        // Note: this is debug only, leaves mem. leaks and uncleaned objects
-        opengl_utils::takeScreenshot(std::string(m_Context.getDiagnostics().getScreenshotName()));
-        exit(5);
     }
+
+    // Update diagnosis
+    {
+        if(m_Context.getDiagnostics().hasReachedLastFrame())
+        {
+            // Note: this is debug only, leaves mem. leaks and uncleaned objects
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            const auto& viewport = m_Context.getCurrentViewport();
+            opengl_utils::takeScreenshot(std::string(m_Context.getDiagnostics().getScreenshotName()), viewport.getWidth(), viewport.getHeight() );
+            exit(5);
+        }
+        m_Context.getDiagnostics().incrementFrameCount();
+        Logger::getInstance().incrementFrameNumber();
+    }
+
+    // Swap buffers
+    m_FramebufferManager.swapBuffers(m_Context,
+    [&]()
+    {
+        ::glXSwapBuffers(dpy,drawable);
+    });
 }
 
 Bool Repeater::glXMakeCurrent(Display * dpy, GLXDrawable drawable,GLXContext context)

@@ -20,7 +20,7 @@ namespace opengl_utils
      */
     std::string getEnumStringRepresentation(GLenum type);
 
-    bool takeScreenshot(const std::string& path);
+    bool takeScreenshot(const std::string& path, size_t screenWidth, size_t screenHeight);
 
     std::optional<std::string> getShaderLogMessage(size_t shaderID);
     std::optional<std::string> getProgramLogMessage(size_t programID);
