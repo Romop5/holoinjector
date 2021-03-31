@@ -1,3 +1,4 @@
+#include <sstream>
 #include <vector>
 #include <filesystem>
 #include <fstream>
@@ -9,6 +10,42 @@
 #include "logger.hpp"
 
 using namespace ve;
+
+
+///////////////////////////////////////////////////////////////////////////////
+// ConfigDict
+///////////////////////////////////////////////////////////////////////////////
+bool Config::ConfigDict::hasKey(const std::string& key) const
+{
+    return count(key) > 0;
+}
+size_t Config::ConfigDict::getAsSizet(const std::string& key) const
+{
+    const auto& value = at(key);
+    return std::stol(value);
+}
+float Config::ConfigDict::getAsFloat(const std::string& key) const
+{
+    const auto& value = at(key);
+    return std::stof(value);
+}
+const std::string& Config::ConfigDict::getAsString(const std::string& key) const
+{
+    return at(key);
+}
+
+const std::string Config::ConfigDict::toString() const
+{
+    std::stringstream ss;
+    for(const auto&[key, value]: *this)
+    {
+        ss << key << " [ " << value << " ], "; 
+    }
+    return ss.str();
+}
+///////////////////////////////////////////////////////////////////////////////
+// Config
+///////////////////////////////////////////////////////////////////////////////
 const Config::ConfigDict Config::load()
 {
     ConfigDict dict;
@@ -50,6 +87,7 @@ const std::string Config::getConfigPath() const
     // if no config file was found, simply return an empty string
     return "";
 }
+
 void Config::loadFromFile(ConfigDict& dict,const std::string& fileName)
 {
     static std::vector<std::pair<std::string, std::string>> keyDefaultValues =
@@ -86,7 +124,8 @@ void Config::loadFromEnvironment(ConfigDict& dict)
         {"ENHANCER_NOW", "now"},
         {"ENHANCER_QUILT", "quilt"},
         {"ENHANCER_WIDE", "wide"},
-        {"ENHANCER_GRIDVIEW", "gridview"},
+        {"ENHANCER_QUILTX", "gridXSize"},
+        {"ENHANCER_QUILTY", "gridYSize"},
         {"ENHANCER_EXIT_AFTER", "exitAfterFrames"},
         {"ENHANCER_CAMERAID", "onlyShownCameraID"},
         {"ENHANCER_SCREENSHOT", "screenshotFormatString"},

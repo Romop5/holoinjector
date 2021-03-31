@@ -184,6 +184,8 @@ void Repeater::initialize()
     });
     
     m_UIManager.initialize(m_Context);
+
+    Logger::log("Initialized with settings: ", settings.toString());
 }
 
 
