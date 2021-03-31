@@ -91,6 +91,9 @@ class Context
 
     /// FBO with all raw virtual cameras
     ve::pipeline::OutputFBO& getOutputFBO();
+
+    /// Determines if newly create GL window should be put to background
+    bool keepWindowInBackgroundFlag = false;
     private:
     std::unique_ptr<ContextPimpl> pimpl;
 };

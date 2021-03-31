@@ -29,8 +29,8 @@ namespace pipeline
         size_t getGridSizeX() const;
         size_t getGridSizeY() const;
 
-        size_t gridXSize = 5;
-        size_t gridYSize = 9;
+        size_t gridXSize = 3;
+        size_t gridYSize = 3;
         size_t pixels_width = 512;
         size_t pixels_height = 512;
     };

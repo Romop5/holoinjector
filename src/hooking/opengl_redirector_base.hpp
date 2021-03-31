@@ -47,6 +47,7 @@ namespace hooking
         virtual void (*glXGetProcAddressARB(	const GLubyte * procName))(void);
 
         virtual int XNextEvent(Display *display, XEvent *event_return);
+        virtual int XMapWindow(Display *display, Window win);
         virtual Window XCreateWindow(Display *display, Window parent, int x, int y, unsigned int width, unsigned int height, unsigned int border_width, int depth, unsigned int classInstance, Visual *visual, unsigned long valuemask, XSetWindowAttributes *        attributes);
         virtual int XWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y);
         virtual void XSetWMNormalHints(Display *display, Window w, XSizeHints* hints);

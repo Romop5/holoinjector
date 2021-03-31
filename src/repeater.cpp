@@ -64,11 +64,19 @@ void Repeater::initialize()
     {
         m_Context.m_IsMultiviewActivated = true;
     }
+    
+    // Preset shift/near-plane position for quilt
     if(settings.hasKey("wide"))
     {
         m_Context.m_IsMultiviewActivated = true;
         m_Context.getCameraParameters().m_XShiftMultiplier = 4.0;
         m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance = 4.0;
+    }
+
+    // Prevent application displaying Window (useful for scripts)
+    if(settings.hasKey("runInBackground"))
+    {
+        m_Context.keepWindowInBackgroundFlag = true;
     }
 
     if(settings.hasKey("quilt"))
@@ -292,7 +300,6 @@ void Repeater::glXSwapBuffers(	Display * dpy, GLXDrawable drawable)
         if(m_Context.getDiagnostics().hasReachedLastFrame())
         {
             // Note: this is debug only, leaves mem. leaks and uncleaned objects
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
             const auto& viewport = m_Context.getCurrentViewport();
             opengl_utils::takeScreenshot(std::string(m_Context.getDiagnostics().getScreenshotName()), viewport.getWidth(), viewport.getHeight() );
             exit(5);
@@ -1027,6 +1034,17 @@ Window Repeater::XCreateWindow(Display *display, Window parent, int x, int y, un
     }
     return OpenglRedirectorBase::XCreateWindow(display, parent, x,y,width, height, border_width, depth, classInstance, visual, valuemask, attributes);
 }
+
+
+int Repeater::XMapWindow(Display *display, Window win)
+{
+    if(!m_Context.keepWindowInBackgroundFlag)
+    {
+        return OpenglRedirectorBase::XMapWindow(display, win);
+    }
+    return 0;
+}
+
 
 void Repeater::XSetWMNormalHints(Display *display, Window w, XSizeHints* hints)
 {

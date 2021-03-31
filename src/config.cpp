@@ -91,6 +91,7 @@ void Config::loadFromEnvironment(ConfigDict& dict)
         {"ENHANCER_CAMERAID", "onlyShownCameraID"},
         {"ENHANCER_SCREENSHOT", "screenshotFormatString"},
         {"ENHANCER_NONINTRUSIVE", "shouldBeNonIntrusive"},
+        {"ENHANCER_RUNINBG", "runInBackground"},
     };
     for(const auto& entry: enviromentVariables)
     {
