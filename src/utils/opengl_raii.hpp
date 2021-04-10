@@ -16,11 +16,15 @@ namespace ve
 namespace utils
 {
     /// FBO RAII owner
-    struct FBORAII: public glObject
+    struct FBORAII : public glObject
     {
         FBORAII() = default;
-        explicit FBORAII(GLuint fboId): glObject(fboId) {}
-        private:
+        explicit FBORAII(GLuint fboId)
+            : glObject(fboId)
+        {
+        }
+
+    private:
     };
 } // namespace raii
 } // namespace ve

@@ -6,8 +6,8 @@
 *
 *****************************************************************************/
 
-#include "startup_enhancer.hpp"
 #include "repeater.hpp"
+#include "startup_enhancer.hpp"
 
 __attribute((constructor)) void repeater_setup()
 {

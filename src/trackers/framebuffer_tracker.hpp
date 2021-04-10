@@ -9,18 +9,17 @@
 #ifndef VE_FRAMEBUFFER_TRACKER_HPP
 #define VE_FRAMEBUFFER_TRACKER_HPP
 
-#include <vector>
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
-#include <GL/gl.h>
 #include "utils/context_tracker.hpp"
 #include "utils/opengl_raii.hpp"
-
+#include <GL/gl.h>
 
 namespace ve
 {
-namespace trackers 
+namespace trackers
 {
     class TextureMetadata;
 
@@ -112,11 +111,11 @@ namespace trackers
         /// Debug: serialize attachment type to string
         static std::string getAttachmentTypeAsString(GLenum attachmentType);
 
-        private:
+    private:
         /// Tracked FBO's OpenGL object ID
         size_t m_id;
         /// Vector of intercepted allowed colour attachments (glDrawBuffers), 0 by default
-        std::vector<GLenum> m_drawBuffers = {GL_COLOR_ATTACHMENT0};
+        std::vector<GLenum> m_drawBuffers = { GL_COLOR_ATTACHMENT0 };
         /// Vector of attachments
         ContextTracker<FramebufferAttachment> m_attachments;
         /**
@@ -142,9 +141,9 @@ namespace trackers
     /**
      * \brief Tracks creation & binding of Opengl's Framebuffer Objects (FBO)
      */
-    class FramebufferTracker: public BindableContextTracker<std::shared_ptr<FramebufferMetadata>>
+    class FramebufferTracker : public BindableContextTracker<std::shared_ptr<FramebufferMetadata>>
     {
-        public:
+    public:
         /*
          * Heuristics
          */

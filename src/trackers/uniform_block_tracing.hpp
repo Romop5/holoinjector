@@ -8,9 +8,9 @@
 
 #ifndef VE_UNIFORM_BLOCK_TRACING_HPP
 #define VE_UNIFORM_BLOCK_TRACING_HPP
+#include "pipeline/projection_estimator.hpp"
 #include <glm/glm.hpp>
 #include <unordered_map>
-#include "pipeline/projection_estimator.hpp"
 
 namespace ve
 {
@@ -30,18 +30,19 @@ namespace trackers
      */
     class UniformBlockTracing
     {
-        public:
+    public:
         bool hasBufferBindingIndex(size_t buffer) const;
         size_t& getBufferBindingIndex(size_t buffer);
         void setUniformBinding(size_t buffer, size_t bindingIndex);
 
         UniformBinding& getBindingIndex(size_t index);
-        private:
-            // buffer object to uniform binding index
-            std::unordered_map<size_t, size_t> m_UniformBindingMap;
 
-            // binding point (e.g. 0) to metadata
-            std::unordered_map<size_t, UniformBinding> m_UniformBindings;
+    private:
+        // buffer object to uniform binding index
+        std::unordered_map<size_t, size_t> m_UniformBindingMap;
+
+        // binding point (e.g. 0) to metadata
+        std::unordered_map<size_t, UniformBinding> m_UniformBindings;
     };
 } //namespace trackers
 } //namespace ve

@@ -8,10 +8,10 @@
 
 #ifndef ENHANCER_VIRTUAL_CAMERAS_HPP
 #define ENHANCER_VIRTUAL_CAMERAS_HPP
-#include <vector>
-#include <glm/glm.hpp>
-#include "pipeline/viewport_area.hpp"
 #include "pipeline/camera_parameters.hpp"
+#include "pipeline/viewport_area.hpp"
+#include <glm/glm.hpp>
+#include <vector>
 
 namespace ve
 {
@@ -19,8 +19,11 @@ namespace pipeline
 {
     class Camera
     {
-        public:
-        Camera(float initialAngle): m_angleY(initialAngle) {}
+    public:
+        Camera(float initialAngle)
+            : m_angleY(initialAngle)
+        {
+        }
         const glm::mat4& getViewMatrix() const;
         const glm::mat4& getViewMatrixRotational() const;
         const ViewportArea& getViewport() const;
@@ -28,8 +31,7 @@ namespace pipeline
         const float getAngle() const;
         friend class VirtualCameras;
 
-
-        protected:
+    protected:
         /// Constant, defining initial angle around axis Y
         const float m_angleY;
         /// Cache: world-to-viewspace
@@ -49,9 +51,9 @@ namespace pipeline
      */
     class VirtualCameras
     {
-        public:
+    public:
         using StorageContainer = std::vector<Camera>;
-        
+
         /// Create 'count' windows with different angle, arranged into grid according to 'windowsPerWidth'
         void setupWindows(size_t count, float windowsPerWidth);
         /// Recalculate if parameters has changed
@@ -60,15 +62,15 @@ namespace pipeline
 
         /// Get reference to all cameras' container
         const StorageContainer& getCameras() const;
-        
+
         /// Returns (per-width,per-height) camera counts
         std::pair<size_t, size_t> getCameraGridSetup() const;
 
-
-        protected:
+    protected:
         void recalculateTransformations();
         void recalculateViewports();
-        private:
+
+    private:
         // Cache last viewport
         ViewportArea m_viewport;
         // Cache last parameters

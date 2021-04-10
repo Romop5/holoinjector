@@ -14,5 +14,5 @@ using namespace ve::pipeline;
 bool CameraParameters::operator==(const CameraParameters& p) const
 {
     return (m_XShiftMultiplier == p.m_XShiftMultiplier
-            && m_frontOpticalAxisCentreDistance == p.m_frontOpticalAxisCentreDistance);
+        && m_frontOpticalAxisCentreDistance == p.m_frontOpticalAxisCentreDistance);
 }

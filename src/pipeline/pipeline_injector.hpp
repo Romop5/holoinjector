@@ -9,10 +9,10 @@
 #ifndef PIPELINE_INJECTOR_HPP
 #define PIPELINE_INJECTOR_HPP
 
-#include <unordered_map>
+#include <GL/gl.h>
 #include <memory>
 #include <string>
-#include <GL/gl.h>
+#include <unordered_map>
 
 #include "pipeline/program_metadata.hpp"
 
@@ -44,33 +44,34 @@ namespace pipeline
      */
     class PipelineInjector
     {
-        public:
-            PipelineInjector() = default;
-            using PipelineType = std::unordered_map<GLenum, std::string>;
-            struct PipelineProcessResult
-            {
-                bool wasSuccessfull;
-                PipelineType pipeline;
-                std::unique_ptr<ProgramMetadata> metadata;
-                std::optional<std::string> failReason;
-            };
-            /**
+    public:
+        PipelineInjector() = default;
+        using PipelineType = std::unordered_map<GLenum, std::string>;
+        struct PipelineProcessResult
+        {
+            bool wasSuccessfull;
+            PipelineType pipeline;
+            std::unique_ptr<ProgramMetadata> metadata;
+            std::optional<std::string> failReason;
+        };
+        /**
              * @brief
              *
              * @param inputPipeline
              *
              * @return 
              */
-            PipelineProcessResult process(PipelineType inputPipeline, const PipelineParams& params = PipelineParams());
-        private:
-            /**
+        PipelineProcessResult process(PipelineType inputPipeline, const PipelineParams& params = PipelineParams());
+
+    private:
+        /**
              * @brief Insert new geometry shader
              *
              * @param pipeline
              * @return alterned pipeline with correct in/out attributes passing
              */
-            PipelineType insertGeometryShader(const PipelineType& pipeline, const PipelineParams params);
-            /**
+        PipelineType insertGeometryShader(const PipelineType& pipeline, const PipelineParams params);
+        /**
              * @brief Inject the old GS
              *
              * @param pipeline
@@ -78,15 +79,12 @@ namespace pipeline
              *
              * @return
              */
-            PipelineType injectGeometryShader(const PipelineType& pipeline, const PipelineParams params);
+        PipelineType injectGeometryShader(const PipelineType& pipeline, const PipelineParams params);
 
+        /// Insert repeating logic into Vertex shader and dont use any additional GS
+        PipelineType injectVertexShader(const PipelineType& pipeline, const PipelineParams params);
 
-
-            /// Insert repeating logic into Vertex shader and dont use any additional GS
-            PipelineType injectVertexShader(const PipelineType& pipeline, const PipelineParams params);
-
-
-            bool injectShader(std::string& sourceCode, ProgramMetadata& outMetadata);
+        bool injectShader(std::string& sourceCode, ProgramMetadata& outMetadata);
     };
 } //namespace pipeline
 } //namespace ve

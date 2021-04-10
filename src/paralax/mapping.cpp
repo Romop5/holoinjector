@@ -26,7 +26,8 @@ void ve::paralax::Mapping::initializeResources()
                 z = 0.0;
             gl_Position = vec4(normal.xy, z, 1.0);
         }
-        )",GL_VERTEX_SHADER);
+        )",
+        GL_VERTEX_SHADER);
 
     auto fs = utils::glShader(R"(
         #version 430 core
@@ -119,7 +120,8 @@ void ve::paralax::Mapping::initializeResources()
             FragColor.xyz = texture(tex, paraUv.xy).xyz;
             //FragColor.x = paraUv.z;
         }
-    )", GL_FRAGMENT_SHADER);
+    )",
+        GL_FRAGMENT_SHADER);
 
     m_program = std::make_unique<ve::utils::glProgram>(std::move(vs), std::move(fs));
     m_VAO = std::make_shared<ve::utils::glFullscreenVAO>();
@@ -140,7 +142,7 @@ void ve::paralax::Mapping::draw(size_t gridXSize, size_t gridYSize, float dispar
     setUniform1i("gridXSize", gridXSize);
     setUniform1i("gridYSize", gridYSize);
     setUniform1f("disparityRatio", disparityRatio);
-    setUniform1f("centerRatio", centerRatio); 
+    setUniform1f("centerRatio", centerRatio);
     m_VAO->draw();
 }
 

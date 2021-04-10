@@ -6,13 +6,13 @@
 *
 *****************************************************************************/
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <memory>
 
-#include "utils/context_tracker.hpp"
 #include "pipeline/program_metadata.hpp"
+#include "utils/context_tracker.hpp"
 
 #include <GL/gl.h>
 
@@ -44,7 +44,6 @@ namespace trackers
         const std::string getTypeAsString() const;
     };
 
-
     /**
      * \brief Tracks program metadata (such as attached shaders and results of injection)
      */
@@ -75,13 +74,12 @@ namespace trackers
         bool isInjected() const;
     };
 
-
     /**
      * \brief Tracks lifetime and binding of shader programs
      */
-    class ShaderTracker: public BindableContextTracker<std::shared_ptr<ShaderProgram>>
+    class ShaderTracker : public BindableContextTracker<std::shared_ptr<ShaderProgram>>
     {
-        public:
+    public:
         /// Vector of all existing shaders
         ContextTracker<std::shared_ptr<ShaderMetadata>> shaders;
 
@@ -99,4 +97,3 @@ namespace trackers
     };
 } // namespace trackers
 } // namespace ve
-

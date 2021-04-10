@@ -16,17 +16,18 @@ std::string ve::utils::regex_replace_functor(const std::string str, const std::r
     std::string result = str;
     size_t startPosition = 0;
     size_t currentLength = result.size();
-    auto end= std::sregex_iterator();
-    do {
-        auto it = std::sregex_iterator(result.begin()+startPosition, result.end(), reg);
-        if(it == end)
+    auto end = std::sregex_iterator();
+    do
+    {
+        auto it = std::sregex_iterator(result.begin() + startPosition, result.end(), reg);
+        if (it == end)
             break;
         auto& match = *it;
         auto newString = functor(match.str(0));
         // replace original with new
-        result.replace(startPosition+match.position(0), match.str(0).size(), newString);
+        result.replace(startPosition + match.position(0), match.str(0).size(), newString);
         // advance pass the replaced string
-        startPosition += match.position(0)+newString.size();
+        startPosition += match.position(0) + newString.size();
         currentLength = result.size();
     } while (startPosition < currentLength);
     return result;
@@ -35,13 +36,10 @@ std::string ve::utils::regex_replace_functor(const std::string str, const std::r
 /// Iterate&replace over all identifiers in text
 std::string ve::utils::regex_replace_identifiers(const std::string str, const std::string identifierName, std::function<std::string()> functor)
 {
-    auto replaceRegexSearch = std::regex(std::string("([a-zA-Z_-][a-zA-Z0-9_-]*)?")+identifierName+std::string("[a-zA-Z0-9_-]*"));
-    return ve::utils::regex_replace_functor(str, replaceRegexSearch,[&](auto str)->std::string
-    {
-        if(str == identifierName)
+    auto replaceRegexSearch = std::regex(std::string("([a-zA-Z_-][a-zA-Z0-9_-]*)?") + identifierName + std::string("[a-zA-Z0-9_-]*"));
+    return ve::utils::regex_replace_functor(str, replaceRegexSearch, [&](auto str) -> std::string {
+        if (str == identifierName)
             return functor();
         return str;
     });
 }
-
-

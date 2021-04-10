@@ -10,16 +10,16 @@
  * Requires (as sudo)
  * setsebool allow_execheap on
  */
-#include <dlfcn.h>
 #include <cstdio>
+#include <dlfcn.h>
 //#include <subhook.h>
-#include <mutex>
 #include <memory>
+#include <mutex>
 
 #include "hooking/redirector_base.hpp"
 
-#include <unistd.h>
 #include <cassert>
+#include <unistd.h>
 
 #define ENHANCER_API_EXPORT __attribute__((visibility("default")))
 
@@ -33,50 +33,53 @@ struct EnhancerContext
 
 static std::unique_ptr<EnhancerContext> context = nullptr;
 
-extern "C" void * __libc_dlopen_mode(const char * filename, int flag);
-extern "C" void * __libc_dlsym(void * handle, const char * symbol);
+extern "C" void* __libc_dlopen_mode(const char* filename, int flag);
+extern "C" void* __libc_dlsym(void* handle, const char* symbol);
 
 namespace helper
 {
-    bool shouldLogApiCall()
+bool shouldLogApiCall()
+{
+    static bool shouldLogApiCall = false;
+    static bool isQueried = false;
+    if (!isQueried)
     {
-        static bool shouldLogApiCall = false;
-        static bool isQueried = false;
-        if(!isQueried)
-        {
-            shouldLogApiCall = (getenv("ENHANCER_LOG_LOAD") != nullptr);
-            isQueried = true;
-        }
-        return shouldLogApiCall;
+        shouldLogApiCall = (getenv("ENHANCER_LOG_LOAD") != nullptr);
+        isQueried = true;
     }
+    return shouldLogApiCall;
+}
 
 }
 namespace ve
 {
-    /*
+/*
      * Stores function names, that were replaced by our symbols
      */
-    std::unordered_map<std::string, void*> m_OriginalCalls;
+std::unordered_map<std::string, void*> m_OriginalCalls;
 
-    void* original_dlsym(void* params, const char* symbol)
+void* original_dlsym(void* params, const char* symbol)
+{
+    typedef void* (*PFN_DLSYM)(void*, const char*);
+    static PFN_DLSYM dlsym_sym = NULL;
+    if (!dlsym_sym)
     {
-        typedef void * (*PFN_DLSYM)(void* , const char*);
-        static PFN_DLSYM dlsym_sym = NULL;
-        if (!dlsym_sym) {
-            void *libdl_handle = __libc_dlopen_mode("libdl.so.2", RTLD_LOCAL | RTLD_NOW);
-            if (libdl_handle) {
-                dlsym_sym = (PFN_DLSYM)__libc_dlsym(libdl_handle, "dlsym");
-            }
-            if (!dlsym_sym) {
-                if(helper::shouldLogApiCall())
-                {
-                    printf("[Enhancer] error: failed to look up real dlsym\n");
-                }
-                return NULL;
-            }
+        void* libdl_handle = __libc_dlopen_mode("libdl.so.2", RTLD_LOCAL | RTLD_NOW);
+        if (libdl_handle)
+        {
+            dlsym_sym = (PFN_DLSYM)__libc_dlsym(libdl_handle, "dlsym");
         }
-        return dlsym_sym(params,symbol);
-        /*
+        if (!dlsym_sym)
+        {
+            if (helper::shouldLogApiCall())
+            {
+                printf("[Enhancer] error: failed to look up real dlsym\n");
+            }
+            return NULL;
+        }
+    }
+    return dlsym_sym(params, symbol);
+    /*
          * SUBHOOK
         void* original_dlsym = reinterpret_cast<void*>(&dlsym);
          *
@@ -92,93 +95,91 @@ namespace ve
         using dlsym_type = void*(void*, const char*);
         return reinterpret_cast<dlsym_type*>(original_dlsym)(params, symbol);
         */
-        
-    }
-    void* hooked_dlsym(void* params, const char* symbol)
-    {
-        /*
+}
+void* hooked_dlsym(void* params, const char* symbol)
+{
+    /*
          * Fix: route dlopen() directly to libc.so
          * This is needed for libraries such as apitrace
          */
-        if(std::string(symbol)== "dlopen")
-        {
-            //auto moduleHandle = dlopen("libc.so",RTLD_LAZY);
-            //return original_dlsym(RTLD_NEXT, symbol); 
-
-            typedef void * (*PFN_DLOPEN)(const char *, int);
-            static PFN_DLOPEN dlopen_sym = NULL;
-            if (!dlopen_sym) {
-                void *libdl_handle = __libc_dlopen_mode("libdl.so.2", RTLD_LOCAL | RTLD_NOW);
-                if (libdl_handle) {
-                    dlopen_sym = (PFN_DLOPEN)__libc_dlsym(libdl_handle, "dlopen");
-                }
-                if (!dlopen_sym) {
-                    printf("[Enhancer] error: failed to look up real dlsym\n");
-                    return NULL;
-                }
-            }
-            return (void*) dlopen_sym;
-        }
-        
-
-        static std::mutex dlsym_mutex;
-        auto lock = std::unique_lock<std::mutex>(dlsym_mutex);
-
-
-        if(helper::shouldLogApiCall())
-        {
-            printf("[Enhancer dlsym] '%s'\n", symbol);
-        }
-
-        assert(context != nullptr);
-        const auto& functions = context->redirector->getRedirectedFunctions();
-
-        auto originalSymbol = original_dlsym(params, symbol);
-        m_OriginalCalls[symbol] = originalSymbol;
-
-        if(functions.hasRedirection(symbol))
-        {
-            auto* const targetAddress = functions.getTarget(symbol);
-            return targetAddress;
-        }
-        // Else, return original address
-        return originalSymbol;
-    }
-
-
-    void* getOriginalCallAddress(std::string symbol)
+    if (std::string(symbol) == "dlopen")
     {
-        if(m_OriginalCalls.count(symbol) > 0)
-        {
-            return m_OriginalCalls[symbol];
-        }
+        //auto moduleHandle = dlopen("libc.so",RTLD_LAZY);
+        //return original_dlsym(RTLD_NEXT, symbol);
 
-        if(helper::shouldLogApiCall())
+        typedef void* (*PFN_DLOPEN)(const char*, int);
+        static PFN_DLOPEN dlopen_sym = NULL;
+        if (!dlopen_sym)
         {
-            printf("[Enhancer- symbol getter] Calling original dlsym with symbo %s\n",symbol.c_str());
+            void* libdl_handle = __libc_dlopen_mode("libdl.so.2", RTLD_LOCAL | RTLD_NOW);
+            if (libdl_handle)
+            {
+                dlopen_sym = (PFN_DLOPEN)__libc_dlsym(libdl_handle, "dlopen");
+            }
+            if (!dlopen_sym)
+            {
+                printf("[Enhancer] error: failed to look up real dlsym\n");
+                return NULL;
+            }
         }
-        auto addr = ve::original_dlsym(RTLD_NEXT,symbol.c_str());
-        if(addr == NULL)
-        {
-            puts("[Enhancer- symbol getter] Failed to get original address via dlsym()");
-        }
-        return addr;
+        return (void*)dlopen_sym;
     }
+
+    static std::mutex dlsym_mutex;
+    auto lock = std::unique_lock<std::mutex>(dlsym_mutex);
+
+    if (helper::shouldLogApiCall())
+    {
+        printf("[Enhancer dlsym] '%s'\n", symbol);
+    }
+
+    assert(context != nullptr);
+    const auto& functions = context->redirector->getRedirectedFunctions();
+
+    auto originalSymbol = original_dlsym(params, symbol);
+    m_OriginalCalls[symbol] = originalSymbol;
+
+    if (functions.hasRedirection(symbol))
+    {
+        auto* const targetAddress = functions.getTarget(symbol);
+        return targetAddress;
+    }
+    // Else, return original address
+    return originalSymbol;
+}
+
+void* getOriginalCallAddress(std::string symbol)
+{
+    if (m_OriginalCalls.count(symbol) > 0)
+    {
+        return m_OriginalCalls[symbol];
+    }
+
+    if (helper::shouldLogApiCall())
+    {
+        printf("[Enhancer- symbol getter] Calling original dlsym with symbo %s\n", symbol.c_str());
+    }
+    auto addr = ve::original_dlsym(RTLD_NEXT, symbol.c_str());
+    if (addr == NULL)
+    {
+        puts("[Enhancer- symbol getter] Failed to get original address via dlsym()");
+    }
+    return addr;
+}
 
 } // namespace ve
 
 // Hooked
 ENHANCER_API_EXPORT void* dlsym(void* params, const char* symbol)
 {
-    if(context == nullptr)
-        return ve::original_dlsym(params,symbol);
-    return ve::hooked_dlsym(params,symbol);
+    if (context == nullptr)
+        return ve::original_dlsym(params, symbol);
+    return ve::hooked_dlsym(params, symbol);
 }
-
 
 namespace helper
 {
-    /* SUBHOOK
+/* SUBHOOK
     bool hook_function(subhook_t& hook, void* target, void* ourHandler,subhook_flags_t hookTypeFlags = (subhook_flags_t)(0))
     {
         hook = subhook_new(target, ourHandler, hookTypeFlags);
@@ -199,16 +200,16 @@ namespace helper
     }
     */
 
-    template<typename DICT>
-    void dumpRedirections(DICT dict)
+template <typename DICT>
+void dumpRedirections(DICT dict)
+{
+    printf("Dumping redirected functions (%lu):\n", dict.size());
+    for (const auto& keyValue : dict)
     {
-        printf("Dumping redirected functions (%lu):\n", dict.size());
-        for(const auto& keyValue: dict)
-        {
-            puts(keyValue.first.c_str());
-        }
-        puts("End of dump");
+        puts(keyValue.first.c_str());
     }
+    puts("End of dump");
+}
 } //namespace helper
 
 /* 
@@ -247,26 +248,25 @@ void enhancer_setup(std::unique_ptr<ve::hooking::RedirectorBase> redirector)
      */
     //auto dlSymHookStatus = helper::hook_function(context->dlsymhook, reinterpret_cast<void *>(dlsym), reinterpret_cast<void *>(hooked_dlsym), hookTypeFlags);
     auto dlSymHookStatus = true;
-    
+
     /*
      * Set original symbol getter using trampolined dlsym()
      */
-    context->redirector->setSymbolGetter([](const char* symbol)->void* 
-    {
+    context->redirector->setSymbolGetter([](const char* symbol) -> void* {
         return getOriginalCallAddress(symbol);
-    });    
+    });
 
     /*
      * Register OpenGL calls that should be redirected
      */
-    context->redirector->registerCallbacks();    
+    context->redirector->registerCallbacks();
     helper::dumpRedirections(context->redirector->getRedirectedFunctions().getMapping());
-    fputs("[Enhancer] Registration done\n",stdout);
-    if(dlSymHookStatus == false)
+    fputs("[Enhancer] Registration done\n", stdout);
+    if (dlSymHookStatus == false)
     {
-        fputs("[Enhancer] Hooking dlsym() failed -> we can't hook any of OpenGL API functions\n",stdout);
-        fputs("[Enhancer] Make sure that 'getsebool allow_execheap' is on\n",stdout);
-        fputs("[Enhancer] If not, run 'setsebool allow_execheap on' as administrator\n",stdout);
+        fputs("[Enhancer] Hooking dlsym() failed -> we can't hook any of OpenGL API functions\n", stdout);
+        fputs("[Enhancer] Make sure that 'getsebool allow_execheap' is on\n", stdout);
+        fputs("[Enhancer] If not, run 'setsebool allow_execheap on' as administrator\n", stdout);
     }
 }
 

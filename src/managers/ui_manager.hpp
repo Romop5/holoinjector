@@ -14,24 +14,24 @@
 
 namespace ve
 {
-    class Context;
+class Context;
 
-    class InspectorWidget;
+class InspectorWidget;
 namespace managers
 {
     class UIManager
     {
-        public:
-            UIManager();
-            ~UIManager();
-            void initialize(Context& context);
-            void deinitialize(Context& context);
-            void onKeyPressed(Context& context, size_t key);
-            void onDraw(Context& context);
+    public:
+        UIManager();
+        ~UIManager();
+        void initialize(Context& context);
+        void deinitialize(Context& context);
+        void onKeyPressed(Context& context, size_t key);
+        void onDraw(Context& context);
 
-        private:
-            void registerCallbacks(Context& context);
-            std::unique_ptr<InspectorWidget> inspectorWidget;
+    private:
+        void registerCallbacks(Context& context);
+        std::unique_ptr<InspectorWidget> inspectorWidget;
     };
 }
 }

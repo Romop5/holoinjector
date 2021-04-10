@@ -8,23 +8,25 @@
 
 #ifndef __REDIRECTOR_BASE_HPP
 #define __REDIRECTOR_BASE_HPP
-#include <functional>
 #include "hooking/symbol_redirection.hpp"
+#include <functional>
 
 /// Original symbol getter type
 using original_symbol_getter = std::function<void*(const char* symbolName)>;
 
 namespace ve
 {
-namespace hooking 
+namespace hooking
 {
     class RedirectorBase
     {
-        private:
-            original_symbol_getter getter;
-        protected:
-            SymbolRedirection redirector;
-        public:
+    private:
+        original_symbol_getter getter;
+
+    protected:
+        SymbolRedirection redirector;
+
+    public:
         virtual ~RedirectorBase() = default;
         virtual void setSymbolGetter(original_symbol_getter getter)
         {

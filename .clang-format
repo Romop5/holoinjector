@@ -1,0 +1,7 @@
+﻿---
+BasedOnStyle: WebKit
+BreakBeforeBraces: Allman
+TabWidth: '4'
+UseTab: Never
+
+...

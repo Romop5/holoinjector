@@ -30,8 +30,9 @@ namespace pipeline
         float A = 0.0f; //matrix[2,2] => -2/(f-n)
         float B = 0.0f; //matrix[2,3] => -(f+n)/(f-n)
 
-        glm::vec4 asVector() const {
-            return glm::vec4(fx,fy,nearPlane, farPlane);
+        glm::vec4 asVector() const
+        {
+            return glm::vec4(fx, fy, nearPlane, farPlane);
         }
     };
 

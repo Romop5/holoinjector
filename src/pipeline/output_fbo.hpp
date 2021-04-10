@@ -9,11 +9,11 @@
 #ifndef REPEATER_OUTPUT_FBO_HPP
 #define REPEATER_OUTPUT_FBO_HPP
 
+#include "GL/gl.h"
+#include "paralax/mapping.hpp"
+#include "utils/opengl_raii.hpp"
 #include <memory>
 #include <vector>
-#include "GL/gl.h"
-#include "utils/opengl_raii.hpp"
-#include "paralax/mapping.hpp"
 
 namespace ve
 {
@@ -29,10 +29,10 @@ namespace pipeline
 
     class OutputFBOParameters
     {
-        public:
+    public:
         OutputFBOParameters() = default;
-	size_t getTextureWidth() const;
-	size_t getTextureHeight() const;
+        size_t getTextureWidth() const;
+        size_t getTextureHeight() const;
         size_t getLayers() const;
         size_t getGridSizeX() const;
         size_t getGridSizeY() const;
@@ -68,7 +68,7 @@ namespace pipeline
      */
     struct OutputFBO
     {
-        public:
+    public:
         OutputFBO() = default;
         ~OutputFBO();
         /// Creates OpenGL objects
@@ -105,7 +105,7 @@ namespace pipeline
         const HoloDisplayParameters getHoloDisplayParameters() const;
         void setHoloDisplayParameters(const HoloDisplayParameters params);
         //---------------------------------------------------------------------
-        private:
+    private:
         std::vector<ve::utils::FBORAII> m_proxyFBO;
         void clearImageFlag();
 
@@ -113,13 +113,13 @@ namespace pipeline
         void renderGridLayout();
         /// Render paralax
         void renderParalax(const CameraParameters& params);
-        bool    m_ContainsImageFlag = false;
-        GLuint  m_FBOId = 0;
-        GLuint  m_LayeredColorBuffer = 0;
-        GLuint  m_LayeredDepthStencilBuffer = 0;
+        bool m_ContainsImageFlag = false;
+        GLuint m_FBOId = 0;
+        GLuint m_LayeredColorBuffer = 0;
+        GLuint m_LayeredDepthStencilBuffer = 0;
 
         /// Shader program for displaying layared color buffers
-        GLuint  m_ViewerProgram = 0;
+        GLuint m_ViewerProgram = 0;
 
         // Full screen quad
         std::shared_ptr<ve::utils::glFullscreenVAO> m_VAO;
@@ -134,7 +134,6 @@ namespace pipeline
         size_t m_OnlyQuiltImageID = 0;
 
         HoloDisplayParameters m_HoloParameters;
-
     };
 
 }; //namespace pipeline

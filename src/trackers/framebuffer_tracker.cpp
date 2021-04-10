@@ -21,13 +21,12 @@ using namespace ve;
 using namespace ve::trackers;
 
 ///////////////////////////////////////////////////////////////////////////////
-// FramebufferMetadata 
+// FramebufferMetadata
 ///////////////////////////////////////////////////////////////////////////////
 
 FramebufferMetadata::FramebufferMetadata(size_t id)
     : m_id(id)
 {
-
 }
 void ve::trackers::FramebufferMetadata::attach(GLenum attachmentType, std::shared_ptr<TextureMetadata> texture, GLenum type, size_t level, size_t layer)
 {
@@ -62,11 +61,10 @@ size_t ve::trackers::FramebufferMetadata::getShadowFBO() const
     return m_shadowFBOId;
 }
 
-
 void ve::trackers::FramebufferMetadata::setDrawBuffers(std::vector<GLenum> buffers)
 {
     m_drawBuffers = buffers;
-    if(hasShadowFBO())
+    if (hasShadowFBO())
     {
         glNamedFramebufferDrawBuffers(m_shadowFBOId, buffers.size(), buffers.data());
     }
@@ -77,51 +75,52 @@ void ve::trackers::FramebufferMetadata::createShadowedFBO(size_t numLayers)
     assert(hasAnyAttachment());
     ASSERT_GL_ERROR();
     GLuint shadowFBO;
-    glGenFramebuffers(1,&shadowFBO);
+    glGenFramebuffers(1, &shadowFBO);
     ASSERT_GL_ERROR();
-    ASSERT_GL_NEQ(shadowFBO,0);
+    ASSERT_GL_NEQ(shadowFBO, 0);
     // Hack: OpenGL require at least one bind before attaching
-    glBindFramebuffer(GL_FRAMEBUFFER,shadowFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
     ASSERT_GL_ERROR();
-    for(auto& [attachmentType, metadata]: m_attachments.getMap())
+    for (auto& [attachmentType, metadata] : m_attachments.getMap())
     {
         auto texture = metadata.texture;
-        if(!texture->hasShadowTexture())
+        if (!texture->hasShadowTexture())
         {
             texture->createShadowedTexture(numLayers);
-            if(!texture->hasShadowTexture())
+            if (!texture->hasShadowTexture())
             {
                 Logger::logError("Failed to create shadow texture for FBO. ", ENHANCER_POS);
                 return;
             }
         }
         auto shadowedTexture = texture->getShadowedTextureId();
-        ASSERT_GL_NEQ(shadowedTexture,0);
-        glFramebufferTexture(GL_FRAMEBUFFER, attachmentType, shadowedTexture,metadata.level);
+        ASSERT_GL_NEQ(shadowedTexture, 0);
+        glFramebufferTexture(GL_FRAMEBUFFER, attachmentType, shadowedTexture, metadata.level);
         assert(glGetError() == GL_NO_ERROR);
     }
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    ASSERT_GL_EQ(status,GL_FRAMEBUFFER_COMPLETE);
+    ASSERT_GL_EQ(status, GL_FRAMEBUFFER_COMPLETE);
 
     glDrawBuffers(m_drawBuffers.size(), m_drawBuffers.data());
     ASSERT_GL_ERROR();
 
-    glBindFramebuffer(GL_FRAMEBUFFER,0);
-    glBindFramebuffer(GL_FRAMEBUFFER,shadowFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    glBindFramebuffer(GL_FRAMEBUFFER,0);
-    if(status == GL_FRAMEBUFFER_COMPLETE)
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (status == GL_FRAMEBUFFER_COMPLETE)
     {
         m_shadowFBOId = shadowFBO;
-    } else {
+    }
+    else
+    {
         std::string attachmentsDump;
-        for(auto& [attachmentType, metadata]: m_attachments.getMap())
+        for (auto& [attachmentType, metadata] : m_attachments.getMap())
         {
-            attachmentsDump += (" ") + FramebufferMetadata::getAttachmentTypeAsString
-                (attachmentType);
+            attachmentsDump += (" ") + FramebufferMetadata::getAttachmentTypeAsString(attachmentType);
         }
         Logger::logError("Failed to create shadow FBO. Count of attachments: ", m_attachments.size(), "\n",
-                attachmentsDump);
+            attachmentsDump);
         glDeleteFramebuffers(1, &shadowFBO);
 
         m_hasCreationOfShadowFBOFailed = true;
@@ -134,38 +133,38 @@ GLuint ve::trackers::FramebufferMetadata::createProxyFBO(size_t layer)
     // and binded, thus a shadow FBO must already exist!
     assert(hasShadowFBO());
 
-        // Use cached FBO if available
-    if(layer < m_proxyFBO.size() && m_proxyFBO[layer].getID() != 0)
+    // Use cached FBO if available
+    if (layer < m_proxyFBO.size() && m_proxyFBO[layer].getID() != 0)
     {
         return m_proxyFBO[layer].getID();
     }
 
-    Logger::logDebug("proxy FBO for layer ",layer," not found in cache -> creating");
+    Logger::logDebug("proxy FBO for layer ", layer, " not found in cache -> creating");
     Logger::logDebug("cache size:", m_proxyFBO.size(), " elements");
 
-    m_proxyFBO.resize(layer+1);
+    m_proxyFBO.resize(layer + 1);
 
     GLuint proxyFBO;
-    glGenFramebuffers(1,&proxyFBO);
+    glGenFramebuffers(1, &proxyFBO);
     ASSERT_GL_ERROR();
     // Hack: OpenGL require at least one bind before attaching
-    glBindFramebuffer(GL_FRAMEBUFFER,proxyFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, proxyFBO);
     ASSERT_GL_ERROR();
-    for(auto& [attachmentType, metadata]: m_attachments.getMap())
+    for (auto& [attachmentType, metadata] : m_attachments.getMap())
     {
         auto texture = metadata.texture;
         // This should hold, because we call createShadowedFBO() above
         assert(texture->hasShadowTexture());
         auto shadowedTexture = texture->getShadowedTextureId();
         assert(shadowedTexture != 0);
-        glFramebufferTextureLayer(GL_FRAMEBUFFER, attachmentType, shadowedTexture,metadata.level, layer);
+        glFramebufferTextureLayer(GL_FRAMEBUFFER, attachmentType, shadowedTexture, metadata.level, layer);
         ASSERT_GL_ERROR();
     }
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     ASSERT_GL_EQ(status, GL_FRAMEBUFFER_COMPLETE);
-    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ASSERT_GL_ERROR();
-    Logger::logDebug("storing proxy FBO for layer ",layer);
+    Logger::logDebug("storing proxy FBO for layer ", layer);
     m_proxyFBO[layer] = std::move(utils::FBORAII(proxyFBO));
     Logger::logDebug("post cache size:", m_proxyFBO.size(), " elements");
     return proxyFBO;
@@ -173,14 +172,14 @@ GLuint ve::trackers::FramebufferMetadata::createProxyFBO(size_t layer)
 
 void ve::trackers::FramebufferMetadata::freeShadowedFBO()
 {
-    for(auto& fbo: m_proxyFBO)
+    for (auto& fbo : m_proxyFBO)
     {
         GLuint id = fbo.getID();
         glDeleteFramebuffers(1, &id);
     }
     m_proxyFBO.clear();
-    
-    if(m_shadowFBOId)
+
+    if (m_shadowFBOId)
     {
         GLuint id = m_shadowFBOId;
         glDeleteFramebuffers(1, &id);
@@ -188,12 +187,9 @@ void ve::trackers::FramebufferMetadata::freeShadowedFBO()
     }
 }
 
-
 bool ve::trackers::FramebufferMetadata::isShadowMapFBO() const
 {
-    return !m_attachments.has(GL_COLOR_ATTACHMENT0) && 
-            (m_attachments.has(GL_DEPTH_ATTACHMENT) || m_attachments.has(GL_DEPTH_STENCIL_ATTACHMENT)) &&
-            m_attachments.size() == 1;
+    return !m_attachments.has(GL_COLOR_ATTACHMENT0) && (m_attachments.has(GL_DEPTH_ATTACHMENT) || m_attachments.has(GL_DEPTH_STENCIL_ATTACHMENT)) && m_attachments.size() == 1;
 }
 
 bool ve::trackers::FramebufferMetadata::isLayeredRendering() const
@@ -202,19 +198,19 @@ bool ve::trackers::FramebufferMetadata::isLayeredRendering() const
 }
 bool ve::trackers::FramebufferMetadata::isEnvironmentMapFBO() const
 {
-    const static auto cubeMapTypes = std::unordered_set<GLenum>{GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BINDING_CUBE_MAP,GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_PROXY_TEXTURE_CUBE_MAP};
+    const static auto cubeMapTypes = std::unordered_set<GLenum> { GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BINDING_CUBE_MAP, GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_PROXY_TEXTURE_CUBE_MAP };
 
-    if(m_attachments.has(GL_DEPTH_ATTACHMENT))
+    if (m_attachments.has(GL_DEPTH_ATTACHMENT))
     {
         auto type = m_attachments.getConst(GL_DEPTH_ATTACHMENT).texture->getType();
-        if(cubeMapTypes.count(type) > 0)
+        if (cubeMapTypes.count(type) > 0)
             return true;
     }
 
-    if(m_attachments.has(GL_COLOR_ATTACHMENT0))
+    if (m_attachments.has(GL_COLOR_ATTACHMENT0))
     {
         auto type = m_attachments.getConst(GL_COLOR_ATTACHMENT0).texture->getType();
-        if(cubeMapTypes.count(type) > 0)
+        if (cubeMapTypes.count(type) > 0)
             return true;
     }
     return false;
@@ -232,22 +228,34 @@ ContextTracker<FramebufferAttachment>& ve::trackers::FramebufferMetadata::getAtt
 
 std::string ve::trackers::FramebufferMetadata::getAttachmentTypeAsString(GLenum attachmentType)
 {
-    switch(attachmentType)
+    switch (attachmentType)
     {
-        case GL_COLOR_ATTACHMENT0: return "GL_COLOR_ATTACHMENT0";
-        case GL_COLOR_ATTACHMENT1: return "GL_COLOR_ATTACHMENT1";
-        case GL_COLOR_ATTACHMENT2: return "GL_COLOR_ATTACHMENT2";
-        case GL_COLOR_ATTACHMENT3: return "GL_COLOR_ATTACHMENT3";
-        case GL_COLOR_ATTACHMENT4: return "GL_COLOR_ATTACHMENT4";
-        case GL_COLOR_ATTACHMENT5: return "GL_COLOR_ATTACHMENT5";
-        case GL_COLOR_ATTACHMENT6: return "GL_COLOR_ATTACHMENT6";
-        case GL_COLOR_ATTACHMENT7: return "GL_COLOR_ATTACHMENT7";
-        case GL_COLOR_ATTACHMENT8: return "GL_COLOR_ATTACHMENT8";
-        case GL_DEPTH_ATTACHMENT: return "GL_DEPTH_ATTACHMENT";
-        case GL_STENCIL_ATTACHMENT: return "GL_STENCIL_ATTACHMENT";
-        case GL_DEPTH_STENCIL_ATTACHMENT: return "GL_DEPTH_STENCIL_ATTACHMENT";
-        default:
-            return "UNKNOWN_ATTACHMENT"+std::to_string(attachmentType);
+    case GL_COLOR_ATTACHMENT0:
+        return "GL_COLOR_ATTACHMENT0";
+    case GL_COLOR_ATTACHMENT1:
+        return "GL_COLOR_ATTACHMENT1";
+    case GL_COLOR_ATTACHMENT2:
+        return "GL_COLOR_ATTACHMENT2";
+    case GL_COLOR_ATTACHMENT3:
+        return "GL_COLOR_ATTACHMENT3";
+    case GL_COLOR_ATTACHMENT4:
+        return "GL_COLOR_ATTACHMENT4";
+    case GL_COLOR_ATTACHMENT5:
+        return "GL_COLOR_ATTACHMENT5";
+    case GL_COLOR_ATTACHMENT6:
+        return "GL_COLOR_ATTACHMENT6";
+    case GL_COLOR_ATTACHMENT7:
+        return "GL_COLOR_ATTACHMENT7";
+    case GL_COLOR_ATTACHMENT8:
+        return "GL_COLOR_ATTACHMENT8";
+    case GL_DEPTH_ATTACHMENT:
+        return "GL_DEPTH_ATTACHMENT";
+    case GL_STENCIL_ATTACHMENT:
+        return "GL_STENCIL_ATTACHMENT";
+    case GL_DEPTH_STENCIL_ATTACHMENT:
+        return "GL_DEPTH_STENCIL_ATTACHMENT";
+    default:
+        return "UNKNOWN_ATTACHMENT" + std::to_string(attachmentType);
     }
 }
 ///////////////////////////////////////////////////////////////////////////////
@@ -260,10 +268,8 @@ bool ve::trackers::FramebufferTracker::isFBODefault() const
 
 bool ve::trackers::FramebufferTracker::isSuitableForRepeating() const
 {
-    if(isFBODefault())
+    if (isFBODefault())
         return true;
     auto fbo = getBoundConst();
     return !fbo->isShadowMapFBO() && !fbo->isEnvironmentMapFBO();
 }
-
-

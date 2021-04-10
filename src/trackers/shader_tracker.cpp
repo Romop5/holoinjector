@@ -24,18 +24,18 @@ bool ShaderMetadata::isShaderOneOf(const std::unordered_set<GLenum>& allowedType
 
 const std::string ShaderMetadata::ShaderMetadata::getTypeAsString() const
 {
-    switch(m_Type)
+    switch (m_Type)
     {
-        case GL_VERTEX_SHADER:
-            return "VertexShader";
-        case GL_FRAGMENT_SHADER:
-            return "FragmentShader";
-        case GL_GEOMETRY_SHADER:
-            return "GeometryShader";
-        case GL_COMPUTE_SHADER:
-            return "GeometryShader";
-        default:
-            break;
+    case GL_VERTEX_SHADER:
+        return "VertexShader";
+    case GL_FRAGMENT_SHADER:
+        return "FragmentShader";
+    case GL_GEOMETRY_SHADER:
+        return "GeometryShader";
+    case GL_COMPUTE_SHADER:
+        return "GeometryShader";
+    default:
+        break;
     }
     return "UknownShader";
 }
@@ -45,11 +45,10 @@ const std::string ShaderMetadata::ShaderMetadata::getTypeAsString() const
 ///////////////////////////////////////////////////////////////////////////////
 void ShaderProgram::updateUniformBlock(size_t location, size_t bindingIndex)
 {
-    auto blockReference = std::find_if(m_UniformBlocks.begin(), m_UniformBlocks.end(),[&](const auto& block)->bool
-    {
-        return block.second.location == location;    
+    auto blockReference = std::find_if(m_UniformBlocks.begin(), m_UniformBlocks.end(), [&](const auto& block) -> bool {
+        return block.second.location == location;
     });
-    if(blockReference != m_UniformBlocks.end())
+    if (blockReference != m_UniformBlocks.end())
     {
         (*blockReference).second.bindingIndex = bindingIndex;
     }
@@ -101,21 +100,20 @@ bool ShaderProgram::isInjected() const
     return hasMetadata() && m_Metadata->m_IsInjected;
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // ShaderTracker
 ///////////////////////////////////////////////////////////////////////////////
 
 bool ShaderTracker::isVSBound() const
 {
-    if(!hasBounded())
+    if (!hasBounded())
         return false;
     return getBoundConst()->shaders.has(GL_VERTEX_SHADER);
 }
 
 bool ShaderTracker::isGSBound() const
 {
-    if(!hasBounded())
+    if (!hasBounded())
         return false;
     return getBoundConst()->shaders.has(GL_GEOMETRY_SHADER);
 }

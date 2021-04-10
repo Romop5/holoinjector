@@ -31,7 +31,7 @@ void Diagnostics::setScreenshotFormat(const std::string& format)
 
 const std::string Diagnostics::getScreenshotName() const
 {
-    if(m_ScreenshotNameFormat.find("{}") != std::string::npos)
+    if (m_ScreenshotNameFormat.find("{}") != std::string::npos)
     {
         const auto position = m_ScreenshotNameFormat.find("{}");
         std::string outputName = m_ScreenshotNameFormat;
@@ -64,4 +64,3 @@ void Diagnostics::setNonIntrusiveness(bool shouldBeNonIntrusive)
 {
     m_shouldNotBeIntrusive = shouldBeNonIntrusive;
 }
-

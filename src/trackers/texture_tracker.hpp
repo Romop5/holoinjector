@@ -8,11 +8,11 @@
 
 #ifndef VE_TEXTURE_TRACKER_HPP
 #define VE_TEXTURE_TRACKER_HPP
-#include <memory>
 #include "GL/gl.h"
+#include <memory>
 
-#include "utils/context_tracker.hpp"
 #include "pipeline/program_metadata.hpp"
+#include "utils/context_tracker.hpp"
 
 namespace ve
 {
@@ -43,8 +43,11 @@ namespace trackers
      */
     class TextureMetadata
     {
-        public:
-        TextureMetadata(size_t id): m_Id(id) {}
+    public:
+        TextureMetadata(size_t id)
+            : m_Id(id)
+        {
+        }
         virtual ~TextureMetadata();
         void deinitialize();
 
@@ -91,7 +94,8 @@ namespace trackers
 
         /// Helper: serialize format (e.gl GL_RGBA8) to string
         static std::string getFormatAsString(GLenum type);
-        protected:
+
+    protected:
         /// Resource's ID
         size_t m_Id = 0;
 
@@ -120,7 +124,7 @@ namespace trackers
     /**
      * \brief Map of <texture_type, textureID>
      */
-    class TextureUnit: public ContextTracker<std::shared_ptr<TextureMetadata>>
+    class TextureUnit : public ContextTracker<std::shared_ptr<TextureMetadata>>
     {
     };
 
@@ -134,9 +138,9 @@ namespace trackers
      * needed.
      */
 
-    class TextureUnitTracker: private BindableContextTracker<std::shared_ptr<TextureUnit>,false>
+    class TextureUnitTracker : private BindableContextTracker<std::shared_ptr<TextureUnit>, false>
     {
-        public:
+    public:
         /// Has any texture with shadow texture active?
         bool hasShadowedTextureBinded() const;
 
@@ -145,15 +149,17 @@ namespace trackers
 
         /// Rebind to original (application's) texture
         void unbindShadowedTextures();
-        protected:
+
+    protected:
         /// Track activation of texture unit with id
         void activate(size_t id);
 
         void bind(size_t target, std::shared_ptr<TextureMetadata> texture);
         MapType& getUnits();
         friend class TextureTracker;
-        private:
-        using baseType = BindableContextTracker<std::shared_ptr<TextureUnit>,false>;
+
+    private:
+        using baseType = BindableContextTracker<std::shared_ptr<TextureUnit>, false>;
     };
 
     /**
@@ -162,9 +168,9 @@ namespace trackers
      * In addition to tracking lifetime of textures, texture units are also tracked due to necessity
      * to rebind shadowed textures prior to draw calls.
      */
-    class TextureTracker: public ContextTracker<std::shared_ptr<TextureMetadata>>
+    class TextureTracker : public ContextTracker<std::shared_ptr<TextureMetadata>>
     {
-        public:
+    public:
         void deinitialize();
 
         /// Mark id as binded for target
@@ -179,14 +185,15 @@ namespace trackers
          * Helpers
          */
         /// Converts type (e.g. GL_TEXTURE_2D) to string
-	static GLenum getParameterForType(GLenum type);
+        static GLenum getParameterForType(GLenum type);
 
         /// Converts format (e.g. GL_RGBA & GL_UNSIGNED_BYTE) to sized format
         static GLenum convertToSizedFormat(GLenum internalFormat, GLenum size);
 
         /// Determines if given format is precise-size OpenGL texture format
         static bool isSizedFormat(GLenum format);
-        private:
+
+    private:
         TextureUnitTracker m_TextureUnits;
     };
 } //namespace trackers

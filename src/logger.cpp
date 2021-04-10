@@ -12,7 +12,7 @@
 ve::Logger& ve::Logger::getInstance()
 {
     static std::unique_ptr<ve::Logger> m_singleton = nullptr;
-    if(!m_singleton)
+    if (!m_singleton)
     {
         m_singleton.reset(new ve::Logger());
     }
@@ -36,7 +36,7 @@ void ve::Logger::incrementFrameNumber()
 
 void ve::Logger::printLog(const std::string& msg, LogLevel level)
 {
-    if(m_maximalLogLevel < level)
+    if (m_maximalLogLevel < level)
         return;
     printLogBanner(level);
     printf("%s", msg.c_str());
@@ -50,12 +50,12 @@ void ve::Logger::flush()
 void ve::Logger::printLogBanner(LogLevel level)
 {
     printf("[Repeater]");
-    switch(level)
+    switch (level)
     {
-        case DEBUG_PER_FRAME_LOG:
-            printf("[Frm: %u]", m_currentFrameID);
-            break;
-        default:
-            break;
+    case DEBUG_PER_FRAME_LOG:
+        printf("[Frm: %u]", m_currentFrameID);
+        break;
+    default:
+        break;
     }
 }

@@ -8,6 +8,6 @@
 
 class GLObject
 {
-    public:
+public:
     size_t getId() const;
 };

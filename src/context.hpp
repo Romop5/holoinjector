@@ -11,36 +11,36 @@
 #include <memory>
 namespace ve
 {
-    namespace pipeline
-    {
-        class CameraParameters; 
-        class VirtualCameras; 
-        class ViewportArea; 
-        class OutputFBO;
-    }
+namespace pipeline
+{
+    class CameraParameters;
+    class VirtualCameras;
+    class ViewportArea;
+    class OutputFBO;
+}
 
-    class Diagnostics; 
-    class ImguiAdapter; 
-    class SettingsWidget;
-    class X11Sniffer;
+class Diagnostics;
+class ImguiAdapter;
+class SettingsWidget;
+class X11Sniffer;
 
-    namespace trackers
-    {
-        class ShaderTracker; 
-        class FramebufferTracker; 
-        class LegacyTracker;
-        class TextureTracker; 
-        class RenderbufferTracker;
-        class UniformBlockTracing;
-    }
+namespace trackers
+{
+    class ShaderTracker;
+    class FramebufferTracker;
+    class LegacyTracker;
+    class TextureTracker;
+    class RenderbufferTracker;
+    class UniformBlockTracing;
+}
 
-    class ContextPimpl;
+class ContextPimpl;
 /**
  * @brief Stores all OpenGL-context related structures
  */
 class Context
 {
-    public:
+public:
     explicit Context();
     ~Context();
     void reset();
@@ -59,7 +59,6 @@ class Context
     /* ------------------------------------------------------------------------
      *  UI
      * ----------------------------------------------------------------------*/
-
 
     /// Dear ImGUI Adapter
     ImguiAdapter& getGui();
@@ -102,9 +101,9 @@ class Context
 
     /// Determines if newly create GL window should be put to background
     bool keepWindowInBackgroundFlag = false;
-    private:
+
+private:
     std::unique_ptr<ContextPimpl> pimpl;
 };
 } // namespace ve
 #endif
-

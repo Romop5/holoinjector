@@ -13,39 +13,40 @@
 
 namespace ve
 {
-    // Fwd
-    class Context;
+// Fwd
+class Context;
 
-    /**
+/**
      * @brief Adapts DearImgui into project
      */
-    class ImguiAdapter
-    {
-        public:
-            /// Prepare resources
-            bool initialize();
-            /// Start accepting user's definitions
-            void beginFrame(Context& context);
-            /// End of user's definitions and prepare draw buffer
-            void endFrame();
-            /// Render draw buffer
-            void renderCurrentFrame();
-            /// Clean up
-            void destroy();
+class ImguiAdapter
+{
+public:
+    /// Prepare resources
+    bool initialize();
+    /// Start accepting user's definitions
+    void beginFrame(Context& context);
+    /// End of user's definitions and prepare draw buffer
+    void endFrame();
+    /// Render draw buffer
+    void renderCurrentFrame();
+    /// Clean up
+    void destroy();
 
-            void onKey(size_t key, bool isDown = true);
-            void onMousePosition(float x, float y);
-            void onButton(size_t buttonID, bool isPressed);
+    void onKey(size_t key, bool isDown = true);
+    void onMousePosition(float x, float y);
+    void onButton(size_t buttonID, bool isPressed);
 
-            bool isVisible();
-            void setVisibility(bool isVisible);
-            void setScaling(float scale);
-        private:
-            bool m_Visibility = false;
-            float m_Scaling = 1.0;
+    bool isVisible();
+    void setVisibility(bool isVisible);
+    void setScaling(float scale);
 
-            float posX = 0.0;
-            float posY = 0.0;
-    };
+private:
+    bool m_Visibility = false;
+    float m_Scaling = 1.0;
+
+    float posX = 0.0;
+    float posY = 0.0;
+};
 } // namespace ve
 #endif

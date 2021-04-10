@@ -7,25 +7,25 @@
 *****************************************************************************/
 
 #include "pipeline/viewport_area.hpp"
+#include <cassert>
 #include <cstdlib> // size_t
 #include <cstring> // memcmp
-#include <cassert>
 
 using namespace ve;
 using namespace ve::pipeline;
 
 ViewportArea::ViewportArea()
 {
-    for(size_t i = 0; i< 3;i++)
+    for (size_t i = 0; i < 3; i++)
         data[i] = 0;
 }
 
 ViewportArea::ViewportArea(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-    set(x,y,width,height);
+    set(x, y, width, height);
 }
 
-GLint* ViewportArea::getDataPtr() 
+GLint* ViewportArea::getDataPtr()
 {
     return data;
 }
@@ -44,7 +44,7 @@ GLint ViewportArea::getHeight() const { return data[3]; }
 
 bool ViewportArea::operator==(const ViewportArea& area) const
 {
-    return std::memcmp(data, area.data, 4*sizeof(GLint)) == 0;
+    return std::memcmp(data, area.data, 4 * sizeof(GLint)) == 0;
 }
 
 GLint ViewportArea::operator[](GLsizei index) const

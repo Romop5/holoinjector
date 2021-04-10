@@ -21,7 +21,7 @@ namespace trackers
      */
     class LegacyTracker
     {
-        public:
+    public:
         /* 
          * Queries / heuristics
          */
@@ -48,10 +48,10 @@ namespace trackers
         /// Multiply top of stack with m
         void multMatrix(const glm::mat4& m);
 
-        private:
+    private:
         /// Mode: affects load/multMatrix() operations
         GLenum m_currentMode = GL_PROJECTION;
-        
+
         /// Intercepted projection matrix
         glm::mat4 m_currentProjection = glm::mat4(1.0);
 
@@ -60,7 +60,6 @@ namespace trackers
 
         /// Cache: store whether least recent GL_PROJECTION is orthogonal
         bool m_isOrthogonalProjection = false;
-        
     };
 
 } // namespace trackers

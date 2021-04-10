@@ -17,21 +17,25 @@ bool ve::enviroment::hasEnviromentalVariable(const std::string& variable)
 float ve::enviroment::getEnviromentValue(const std::string& variable, float defaultValue)
 {
     auto envStringRaw = getenv(variable.c_str());
-    if(!envStringRaw)
+    if (!envStringRaw)
         return defaultValue;
     float resultValue = defaultValue;
-    try {
+    try
+    {
         resultValue = std::stof(envStringRaw);
-    } catch(...) {};
-    Logger::log("[Enhancer] Getting env value of", variable.c_str(),"=>",resultValue);
+    }
+    catch (...)
+    {
+    };
+    Logger::log("[Enhancer] Getting env value of", variable.c_str(), "=>", resultValue);
     return resultValue;
 }
 
 std::string ve::enviroment::getEnviromentValueStr(const std::string& variable, std::string defaultValue)
 {
     auto envStringRaw = getenv(variable.c_str());
-    auto result = (envStringRaw)?envStringRaw:defaultValue;
-    Logger::log("[Enhancer] Getting env value of", variable.c_str(),"=>",result.c_str());
+    auto result = (envStringRaw) ? envStringRaw : defaultValue;
+    Logger::log("[Enhancer] Getting env value of", variable.c_str(), "=>", result.c_str());
     return result;
 }
 

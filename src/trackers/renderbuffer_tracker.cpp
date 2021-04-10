@@ -9,8 +9,8 @@
 #define GL_GLEXT_PROTOTYPES 1
 #include <GL/gl.h>
 
-#include "renderbuffer_tracker.hpp"
 #include "logger.hpp"
+#include "renderbuffer_tracker.hpp"
 #include "utils/opengl_debug.hpp"
 
 using namespace ve;
@@ -25,13 +25,13 @@ TextureType RenderbufferMetadata::getPhysicalTextureType()
 
 void RenderbufferMetadata::createShadowedTexture(size_t numOfLayers)
 {
-    if(getWidth() == 0 || getHeight() == 0)
+    if (getWidth() == 0 || getHeight() == 0)
     {
-        Logger::logError(" Failed to get texture size. Got ",getWidth(),"x",getHeight(), ENHANCER_POS);
+        Logger::logError(" Failed to get texture size. Got ", getWidth(), "x", getHeight(), ENHANCER_POS);
         return;
     }
     Logger::logDebug("Creating shadow texture: renderbuffer: with resolution: ", getWidth(), "x",
-            getHeight(), " and format: ", TextureMetadata::getFormatAsString(getFormat()), ENHANCER_POS);
+        getHeight(), " and format: ", TextureMetadata::getFormatAsString(getFormat()), ENHANCER_POS);
 
     glGetError();
     GLuint layeredTexture;
@@ -44,12 +44,14 @@ void RenderbufferMetadata::createShadowedTexture(size_t numOfLayers)
     auto format = getFormat();
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, getFormat(), getWidth(), getHeight(), numOfLayers);
     auto storageError = glGetError();
-    if(storageError == GL_INVALID_ENUM)
+    if (storageError == GL_INVALID_ENUM)
     {
         Logger::logError("Failed to create renderbuffer with intercepted format. Falling back to GL_DEPTH_COMPONENT32");
         glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH_COMPONENT32, getWidth(), getHeight(), numOfLayers);
         ASSERT_GL_ERROR();
-    } else {
+    }
+    else
+    {
         Logger::logError("Error while creating texture for renderbuffer texture", ENHANCER_POS);
     }
 
@@ -64,4 +66,3 @@ void RenderbufferMetadata::createShadowedTexture(size_t numOfLayers)
     // => no need to set up a texture view as renderbuffer is always coupled with FBO
     m_shadowTextureViewId = 0;
 }
-

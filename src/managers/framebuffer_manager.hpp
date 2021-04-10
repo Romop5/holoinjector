@@ -13,14 +13,14 @@
 
 namespace ve
 {
-    class Context;
+class Context;
 namespace managers
 {
     class FramebufferManager
     {
-        public:
+    public:
         void clear(Context& context, GLbitfield mask);
-        void bindFramebuffer (Context& context, GLenum target, GLuint framebuffer);
+        void bindFramebuffer(Context& context, GLenum target, GLuint framebuffer);
         void swapBuffers(Context& context, std::function<void(void)> swapit);
         void renderFromOutputFBO(Context& context);
     };

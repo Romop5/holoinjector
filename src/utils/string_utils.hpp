@@ -8,9 +8,9 @@
 
 #ifndef STRING_UTILS_HPP
 #define STRING_UTILS_HPP
-#include <string>
-#include <regex>
 #include <functional>
+#include <regex>
+#include <string>
 
 namespace ve
 {

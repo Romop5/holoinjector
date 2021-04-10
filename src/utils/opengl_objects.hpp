@@ -17,15 +17,18 @@
 
 #include "logger.hpp"
 
-namespace ve 
+namespace ve
 {
 namespace utils
 {
     class glObject
     {
-        public:
+    public:
         glObject() = default;
-        explicit glObject(size_t id): m_ID(id) {}
+        explicit glObject(size_t id)
+            : m_ID(id)
+        {
+        }
         glObject(const glObject& o) = delete;
         glObject(glObject&& o)
         {
@@ -40,18 +43,20 @@ namespace utils
         }
         ~glObject();
         size_t getID() const { return m_ID; }
-        size_t releaseID() {
+        size_t releaseID()
+        {
             auto id = m_ID;
             m_ID = 0;
             return id;
         }
-        protected:
+
+    protected:
         size_t m_ID = 0;
         void setID(size_t id) { m_ID = id; }
     };
-    class glShader: public glObject
+    class glShader : public glObject
     {
-        public:
+    public:
         glShader() = default;
         glShader(const std::string& src, GLenum type)
         {
@@ -59,24 +64,24 @@ namespace utils
         }
         bool create(const std::string& src, GLenum type);
     };
-    class glProgram: public glObject
+    class glProgram : public glObject
     {
-        public:
+    public:
         glProgram() = default;
 
-        template<class ...TYPES>
+        template <class... TYPES>
         glProgram(TYPES... types)
         {
-            const std::vector<size_t> ids = {types.getID()...};
+            const std::vector<size_t> ids = { types.getID()... };
             link(ids);
         }
         bool link(const std::vector<size_t> shaders);
         bool isLinked() const { return getID(); }
     };
 
-    class glFullscreenVAO: public glObject
+    class glFullscreenVAO : public glObject
     {
-        public:
+    public:
         glFullscreenVAO()
         {
             create();
@@ -88,7 +93,8 @@ namespace utils
         }
 
         void draw();
-        private:
+
+    private:
         glObject m_VBO;
     };
 

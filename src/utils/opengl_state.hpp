@@ -10,8 +10,8 @@
 #define VE_UTILS_OPENGL_STATE_HPP
 
 #include <GL/gl.h>
-#include <vector>
 #include <functional>
+#include <vector>
 
 namespace ve
 {
@@ -22,7 +22,7 @@ namespace utils
      */
     class BackupOpenGLStatesRAII
     {
-        public:
+    public:
         BackupOpenGLStatesRAII() = default;
         explicit BackupOpenGLStatesRAII(GLenum state);
         ~BackupOpenGLStatesRAII();
@@ -37,7 +37,7 @@ namespace utils
         // Move assingnable
         BackupOpenGLStatesRAII& operator=(BackupOpenGLStatesRAII&& inst);
 
-        private:
+    private:
         GLenum m_State = GL_FALSE;
         bool m_IsEnabled = false;
     };
@@ -47,6 +47,3 @@ namespace utils
 } // namespace raii
 } // namespace ve
 #endif
-
-
-

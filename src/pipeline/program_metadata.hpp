@@ -11,39 +11,39 @@
 
 #include <string>
 
-namespace ve 
+namespace ve
 {
 namespace pipeline
 {
-struct ProgramMetadata
-{
-    bool m_IsInvisible = false;
-    bool m_IsInjected = false;
-    bool m_IsUniformInInterfaceBlock = false;
-    /// If transformation is in block, stores block name
-    std::string m_InterfaceBlockName;
+    struct ProgramMetadata
+    {
+        bool m_IsInvisible = false;
+        bool m_IsInjected = false;
+        bool m_IsUniformInInterfaceBlock = false;
+        /// If transformation is in block, stores block name
+        std::string m_InterfaceBlockName;
 
-    /// Name of projection matrix or MVP
-    std::string m_TransformationMatrixName;
-    // Determines if any uniform is defined
-    bool m_HasAnyUniform = false;
-    // Determines if skybox / clipspace rendering was detected
-    bool m_IsClipSpaceTransform = false;
-    // Determines if ftransform() is called in Vertex Shader
-    bool m_HasAnyFtransform = false;
+        /// Name of projection matrix or MVP
+        std::string m_TransformationMatrixName;
+        // Determines if any uniform is defined
+        bool m_HasAnyUniform = false;
+        // Determines if skybox / clipspace rendering was detected
+        bool m_IsClipSpaceTransform = false;
+        // Determines if ftransform() is called in Vertex Shader
+        bool m_HasAnyFtransform = false;
 
-    // Is geometry shader user
-    bool m_IsGeometryShaderUsed = true;
+        // Is geometry shader user
+        bool m_IsGeometryShaderUsed = true;
 
-    // Is linked by enhancer correctly
-    bool m_IsLinkedCorrectly = false;
-    // Queries
-    bool isUBOused() const;
-    bool hasDetectedTransformation() const;
-    bool hasFtransform() const;
-    bool usesGeometryShader() const;
-    bool isLinked() const;
-};
+        // Is linked by enhancer correctly
+        bool m_IsLinkedCorrectly = false;
+        // Queries
+        bool isUBOused() const;
+        bool hasDetectedTransformation() const;
+        bool hasFtransform() const;
+        bool usesGeometryShader() const;
+        bool isLinked() const;
+    };
 
 } //namespace pipeline
 } //namespace ve

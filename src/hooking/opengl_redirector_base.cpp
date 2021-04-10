@@ -16,9 +16,9 @@
  * g++ -E opengl_redirector_base.cpp | clang-format 
  */
 
-#include <unordered_map>
 #include <sstream>
 #include <type_traits>
+#include <unordered_map>
 
 #include "hooking/opengl_redirector_base.hpp"
 #include "hooking/opengl_redirector_impl_macros.hpp"
@@ -47,198 +47,196 @@ OpenglRedirectorBase::~OpenglRedirectorBase()
 
 namespace helper
 {
-    bool shouldLogApiMessages()
+bool shouldLogApiMessages()
+{
+    static bool shouldLogApiCall = false;
+    static bool isQueried = false;
+    if (!isQueried)
     {
-        static bool shouldLogApiCall = false;
-        static bool isQueried = false;
-        if(!isQueried)
-        {
-            shouldLogApiCall = (getenv("ENHANCER_LOG_LOAD") != nullptr);
-            isQueried = true;
-        }
-        return shouldLogApiCall;
+        shouldLogApiCall = (getenv("ENHANCER_LOG_LOAD") != nullptr);
+        isQueried = true;
     }
-
-    void log_api_call(const std::string apiName, const std::string serializedArguments = "")
-    {
-        if(shouldLogApiMessages())
-        {
-            printf("[Enhancer API CALL: %s] %s\n", apiName.c_str(), serializedArguments.c_str());
-        }
-    }
-
-
-    static std::unordered_map<std::string, void*> definedAPIFunctions;
-    /// Register corresponding OpenGL API rediction into definedAPIFunctions
-    class RegisterAPIFunction
-    {
-        public:
-        RegisterAPIFunction(const std::string& name, void* address)
-        {
-            if(!g_OpenGLRedirector)
-            {
-                if(shouldLogApiMessages())
-                {
-                    printf("[Enhancer] Error: g_OpenGLRedirector == nullptr\nenhancer_startup() was not called before C++ initialization. (%s)\n", name.c_str());
-                }
-                return;
-            }
-            if(shouldLogApiMessages())
-            {
-                printf("[Enhancer] Registering redirection for %s\n", name.c_str());
-            }
-            g_OpenGLRedirector->redirector.addRedirection(name,address);
-            //definedAPIFunctions[name] = address;
-        }
-    };
-
-    std::string serialize(...)
-    {
-        return "Unknown";
-    }
-
-    std::string serialize(const GLubyte* s)
-    {
-        std::stringstream ss;
-        ss << "\"" << reinterpret_cast<const char*>(s) << "\"";
-        return ss.str();
-    }
-
-    std::string serialize(const std::string s)
-    {
-        std::stringstream ss;
-        ss << "\"" << s << "\"";
-        return ss.str();
-    }
-
-    std::string serialize(GLenum c)
-    {
-        return ve::opengl_utils::getEnumStringRepresentation(c);
-    }
-
-    std::string serialize(char c)
-    {
-        std::stringstream ss;
-        ss << "'" << c << "'";
-        return ss.str();
-    }
-
-    std::string serialize(XEvent* event)
-    {
-        std::string eventTypes[] = {
-            "Unknown 0",
-            "Unknown 1",
-            "KeyPress",
-            "KeyRelease",
-            "ButtonPress",
-            "ButtonRelease",
-            "MotionNotify",
-            "EnterNotify",
-            "LeaveNotify",
-            "FocusIn",
-            "FocusOut",
-            "KeymapNotify",
-            "Expose",
-            "GraphicsExpose",
-            "NoExpose",
-            "VisibilityNotify",
-            "CreateNotify",
-            "DestroyNotify",
-            "UnmapNotify",
-            "MapNotify",
-            "MapRequest",
-            "ReparentNotify",
-            "ConfigureNotify",
-            "ConfigureRequest",
-            "GravityNotify",
-            "ResizeRequest",
-            "CirculateNotify",
-            "CirculateRequest",
-            "PropertyNotify",
-            "SelectionClear",
-            "SelectionRequest",
-            "SelectionNotify",
-            "ColormapNotify",
-            "ClientMessage",
-            "MappingNotify",
-            "GenericEvent"
-        };
-
-        return "UNKNOWN";
-
-        const auto& type = eventTypes[event->type];
-        return type;
-    }
-
-
-
-    template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
-    std::string  serialize(T val)
-    {
-        return std::to_string(val);
-    }
-
-    template <typename T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
-    std::string  serialize(T val)
-    {
-        return std::to_string(val);
-    }
-
-    std::string packArgs()
-    {
-        return "";
-    }
-
-    template <typename FIRST, typename... T>
-    std::string packArgs(FIRST head, T... args)
-    {
-        if(sizeof...(args) == 0)
-            return serialize(head);
-        return serialize(head)+", "+packArgs(args...);
-    }
-
-    using ReturnFunctionType = void(*)();
-
-    std::string convertGLString(const GLubyte * name)
-    {
-        size_t i = 0;
-        while(name[i] != '\0')
-            i++;
-        return std::string(reinterpret_cast<const char*>(name), i);
-    }
-
-
-    /**
-     * @brief Simple RAII lock mechanism
-     */
-    template <typename T>
-    class ThreadLocalLock
-    {
-        T& m_ref;
-        public:
-        ThreadLocalLock(T& ref): m_ref(ref)
-        {
-            m_ref = 1;
-        }
-        ~ThreadLocalLock()
-        {
-            m_ref = 0;
-        }
-    };
+    return shouldLogApiCall;
 }
 
-OPENGL_FORWARD(GLXContext,glXCreateContext,Display*, dpy, XVisualInfo*, vis,GLXContext,shareList, Bool, direct);
-OPENGL_FORWARD(void,glXSwapBuffers,Display*, dpy, GLXDrawable, drawable);
-OPENGL_FORWARD(Bool,glXMakeCurrent,Display*, dpy, GLXDrawable, drawable,GLXContext,ctx);
-OPENGL_FORWARD(Bool,glXMakeContextCurrent,Display*, dpy, GLXDrawable, draw,GLXDrawable, read,GLXContext,ctx);
-OPENGL_FORWARD(void,XSetWMNormalHints,Display *,display, Window, w, XSizeHints*, hints);
+void log_api_call(const std::string apiName, const std::string serializedArguments = "")
+{
+    if (shouldLogApiMessages())
+    {
+        printf("[Enhancer API CALL: %s] %s\n", apiName.c_str(), serializedArguments.c_str());
+    }
+}
 
-OPENGL_FORWARD_LOADER_ONLY(helper::ReturnFunctionType,glXGetProcAddress,const GLubyte *, procName);
-void (*OpenglRedirectorBase::glXGetProcAddress(	const GLubyte * procName))(void)
+static std::unordered_map<std::string, void*> definedAPIFunctions;
+/// Register corresponding OpenGL API rediction into definedAPIFunctions
+class RegisterAPIFunction
+{
+public:
+    RegisterAPIFunction(const std::string& name, void* address)
+    {
+        if (!g_OpenGLRedirector)
+        {
+            if (shouldLogApiMessages())
+            {
+                printf("[Enhancer] Error: g_OpenGLRedirector == nullptr\nenhancer_startup() was not called before C++ initialization. (%s)\n", name.c_str());
+            }
+            return;
+        }
+        if (shouldLogApiMessages())
+        {
+            printf("[Enhancer] Registering redirection for %s\n", name.c_str());
+        }
+        g_OpenGLRedirector->redirector.addRedirection(name, address);
+        //definedAPIFunctions[name] = address;
+    }
+};
+
+std::string serialize(...)
+{
+    return "Unknown";
+}
+
+std::string serialize(const GLubyte* s)
+{
+    std::stringstream ss;
+    ss << "\"" << reinterpret_cast<const char*>(s) << "\"";
+    return ss.str();
+}
+
+std::string serialize(const std::string s)
+{
+    std::stringstream ss;
+    ss << "\"" << s << "\"";
+    return ss.str();
+}
+
+std::string serialize(GLenum c)
+{
+    return ve::opengl_utils::getEnumStringRepresentation(c);
+}
+
+std::string serialize(char c)
+{
+    std::stringstream ss;
+    ss << "'" << c << "'";
+    return ss.str();
+}
+
+std::string serialize(XEvent* event)
+{
+    std::string eventTypes[] = {
+        "Unknown 0",
+        "Unknown 1",
+        "KeyPress",
+        "KeyRelease",
+        "ButtonPress",
+        "ButtonRelease",
+        "MotionNotify",
+        "EnterNotify",
+        "LeaveNotify",
+        "FocusIn",
+        "FocusOut",
+        "KeymapNotify",
+        "Expose",
+        "GraphicsExpose",
+        "NoExpose",
+        "VisibilityNotify",
+        "CreateNotify",
+        "DestroyNotify",
+        "UnmapNotify",
+        "MapNotify",
+        "MapRequest",
+        "ReparentNotify",
+        "ConfigureNotify",
+        "ConfigureRequest",
+        "GravityNotify",
+        "ResizeRequest",
+        "CirculateNotify",
+        "CirculateRequest",
+        "PropertyNotify",
+        "SelectionClear",
+        "SelectionRequest",
+        "SelectionNotify",
+        "ColormapNotify",
+        "ClientMessage",
+        "MappingNotify",
+        "GenericEvent"
+    };
+
+    return "UNKNOWN";
+
+    const auto& type = eventTypes[event->type];
+    return type;
+}
+
+template <typename T, std::enable_if_t<std::is_integral<T>::value, int> = 0>
+std::string serialize(T val)
+{
+    return std::to_string(val);
+}
+
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
+std::string serialize(T val)
+{
+    return std::to_string(val);
+}
+
+std::string packArgs()
+{
+    return "";
+}
+
+template <typename FIRST, typename... T>
+std::string packArgs(FIRST head, T... args)
+{
+    if (sizeof...(args) == 0)
+        return serialize(head);
+    return serialize(head) + ", " + packArgs(args...);
+}
+
+using ReturnFunctionType = void (*)();
+
+std::string convertGLString(const GLubyte* name)
+{
+    size_t i = 0;
+    while (name[i] != '\0')
+        i++;
+    return std::string(reinterpret_cast<const char*>(name), i);
+}
+
+/**
+     * @brief Simple RAII lock mechanism
+     */
+template <typename T>
+class ThreadLocalLock
+{
+    T& m_ref;
+
+public:
+    ThreadLocalLock(T& ref)
+        : m_ref(ref)
+    {
+        m_ref = 1;
+    }
+    ~ThreadLocalLock()
+    {
+        m_ref = 0;
+    }
+};
+}
+
+OPENGL_FORWARD(GLXContext, glXCreateContext, Display*, dpy, XVisualInfo*, vis, GLXContext, shareList, Bool, direct);
+OPENGL_FORWARD(void, glXSwapBuffers, Display*, dpy, GLXDrawable, drawable);
+OPENGL_FORWARD(Bool, glXMakeCurrent, Display*, dpy, GLXDrawable, drawable, GLXContext, ctx);
+OPENGL_FORWARD(Bool, glXMakeContextCurrent, Display*, dpy, GLXDrawable, draw, GLXDrawable, read, GLXContext, ctx);
+OPENGL_FORWARD(void, XSetWMNormalHints, Display*, display, Window, w, XSizeHints*, hints);
+
+OPENGL_FORWARD_LOADER_ONLY(helper::ReturnFunctionType, glXGetProcAddress, const GLubyte*, procName);
+void (*OpenglRedirectorBase::glXGetProcAddress(const GLubyte* procName))(void)
 {
     helper::log_api_call("glXGetProcAddress", helper::packArgs(procName));
     const std::string name = helper::convertGLString(procName);
-    if(redirector.hasRedirection(name))
+    if (redirector.hasRedirection(name))
     {
         return reinterpret_cast<helper::ReturnFunctionType>(redirector.getTarget(name));
     }
@@ -246,12 +244,12 @@ void (*OpenglRedirectorBase::glXGetProcAddress(	const GLubyte * procName))(void)
     return originalAddress(procName);
 }
 
-OPENGL_FORWARD_LOADER_ONLY(helper::ReturnFunctionType,glXGetProcAddressARB,const GLubyte *, procName);
-void (*OpenglRedirectorBase::glXGetProcAddressARB(	const GLubyte * procName))(void)
+OPENGL_FORWARD_LOADER_ONLY(helper::ReturnFunctionType, glXGetProcAddressARB, const GLubyte*, procName);
+void (*OpenglRedirectorBase::glXGetProcAddressARB(const GLubyte* procName))(void)
 {
     helper::log_api_call("glXGetProcAddressARB", helper::packArgs(procName));
     const std::string name = helper::convertGLString(procName);
-    if(redirector.hasRedirection(name))
+    if (redirector.hasRedirection(name))
     {
         return reinterpret_cast<helper::ReturnFunctionType>(redirector.getTarget(name));
     }
@@ -259,12 +257,10 @@ void (*OpenglRedirectorBase::glXGetProcAddressARB(	const GLubyte * procName))(vo
     return originalAddress(procName);
 }
 
-
-OPENGL_FORWARD(Window,XCreateWindow,Display *,display, Window, parent, int, x, int, y, unsigned int, width, unsigned int, height, unsigned int, border_width, int, depth, unsigned int, classInstance, Visual*, visual,unsigned long, valuemask, XSetWindowAttributes*, attributes);
-OPENGL_FORWARD(int,XNextEvent,Display *,display, XEvent *,event_return);
-OPENGL_FORWARD(int,XMapWindow,Display *,display, Window,win);
-OPENGL_FORWARD(int,XWarpPointer,Display *,display, Window,src_w, Window,dest_w, int,src_x, int
-        ,src_y, unsigned int,src_width, unsigned int,src_height, int,dest_x, int,dest_y);
+OPENGL_FORWARD(Window, XCreateWindow, Display*, display, Window, parent, int, x, int, y, unsigned int, width, unsigned int, height, unsigned int, border_width, int, depth, unsigned int, classInstance, Visual*, visual, unsigned long, valuemask, XSetWindowAttributes*, attributes);
+OPENGL_FORWARD(int, XNextEvent, Display*, display, XEvent*, event_return);
+OPENGL_FORWARD(int, XMapWindow, Display*, display, Window, win);
+OPENGL_FORWARD(int, XWarpPointer, Display*, display, Window, src_w, Window, dest_w, int, src_x, int, src_y, unsigned int, src_width, unsigned int, src_height, int, dest_x, int, dest_y);
 
 /*
  * OPENGL_FORWARD does following:
@@ -273,82 +269,82 @@ OPENGL_FORWARD(int,XWarpPointer,Display *,display, Window,src_w, Window,dest_w, 
  *  - a single method of class OpenglRedirectorBase for class method XYZ
  *  - an instance of RegisterAPIFunction with XYZ and address of implglXYZ
  */
-OPENGL_FORWARD(void,glClearIndex,GLfloat,c);
-OPENGL_FORWARD(void,glClearColor,GLclampf,red,GLclampf,green,GLclampf,blue,GLclampf,alpha);
-OPENGL_FORWARD(void,glClear,GLbitfield,mask);
-OPENGL_FORWARD(void,glIndexMask,GLuint,mask);
-OPENGL_FORWARD(void,glColorMask,GLboolean,red,GLboolean,green,GLboolean,blue,GLboolean,alpha);
-OPENGL_FORWARD(void,glAlphaFunc,GLenum,func,GLclampf,ref);
-OPENGL_FORWARD(void,glBlendFunc,GLenum,sfactor,GLenum,dfactor);
-OPENGL_FORWARD(void,glLogicOp,GLenum,opcode);
-OPENGL_FORWARD(void,glCullFace,GLenum,mode);
-OPENGL_FORWARD(void,glFrontFace,GLenum,mode);
-OPENGL_FORWARD(void,glPointSize,GLfloat,size);
-OPENGL_FORWARD(void,glLineWidth,GLfloat,width);
-OPENGL_FORWARD(void,glLineStipple,GLint,factor,GLushort,pattern);
-OPENGL_FORWARD(void,glPolygonMode,GLenum,face,GLenum,mode);
-OPENGL_FORWARD(void,glPolygonOffset,GLfloat,factor,GLfloat,units);
-OPENGL_FORWARD(void,glPolygonStipple,const GLubyte*,mask);
-OPENGL_FORWARD(void,glGetPolygonStipple,GLubyte*,mask);
-OPENGL_FORWARD(void,glEdgeFlag,GLboolean,flag);
-OPENGL_FORWARD(void,glEdgeFlagv,const GLboolean*,flag);
-OPENGL_FORWARD(void,glScissor,GLint,x,GLint,y,GLsizei,width,GLsizei,height);
-OPENGL_FORWARD(void,glClipPlane,GLenum,plane,const GLdouble*,equation);
-OPENGL_FORWARD(void,glGetClipPlane,GLenum,plane,GLdouble*,equation);
-OPENGL_FORWARD(void,glDrawBuffer,GLenum,mode);
-OPENGL_FORWARD(void,glReadBuffer,GLenum,mode);
-OPENGL_FORWARD(void,glEnable,GLenum,cap);
-OPENGL_FORWARD(void,glDisable,GLenum,cap);
-OPENGL_FORWARD(GLboolean,glIsEnabled,GLenum,cap);
-OPENGL_FORWARD(void,glEnableClientState,GLenum,cap);
-OPENGL_FORWARD(void,glDisableClientState,GLenum,cap);
-OPENGL_FORWARD(void,glGetBooleanv,GLenum,pname,GLboolean*,params);
-OPENGL_FORWARD(void,glGetDoublev,GLenum,pname,GLdouble*,params);
-OPENGL_FORWARD(void,glGetFloatv,GLenum,pname,GLfloat*,params);
-OPENGL_FORWARD(void,glGetIntegerv,GLenum,pname,GLint*,params);
-OPENGL_FORWARD(void,glPushAttrib,GLbitfield,mask);
-OPENGL_FORWARD(void,glPopAttrib,void,);
-OPENGL_FORWARD(void,glPushClientAttrib,GLbitfield,mask);
-OPENGL_FORWARD(void,glPopClientAttrib,void,);
-OPENGL_FORWARD(GLint,glRenderMode,GLenum,mode);
-OPENGL_FORWARD(GLenum,glGetError,void,);
-OPENGL_FORWARD(const GLubyte*,glGetString,GLenum,name);
-OPENGL_FORWARD(void,glFinish,void,);
-OPENGL_FORWARD(void,glFlush,void,);
-OPENGL_FORWARD(void,glHint,GLenum,target,GLenum,mode);
-OPENGL_FORWARD(void,glClearDepth,GLclampd,depth);
-OPENGL_FORWARD(void,glDepthFunc,GLenum,func);
-OPENGL_FORWARD(void,glDepthMask,GLboolean,flag);
-OPENGL_FORWARD(void,glDepthRange,GLclampd,near_val,GLclampd,far_val);
-OPENGL_FORWARD(void,glClearAccum,GLfloat,red,GLfloat,green,GLfloat,blue,GLfloat,alpha);
-OPENGL_FORWARD(void,glAccum,GLenum,op,GLfloat,value);
-OPENGL_FORWARD(void,glMatrixMode,GLenum,mode);
-OPENGL_FORWARD(void,glOrtho,GLdouble,left,GLdouble,right,GLdouble,bottom,GLdouble,top,GLdouble,near_val,GLdouble,far_val);
-OPENGL_FORWARD(void,glFrustum,GLdouble,left,GLdouble,right,GLdouble,bottom,GLdouble,top,GLdouble,near_val,GLdouble,far_val);
-OPENGL_FORWARD(void,glViewport,GLint,x,GLint,y,GLsizei,width,GLsizei,height);
-OPENGL_FORWARD(void,glPushMatrix,void,);
-OPENGL_FORWARD(void,glPopMatrix,void,);
-OPENGL_FORWARD(void,glLoadIdentity,void,);
-OPENGL_FORWARD(void,glLoadMatrixd,const GLdouble*,m);
-OPENGL_FORWARD(void,glLoadMatrixf,const GLfloat*,m);
-OPENGL_FORWARD(void,glMultMatrixd,const GLdouble*,m);
-OPENGL_FORWARD(void,glMultMatrixf,const GLfloat*,m);
-OPENGL_FORWARD(void,glRotated,GLdouble,angle,GLdouble,x,GLdouble,y,GLdouble,z);
-OPENGL_FORWARD(void,glRotatef,GLfloat,angle,GLfloat,x,GLfloat,y,GLfloat,z);
-OPENGL_FORWARD(void,glScaled,GLdouble,x,GLdouble,y,GLdouble,z);
-OPENGL_FORWARD(void,glScalef,GLfloat,x,GLfloat,y,GLfloat,z);
-OPENGL_FORWARD(void,glTranslated,GLdouble,x,GLdouble,y,GLdouble,z);
-OPENGL_FORWARD(void,glTranslatef,GLfloat,x,GLfloat,y,GLfloat,z);
-OPENGL_FORWARD(GLboolean,glIsList,GLuint,list);
-OPENGL_FORWARD(void,glDeleteLists,GLuint,list,GLsizei,range);
-OPENGL_FORWARD(GLuint,glGenLists,GLsizei,range);
-OPENGL_FORWARD(void,glNewList,GLuint,list,GLenum,mode);
-OPENGL_FORWARD(void,glEndList,void,);
-OPENGL_FORWARD(void,glCallList,GLuint,list);
-OPENGL_FORWARD(void,glCallLists,GLsizei,n,GLenum,type,const GLvoid*,lists);
-OPENGL_FORWARD(void,glListBase,GLuint,base);
-OPENGL_FORWARD(void,glBegin,GLenum,mode);
-OPENGL_FORWARD(void,glEnd,void,);
+OPENGL_FORWARD(void, glClearIndex, GLfloat, c);
+OPENGL_FORWARD(void, glClearColor, GLclampf, red, GLclampf, green, GLclampf, blue, GLclampf, alpha);
+OPENGL_FORWARD(void, glClear, GLbitfield, mask);
+OPENGL_FORWARD(void, glIndexMask, GLuint, mask);
+OPENGL_FORWARD(void, glColorMask, GLboolean, red, GLboolean, green, GLboolean, blue, GLboolean, alpha);
+OPENGL_FORWARD(void, glAlphaFunc, GLenum, func, GLclampf, ref);
+OPENGL_FORWARD(void, glBlendFunc, GLenum, sfactor, GLenum, dfactor);
+OPENGL_FORWARD(void, glLogicOp, GLenum, opcode);
+OPENGL_FORWARD(void, glCullFace, GLenum, mode);
+OPENGL_FORWARD(void, glFrontFace, GLenum, mode);
+OPENGL_FORWARD(void, glPointSize, GLfloat, size);
+OPENGL_FORWARD(void, glLineWidth, GLfloat, width);
+OPENGL_FORWARD(void, glLineStipple, GLint, factor, GLushort, pattern);
+OPENGL_FORWARD(void, glPolygonMode, GLenum, face, GLenum, mode);
+OPENGL_FORWARD(void, glPolygonOffset, GLfloat, factor, GLfloat, units);
+OPENGL_FORWARD(void, glPolygonStipple, const GLubyte*, mask);
+OPENGL_FORWARD(void, glGetPolygonStipple, GLubyte*, mask);
+OPENGL_FORWARD(void, glEdgeFlag, GLboolean, flag);
+OPENGL_FORWARD(void, glEdgeFlagv, const GLboolean*, flag);
+OPENGL_FORWARD(void, glScissor, GLint, x, GLint, y, GLsizei, width, GLsizei, height);
+OPENGL_FORWARD(void, glClipPlane, GLenum, plane, const GLdouble*, equation);
+OPENGL_FORWARD(void, glGetClipPlane, GLenum, plane, GLdouble*, equation);
+OPENGL_FORWARD(void, glDrawBuffer, GLenum, mode);
+OPENGL_FORWARD(void, glReadBuffer, GLenum, mode);
+OPENGL_FORWARD(void, glEnable, GLenum, cap);
+OPENGL_FORWARD(void, glDisable, GLenum, cap);
+OPENGL_FORWARD(GLboolean, glIsEnabled, GLenum, cap);
+OPENGL_FORWARD(void, glEnableClientState, GLenum, cap);
+OPENGL_FORWARD(void, glDisableClientState, GLenum, cap);
+OPENGL_FORWARD(void, glGetBooleanv, GLenum, pname, GLboolean*, params);
+OPENGL_FORWARD(void, glGetDoublev, GLenum, pname, GLdouble*, params);
+OPENGL_FORWARD(void, glGetFloatv, GLenum, pname, GLfloat*, params);
+OPENGL_FORWARD(void, glGetIntegerv, GLenum, pname, GLint*, params);
+OPENGL_FORWARD(void, glPushAttrib, GLbitfield, mask);
+OPENGL_FORWARD(void, glPopAttrib, void, );
+OPENGL_FORWARD(void, glPushClientAttrib, GLbitfield, mask);
+OPENGL_FORWARD(void, glPopClientAttrib, void, );
+OPENGL_FORWARD(GLint, glRenderMode, GLenum, mode);
+OPENGL_FORWARD(GLenum, glGetError, void, );
+OPENGL_FORWARD(const GLubyte*, glGetString, GLenum, name);
+OPENGL_FORWARD(void, glFinish, void, );
+OPENGL_FORWARD(void, glFlush, void, );
+OPENGL_FORWARD(void, glHint, GLenum, target, GLenum, mode);
+OPENGL_FORWARD(void, glClearDepth, GLclampd, depth);
+OPENGL_FORWARD(void, glDepthFunc, GLenum, func);
+OPENGL_FORWARD(void, glDepthMask, GLboolean, flag);
+OPENGL_FORWARD(void, glDepthRange, GLclampd, near_val, GLclampd, far_val);
+OPENGL_FORWARD(void, glClearAccum, GLfloat, red, GLfloat, green, GLfloat, blue, GLfloat, alpha);
+OPENGL_FORWARD(void, glAccum, GLenum, op, GLfloat, value);
+OPENGL_FORWARD(void, glMatrixMode, GLenum, mode);
+OPENGL_FORWARD(void, glOrtho, GLdouble, left, GLdouble, right, GLdouble, bottom, GLdouble, top, GLdouble, near_val, GLdouble, far_val);
+OPENGL_FORWARD(void, glFrustum, GLdouble, left, GLdouble, right, GLdouble, bottom, GLdouble, top, GLdouble, near_val, GLdouble, far_val);
+OPENGL_FORWARD(void, glViewport, GLint, x, GLint, y, GLsizei, width, GLsizei, height);
+OPENGL_FORWARD(void, glPushMatrix, void, );
+OPENGL_FORWARD(void, glPopMatrix, void, );
+OPENGL_FORWARD(void, glLoadIdentity, void, );
+OPENGL_FORWARD(void, glLoadMatrixd, const GLdouble*, m);
+OPENGL_FORWARD(void, glLoadMatrixf, const GLfloat*, m);
+OPENGL_FORWARD(void, glMultMatrixd, const GLdouble*, m);
+OPENGL_FORWARD(void, glMultMatrixf, const GLfloat*, m);
+OPENGL_FORWARD(void, glRotated, GLdouble, angle, GLdouble, x, GLdouble, y, GLdouble, z);
+OPENGL_FORWARD(void, glRotatef, GLfloat, angle, GLfloat, x, GLfloat, y, GLfloat, z);
+OPENGL_FORWARD(void, glScaled, GLdouble, x, GLdouble, y, GLdouble, z);
+OPENGL_FORWARD(void, glScalef, GLfloat, x, GLfloat, y, GLfloat, z);
+OPENGL_FORWARD(void, glTranslated, GLdouble, x, GLdouble, y, GLdouble, z);
+OPENGL_FORWARD(void, glTranslatef, GLfloat, x, GLfloat, y, GLfloat, z);
+OPENGL_FORWARD(GLboolean, glIsList, GLuint, list);
+OPENGL_FORWARD(void, glDeleteLists, GLuint, list, GLsizei, range);
+OPENGL_FORWARD(GLuint, glGenLists, GLsizei, range);
+OPENGL_FORWARD(void, glNewList, GLuint, list, GLenum, mode);
+OPENGL_FORWARD(void, glEndList, void, );
+OPENGL_FORWARD(void, glCallList, GLuint, list);
+OPENGL_FORWARD(void, glCallLists, GLsizei, n, GLenum, type, const GLvoid*, lists);
+OPENGL_FORWARD(void, glListBase, GLuint, base);
+OPENGL_FORWARD(void, glBegin, GLenum, mode);
+OPENGL_FORWARD(void, glEnd, void, );
 /*
 OPENGL_FORWARD(void,glVertex2d,GLdouble,x,GLdouble,y);
 OPENGL_FORWARD(void,glVertex2f,GLfloat,x,GLfloat,y);
@@ -483,849 +479,849 @@ OPENGL_FORWARD(void,glRasterPos4fv,const GLfloat*,v);
 OPENGL_FORWARD(void,glRasterPos4iv,const GLint*,v);
 OPENGL_FORWARD(void,glRasterPos4sv,const GLshort*,v);
 */
-OPENGL_FORWARD(void,glRectd,GLdouble,x1,GLdouble,y1,GLdouble,x2,GLdouble,y2);
-OPENGL_FORWARD(void,glRectf,GLfloat,x1,GLfloat,y1,GLfloat,x2,GLfloat,y2);
-OPENGL_FORWARD(void,glRecti,GLint,x1,GLint,y1,GLint,x2,GLint,y2);
-OPENGL_FORWARD(void,glRects,GLshort,x1,GLshort,y1,GLshort,x2,GLshort,y2);
-OPENGL_FORWARD(void,glRectdv,const GLdouble*,v1,const GLdouble*,v2);
-OPENGL_FORWARD(void,glRectfv,const GLfloat*,v1,const GLfloat*,v2);
-OPENGL_FORWARD(void,glRectiv,const GLint*,v1,const GLint*,v2);
-OPENGL_FORWARD(void,glRectsv,const GLshort*,v1,const GLshort*,v2);
-OPENGL_FORWARD(void,glVertexPointer,GLint,size,GLenum,type,GLsizei,stride,const GLvoid*,ptr);
-OPENGL_FORWARD(void,glNormalPointer,GLenum,type,GLsizei,stride,const GLvoid*,ptr);
-OPENGL_FORWARD(void,glColorPointer,GLint,size,GLenum,type,GLsizei,stride,const GLvoid*,ptr);
-OPENGL_FORWARD(void,glIndexPointer,GLenum,type,GLsizei,stride,const GLvoid*,ptr);
-OPENGL_FORWARD(void,glTexCoordPointer,GLint,size,GLenum,type,GLsizei,stride,const GLvoid*,ptr);
-OPENGL_FORWARD(void,glEdgeFlagPointer,GLsizei,stride,const GLvoid*,ptr);
-OPENGL_FORWARD(void,glGetPointerv,GLenum,pname,GLvoid**,params);
-OPENGL_FORWARD(void,glArrayElement,GLint,i);
-OPENGL_FORWARD(void,glDrawArrays,GLenum,mode,GLint,first,GLsizei,count);
-OPENGL_FORWARD(void,glDrawElements,GLenum,mode,GLsizei,count,GLenum,type,const GLvoid*,indices);
-OPENGL_FORWARD(void,glInterleavedArrays,GLenum,format,GLsizei,stride,const GLvoid*,pointer);
-OPENGL_FORWARD(void,glShadeModel,GLenum,mode);
-OPENGL_FORWARD(void,glLightf,GLenum,light,GLenum,pname,GLfloat,param);
-OPENGL_FORWARD(void,glLighti,GLenum,light,GLenum,pname,GLint,param);
-OPENGL_FORWARD(void,glLightfv,GLenum,light,GLenum,pname,const GLfloat*,params);
-OPENGL_FORWARD(void,glLightiv,GLenum,light,GLenum,pname,const GLint*,params);
-OPENGL_FORWARD(void,glGetLightfv,GLenum,light,GLenum,pname,GLfloat*,params);
-OPENGL_FORWARD(void,glGetLightiv,GLenum,light,GLenum,pname,GLint*,params);
-OPENGL_FORWARD(void,glLightModelf,GLenum,pname,GLfloat,param);
-OPENGL_FORWARD(void,glLightModeli,GLenum,pname,GLint,param);
-OPENGL_FORWARD(void,glLightModelfv,GLenum,pname,const GLfloat*,params);
-OPENGL_FORWARD(void,glLightModeliv,GLenum,pname,const GLint*,params);
-OPENGL_FORWARD(void,glMaterialf,GLenum,face,GLenum,pname,GLfloat,param);
-OPENGL_FORWARD(void,glMateriali,GLenum,face,GLenum,pname,GLint,param);
-OPENGL_FORWARD(void,glMaterialfv,GLenum,face,GLenum,pname,const GLfloat*,params);
-OPENGL_FORWARD(void,glMaterialiv,GLenum,face,GLenum,pname,const GLint*,params);
-OPENGL_FORWARD(void,glGetMaterialfv,GLenum,face,GLenum,pname,GLfloat*,params);
-OPENGL_FORWARD(void,glGetMaterialiv,GLenum,face,GLenum,pname,GLint*,params);
-OPENGL_FORWARD(void,glColorMaterial,GLenum,face,GLenum,mode);
-OPENGL_FORWARD(void,glPixelZoom,GLfloat,xfactor,GLfloat,yfactor);
-OPENGL_FORWARD(void,glPixelStoref,GLenum,pname,GLfloat,param);
-OPENGL_FORWARD(void,glPixelStorei,GLenum,pname,GLint,param);
-OPENGL_FORWARD(void,glPixelTransferf,GLenum,pname,GLfloat,param);
-OPENGL_FORWARD(void,glPixelTransferi,GLenum,pname,GLint,param);
-OPENGL_FORWARD(void,glPixelMapfv,GLenum,map,GLsizei,mapsize,const GLfloat*,values);
-OPENGL_FORWARD(void,glPixelMapuiv,GLenum,map,GLsizei,mapsize,const GLuint*,values);
-OPENGL_FORWARD(void,glPixelMapusv,GLenum,map,GLsizei,mapsize,const GLushort*,values);
-OPENGL_FORWARD(void,glGetPixelMapfv,GLenum,map,GLfloat*,values);
-OPENGL_FORWARD(void,glGetPixelMapuiv,GLenum,map,GLuint*,values);
-OPENGL_FORWARD(void,glGetPixelMapusv,GLenum,map,GLushort*,values);
-OPENGL_FORWARD(void,glBitmap,GLsizei,width,GLsizei,height,GLfloat,xorig,GLfloat,yorig,GLfloat,xmove,GLfloat,ymove,const GLubyte*,bitmap);
-OPENGL_FORWARD(void,glReadPixels,GLint,x,GLint,y,GLsizei,width,GLsizei,height,GLenum,format,GLenum,type,GLvoid*,pixels);
-OPENGL_FORWARD(void,glDrawPixels,GLsizei,width,GLsizei,height,GLenum,format,GLenum,type,const GLvoid*,pixels);
-OPENGL_FORWARD(void,glCopyPixels,GLint,x,GLint,y,GLsizei,width,GLsizei,height,GLenum,type);
-OPENGL_FORWARD(void,glStencilFunc,GLenum,func,GLint,ref,GLuint,mask);
-OPENGL_FORWARD(void,glStencilMask,GLuint,mask);
-OPENGL_FORWARD(void,glStencilOp,GLenum,fail,GLenum,zfail,GLenum,zpass);
-OPENGL_FORWARD(void,glClearStencil,GLint,s);
-OPENGL_FORWARD(void,glTexGend,GLenum,coord,GLenum,pname,GLdouble,param);
-OPENGL_FORWARD(void,glTexGenf,GLenum,coord,GLenum,pname,GLfloat,param);
-OPENGL_FORWARD(void,glTexGeni,GLenum,coord,GLenum,pname,GLint,param);
-OPENGL_FORWARD(void,glTexGendv,GLenum,coord,GLenum,pname,const GLdouble*,params);
-OPENGL_FORWARD(void,glTexGenfv,GLenum,coord,GLenum,pname,const GLfloat*,params);
-OPENGL_FORWARD(void,glTexGeniv,GLenum,coord,GLenum,pname,const GLint*,params);
-OPENGL_FORWARD(void,glGetTexGendv,GLenum,coord,GLenum,pname,GLdouble*,params);
-OPENGL_FORWARD(void,glGetTexGenfv,GLenum,coord,GLenum,pname,GLfloat*,params);
-OPENGL_FORWARD(void,glGetTexGeniv,GLenum,coord,GLenum,pname,GLint*,params);
-OPENGL_FORWARD(void,glTexEnvf,GLenum,target,GLenum,pname,GLfloat,param);
-OPENGL_FORWARD(void,glTexEnvi,GLenum,target,GLenum,pname,GLint,param);
-OPENGL_FORWARD(void,glTexEnvfv,GLenum,target,GLenum,pname,const GLfloat*,params);
-OPENGL_FORWARD(void,glTexEnviv,GLenum,target,GLenum,pname,const GLint*,params);
-OPENGL_FORWARD(void,glGetTexEnvfv,GLenum,target,GLenum,pname,GLfloat*,params);
-OPENGL_FORWARD(void,glGetTexEnviv,GLenum,target,GLenum,pname,GLint*,params);
-OPENGL_FORWARD(void,glTexParameterf,GLenum,target,GLenum,pname,GLfloat,param);
-OPENGL_FORWARD(void,glTexParameteri,GLenum,target,GLenum,pname,GLint,param);
-OPENGL_FORWARD(void,glTexParameterfv,GLenum,target,GLenum,pname,const GLfloat*,params);
-OPENGL_FORWARD(void,glTexParameteriv,GLenum,target,GLenum,pname,const GLint*,params);
-OPENGL_FORWARD(void,glGetTexParameterfv,GLenum,target,GLenum,pname,GLfloat*,params);
-OPENGL_FORWARD(void,glGetTexParameteriv,GLenum,target,GLenum,pname,GLint*,params);
-OPENGL_FORWARD(void,glGetTexLevelParameterfv,GLenum,target,GLint,level,GLenum,pname,GLfloat*,params);
-OPENGL_FORWARD(void,glGetTexLevelParameteriv,GLenum,target,GLint,level,GLenum,pname,GLint*,params);
-OPENGL_FORWARD(void,glTexImage1D,GLenum,target,GLint,level,GLint,internalFormat,GLsizei,width,GLint,border,GLenum,format,GLenum,type,const GLvoid*,pixels);
-OPENGL_FORWARD(void,glTexImage2D,GLenum,target,GLint,level,GLint,internalFormat,GLsizei,width,GLsizei,height,GLint,border,GLenum,format,GLenum,type,const GLvoid*,pixels);
-OPENGL_FORWARD(void,glGetTexImage,GLenum,target,GLint,level,GLenum,format,GLenum,type,GLvoid*,pixels);
-OPENGL_FORWARD(void,glGenTextures,GLsizei,n,GLuint*,textures);
-OPENGL_FORWARD(void,glDeleteTextures,GLsizei,n,const GLuint*,textures);
-OPENGL_FORWARD(void,glBindTexture,GLenum,target,GLuint,texture);
-OPENGL_FORWARD(void,glPrioritizeTextures,GLsizei,n,const GLuint*,textures,const GLclampf*,priorities);
-OPENGL_FORWARD(GLboolean,glAreTexturesResident,GLsizei,n,const GLuint*,textures,GLboolean*,residences);
-OPENGL_FORWARD(GLboolean,glIsTexture,GLuint,texture);
-OPENGL_FORWARD(void,glTexSubImage1D,GLenum,target,GLint,level,GLint,xoffset,GLsizei,width,GLenum,format,GLenum,type,const GLvoid*,pixels);
-OPENGL_FORWARD(void,glTexSubImage2D,GLenum,target,GLint,level,GLint,xoffset,GLint,yoffset,GLsizei,width,GLsizei,height,GLenum,format,GLenum,type,const GLvoid*,pixels);
-OPENGL_FORWARD(void,glCopyTexImage1D,GLenum,target,GLint,level,GLenum,internalformat,GLint,x,GLint,y,GLsizei,width,GLint,border);
-OPENGL_FORWARD(void,glCopyTexImage2D,GLenum,target,GLint,level,GLenum,internalformat,GLint,x,GLint,y,GLsizei,width,GLsizei,height,GLint,border);
-OPENGL_FORWARD(void,glCopyTexSubImage1D,GLenum,target,GLint,level,GLint,xoffset,GLint,x,GLint,y,GLsizei,width);
-OPENGL_FORWARD(void,glCopyTexSubImage2D,GLenum,target,GLint,level,GLint,xoffset,GLint,yoffset,GLint,x,GLint,y,GLsizei,width,GLsizei,height);
-OPENGL_FORWARD(void,glMap1d,GLenum,target,GLdouble,u1,GLdouble,u2,GLint,stride,GLint,order,const GLdouble*,points);
-OPENGL_FORWARD(void,glMap1f,GLenum,target,GLfloat,u1,GLfloat,u2,GLint,stride,GLint,order,const GLfloat*,points);
-OPENGL_FORWARD(void,glMap2d,GLenum,target,GLdouble,u1,GLdouble,u2,GLint,ustride,GLint,uorder,GLdouble,v1,GLdouble,v2,GLint,vstride,GLint,vorder,const GLdouble*,points);
-OPENGL_FORWARD(void,glMap2f,GLenum,target,GLfloat,u1,GLfloat,u2,GLint,ustride,GLint,uorder,GLfloat,v1,GLfloat,v2,GLint,vstride,GLint,vorder,const GLfloat*,points);
-OPENGL_FORWARD(void,glGetMapdv,GLenum,target,GLenum,query,GLdouble*,v);
-OPENGL_FORWARD(void,glGetMapfv,GLenum,target,GLenum,query,GLfloat*,v);
-OPENGL_FORWARD(void,glGetMapiv,GLenum,target,GLenum,query,GLint*,v);
-OPENGL_FORWARD(void,glEvalCoord1d,GLdouble,u);
-OPENGL_FORWARD(void,glEvalCoord1f,GLfloat,u);
-OPENGL_FORWARD(void,glEvalCoord1dv,const GLdouble*,u);
-OPENGL_FORWARD(void,glEvalCoord1fv,const GLfloat*,u);
-OPENGL_FORWARD(void,glEvalCoord2d,GLdouble,u,GLdouble,v);
-OPENGL_FORWARD(void,glEvalCoord2f,GLfloat,u,GLfloat,v);
-OPENGL_FORWARD(void,glEvalCoord2dv,const GLdouble*,u);
-OPENGL_FORWARD(void,glEvalCoord2fv,const GLfloat*,u);
-OPENGL_FORWARD(void,glMapGrid1d,GLint,un,GLdouble,u1,GLdouble,u2);
-OPENGL_FORWARD(void,glMapGrid1f,GLint,un,GLfloat,u1,GLfloat,u2);
-OPENGL_FORWARD(void,glMapGrid2d,GLint,un,GLdouble,u1,GLdouble,u2,GLint,vn,GLdouble,v1,GLdouble,v2);
-OPENGL_FORWARD(void,glMapGrid2f,GLint,un,GLfloat,u1,GLfloat,u2,GLint,vn,GLfloat,v1,GLfloat,v2);
-OPENGL_FORWARD(void,glEvalPoint1,GLint,i);
-OPENGL_FORWARD(void,glEvalPoint2,GLint,i,GLint,j);
-OPENGL_FORWARD(void,glEvalMesh1,GLenum,mode,GLint,i1,GLint,i2);
-OPENGL_FORWARD(void,glEvalMesh2,GLenum,mode,GLint,i1,GLint,i2,GLint,j1,GLint,j2);
-OPENGL_FORWARD(void,glFogf,GLenum,pname,GLfloat,param);
-OPENGL_FORWARD(void,glFogi,GLenum,pname,GLint,param);
-OPENGL_FORWARD(void,glFogfv,GLenum,pname,const GLfloat*,params);
-OPENGL_FORWARD(void,glFogiv,GLenum,pname,const GLint*,params);
-OPENGL_FORWARD(void,glFeedbackBuffer,GLsizei,size,GLenum,type,GLfloat*,buffer);
-OPENGL_FORWARD(void,glPassThrough,GLfloat,token);
-OPENGL_FORWARD(void,glSelectBuffer,GLsizei,size,GLuint*,buffer);
-OPENGL_FORWARD(void,glInitNames,void,);
-OPENGL_FORWARD(void,glLoadName,GLuint,name);
-OPENGL_FORWARD(void,glPushName,GLuint,name);
-OPENGL_FORWARD(void,glPopName,void,);
+OPENGL_FORWARD(void, glRectd, GLdouble, x1, GLdouble, y1, GLdouble, x2, GLdouble, y2);
+OPENGL_FORWARD(void, glRectf, GLfloat, x1, GLfloat, y1, GLfloat, x2, GLfloat, y2);
+OPENGL_FORWARD(void, glRecti, GLint, x1, GLint, y1, GLint, x2, GLint, y2);
+OPENGL_FORWARD(void, glRects, GLshort, x1, GLshort, y1, GLshort, x2, GLshort, y2);
+OPENGL_FORWARD(void, glRectdv, const GLdouble*, v1, const GLdouble*, v2);
+OPENGL_FORWARD(void, glRectfv, const GLfloat*, v1, const GLfloat*, v2);
+OPENGL_FORWARD(void, glRectiv, const GLint*, v1, const GLint*, v2);
+OPENGL_FORWARD(void, glRectsv, const GLshort*, v1, const GLshort*, v2);
+OPENGL_FORWARD(void, glVertexPointer, GLint, size, GLenum, type, GLsizei, stride, const GLvoid*, ptr);
+OPENGL_FORWARD(void, glNormalPointer, GLenum, type, GLsizei, stride, const GLvoid*, ptr);
+OPENGL_FORWARD(void, glColorPointer, GLint, size, GLenum, type, GLsizei, stride, const GLvoid*, ptr);
+OPENGL_FORWARD(void, glIndexPointer, GLenum, type, GLsizei, stride, const GLvoid*, ptr);
+OPENGL_FORWARD(void, glTexCoordPointer, GLint, size, GLenum, type, GLsizei, stride, const GLvoid*, ptr);
+OPENGL_FORWARD(void, glEdgeFlagPointer, GLsizei, stride, const GLvoid*, ptr);
+OPENGL_FORWARD(void, glGetPointerv, GLenum, pname, GLvoid**, params);
+OPENGL_FORWARD(void, glArrayElement, GLint, i);
+OPENGL_FORWARD(void, glDrawArrays, GLenum, mode, GLint, first, GLsizei, count);
+OPENGL_FORWARD(void, glDrawElements, GLenum, mode, GLsizei, count, GLenum, type, const GLvoid*, indices);
+OPENGL_FORWARD(void, glInterleavedArrays, GLenum, format, GLsizei, stride, const GLvoid*, pointer);
+OPENGL_FORWARD(void, glShadeModel, GLenum, mode);
+OPENGL_FORWARD(void, glLightf, GLenum, light, GLenum, pname, GLfloat, param);
+OPENGL_FORWARD(void, glLighti, GLenum, light, GLenum, pname, GLint, param);
+OPENGL_FORWARD(void, glLightfv, GLenum, light, GLenum, pname, const GLfloat*, params);
+OPENGL_FORWARD(void, glLightiv, GLenum, light, GLenum, pname, const GLint*, params);
+OPENGL_FORWARD(void, glGetLightfv, GLenum, light, GLenum, pname, GLfloat*, params);
+OPENGL_FORWARD(void, glGetLightiv, GLenum, light, GLenum, pname, GLint*, params);
+OPENGL_FORWARD(void, glLightModelf, GLenum, pname, GLfloat, param);
+OPENGL_FORWARD(void, glLightModeli, GLenum, pname, GLint, param);
+OPENGL_FORWARD(void, glLightModelfv, GLenum, pname, const GLfloat*, params);
+OPENGL_FORWARD(void, glLightModeliv, GLenum, pname, const GLint*, params);
+OPENGL_FORWARD(void, glMaterialf, GLenum, face, GLenum, pname, GLfloat, param);
+OPENGL_FORWARD(void, glMateriali, GLenum, face, GLenum, pname, GLint, param);
+OPENGL_FORWARD(void, glMaterialfv, GLenum, face, GLenum, pname, const GLfloat*, params);
+OPENGL_FORWARD(void, glMaterialiv, GLenum, face, GLenum, pname, const GLint*, params);
+OPENGL_FORWARD(void, glGetMaterialfv, GLenum, face, GLenum, pname, GLfloat*, params);
+OPENGL_FORWARD(void, glGetMaterialiv, GLenum, face, GLenum, pname, GLint*, params);
+OPENGL_FORWARD(void, glColorMaterial, GLenum, face, GLenum, mode);
+OPENGL_FORWARD(void, glPixelZoom, GLfloat, xfactor, GLfloat, yfactor);
+OPENGL_FORWARD(void, glPixelStoref, GLenum, pname, GLfloat, param);
+OPENGL_FORWARD(void, glPixelStorei, GLenum, pname, GLint, param);
+OPENGL_FORWARD(void, glPixelTransferf, GLenum, pname, GLfloat, param);
+OPENGL_FORWARD(void, glPixelTransferi, GLenum, pname, GLint, param);
+OPENGL_FORWARD(void, glPixelMapfv, GLenum, map, GLsizei, mapsize, const GLfloat*, values);
+OPENGL_FORWARD(void, glPixelMapuiv, GLenum, map, GLsizei, mapsize, const GLuint*, values);
+OPENGL_FORWARD(void, glPixelMapusv, GLenum, map, GLsizei, mapsize, const GLushort*, values);
+OPENGL_FORWARD(void, glGetPixelMapfv, GLenum, map, GLfloat*, values);
+OPENGL_FORWARD(void, glGetPixelMapuiv, GLenum, map, GLuint*, values);
+OPENGL_FORWARD(void, glGetPixelMapusv, GLenum, map, GLushort*, values);
+OPENGL_FORWARD(void, glBitmap, GLsizei, width, GLsizei, height, GLfloat, xorig, GLfloat, yorig, GLfloat, xmove, GLfloat, ymove, const GLubyte*, bitmap);
+OPENGL_FORWARD(void, glReadPixels, GLint, x, GLint, y, GLsizei, width, GLsizei, height, GLenum, format, GLenum, type, GLvoid*, pixels);
+OPENGL_FORWARD(void, glDrawPixels, GLsizei, width, GLsizei, height, GLenum, format, GLenum, type, const GLvoid*, pixels);
+OPENGL_FORWARD(void, glCopyPixels, GLint, x, GLint, y, GLsizei, width, GLsizei, height, GLenum, type);
+OPENGL_FORWARD(void, glStencilFunc, GLenum, func, GLint, ref, GLuint, mask);
+OPENGL_FORWARD(void, glStencilMask, GLuint, mask);
+OPENGL_FORWARD(void, glStencilOp, GLenum, fail, GLenum, zfail, GLenum, zpass);
+OPENGL_FORWARD(void, glClearStencil, GLint, s);
+OPENGL_FORWARD(void, glTexGend, GLenum, coord, GLenum, pname, GLdouble, param);
+OPENGL_FORWARD(void, glTexGenf, GLenum, coord, GLenum, pname, GLfloat, param);
+OPENGL_FORWARD(void, glTexGeni, GLenum, coord, GLenum, pname, GLint, param);
+OPENGL_FORWARD(void, glTexGendv, GLenum, coord, GLenum, pname, const GLdouble*, params);
+OPENGL_FORWARD(void, glTexGenfv, GLenum, coord, GLenum, pname, const GLfloat*, params);
+OPENGL_FORWARD(void, glTexGeniv, GLenum, coord, GLenum, pname, const GLint*, params);
+OPENGL_FORWARD(void, glGetTexGendv, GLenum, coord, GLenum, pname, GLdouble*, params);
+OPENGL_FORWARD(void, glGetTexGenfv, GLenum, coord, GLenum, pname, GLfloat*, params);
+OPENGL_FORWARD(void, glGetTexGeniv, GLenum, coord, GLenum, pname, GLint*, params);
+OPENGL_FORWARD(void, glTexEnvf, GLenum, target, GLenum, pname, GLfloat, param);
+OPENGL_FORWARD(void, glTexEnvi, GLenum, target, GLenum, pname, GLint, param);
+OPENGL_FORWARD(void, glTexEnvfv, GLenum, target, GLenum, pname, const GLfloat*, params);
+OPENGL_FORWARD(void, glTexEnviv, GLenum, target, GLenum, pname, const GLint*, params);
+OPENGL_FORWARD(void, glGetTexEnvfv, GLenum, target, GLenum, pname, GLfloat*, params);
+OPENGL_FORWARD(void, glGetTexEnviv, GLenum, target, GLenum, pname, GLint*, params);
+OPENGL_FORWARD(void, glTexParameterf, GLenum, target, GLenum, pname, GLfloat, param);
+OPENGL_FORWARD(void, glTexParameteri, GLenum, target, GLenum, pname, GLint, param);
+OPENGL_FORWARD(void, glTexParameterfv, GLenum, target, GLenum, pname, const GLfloat*, params);
+OPENGL_FORWARD(void, glTexParameteriv, GLenum, target, GLenum, pname, const GLint*, params);
+OPENGL_FORWARD(void, glGetTexParameterfv, GLenum, target, GLenum, pname, GLfloat*, params);
+OPENGL_FORWARD(void, glGetTexParameteriv, GLenum, target, GLenum, pname, GLint*, params);
+OPENGL_FORWARD(void, glGetTexLevelParameterfv, GLenum, target, GLint, level, GLenum, pname, GLfloat*, params);
+OPENGL_FORWARD(void, glGetTexLevelParameteriv, GLenum, target, GLint, level, GLenum, pname, GLint*, params);
+OPENGL_FORWARD(void, glTexImage1D, GLenum, target, GLint, level, GLint, internalFormat, GLsizei, width, GLint, border, GLenum, format, GLenum, type, const GLvoid*, pixels);
+OPENGL_FORWARD(void, glTexImage2D, GLenum, target, GLint, level, GLint, internalFormat, GLsizei, width, GLsizei, height, GLint, border, GLenum, format, GLenum, type, const GLvoid*, pixels);
+OPENGL_FORWARD(void, glGetTexImage, GLenum, target, GLint, level, GLenum, format, GLenum, type, GLvoid*, pixels);
+OPENGL_FORWARD(void, glGenTextures, GLsizei, n, GLuint*, textures);
+OPENGL_FORWARD(void, glDeleteTextures, GLsizei, n, const GLuint*, textures);
+OPENGL_FORWARD(void, glBindTexture, GLenum, target, GLuint, texture);
+OPENGL_FORWARD(void, glPrioritizeTextures, GLsizei, n, const GLuint*, textures, const GLclampf*, priorities);
+OPENGL_FORWARD(GLboolean, glAreTexturesResident, GLsizei, n, const GLuint*, textures, GLboolean*, residences);
+OPENGL_FORWARD(GLboolean, glIsTexture, GLuint, texture);
+OPENGL_FORWARD(void, glTexSubImage1D, GLenum, target, GLint, level, GLint, xoffset, GLsizei, width, GLenum, format, GLenum, type, const GLvoid*, pixels);
+OPENGL_FORWARD(void, glTexSubImage2D, GLenum, target, GLint, level, GLint, xoffset, GLint, yoffset, GLsizei, width, GLsizei, height, GLenum, format, GLenum, type, const GLvoid*, pixels);
+OPENGL_FORWARD(void, glCopyTexImage1D, GLenum, target, GLint, level, GLenum, internalformat, GLint, x, GLint, y, GLsizei, width, GLint, border);
+OPENGL_FORWARD(void, glCopyTexImage2D, GLenum, target, GLint, level, GLenum, internalformat, GLint, x, GLint, y, GLsizei, width, GLsizei, height, GLint, border);
+OPENGL_FORWARD(void, glCopyTexSubImage1D, GLenum, target, GLint, level, GLint, xoffset, GLint, x, GLint, y, GLsizei, width);
+OPENGL_FORWARD(void, glCopyTexSubImage2D, GLenum, target, GLint, level, GLint, xoffset, GLint, yoffset, GLint, x, GLint, y, GLsizei, width, GLsizei, height);
+OPENGL_FORWARD(void, glMap1d, GLenum, target, GLdouble, u1, GLdouble, u2, GLint, stride, GLint, order, const GLdouble*, points);
+OPENGL_FORWARD(void, glMap1f, GLenum, target, GLfloat, u1, GLfloat, u2, GLint, stride, GLint, order, const GLfloat*, points);
+OPENGL_FORWARD(void, glMap2d, GLenum, target, GLdouble, u1, GLdouble, u2, GLint, ustride, GLint, uorder, GLdouble, v1, GLdouble, v2, GLint, vstride, GLint, vorder, const GLdouble*, points);
+OPENGL_FORWARD(void, glMap2f, GLenum, target, GLfloat, u1, GLfloat, u2, GLint, ustride, GLint, uorder, GLfloat, v1, GLfloat, v2, GLint, vstride, GLint, vorder, const GLfloat*, points);
+OPENGL_FORWARD(void, glGetMapdv, GLenum, target, GLenum, query, GLdouble*, v);
+OPENGL_FORWARD(void, glGetMapfv, GLenum, target, GLenum, query, GLfloat*, v);
+OPENGL_FORWARD(void, glGetMapiv, GLenum, target, GLenum, query, GLint*, v);
+OPENGL_FORWARD(void, glEvalCoord1d, GLdouble, u);
+OPENGL_FORWARD(void, glEvalCoord1f, GLfloat, u);
+OPENGL_FORWARD(void, glEvalCoord1dv, const GLdouble*, u);
+OPENGL_FORWARD(void, glEvalCoord1fv, const GLfloat*, u);
+OPENGL_FORWARD(void, glEvalCoord2d, GLdouble, u, GLdouble, v);
+OPENGL_FORWARD(void, glEvalCoord2f, GLfloat, u, GLfloat, v);
+OPENGL_FORWARD(void, glEvalCoord2dv, const GLdouble*, u);
+OPENGL_FORWARD(void, glEvalCoord2fv, const GLfloat*, u);
+OPENGL_FORWARD(void, glMapGrid1d, GLint, un, GLdouble, u1, GLdouble, u2);
+OPENGL_FORWARD(void, glMapGrid1f, GLint, un, GLfloat, u1, GLfloat, u2);
+OPENGL_FORWARD(void, glMapGrid2d, GLint, un, GLdouble, u1, GLdouble, u2, GLint, vn, GLdouble, v1, GLdouble, v2);
+OPENGL_FORWARD(void, glMapGrid2f, GLint, un, GLfloat, u1, GLfloat, u2, GLint, vn, GLfloat, v1, GLfloat, v2);
+OPENGL_FORWARD(void, glEvalPoint1, GLint, i);
+OPENGL_FORWARD(void, glEvalPoint2, GLint, i, GLint, j);
+OPENGL_FORWARD(void, glEvalMesh1, GLenum, mode, GLint, i1, GLint, i2);
+OPENGL_FORWARD(void, glEvalMesh2, GLenum, mode, GLint, i1, GLint, i2, GLint, j1, GLint, j2);
+OPENGL_FORWARD(void, glFogf, GLenum, pname, GLfloat, param);
+OPENGL_FORWARD(void, glFogi, GLenum, pname, GLint, param);
+OPENGL_FORWARD(void, glFogfv, GLenum, pname, const GLfloat*, params);
+OPENGL_FORWARD(void, glFogiv, GLenum, pname, const GLint*, params);
+OPENGL_FORWARD(void, glFeedbackBuffer, GLsizei, size, GLenum, type, GLfloat*, buffer);
+OPENGL_FORWARD(void, glPassThrough, GLfloat, token);
+OPENGL_FORWARD(void, glSelectBuffer, GLsizei, size, GLuint*, buffer);
+OPENGL_FORWARD(void, glInitNames, void, );
+OPENGL_FORWARD(void, glLoadName, GLuint, name);
+OPENGL_FORWARD(void, glPushName, GLuint, name);
+OPENGL_FORWARD(void, glPopName, void, );
 /*
  * EXT
  */
-OPENGL_FORWARD(void,glDrawRangeElements ,GLenum,mode, GLuint,start, GLuint,end, GLsizei,count, GLenum,type, const void*,indices)
-OPENGL_FORWARD(void,glTexImage3D ,GLenum,target, GLint,level, GLint,internalformat, GLsizei,width, GLsizei,height, GLsizei,depth, GLint,border, GLenum,format, GLenum,type, const void*,pixels)
-OPENGL_FORWARD(void,glTexSubImage3D ,GLenum,target, GLint,level, GLint,xoffset, GLint,yoffset, GLint,zoffset, GLsizei,width, GLsizei,height, GLsizei,depth, GLenum,format, GLenum,type, const void*,pixels)
-OPENGL_FORWARD(void,glCopyTexSubImage3D ,GLenum,target, GLint,level, GLint,xoffset, GLint,yoffset, GLint,zoffset, GLint,x, GLint,y, GLsizei,width, GLsizei,height)
-OPENGL_FORWARD(void,glActiveTexture ,GLenum,texture)
-OPENGL_FORWARD(void,glSampleCoverage ,GLfloat,value, GLboolean,invert)
-OPENGL_FORWARD(void,glCompressedTexImage3D ,GLenum,target, GLint,level, GLenum,internalformat, GLsizei,width, GLsizei,height, GLsizei,depth, GLint,border, GLsizei,imageSize, const void*,data)
-OPENGL_FORWARD(void,glCompressedTexImage2D ,GLenum,target, GLint,level, GLenum,internalformat, GLsizei,width, GLsizei,height, GLint,border, GLsizei,imageSize, const void*,data)
-OPENGL_FORWARD(void,glCompressedTexImage1D ,GLenum,target, GLint,level, GLenum,internalformat, GLsizei,width, GLint,border, GLsizei,imageSize, const void*,data)
-OPENGL_FORWARD(void,glCompressedTexSubImage3D ,GLenum,target, GLint,level, GLint,xoffset, GLint,yoffset, GLint,zoffset, GLsizei,width, GLsizei,height, GLsizei,depth, GLenum,format, GLsizei,imageSize, const void*,data)
-OPENGL_FORWARD(void,glCompressedTexSubImage2D ,GLenum,target, GLint,level, GLint,xoffset, GLint,yoffset, GLsizei,width, GLsizei,height, GLenum,format, GLsizei,imageSize, const void*,data)
-OPENGL_FORWARD(void,glCompressedTexSubImage1D ,GLenum,target, GLint,level, GLint,xoffset, GLsizei,width, GLenum,format, GLsizei,imageSize, const void*,data)
-OPENGL_FORWARD(void,glGetCompressedTexImage ,GLenum,target, GLint,level, void*,img)
-OPENGL_FORWARD(void,glClientActiveTexture ,GLenum,texture)
-OPENGL_FORWARD(void,glMultiTexCoord1d ,GLenum,target, GLdouble,s)
-OPENGL_FORWARD(void,glMultiTexCoord1dv ,GLenum,target, const GLdouble*,v)
-OPENGL_FORWARD(void,glMultiTexCoord1f ,GLenum,target, GLfloat,s)
-OPENGL_FORWARD(void,glMultiTexCoord1fv ,GLenum,target, const GLfloat*,v)
-OPENGL_FORWARD(void,glMultiTexCoord1i ,GLenum,target, GLint,s)
-OPENGL_FORWARD(void,glMultiTexCoord1iv ,GLenum,target, const GLint*,v)
-OPENGL_FORWARD(void,glMultiTexCoord1s ,GLenum,target, GLshort,s)
-OPENGL_FORWARD(void,glMultiTexCoord1sv ,GLenum,target, const GLshort*,v)
-OPENGL_FORWARD(void,glMultiTexCoord2d ,GLenum,target, GLdouble,s, GLdouble,t)
-OPENGL_FORWARD(void,glMultiTexCoord2dv ,GLenum,target, const GLdouble*,v)
-OPENGL_FORWARD(void,glMultiTexCoord2f ,GLenum,target, GLfloat,s, GLfloat,t)
-OPENGL_FORWARD(void,glMultiTexCoord2fv ,GLenum,target, const GLfloat*,v)
-OPENGL_FORWARD(void,glMultiTexCoord2i ,GLenum,target, GLint,s, GLint,t)
-OPENGL_FORWARD(void,glMultiTexCoord2iv ,GLenum,target, const GLint*,v)
-OPENGL_FORWARD(void,glMultiTexCoord2s ,GLenum,target, GLshort,s, GLshort,t)
-OPENGL_FORWARD(void,glMultiTexCoord2sv ,GLenum,target, const GLshort*,v)
-OPENGL_FORWARD(void,glMultiTexCoord3d ,GLenum,target, GLdouble,s, GLdouble,t, GLdouble,r)
-OPENGL_FORWARD(void,glMultiTexCoord3dv ,GLenum,target, const GLdouble*,v)
-OPENGL_FORWARD(void,glMultiTexCoord3f ,GLenum,target, GLfloat,s, GLfloat,t, GLfloat,r)
-OPENGL_FORWARD(void,glMultiTexCoord3fv ,GLenum,target, const GLfloat*,v)
-OPENGL_FORWARD(void,glMultiTexCoord3i ,GLenum,target, GLint,s, GLint,t, GLint,r)
-OPENGL_FORWARD(void,glMultiTexCoord3iv ,GLenum,target, const GLint*,v)
-OPENGL_FORWARD(void,glMultiTexCoord3s ,GLenum,target, GLshort,s, GLshort,t, GLshort,r)
-OPENGL_FORWARD(void,glMultiTexCoord3sv ,GLenum,target, const GLshort*,v)
-OPENGL_FORWARD(void,glMultiTexCoord4d ,GLenum,target, GLdouble,s, GLdouble,t, GLdouble,r, GLdouble,q)
-OPENGL_FORWARD(void,glMultiTexCoord4dv ,GLenum,target, const GLdouble*,v)
-OPENGL_FORWARD(void,glMultiTexCoord4f ,GLenum,target, GLfloat,s, GLfloat,t, GLfloat,r, GLfloat,q)
-OPENGL_FORWARD(void,glMultiTexCoord4fv ,GLenum,target, const GLfloat*,v)
-OPENGL_FORWARD(void,glMultiTexCoord4i ,GLenum,target, GLint,s, GLint,t, GLint,r, GLint,q)
-OPENGL_FORWARD(void,glMultiTexCoord4iv ,GLenum,target, const GLint*,v)
-OPENGL_FORWARD(void,glMultiTexCoord4s ,GLenum,target, GLshort,s, GLshort,t, GLshort,r, GLshort,q)
-OPENGL_FORWARD(void,glMultiTexCoord4sv ,GLenum,target, const GLshort*,v)
-OPENGL_FORWARD(void,glLoadTransposeMatrixf ,const GLfloat*,m)
-OPENGL_FORWARD(void,glLoadTransposeMatrixd ,const GLdouble*,m)
-OPENGL_FORWARD(void,glMultTransposeMatrixf ,const GLfloat*,m)
-OPENGL_FORWARD(void,glMultTransposeMatrixd ,const GLdouble*,m)
-OPENGL_FORWARD(void,glBlendFuncSeparate ,GLenum,sfactorRGB, GLenum,dfactorRGB, GLenum,sfactorAlpha, GLenum,dfactorAlpha)
-OPENGL_FORWARD(void,glMultiDrawArrays ,GLenum,mode, const GLint*,first, const GLsizei*,count, GLsizei,drawcount)
-OPENGL_FORWARD(void,glMultiDrawElements ,GLenum,mode, const GLsizei*,count, GLenum,type, const void* const*,indices, GLsizei,drawcount)
-OPENGL_FORWARD(void,glPointParameterf ,GLenum,pname, GLfloat,param)
-OPENGL_FORWARD(void,glPointParameterfv ,GLenum,pname, const GLfloat*,params)
-OPENGL_FORWARD(void,glPointParameteri ,GLenum,pname, GLint,param)
-OPENGL_FORWARD(void,glPointParameteriv ,GLenum,pname, const GLint*,params)
-OPENGL_FORWARD(void,glFogCoordf ,GLfloat,coord)
-OPENGL_FORWARD(void,glFogCoordfv ,const GLfloat*,coord)
-OPENGL_FORWARD(void,glFogCoordd ,GLdouble,coord)
-OPENGL_FORWARD(void,glFogCoorddv ,const GLdouble*,coord)
-OPENGL_FORWARD(void,glFogCoordPointer ,GLenum,type, GLsizei,stride, const void*,pointer)
-OPENGL_FORWARD(void,glSecondaryColor3b ,GLbyte,red, GLbyte,green, GLbyte,blue)
-OPENGL_FORWARD(void,glSecondaryColor3bv ,const GLbyte*,v)
-OPENGL_FORWARD(void,glSecondaryColor3d ,GLdouble,red, GLdouble,green, GLdouble,blue)
-OPENGL_FORWARD(void,glSecondaryColor3dv ,const GLdouble*,v)
-OPENGL_FORWARD(void,glSecondaryColor3f ,GLfloat,red, GLfloat,green, GLfloat,blue)
-OPENGL_FORWARD(void,glSecondaryColor3fv ,const GLfloat*,v)
-OPENGL_FORWARD(void,glSecondaryColor3i ,GLint,red, GLint,green, GLint,blue)
-OPENGL_FORWARD(void,glSecondaryColor3iv ,const GLint*,v)
-OPENGL_FORWARD(void,glSecondaryColor3s ,GLshort,red, GLshort,green, GLshort,blue)
-OPENGL_FORWARD(void,glSecondaryColor3sv ,const GLshort*,v)
-OPENGL_FORWARD(void,glSecondaryColor3ub ,GLubyte,red, GLubyte,green, GLubyte,blue)
-OPENGL_FORWARD(void,glSecondaryColor3ubv ,const GLubyte*,v)
-OPENGL_FORWARD(void,glSecondaryColor3ui ,GLuint,red, GLuint,green, GLuint,blue)
-OPENGL_FORWARD(void,glSecondaryColor3uiv ,const GLuint*,v)
-OPENGL_FORWARD(void,glSecondaryColor3us ,GLushort,red, GLushort,green, GLushort,blue)
-OPENGL_FORWARD(void,glSecondaryColor3usv ,const GLushort*,v)
-OPENGL_FORWARD(void,glSecondaryColorPointer ,GLint,size, GLenum,type, GLsizei,stride, const void*,pointer)
-OPENGL_FORWARD(void,glWindowPos2d ,GLdouble,x, GLdouble,y)
-OPENGL_FORWARD(void,glWindowPos2dv ,const GLdouble*,v)
-OPENGL_FORWARD(void,glWindowPos2f ,GLfloat,x, GLfloat,y)
-OPENGL_FORWARD(void,glWindowPos2fv ,const GLfloat*,v)
-OPENGL_FORWARD(void,glWindowPos2i ,GLint,x, GLint,y)
-OPENGL_FORWARD(void,glWindowPos2iv ,const GLint*,v)
-OPENGL_FORWARD(void,glWindowPos2s ,GLshort,x, GLshort,y)
-OPENGL_FORWARD(void,glWindowPos2sv ,const GLshort*,v)
-OPENGL_FORWARD(void,glWindowPos3d ,GLdouble,x, GLdouble,y, GLdouble,z)
-OPENGL_FORWARD(void,glWindowPos3dv ,const GLdouble*,v)
-OPENGL_FORWARD(void,glWindowPos3f ,GLfloat,x, GLfloat,y, GLfloat,z)
-OPENGL_FORWARD(void,glWindowPos3fv ,const GLfloat*,v)
-OPENGL_FORWARD(void,glWindowPos3i ,GLint,x, GLint,y, GLint,z)
-OPENGL_FORWARD(void,glWindowPos3iv ,const GLint*,v)
-OPENGL_FORWARD(void,glWindowPos3s ,GLshort,x, GLshort,y, GLshort,z)
-OPENGL_FORWARD(void,glWindowPos3sv ,const GLshort*,v)
-OPENGL_FORWARD(void,glBlendColor ,GLfloat,red, GLfloat,green, GLfloat,blue, GLfloat,alpha)
-OPENGL_FORWARD(void,glBlendEquation ,GLenum,mode)
-OPENGL_FORWARD(void,glGenQueries ,GLsizei,n, GLuint*,ids)
-OPENGL_FORWARD(void,glDeleteQueries ,GLsizei,n, const GLuint*,ids)
-OPENGL_FORWARD(GLboolean,glIsQuery ,GLuint,id)
-OPENGL_FORWARD(void,glBeginQuery ,GLenum,target, GLuint,id)
-OPENGL_FORWARD(void,glEndQuery ,GLenum,target)
-OPENGL_FORWARD(void,glGetQueryiv ,GLenum,target, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetQueryObjectiv ,GLuint,id, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetQueryObjectuiv ,GLuint,id, GLenum,pname, GLuint*,params)
-OPENGL_FORWARD(void,glBindBuffer ,GLenum,target, GLuint,buffer)
-OPENGL_FORWARD(void,glDeleteBuffers ,GLsizei,n, const GLuint*,buffers)
-OPENGL_FORWARD(void,glGenBuffers ,GLsizei,n, GLuint*,buffers)
-OPENGL_FORWARD(GLboolean,glIsBuffer ,GLuint,buffer)
-OPENGL_FORWARD(void,glBufferData ,GLenum,target, GLsizeiptr,size, const void*,data, GLenum,usage)
-OPENGL_FORWARD(void,glBufferSubData ,GLenum,target, GLintptr,offset, GLsizeiptr,size, const void*,data)
-OPENGL_FORWARD(void,glGetBufferSubData ,GLenum,target, GLintptr,offset, GLsizeiptr,size, void*,data)
-OPENGL_FORWARD(void*,glMapBuffer ,GLenum,target, GLenum,access)
-OPENGL_FORWARD(GLboolean,glUnmapBuffer ,GLenum,target)
-OPENGL_FORWARD(void,glGetBufferParameteriv ,GLenum,target, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetBufferPointerv ,GLenum,target, GLenum,pname, void**,params)
-OPENGL_FORWARD(void,glBlendEquationSeparate ,GLenum,modeRGB, GLenum,modeAlpha)
-OPENGL_FORWARD(void,glDrawBuffers ,GLsizei,n, const GLenum*,bufs)
-OPENGL_FORWARD(void,glStencilOpSeparate ,GLenum,face, GLenum,sfail, GLenum,dpfail, GLenum,dppass)
-OPENGL_FORWARD(void,glStencilFuncSeparate ,GLenum,face, GLenum,func, GLint,ref, GLuint,mask)
-OPENGL_FORWARD(void,glStencilMaskSeparate ,GLenum,face, GLuint,mask)
-OPENGL_FORWARD(void,glAttachShader ,GLuint,program, GLuint,shader)
-OPENGL_FORWARD(void,glBindAttribLocation ,GLuint,program, GLuint,index, const GLchar*,name)
-OPENGL_FORWARD(void,glCompileShader ,GLuint,shader)
-OPENGL_FORWARD(GLuint,glCreateProgram ,void,)
-OPENGL_FORWARD(GLuint,glCreateShader ,GLenum,type)
-OPENGL_FORWARD(void,glDeleteProgram ,GLuint,program)
-OPENGL_FORWARD(void,glDeleteShader ,GLuint,shader)
-OPENGL_FORWARD(void,glDetachShader ,GLuint,program, GLuint,shader)
-OPENGL_FORWARD(void,glDisableVertexAttribArray ,GLuint,index)
-OPENGL_FORWARD(void,glEnableVertexAttribArray ,GLuint,index)
-OPENGL_FORWARD(void,glGetActiveAttrib ,GLuint,program, GLuint,index, GLsizei,bufSize, GLsizei*,length, GLint*,size, GLenum*,type, GLchar*,name)
-OPENGL_FORWARD(void,glGetActiveUniform ,GLuint,program, GLuint,index, GLsizei,bufSize, GLsizei*,length, GLint*,size, GLenum*,type, GLchar*,name)
-OPENGL_FORWARD(void,glGetAttachedShaders ,GLuint,program, GLsizei,maxCount, GLsizei*,count, GLuint*,shaders)
-OPENGL_FORWARD(GLint,glGetAttribLocation ,GLuint,program, const GLchar*,name)
-OPENGL_FORWARD(void,glGetProgramiv ,GLuint,program, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetProgramInfoLog ,GLuint,program, GLsizei,bufSize, GLsizei*,length, GLchar*,infoLog)
-OPENGL_FORWARD(void,glGetShaderiv ,GLuint,shader, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetShaderInfoLog ,GLuint,shader, GLsizei,bufSize, GLsizei*,length, GLchar*,infoLog)
-OPENGL_FORWARD(void,glGetShaderSource ,GLuint,shader, GLsizei,bufSize, GLsizei*,length, GLchar*,source)
-OPENGL_FORWARD(GLint,glGetUniformLocation ,GLuint,program, const GLchar*,name)
-OPENGL_FORWARD(void,glGetUniformfv ,GLuint,program, GLint,location, GLfloat*,params)
-OPENGL_FORWARD(void,glGetUniformiv ,GLuint,program, GLint,location, GLint*,params)
-OPENGL_FORWARD(void,glGetVertexAttribdv ,GLuint,index, GLenum,pname, GLdouble*,params)
-OPENGL_FORWARD(void,glGetVertexAttribfv ,GLuint,index, GLenum,pname, GLfloat*,params)
-OPENGL_FORWARD(void,glGetVertexAttribiv ,GLuint,index, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetVertexAttribPointerv ,GLuint,index, GLenum,pname, void**,pointer)
-OPENGL_FORWARD(GLboolean,glIsProgram ,GLuint,program)
-OPENGL_FORWARD(GLboolean,glIsShader ,GLuint,shader)
-OPENGL_FORWARD(void,glLinkProgram ,GLuint,program)
-OPENGL_FORWARD(void,glShaderSource ,GLuint,shader, GLsizei,count, const GLchar* const*,string, const GLint*,length)
-OPENGL_FORWARD(void,glUseProgram ,GLuint,program)
-OPENGL_FORWARD(void,glUniform1f ,GLint,location, GLfloat,v0)
-OPENGL_FORWARD(void,glUniform2f ,GLint,location, GLfloat,v0, GLfloat,v1)
-OPENGL_FORWARD(void,glUniform3f ,GLint,location, GLfloat,v0, GLfloat,v1, GLfloat,v2)
-OPENGL_FORWARD(void,glUniform4f ,GLint,location, GLfloat,v0, GLfloat,v1, GLfloat,v2, GLfloat,v3)
-OPENGL_FORWARD(void,glUniform1i ,GLint,location, GLint,v0)
-OPENGL_FORWARD(void,glUniform2i ,GLint,location, GLint,v0, GLint,v1)
-OPENGL_FORWARD(void,glUniform3i ,GLint,location, GLint,v0, GLint,v1, GLint,v2)
-OPENGL_FORWARD(void,glUniform4i ,GLint,location, GLint,v0, GLint,v1, GLint,v2, GLint,v3)
-OPENGL_FORWARD(void,glUniform1fv ,GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniform2fv ,GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniform3fv ,GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniform4fv ,GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniform1iv ,GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD(void,glUniform2iv ,GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD(void,glUniform3iv ,GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD(void,glUniform4iv ,GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD(void,glUniformMatrix2fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniformMatrix3fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniformMatrix4fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glValidateProgram ,GLuint,program)
-OPENGL_FORWARD(void,glVertexAttrib1d ,GLuint,index, GLdouble,x)
-OPENGL_FORWARD(void,glVertexAttrib1dv ,GLuint,index, const GLdouble*,v)
-OPENGL_FORWARD(void,glVertexAttrib1f ,GLuint,index, GLfloat,x)
-OPENGL_FORWARD(void,glVertexAttrib1fv ,GLuint,index, const GLfloat*,v)
-OPENGL_FORWARD(void,glVertexAttrib1s ,GLuint,index, GLshort,x)
-OPENGL_FORWARD(void,glVertexAttrib1sv ,GLuint,index, const GLshort*,v)
-OPENGL_FORWARD(void,glVertexAttrib2d ,GLuint,index, GLdouble,x, GLdouble,y)
-OPENGL_FORWARD(void,glVertexAttrib2dv ,GLuint,index, const GLdouble*,v)
-OPENGL_FORWARD(void,glVertexAttrib2f ,GLuint,index, GLfloat,x, GLfloat,y)
-OPENGL_FORWARD(void,glVertexAttrib2fv ,GLuint,index, const GLfloat*,v)
-OPENGL_FORWARD(void,glVertexAttrib2s ,GLuint,index, GLshort,x, GLshort,y)
-OPENGL_FORWARD(void,glVertexAttrib2sv ,GLuint,index, const GLshort*,v)
-OPENGL_FORWARD(void,glVertexAttrib3d ,GLuint,index, GLdouble,x, GLdouble,y, GLdouble,z)
-OPENGL_FORWARD(void,glVertexAttrib3dv ,GLuint,index, const GLdouble*,v)
-OPENGL_FORWARD(void,glVertexAttrib3f ,GLuint,index, GLfloat,x, GLfloat,y, GLfloat,z)
-OPENGL_FORWARD(void,glVertexAttrib3fv ,GLuint,index, const GLfloat*,v)
-OPENGL_FORWARD(void,glVertexAttrib3s ,GLuint,index, GLshort,x, GLshort,y, GLshort,z)
-OPENGL_FORWARD(void,glVertexAttrib3sv ,GLuint,index, const GLshort*,v)
-OPENGL_FORWARD(void,glVertexAttrib4Nbv ,GLuint,index, const GLbyte*,v)
-OPENGL_FORWARD(void,glVertexAttrib4Niv ,GLuint,index, const GLint*,v)
-OPENGL_FORWARD(void,glVertexAttrib4Nsv ,GLuint,index, const GLshort*,v)
-OPENGL_FORWARD(void,glVertexAttrib4Nub ,GLuint,index, GLubyte,x, GLubyte,y, GLubyte,z, GLubyte,w)
-OPENGL_FORWARD(void,glVertexAttrib4Nubv ,GLuint,index, const GLubyte*,v)
-OPENGL_FORWARD(void,glVertexAttrib4Nuiv ,GLuint,index, const GLuint*,v)
-OPENGL_FORWARD(void,glVertexAttrib4Nusv ,GLuint,index, const GLushort*,v)
-OPENGL_FORWARD(void,glVertexAttrib4bv ,GLuint,index, const GLbyte*,v)
-OPENGL_FORWARD(void,glVertexAttrib4d ,GLuint,index, GLdouble,x, GLdouble,y, GLdouble,z, GLdouble,w)
-OPENGL_FORWARD(void,glVertexAttrib4dv ,GLuint,index, const GLdouble*,v)
-OPENGL_FORWARD(void,glVertexAttrib4f ,GLuint,index, GLfloat,x, GLfloat,y, GLfloat,z, GLfloat,w)
-OPENGL_FORWARD(void,glVertexAttrib4fv ,GLuint,index, const GLfloat*,v)
-OPENGL_FORWARD(void,glVertexAttrib4iv ,GLuint,index, const GLint*,v)
-OPENGL_FORWARD(void,glVertexAttrib4s ,GLuint,index, GLshort,x, GLshort,y, GLshort,z, GLshort,w)
-OPENGL_FORWARD(void,glVertexAttrib4sv ,GLuint,index, const GLshort*,v)
-OPENGL_FORWARD(void,glVertexAttrib4ubv ,GLuint,index, const GLubyte*,v)
-OPENGL_FORWARD(void,glVertexAttrib4uiv ,GLuint,index, const GLuint*,v)
-OPENGL_FORWARD(void,glVertexAttrib4usv ,GLuint,index, const GLushort*,v)
-OPENGL_FORWARD(void,glVertexAttribPointer ,GLuint,index, GLint,size, GLenum,type, GLboolean,normalized, GLsizei,stride, const void*,pointer)
-OPENGL_FORWARD(void,glUniformMatrix2x3fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniformMatrix3x2fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniformMatrix2x4fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniformMatrix4x2fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniformMatrix3x4fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glUniformMatrix4x3fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glColorMaski ,GLuint,index, GLboolean,r, GLboolean,g, GLboolean,b, GLboolean,a)
-OPENGL_FORWARD(void,glGetBooleani_v ,GLenum,target, GLuint,index, GLboolean*,data)
-OPENGL_FORWARD(void,glGetIntegeri_v ,GLenum,target, GLuint,index, GLint*,data)
-OPENGL_FORWARD(void,glEnablei ,GLenum,target, GLuint,index)
-OPENGL_FORWARD(void,glDisablei ,GLenum,target, GLuint,index)
-OPENGL_FORWARD(GLboolean,glIsEnabledi ,GLenum,target, GLuint,index)
-OPENGL_FORWARD(void,glBeginTransformFeedback ,GLenum,primitiveMode)
-OPENGL_FORWARD(void,glEndTransformFeedback ,void,)
-OPENGL_FORWARD(void,glBindBufferRange ,GLenum,target, GLuint,index, GLuint,buffer, GLintptr,offset, GLsizeiptr,size)
-OPENGL_FORWARD(void,glBindBufferBase ,GLenum,target, GLuint,index, GLuint,buffer)
-OPENGL_FORWARD(void,glTransformFeedbackVaryings ,GLuint,program, GLsizei,count, const GLchar* const*,varyings, GLenum,bufferMode)
-OPENGL_FORWARD(void,glGetTransformFeedbackVarying ,GLuint,program, GLuint,index, GLsizei,bufSize, GLsizei*,length, GLsizei*,size, GLenum*,type, GLchar*,name)
-OPENGL_FORWARD(void,glClampColor ,GLenum,target, GLenum,clamp)
-OPENGL_FORWARD(void,glBeginConditionalRender ,GLuint,id, GLenum,mode)
-OPENGL_FORWARD(void,glEndConditionalRender ,void,)
-OPENGL_FORWARD(void,glVertexAttribIPointer ,GLuint,index, GLint,size, GLenum,type, GLsizei,stride, const void*,pointer)
-OPENGL_FORWARD(void,glGetVertexAttribIiv ,GLuint,index, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetVertexAttribIuiv ,GLuint,index, GLenum,pname, GLuint*,params)
-OPENGL_FORWARD(void,glVertexAttribI1i ,GLuint,index, GLint,x)
-OPENGL_FORWARD(void,glVertexAttribI2i ,GLuint,index, GLint,x, GLint,y)
-OPENGL_FORWARD(void,glVertexAttribI3i ,GLuint,index, GLint,x, GLint,y, GLint,z)
-OPENGL_FORWARD(void,glVertexAttribI4i ,GLuint,index, GLint,x, GLint,y, GLint,z, GLint,w)
-OPENGL_FORWARD(void,glVertexAttribI1ui ,GLuint,index, GLuint,x)
-OPENGL_FORWARD(void,glVertexAttribI2ui ,GLuint,index, GLuint,x, GLuint,y)
-OPENGL_FORWARD(void,glVertexAttribI3ui ,GLuint,index, GLuint,x, GLuint,y, GLuint,z)
-OPENGL_FORWARD(void,glVertexAttribI4ui ,GLuint,index, GLuint,x, GLuint,y, GLuint,z, GLuint,w)
-OPENGL_FORWARD(void,glVertexAttribI1iv ,GLuint,index, const GLint*,v)
-OPENGL_FORWARD(void,glVertexAttribI2iv ,GLuint,index, const GLint*,v)
-OPENGL_FORWARD(void,glVertexAttribI3iv ,GLuint,index, const GLint*,v)
-OPENGL_FORWARD(void,glVertexAttribI4iv ,GLuint,index, const GLint*,v)
-OPENGL_FORWARD(void,glVertexAttribI1uiv ,GLuint,index, const GLuint*,v)
-OPENGL_FORWARD(void,glVertexAttribI2uiv ,GLuint,index, const GLuint*,v)
-OPENGL_FORWARD(void,glVertexAttribI3uiv ,GLuint,index, const GLuint*,v)
-OPENGL_FORWARD(void,glVertexAttribI4uiv ,GLuint,index, const GLuint*,v)
-OPENGL_FORWARD(void,glVertexAttribI4bv ,GLuint,index, const GLbyte*,v)
-OPENGL_FORWARD(void,glVertexAttribI4sv ,GLuint,index, const GLshort*,v)
-OPENGL_FORWARD(void,glVertexAttribI4ubv ,GLuint,index, const GLubyte*,v)
-OPENGL_FORWARD(void,glVertexAttribI4usv ,GLuint,index, const GLushort*,v)
-OPENGL_FORWARD(void,glGetUniformuiv ,GLuint,program, GLint,location, GLuint*,params)
-OPENGL_FORWARD(void,glBindFragDataLocation ,GLuint,program, GLuint,color, const GLchar*,name)
-OPENGL_FORWARD(GLint,glGetFragDataLocation ,GLuint,program, const GLchar*,name)
-OPENGL_FORWARD(void,glUniform1ui ,GLint,location, GLuint,v0)
-OPENGL_FORWARD(void,glUniform2ui ,GLint,location, GLuint,v0, GLuint,v1)
-OPENGL_FORWARD(void,glUniform3ui ,GLint,location, GLuint,v0, GLuint,v1, GLuint,v2)
-OPENGL_FORWARD(void,glUniform4ui ,GLint,location, GLuint,v0, GLuint,v1, GLuint,v2, GLuint,v3)
-OPENGL_FORWARD(void,glUniform1uiv ,GLint,location, GLsizei,count, const GLuint*,value)
-OPENGL_FORWARD(void,glUniform2uiv ,GLint,location, GLsizei,count, const GLuint*,value)
-OPENGL_FORWARD(void,glUniform3uiv ,GLint,location, GLsizei,count, const GLuint*,value)
-OPENGL_FORWARD(void,glUniform4uiv ,GLint,location, GLsizei,count, const GLuint*,value)
-OPENGL_FORWARD(void,glTexParameterIiv ,GLenum,target, GLenum,pname, const GLint*,params)
-OPENGL_FORWARD(void,glTexParameterIuiv ,GLenum,target, GLenum,pname, const GLuint*,params)
-OPENGL_FORWARD(void,glGetTexParameterIiv ,GLenum,target, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetTexParameterIuiv ,GLenum,target, GLenum,pname, GLuint*,params)
-OPENGL_FORWARD(void,glClearBufferiv ,GLenum,buffer, GLint,drawbuffer, const GLint*,value)
-OPENGL_FORWARD(void,glClearBufferuiv ,GLenum,buffer, GLint,drawbuffer, const GLuint*,value)
-OPENGL_FORWARD(void,glClearBufferfv ,GLenum,buffer, GLint,drawbuffer, const GLfloat*,value)
-OPENGL_FORWARD(void,glClearBufferfi ,GLenum,buffer, GLint,drawbuffer, GLfloat,depth, GLint,stencil)
-OPENGL_FORWARD(const GLubyte*, glGetStringi ,GLenum,name, GLuint,index)
-OPENGL_FORWARD(GLboolean,glIsRenderbuffer ,GLuint,renderbuffer)
-OPENGL_FORWARD(void,glBindRenderbuffer ,GLenum,target, GLuint,renderbuffer)
-OPENGL_FORWARD(void,glDeleteRenderbuffers ,GLsizei,n, const GLuint*,renderbuffers)
-OPENGL_FORWARD(void,glGenRenderbuffers ,GLsizei,n, GLuint*,renderbuffers)
-OPENGL_FORWARD(void,glRenderbufferStorage ,GLenum,target, GLenum,internalformat, GLsizei,width, GLsizei,height)
-OPENGL_FORWARD(void,glGetRenderbufferParameteriv ,GLenum,target, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(GLboolean,glIsFramebuffer ,GLuint,framebuffer)
-OPENGL_FORWARD(void,glBindFramebuffer ,GLenum,target, GLuint,framebuffer)
-OPENGL_FORWARD(void,glDeleteFramebuffers ,GLsizei,n, const GLuint*,framebuffers)
-OPENGL_FORWARD(void,glGenFramebuffers ,GLsizei,n, GLuint*,framebuffers)
-OPENGL_FORWARD(GLenum,glCheckFramebufferStatus ,GLenum,target)
-OPENGL_FORWARD(void,glFramebufferTexture1D ,GLenum,target, GLenum,attachment, GLenum,textarget, GLuint,texture, GLint,level)
-OPENGL_FORWARD(void,glFramebufferTexture2D ,GLenum,target, GLenum,attachment, GLenum,textarget, GLuint,texture, GLint,level)
-OPENGL_FORWARD(void,glFramebufferTexture3D ,GLenum,target, GLenum,attachment, GLenum,textarget, GLuint,texture, GLint,level, GLint,zoffset)
-OPENGL_FORWARD(void,glFramebufferRenderbuffer ,GLenum,target, GLenum,attachment, GLenum,renderbuffertarget, GLuint,renderbuffer)
-OPENGL_FORWARD(void,glGetFramebufferAttachmentParameteriv ,GLenum,target, GLenum,attachment, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGenerateMipmap ,GLenum,target)
-OPENGL_FORWARD(void,glBlitFramebuffer ,GLint,srcX0, GLint,srcY0, GLint,srcX1, GLint,srcY1, GLint,dstX0, GLint,dstY0, GLint,dstX1, GLint,dstY1, GLbitfield,mask, GLenum,filter)
-OPENGL_FORWARD(void,glRenderbufferStorageMultisample ,GLenum,target, GLsizei,samples, GLenum,internalformat, GLsizei,width, GLsizei,height)
-OPENGL_FORWARD(void,glFramebufferTextureLayer ,GLenum,target, GLenum,attachment, GLuint,texture, GLint,level, GLint,layer)
-OPENGL_FORWARD(void*, glMapBufferRange ,GLenum,target, GLintptr,offset, GLsizeiptr,length, GLbitfield,access)
-OPENGL_FORWARD(void,glFlushMappedBufferRange ,GLenum,target, GLintptr,offset, GLsizeiptr,length)
-OPENGL_FORWARD(void,glBindVertexArray ,GLuint,array)
-OPENGL_FORWARD(void,glDeleteVertexArrays ,GLsizei,n, const GLuint*,arrays)
-OPENGL_FORWARD(void,glGenVertexArrays ,GLsizei,n, GLuint*,arrays)
-OPENGL_FORWARD(GLboolean,glIsVertexArray ,GLuint,array)
-OPENGL_FORWARD(void,glDrawArraysInstanced ,GLenum,mode, GLint,first, GLsizei,count, GLsizei,instancecount)
-OPENGL_FORWARD(void,glDrawElementsInstanced ,GLenum,mode, GLsizei,count, GLenum,type, const void*,indices, GLsizei,instancecount)
-OPENGL_FORWARD(void,glTexBuffer ,GLenum,target, GLenum,internalformat, GLuint,buffer)
-OPENGL_FORWARD(void,glPrimitiveRestartIndex ,GLuint,index)
-OPENGL_FORWARD(void,glCopyBufferSubData ,GLenum,readTarget, GLenum,writeTarget, GLintptr,readOffset, GLintptr,writeOffset, GLsizeiptr,size)
-OPENGL_FORWARD(void,glGetUniformIndices ,GLuint,program, GLsizei,uniformCount, const GLchar* const*,uniformNames, GLuint*,uniformIndices)
-OPENGL_FORWARD(void,glGetActiveUniformsiv ,GLuint,program, GLsizei,uniformCount, const GLuint*,uniformIndices, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetActiveUniformName ,GLuint,program, GLuint,uniformIndex, GLsizei,bufSize, GLsizei*,length, GLchar*,uniformName)
-OPENGL_FORWARD(GLuint,glGetUniformBlockIndex ,GLuint,program, const GLchar*,uniformBlockName)
-OPENGL_FORWARD(void,glGetActiveUniformBlockiv ,GLuint,program, GLuint,uniformBlockIndex, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetActiveUniformBlockName ,GLuint,program, GLuint,uniformBlockIndex, GLsizei,bufSize, GLsizei*,length, GLchar*,uniformBlockName)
-OPENGL_FORWARD(void,glUniformBlockBinding ,GLuint,program, GLuint,uniformBlockIndex, GLuint,uniformBlockBinding)
-OPENGL_FORWARD(void,glDrawElementsBaseVertex ,GLenum,mode, GLsizei,count, GLenum,type, const void*,indices, GLint,basevertex)
-OPENGL_FORWARD(void,glDrawRangeElementsBaseVertex ,GLenum,mode, GLuint,start, GLuint,end, GLsizei,count, GLenum,type, const void*,indices, GLint,basevertex)
-OPENGL_FORWARD(void,glDrawElementsInstancedBaseVertex ,GLenum,mode, GLsizei,count, GLenum,type, const void*,indices, GLsizei,instancecount, GLint,basevertex)
-OPENGL_FORWARD(void,glMultiDrawElementsBaseVertex ,GLenum,mode, const GLsizei*,count, GLenum,type, const void* const*,indices, GLsizei,drawcount, const GLint*,basevertex)
-OPENGL_FORWARD(void,glProvokingVertex ,GLenum,mode)
-OPENGL_FORWARD(GLsync,glFenceSync ,GLenum,condition, GLbitfield,flags)
-OPENGL_FORWARD(GLboolean,glIsSync ,GLsync,sync)
-OPENGL_FORWARD(void,glDeleteSync ,GLsync,sync)
-OPENGL_FORWARD(GLenum,glClientWaitSync ,GLsync,sync, GLbitfield,flags, GLuint64,timeout)
-OPENGL_FORWARD(void,glWaitSync ,GLsync,sync, GLbitfield,flags, GLuint64,timeout)
-OPENGL_FORWARD(void,glGetInteger64v ,GLenum,pname, GLint64*,data)
-OPENGL_FORWARD(void,glGetSynciv ,GLsync,sync, GLenum,pname, GLsizei,bufSize, GLsizei*,length, GLint*,values)
-OPENGL_FORWARD(void,glGetInteger64i_v ,GLenum,target, GLuint,index, GLint64*,data)
-OPENGL_FORWARD(void,glGetBufferParameteri64v ,GLenum,target, GLenum,pname, GLint64*,params)
-OPENGL_FORWARD(void,glFramebufferTexture ,GLenum,target, GLenum,attachment, GLuint,texture, GLint,level)
-OPENGL_FORWARD(void,glTexImage2DMultisample ,GLenum,target, GLsizei,samples, GLenum,internalformat, GLsizei,width, GLsizei,height, GLboolean,fixedsamplelocations)
-OPENGL_FORWARD(void,glTexImage3DMultisample ,GLenum,target, GLsizei,samples, GLenum,internalformat, GLsizei,width, GLsizei,height, GLsizei,depth, GLboolean,fixedsamplelocations)
-OPENGL_FORWARD(void,glGetMultisamplefv ,GLenum,pname, GLuint,index, GLfloat*,val)
-OPENGL_FORWARD(void,glSampleMaski ,GLuint,maskNumber, GLbitfield,mask)
-OPENGL_FORWARD(void,glBindFragDataLocationIndexed ,GLuint,program, GLuint,colorNumber, GLuint,index, const GLchar*,name)
-OPENGL_FORWARD(GLint,glGetFragDataIndex ,GLuint,program, const GLchar*,name)
-OPENGL_FORWARD(void,glGenSamplers ,GLsizei,count, GLuint*,samplers)
-OPENGL_FORWARD(void,glDeleteSamplers ,GLsizei,count, const GLuint*,samplers)
-OPENGL_FORWARD(GLboolean,glIsSampler ,GLuint,sampler)
-OPENGL_FORWARD(void,glBindSampler ,GLuint,unit, GLuint,sampler)
-OPENGL_FORWARD(void,glSamplerParameteri ,GLuint,sampler, GLenum,pname, GLint,param)
-OPENGL_FORWARD(void,glSamplerParameteriv ,GLuint,sampler, GLenum,pname, const GLint*,param)
-OPENGL_FORWARD(void,glSamplerParameterf ,GLuint,sampler, GLenum,pname, GLfloat,param)
-OPENGL_FORWARD(void,glSamplerParameterfv ,GLuint,sampler, GLenum,pname, const GLfloat*,param)
-OPENGL_FORWARD(void,glSamplerParameterIiv ,GLuint,sampler, GLenum,pname, const GLint*,param)
-OPENGL_FORWARD(void,glSamplerParameterIuiv ,GLuint,sampler, GLenum,pname, const GLuint*,param)
-OPENGL_FORWARD(void,glGetSamplerParameteriv ,GLuint,sampler, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetSamplerParameterIiv ,GLuint,sampler, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetSamplerParameterfv ,GLuint,sampler, GLenum,pname, GLfloat*,params)
-OPENGL_FORWARD(void,glGetSamplerParameterIuiv ,GLuint,sampler, GLenum,pname, GLuint*,params)
-OPENGL_FORWARD(void,glQueryCounter ,GLuint,id, GLenum,target)
-OPENGL_FORWARD(void,glGetQueryObjecti64v ,GLuint,id, GLenum,pname, GLint64*,params)
-OPENGL_FORWARD(void,glGetQueryObjectui64v ,GLuint,id, GLenum,pname, GLuint64*,params)
-OPENGL_FORWARD(void,glVertexAttribDivisor ,GLuint,index, GLuint,divisor)
-OPENGL_FORWARD(void,glVertexAttribP1ui ,GLuint,index, GLenum,type, GLboolean,normalized, GLuint,value)
-OPENGL_FORWARD(void,glVertexAttribP1uiv ,GLuint,index, GLenum,type, GLboolean,normalized, const GLuint*,value)
-OPENGL_FORWARD(void,glVertexAttribP2ui ,GLuint,index, GLenum,type, GLboolean,normalized, GLuint,value)
-OPENGL_FORWARD(void,glVertexAttribP2uiv ,GLuint,index, GLenum,type, GLboolean,normalized, const GLuint*,value)
-OPENGL_FORWARD(void,glVertexAttribP3ui ,GLuint,index, GLenum,type, GLboolean,normalized, GLuint,value)
-OPENGL_FORWARD(void,glVertexAttribP3uiv ,GLuint,index, GLenum,type, GLboolean,normalized, const GLuint*,value)
-OPENGL_FORWARD(void,glVertexAttribP4ui ,GLuint,index, GLenum,type, GLboolean,normalized, GLuint,value)
-OPENGL_FORWARD(void,glVertexAttribP4uiv ,GLuint,index, GLenum,type, GLboolean,normalized, const GLuint*,value)
-OPENGL_FORWARD(void,glVertexP2ui ,GLenum,type, GLuint,value)
-OPENGL_FORWARD(void,glVertexP2uiv ,GLenum,type, const GLuint*,value)
-OPENGL_FORWARD(void,glVertexP3ui ,GLenum,type, GLuint,value)
-OPENGL_FORWARD(void,glVertexP3uiv ,GLenum,type, const GLuint*,value)
-OPENGL_FORWARD(void,glVertexP4ui ,GLenum,type, GLuint,value)
-OPENGL_FORWARD(void,glVertexP4uiv ,GLenum,type, const GLuint*,value)
-OPENGL_FORWARD(void,glTexCoordP1ui ,GLenum,type, GLuint,coords)
-OPENGL_FORWARD(void,glTexCoordP1uiv ,GLenum,type, const GLuint*,coords)
-OPENGL_FORWARD(void,glTexCoordP2ui ,GLenum,type, GLuint,coords)
-OPENGL_FORWARD(void,glTexCoordP2uiv ,GLenum,type, const GLuint*,coords)
-OPENGL_FORWARD(void,glTexCoordP3ui ,GLenum,type, GLuint,coords)
-OPENGL_FORWARD(void,glTexCoordP3uiv ,GLenum,type, const GLuint*,coords)
-OPENGL_FORWARD(void,glTexCoordP4ui ,GLenum,type, GLuint,coords)
-OPENGL_FORWARD(void,glTexCoordP4uiv ,GLenum,type, const GLuint*,coords)
-OPENGL_FORWARD(void,glMultiTexCoordP1ui ,GLenum,texture, GLenum,type, GLuint,coords)
-OPENGL_FORWARD(void,glMultiTexCoordP1uiv ,GLenum,texture, GLenum,type, const GLuint*,coords)
-OPENGL_FORWARD(void,glMultiTexCoordP2ui ,GLenum,texture, GLenum,type, GLuint,coords)
-OPENGL_FORWARD(void,glMultiTexCoordP2uiv ,GLenum,texture, GLenum,type, const GLuint*,coords)
-OPENGL_FORWARD(void,glMultiTexCoordP3ui ,GLenum,texture, GLenum,type, GLuint,coords)
-OPENGL_FORWARD(void,glMultiTexCoordP3uiv ,GLenum,texture, GLenum,type, const GLuint*,coords)
-OPENGL_FORWARD(void,glMultiTexCoordP4ui ,GLenum,texture, GLenum,type, GLuint,coords)
-OPENGL_FORWARD(void,glMultiTexCoordP4uiv ,GLenum,texture, GLenum,type, const GLuint*,coords)
-OPENGL_FORWARD(void,glNormalP3ui ,GLenum,type, GLuint,coords)
-OPENGL_FORWARD(void,glNormalP3uiv ,GLenum,type, const GLuint*,coords)
-OPENGL_FORWARD(void,glColorP3ui ,GLenum,type, GLuint,color)
-OPENGL_FORWARD(void,glColorP3uiv ,GLenum,type, const GLuint*,color)
-OPENGL_FORWARD(void,glColorP4ui ,GLenum,type, GLuint,color)
-OPENGL_FORWARD(void,glColorP4uiv ,GLenum,type, const GLuint*,color)
-OPENGL_FORWARD(void,glSecondaryColorP3ui ,GLenum,type, GLuint,color)
-OPENGL_FORWARD(void,glSecondaryColorP3uiv ,GLenum,type, const GLuint*,color)
-OPENGL_FORWARD(void,glMinSampleShading ,GLfloat,value)
-OPENGL_FORWARD(void,glBlendEquationi ,GLuint,buf, GLenum,mode)
-OPENGL_FORWARD(void,glBlendEquationSeparatei ,GLuint,buf, GLenum,modeRGB, GLenum,modeAlpha)
-OPENGL_FORWARD(void,glBlendFunci ,GLuint,buf, GLenum,src, GLenum,dst)
-OPENGL_FORWARD(void,glBlendFuncSeparatei ,GLuint,buf, GLenum,srcRGB, GLenum,dstRGB, GLenum,srcAlpha, GLenum,dstAlpha)
-OPENGL_FORWARD(void,glDrawArraysIndirect ,GLenum,mode, const void*,indirect)
-OPENGL_FORWARD(void,glDrawElementsIndirect ,GLenum,mode, GLenum,type, const void*,indirect)
-OPENGL_FORWARD(void,glUniform1d ,GLint,location, GLdouble,x)
-OPENGL_FORWARD(void,glUniform2d ,GLint,location, GLdouble,x, GLdouble,y)
-OPENGL_FORWARD(void,glUniform3d ,GLint,location, GLdouble,x, GLdouble,y, GLdouble,z)
-OPENGL_FORWARD(void,glUniform4d ,GLint,location, GLdouble,x, GLdouble,y, GLdouble,z, GLdouble,w)
-OPENGL_FORWARD(void,glUniform1dv ,GLint,location, GLsizei,count, const GLdouble*,value)
-OPENGL_FORWARD(void,glUniform2dv ,GLint,location, GLsizei,count, const GLdouble*,value)
-OPENGL_FORWARD(void,glUniform3dv ,GLint,location, GLsizei,count, const GLdouble*,value)
-OPENGL_FORWARD(void,glUniform4dv ,GLint,location, GLsizei,count, const GLdouble*,value)
-OPENGL_FORWARD(void,glUniformMatrix2dv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glUniformMatrix3dv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glUniformMatrix4dv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glUniformMatrix2x3dv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glUniformMatrix2x4dv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glUniformMatrix3x2dv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glUniformMatrix3x4dv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glUniformMatrix4x2dv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glUniformMatrix4x3dv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glGetUniformdv ,GLuint,program, GLint,location, GLdouble*,params)
-OPENGL_FORWARD(GLint,glGetSubroutineUniformLocation ,GLuint,program, GLenum,shadertype, const GLchar*,name)
-OPENGL_FORWARD(GLuint,glGetSubroutineIndex ,GLuint,program, GLenum,shadertype, const GLchar*,name)
-OPENGL_FORWARD(void,glGetActiveSubroutineUniformiv ,GLuint,program, GLenum,shadertype, GLuint,index, GLenum,pname, GLint*,values)
-OPENGL_FORWARD(void,glGetActiveSubroutineUniformName ,GLuint,program, GLenum,shadertype, GLuint,index, GLsizei,bufsize, GLsizei*,length, GLchar*,name)
-OPENGL_FORWARD(void,glGetActiveSubroutineName ,GLuint,program, GLenum,shadertype, GLuint,index, GLsizei,bufsize, GLsizei*,length, GLchar*,name)
-OPENGL_FORWARD(void,glUniformSubroutinesuiv ,GLenum,shadertype, GLsizei,count, const GLuint*,indices)
-OPENGL_FORWARD(void,glGetUniformSubroutineuiv ,GLenum,shadertype, GLint,location, GLuint*,params)
-OPENGL_FORWARD(void,glGetProgramStageiv ,GLuint,program, GLenum,shadertype, GLenum,pname, GLint*,values)
-OPENGL_FORWARD(void,glPatchParameteri ,GLenum,pname, GLint,value)
-OPENGL_FORWARD(void,glPatchParameterfv ,GLenum,pname, const GLfloat*,values)
-OPENGL_FORWARD(void,glBindTransformFeedback ,GLenum,target, GLuint,id)
-OPENGL_FORWARD(void,glDeleteTransformFeedbacks ,GLsizei,n, const GLuint*,ids)
-OPENGL_FORWARD(void,glGenTransformFeedbacks ,GLsizei,n, GLuint*,ids)
-OPENGL_FORWARD(GLboolean,glIsTransformFeedback ,GLuint,id)
-OPENGL_FORWARD(void,glPauseTransformFeedback ,void,)
-OPENGL_FORWARD(void,glResumeTransformFeedback ,void,)
-OPENGL_FORWARD(void,glDrawTransformFeedback ,GLenum,mode, GLuint,id)
-OPENGL_FORWARD(void,glDrawTransformFeedbackStream ,GLenum,mode, GLuint,id, GLuint,stream)
-OPENGL_FORWARD(void,glBeginQueryIndexed ,GLenum,target, GLuint,index, GLuint,id)
-OPENGL_FORWARD(void,glEndQueryIndexed ,GLenum,target, GLuint,index)
-OPENGL_FORWARD(void,glGetQueryIndexediv ,GLenum,target, GLuint,index, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glReleaseShaderCompiler ,void,)
-OPENGL_FORWARD(void,glShaderBinary ,GLsizei,count, const GLuint*,shaders, GLenum,binaryformat, const void*,binary, GLsizei,length)
-OPENGL_FORWARD(void,glGetShaderPrecisionFormat ,GLenum,shadertype, GLenum,precisiontype, GLint*,range, GLint*,precision)
-OPENGL_FORWARD(void,glDepthRangef ,GLfloat,n, GLfloat,f)
-OPENGL_FORWARD(void,glClearDepthf ,GLfloat,d)
-OPENGL_FORWARD(void,glGetProgramBinary ,GLuint,program, GLsizei,bufSize, GLsizei*,length, GLenum*,binaryFormat, void*,binary)
-OPENGL_FORWARD(void,glProgramBinary ,GLuint,program, GLenum,binaryFormat, const void*,binary, GLsizei,length)
-OPENGL_FORWARD(void,glProgramParameteri ,GLuint,program, GLenum,pname, GLint,value)
-OPENGL_FORWARD(void,glUseProgramStages ,GLuint,pipeline, GLbitfield,stages, GLuint,program)
-OPENGL_FORWARD(void,glActiveShaderProgram ,GLuint,pipeline, GLuint,program)
-OPENGL_FORWARD(GLuint,glCreateShaderProgramv ,GLenum,type, GLsizei,count, const GLchar* const*,strings)
-OPENGL_FORWARD(void,glBindProgramPipeline ,GLuint,pipeline)
-OPENGL_FORWARD(void,glDeleteProgramPipelines ,GLsizei,n, const GLuint*,pipelines)
-OPENGL_FORWARD(void,glGenProgramPipelines ,GLsizei,n, GLuint*,pipelines)
-OPENGL_FORWARD(GLboolean,glIsProgramPipeline ,GLuint,pipeline)
-OPENGL_FORWARD(void,glGetProgramPipelineiv ,GLuint,pipeline, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glProgramUniform1i ,GLuint,program, GLint,location, GLint,v0)
-OPENGL_FORWARD(void,glProgramUniform1iv ,GLuint,program, GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD(void,glProgramUniform1f ,GLuint,program, GLint,location, GLfloat,v0)
-OPENGL_FORWARD(void,glProgramUniform1fv ,GLuint,program, GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniform1d ,GLuint,program, GLint,location, GLdouble,v0)
-OPENGL_FORWARD(void,glProgramUniform1dv ,GLuint,program, GLint,location, GLsizei,count, const GLdouble*,value)
-OPENGL_FORWARD(void,glProgramUniform1ui ,GLuint,program, GLint,location, GLuint,v0)
-OPENGL_FORWARD(void,glProgramUniform1uiv ,GLuint,program, GLint,location, GLsizei,count, const GLuint*,value)
-OPENGL_FORWARD(void,glProgramUniform2i ,GLuint,program, GLint,location, GLint,v0, GLint,v1)
-OPENGL_FORWARD(void,glProgramUniform2iv ,GLuint,program, GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD(void,glProgramUniform2f ,GLuint,program, GLint,location, GLfloat,v0, GLfloat,v1)
-OPENGL_FORWARD(void,glProgramUniform2fv ,GLuint,program, GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniform2d ,GLuint,program, GLint,location, GLdouble,v0, GLdouble,v1)
-OPENGL_FORWARD(void,glProgramUniform2dv ,GLuint,program, GLint,location, GLsizei,count, const GLdouble*,value)
-OPENGL_FORWARD(void,glProgramUniform2ui ,GLuint,program, GLint,location, GLuint,v0, GLuint,v1)
-OPENGL_FORWARD(void,glProgramUniform2uiv ,GLuint,program, GLint,location, GLsizei,count, const GLuint*,value)
-OPENGL_FORWARD(void,glProgramUniform3i ,GLuint,program, GLint,location, GLint,v0, GLint,v1, GLint,v2)
-OPENGL_FORWARD(void,glProgramUniform3iv ,GLuint,program, GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD(void,glProgramUniform3f ,GLuint,program, GLint,location, GLfloat,v0, GLfloat,v1, GLfloat,v2)
-OPENGL_FORWARD(void,glProgramUniform3fv ,GLuint,program, GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniform3d ,GLuint,program, GLint,location, GLdouble,v0, GLdouble,v1, GLdouble,v2)
-OPENGL_FORWARD(void,glProgramUniform3dv ,GLuint,program, GLint,location, GLsizei,count, const GLdouble*,value)
-OPENGL_FORWARD(void,glProgramUniform3ui ,GLuint,program, GLint,location, GLuint,v0, GLuint,v1, GLuint,v2)
-OPENGL_FORWARD(void,glProgramUniform3uiv ,GLuint,program, GLint,location, GLsizei,count, const GLuint*,value)
-OPENGL_FORWARD(void,glProgramUniform4i ,GLuint,program, GLint,location, GLint,v0, GLint,v1, GLint,v2, GLint,v3)
-OPENGL_FORWARD(void,glProgramUniform4iv ,GLuint,program, GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD(void,glProgramUniform4f ,GLuint,program, GLint,location, GLfloat,v0, GLfloat,v1, GLfloat,v2, GLfloat,v3)
-OPENGL_FORWARD(void,glProgramUniform4fv ,GLuint,program, GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniform4d ,GLuint,program, GLint,location, GLdouble,v0, GLdouble,v1, GLdouble,v2, GLdouble,v3)
-OPENGL_FORWARD(void,glProgramUniform4dv ,GLuint,program, GLint,location, GLsizei,count, const GLdouble*,value)
-OPENGL_FORWARD(void,glProgramUniform4ui ,GLuint,program, GLint,location, GLuint,v0, GLuint,v1, GLuint,v2, GLuint,v3)
-OPENGL_FORWARD(void,glProgramUniform4uiv ,GLuint,program, GLint,location, GLsizei,count, const GLuint*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix2fv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix3fv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix4fv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix2dv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix3dv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix4dv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix2x3fv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix3x2fv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix2x4fv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix4x2fv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix3x4fv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix4x3fv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix2x3dv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix3x2dv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix2x4dv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix4x2dv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix3x4dv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glProgramUniformMatrix4x3dv ,GLuint,program, GLint,location, GLsizei,count, GLboolean,transpose, const GLdouble*,value)
-OPENGL_FORWARD(void,glValidateProgramPipeline ,GLuint,pipeline)
-OPENGL_FORWARD(void,glGetProgramPipelineInfoLog ,GLuint,pipeline, GLsizei,bufSize, GLsizei*,length, GLchar*,infoLog)
-OPENGL_FORWARD(void,glVertexAttribL1d ,GLuint,index, GLdouble,x)
-OPENGL_FORWARD(void,glVertexAttribL2d ,GLuint,index, GLdouble,x, GLdouble,y)
-OPENGL_FORWARD(void,glVertexAttribL3d ,GLuint,index, GLdouble,x, GLdouble,y, GLdouble,z)
-OPENGL_FORWARD(void,glVertexAttribL4d ,GLuint,index, GLdouble,x, GLdouble,y, GLdouble,z, GLdouble,w)
-OPENGL_FORWARD(void,glVertexAttribL1dv ,GLuint,index, const GLdouble*,v)
-OPENGL_FORWARD(void,glVertexAttribL2dv ,GLuint,index, const GLdouble*,v)
-OPENGL_FORWARD(void,glVertexAttribL3dv ,GLuint,index, const GLdouble*,v)
-OPENGL_FORWARD(void,glVertexAttribL4dv ,GLuint,index, const GLdouble*,v)
-OPENGL_FORWARD(void,glVertexAttribLPointer ,GLuint,index, GLint,size, GLenum,type, GLsizei,stride, const void*,pointer)
-OPENGL_FORWARD(void,glGetVertexAttribLdv ,GLuint,index, GLenum,pname, GLdouble*,params)
-OPENGL_FORWARD(void,glViewportArrayv ,GLuint,first, GLsizei,count, const GLfloat*,v)
-OPENGL_FORWARD(void,glViewportIndexedf ,GLuint,index, GLfloat,x, GLfloat,y, GLfloat,w, GLfloat,h)
-OPENGL_FORWARD(void,glViewportIndexedfv ,GLuint,index, const GLfloat*,v)
-OPENGL_FORWARD(void,glScissorArrayv ,GLuint,first, GLsizei,count, const GLint*,v)
-OPENGL_FORWARD(void,glScissorIndexed ,GLuint,index, GLint,left, GLint,bottom, GLsizei,width, GLsizei,height)
-OPENGL_FORWARD(void,glScissorIndexedv ,GLuint,index, const GLint*,v)
-OPENGL_FORWARD(void,glDepthRangeArrayv ,GLuint,first, GLsizei,count, const GLdouble*,v)
-OPENGL_FORWARD(void,glDepthRangeIndexed ,GLuint,index, GLdouble,n, GLdouble,f)
-OPENGL_FORWARD(void,glGetFloati_v ,GLenum,target, GLuint,index, GLfloat*,data)
-OPENGL_FORWARD(void,glGetDoublei_v ,GLenum,target, GLuint,index, GLdouble*,data)
-OPENGL_FORWARD(void,glDrawArraysInstancedBaseInstance ,GLenum,mode, GLint,first, GLsizei,count, GLsizei,instancecount, GLuint,baseinstance)
-OPENGL_FORWARD(void,glDrawElementsInstancedBaseInstance ,GLenum,mode, GLsizei,count, GLenum,type, const void*,indices, GLsizei,instancecount, GLuint,baseinstance)
-OPENGL_FORWARD(void,glDrawElementsInstancedBaseVertexBaseInstance ,GLenum,mode, GLsizei,count, GLenum,type, const void*,indices, GLsizei,instancecount, GLint,basevertex, GLuint,baseinstance)
-OPENGL_FORWARD(void,glGetInternalformativ ,GLenum,target, GLenum,internalformat, GLenum,pname, GLsizei,bufSize, GLint*,params)
-OPENGL_FORWARD(void,glGetActiveAtomicCounterBufferiv ,GLuint,program, GLuint,bufferIndex, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glBindImageTexture ,GLuint,unit, GLuint,texture, GLint,level, GLboolean,layered, GLint,layer, GLenum,access, GLenum,format)
-OPENGL_FORWARD(void,glMemoryBarrier ,GLbitfield,barriers)
-OPENGL_FORWARD(void,glTexStorage1D ,GLenum,target, GLsizei,levels, GLenum,internalformat, GLsizei,width)
-OPENGL_FORWARD(void,glTexStorage2D ,GLenum,target, GLsizei,levels, GLenum,internalformat, GLsizei,width, GLsizei,height)
-OPENGL_FORWARD(void,glTexStorage3D ,GLenum,target, GLsizei,levels, GLenum,internalformat, GLsizei,width, GLsizei,height, GLsizei,depth)
-OPENGL_FORWARD(void,glDrawTransformFeedbackInstanced ,GLenum,mode, GLuint,id, GLsizei,instancecount)
-OPENGL_FORWARD(void,glDrawTransformFeedbackStreamInstanced ,GLenum,mode, GLuint,id, GLuint,stream, GLsizei,instancecount)
-OPENGL_FORWARD(void,glClearBufferData ,GLenum,target, GLenum,internalformat, GLenum,format, GLenum,type, const void*,data)
-OPENGL_FORWARD(void,glClearBufferSubData ,GLenum,target, GLenum,internalformat, GLintptr,offset, GLsizeiptr,size, GLenum,format, GLenum,type, const void*,data)
-OPENGL_FORWARD(void,glDispatchCompute ,GLuint,num_groups_x, GLuint,num_groups_y, GLuint,num_groups_z)
-OPENGL_FORWARD(void,glDispatchComputeIndirect ,GLintptr,indirect)
-OPENGL_FORWARD(void,glCopyImageSubData ,GLuint,srcName, GLenum,srcTarget, GLint,srcLevel, GLint,srcX, GLint,srcY, GLint,srcZ, GLuint,dstName, GLenum,dstTarget, GLint,dstLevel, GLint,dstX, GLint,dstY, GLint,dstZ, GLsizei,srcWidth, GLsizei,srcHeight, GLsizei,srcDepth)
-OPENGL_FORWARD(void,glFramebufferParameteri ,GLenum,target, GLenum,pname, GLint,param)
-OPENGL_FORWARD(void,glGetFramebufferParameteriv ,GLenum,target, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetInternalformati64v ,GLenum,target, GLenum,internalformat, GLenum,pname, GLsizei,bufSize, GLint64*,params)
-OPENGL_FORWARD(void,glInvalidateTexSubImage ,GLuint,texture, GLint,level, GLint,xoffset, GLint,yoffset, GLint,zoffset, GLsizei,width, GLsizei,height, GLsizei,depth)
-OPENGL_FORWARD(void,glInvalidateTexImage ,GLuint,texture, GLint,level)
-OPENGL_FORWARD(void,glInvalidateBufferSubData ,GLuint,buffer, GLintptr,offset, GLsizeiptr,length)
-OPENGL_FORWARD(void,glInvalidateBufferData ,GLuint,buffer)
-OPENGL_FORWARD(void,glInvalidateFramebuffer ,GLenum,target, GLsizei,numAttachments, const GLenum*,attachments)
-OPENGL_FORWARD(void,glInvalidateSubFramebuffer ,GLenum,target, GLsizei,numAttachments, const GLenum*,attachments, GLint,x, GLint,y, GLsizei,width, GLsizei,height)
-OPENGL_FORWARD(void,glMultiDrawArraysIndirect ,GLenum,mode, const void*,indirect, GLsizei,drawcount, GLsizei,stride)
-OPENGL_FORWARD(void,glMultiDrawElementsIndirect ,GLenum,mode, GLenum,type, const void*,indirect, GLsizei,drawcount, GLsizei,stride)
-OPENGL_FORWARD(void,glGetProgramInterfaceiv ,GLuint,program, GLenum,programInterface, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(GLuint,glGetProgramResourceIndex ,GLuint,program, GLenum,programInterface, const GLchar*,name)
-OPENGL_FORWARD(void,glGetProgramResourceName ,GLuint,program, GLenum,programInterface, GLuint,index, GLsizei,bufSize, GLsizei*,length, GLchar*,name)
-OPENGL_FORWARD(void,glGetProgramResourceiv ,GLuint,program, GLenum,programInterface, GLuint,index, GLsizei,propCount, const GLenum*,props, GLsizei,bufSize, GLsizei*,length, GLint*,params)
-OPENGL_FORWARD(GLint,glGetProgramResourceLocation ,GLuint,program, GLenum,programInterface, const GLchar*,name)
-OPENGL_FORWARD(GLint,glGetProgramResourceLocationIndex ,GLuint,program, GLenum,programInterface, const GLchar*,name)
-OPENGL_FORWARD(void,glShaderStorageBlockBinding ,GLuint,program, GLuint,storageBlockIndex, GLuint,storageBlockBinding)
-OPENGL_FORWARD(void,glTexBufferRange ,GLenum,target, GLenum,internalformat, GLuint,buffer, GLintptr,offset, GLsizeiptr,size)
-OPENGL_FORWARD(void,glTexStorage2DMultisample ,GLenum,target, GLsizei,samples, GLenum,internalformat, GLsizei,width, GLsizei,height, GLboolean,fixedsamplelocations)
-OPENGL_FORWARD(void,glTexStorage3DMultisample ,GLenum,target, GLsizei,samples, GLenum,internalformat, GLsizei,width, GLsizei,height, GLsizei,depth, GLboolean,fixedsamplelocations)
-OPENGL_FORWARD(void,glTextureView ,GLuint,texture, GLenum,target, GLuint,origtexture, GLenum,internalformat, GLuint,minlevel, GLuint,numlevels, GLuint,minlayer, GLuint,numlayers)
-OPENGL_FORWARD(void,glBindVertexBuffer ,GLuint,bindingindex, GLuint,buffer, GLintptr,offset, GLsizei,stride)
-OPENGL_FORWARD(void,glVertexAttribFormat ,GLuint,attribindex, GLint,size, GLenum,type, GLboolean,normalized, GLuint,relativeoffset)
-OPENGL_FORWARD(void,glVertexAttribIFormat ,GLuint,attribindex, GLint,size, GLenum,type, GLuint,relativeoffset)
-OPENGL_FORWARD(void,glVertexAttribLFormat ,GLuint,attribindex, GLint,size, GLenum,type, GLuint,relativeoffset)
-OPENGL_FORWARD(void,glVertexAttribBinding ,GLuint,attribindex, GLuint,bindingindex)
-OPENGL_FORWARD(void,glVertexBindingDivisor ,GLuint,bindingindex, GLuint,divisor)
-OPENGL_FORWARD(void,glDebugMessageControl ,GLenum,source, GLenum,type, GLenum,severity, GLsizei,count, const GLuint*,ids, GLboolean,enabled)
-OPENGL_FORWARD(void,glDebugMessageInsert ,GLenum,source, GLenum,type, GLuint,id, GLenum,severity, GLsizei,length, const GLchar*,buf)
-OPENGL_FORWARD(void,glDebugMessageCallback ,GLDEBUGPROC,callback, const void*,userParam)
-OPENGL_FORWARD(GLuint,glGetDebugMessageLog ,GLuint,count, GLsizei,bufSize, GLenum*,sources, GLenum*,types, GLuint*,ids, GLenum*,severities, GLsizei*,lengths, GLchar*,messageLog)
-OPENGL_FORWARD(void,glPushDebugGroup ,GLenum,source, GLuint,id, GLsizei,length, const GLchar*,message)
-OPENGL_FORWARD(void,glPopDebugGroup ,void,)
-OPENGL_FORWARD(void,glObjectLabel ,GLenum,identifier, GLuint,name, GLsizei,length, const GLchar*,label)
-OPENGL_FORWARD(void,glGetObjectLabel ,GLenum,identifier, GLuint,name, GLsizei,bufSize, GLsizei*,length, GLchar*,label)
-OPENGL_FORWARD(void,glObjectPtrLabel ,const void*,ptr, GLsizei,length, const GLchar*,label)
-OPENGL_FORWARD(void,glGetObjectPtrLabel ,const void*,ptr, GLsizei,bufSize, GLsizei*,length, GLchar*,label)
-OPENGL_FORWARD(void,glBufferStorage ,GLenum,target, GLsizeiptr,size, const void*,data, GLbitfield,flags)
-OPENGL_FORWARD(void,glClearTexImage ,GLuint,texture, GLint,level, GLenum,format, GLenum,type, const void*,data)
-OPENGL_FORWARD(void,glClearTexSubImage ,GLuint,texture, GLint,level, GLint,xoffset, GLint,yoffset, GLint,zoffset, GLsizei,width, GLsizei,height, GLsizei,depth, GLenum,format, GLenum,type, const void*,data)
-OPENGL_FORWARD(void,glBindBuffersBase ,GLenum,target, GLuint,first, GLsizei,count, const GLuint*,buffers)
-OPENGL_FORWARD(void,glBindBuffersRange ,GLenum,target, GLuint,first, GLsizei,count, const GLuint*,buffers, const GLintptr*,offsets, const GLsizeiptr*,sizes)
-OPENGL_FORWARD(void,glBindTextures ,GLuint,first, GLsizei,count, const GLuint*,textures)
-OPENGL_FORWARD(void,glBindSamplers ,GLuint,first, GLsizei,count, const GLuint*,samplers)
-OPENGL_FORWARD(void,glBindImageTextures ,GLuint,first, GLsizei,count, const GLuint*,textures)
-OPENGL_FORWARD(void,glBindVertexBuffers ,GLuint,first, GLsizei,count, const GLuint*,buffers, const GLintptr*,offsets, const GLsizei*,strides)
-OPENGL_FORWARD(void,glClipControl ,GLenum,origin, GLenum,depth)
-OPENGL_FORWARD(void,glCreateTransformFeedbacks ,GLsizei,n, GLuint*,ids)
-OPENGL_FORWARD(void,glTransformFeedbackBufferBase ,GLuint,xfb, GLuint,index, GLuint,buffer)
-OPENGL_FORWARD(void,glTransformFeedbackBufferRange ,GLuint,xfb, GLuint,index, GLuint,buffer, GLintptr,offset, GLsizeiptr,size)
-OPENGL_FORWARD(void,glGetTransformFeedbackiv ,GLuint,xfb, GLenum,pname, GLint*,param)
-OPENGL_FORWARD(void,glGetTransformFeedbacki_v ,GLuint,xfb, GLenum,pname, GLuint,index, GLint*,param)
-OPENGL_FORWARD(void,glGetTransformFeedbacki64_v ,GLuint,xfb, GLenum,pname, GLuint,index, GLint64*,param)
-OPENGL_FORWARD(void,glCreateBuffers ,GLsizei,n, GLuint*,buffers)
-OPENGL_FORWARD(void,glNamedBufferStorage ,GLuint,buffer, GLsizeiptr,size, const void*,data, GLbitfield,flags)
-OPENGL_FORWARD(void,glNamedBufferData ,GLuint,buffer, GLsizeiptr,size, const void*,data, GLenum,usage)
-OPENGL_FORWARD(void,glNamedBufferSubData ,GLuint,buffer, GLintptr,offset, GLsizeiptr,size, const void*,data)
-OPENGL_FORWARD(void,glCopyNamedBufferSubData ,GLuint,readBuffer, GLuint,writeBuffer, GLintptr,readOffset, GLintptr,writeOffset, GLsizeiptr,size)
-OPENGL_FORWARD(void,glClearNamedBufferData ,GLuint,buffer, GLenum,internalformat, GLenum,format, GLenum,type, const void*,data)
-OPENGL_FORWARD(void,glClearNamedBufferSubData ,GLuint,buffer, GLenum,internalformat, GLintptr,offset, GLsizeiptr,size, GLenum,format, GLenum,type, const void*,data)
-OPENGL_FORWARD(void*, glMapNamedBuffer ,GLuint,buffer, GLenum,access)
-OPENGL_FORWARD(void*, glMapNamedBufferRange ,GLuint,buffer, GLintptr,offset, GLsizeiptr,length, GLbitfield,access)
-OPENGL_FORWARD(GLboolean,glUnmapNamedBuffer ,GLuint,buffer)
-OPENGL_FORWARD(void,glFlushMappedNamedBufferRange ,GLuint,buffer, GLintptr,offset, GLsizeiptr,length)
-OPENGL_FORWARD(void,glGetNamedBufferParameteriv ,GLuint,buffer, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetNamedBufferParameteri64v ,GLuint,buffer, GLenum,pname, GLint64*,params)
-OPENGL_FORWARD(void,glGetNamedBufferPointerv ,GLuint,buffer, GLenum,pname, void**,params)
-OPENGL_FORWARD(void,glGetNamedBufferSubData ,GLuint,buffer, GLintptr,offset, GLsizeiptr,size, void*,data)
-OPENGL_FORWARD(void,glCreateFramebuffers ,GLsizei,n, GLuint*,framebuffers)
-OPENGL_FORWARD(void,glNamedFramebufferRenderbuffer ,GLuint,framebuffer, GLenum,attachment, GLenum,renderbuffertarget, GLuint,renderbuffer)
-OPENGL_FORWARD(void,glNamedFramebufferParameteri ,GLuint,framebuffer, GLenum,pname, GLint,param)
-OPENGL_FORWARD(void,glNamedFramebufferTexture ,GLuint,framebuffer, GLenum,attachment, GLuint,texture, GLint,level)
-OPENGL_FORWARD(void,glNamedFramebufferTextureLayer ,GLuint,framebuffer, GLenum,attachment, GLuint,texture, GLint,level, GLint,layer)
-OPENGL_FORWARD(void,glNamedFramebufferDrawBuffer ,GLuint,framebuffer, GLenum,buf)
-OPENGL_FORWARD(void,glNamedFramebufferDrawBuffers ,GLuint,framebuffer, GLsizei,n, const GLenum*,bufs)
-OPENGL_FORWARD(void,glNamedFramebufferReadBuffer ,GLuint,framebuffer, GLenum,src)
-OPENGL_FORWARD(void,glInvalidateNamedFramebufferData ,GLuint,framebuffer, GLsizei,numAttachments, const GLenum*,attachments)
-OPENGL_FORWARD(void,glInvalidateNamedFramebufferSubData ,GLuint,framebuffer, GLsizei,numAttachments, const GLenum*,attachments, GLint,x, GLint,y, GLsizei,width, GLsizei,height)
-OPENGL_FORWARD(void,glClearNamedFramebufferiv ,GLuint,framebuffer, GLenum,buffer, GLint,drawbuffer, const GLint*,value)
-OPENGL_FORWARD(void,glClearNamedFramebufferuiv ,GLuint,framebuffer, GLenum,buffer, GLint,drawbuffer, const GLuint*,value)
-OPENGL_FORWARD(void,glClearNamedFramebufferfv ,GLuint,framebuffer, GLenum,buffer, GLint,drawbuffer, const GLfloat*,value)
-OPENGL_FORWARD(void,glClearNamedFramebufferfi ,GLuint,framebuffer, GLenum,buffer, GLint,drawbuffer, GLfloat,depth, GLint,stencil)
-OPENGL_FORWARD(void,glBlitNamedFramebuffer ,GLuint,readFramebuffer, GLuint,drawFramebuffer, GLint,srcX0, GLint,srcY0, GLint,srcX1, GLint,srcY1, GLint,dstX0, GLint,dstY0, GLint,dstX1, GLint,dstY1, GLbitfield,mask, GLenum,filter)
-OPENGL_FORWARD(GLenum,glCheckNamedFramebufferStatus ,GLuint,framebuffer, GLenum,target)
-OPENGL_FORWARD(void,glGetNamedFramebufferParameteriv ,GLuint,framebuffer, GLenum,pname, GLint*,param)
-OPENGL_FORWARD(void,glGetNamedFramebufferAttachmentParameteriv ,GLuint,framebuffer, GLenum,attachment, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glCreateRenderbuffers ,GLsizei,n, GLuint*,renderbuffers)
-OPENGL_FORWARD(void,glNamedRenderbufferStorage ,GLuint,renderbuffer, GLenum,internalformat, GLsizei,width, GLsizei,height)
-OPENGL_FORWARD(void,glNamedRenderbufferStorageMultisample ,GLuint,renderbuffer, GLsizei,samples, GLenum,internalformat, GLsizei,width, GLsizei,height)
-OPENGL_FORWARD(void,glGetNamedRenderbufferParameteriv ,GLuint,renderbuffer, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glCreateTextures ,GLenum,target, GLsizei,n, GLuint*,textures)
-OPENGL_FORWARD(void,glTextureBuffer ,GLuint,texture, GLenum,internalformat, GLuint,buffer)
-OPENGL_FORWARD(void,glTextureBufferRange ,GLuint,texture, GLenum,internalformat, GLuint,buffer, GLintptr,offset, GLsizeiptr,size)
-OPENGL_FORWARD(void,glTextureStorage1D ,GLuint,texture, GLsizei,levels, GLenum,internalformat, GLsizei,width)
-OPENGL_FORWARD(void,glTextureStorage2D ,GLuint,texture, GLsizei,levels, GLenum,internalformat, GLsizei,width, GLsizei,height)
-OPENGL_FORWARD(void,glTextureStorage3D ,GLuint,texture, GLsizei,levels, GLenum,internalformat, GLsizei,width, GLsizei,height, GLsizei,depth)
-OPENGL_FORWARD(void,glTextureStorage2DMultisample ,GLuint,texture, GLsizei,samples, GLenum,internalformat, GLsizei,width, GLsizei,height, GLboolean,fixedsamplelocations)
-OPENGL_FORWARD(void,glTextureStorage3DMultisample ,GLuint,texture, GLsizei,samples, GLenum,internalformat, GLsizei,width, GLsizei,height, GLsizei,depth, GLboolean,fixedsamplelocations)
-OPENGL_FORWARD(void,glTextureSubImage1D ,GLuint,texture, GLint,level, GLint,xoffset, GLsizei,width, GLenum,format, GLenum,type, const void*,pixels)
-OPENGL_FORWARD(void,glTextureSubImage2D ,GLuint,texture, GLint,level, GLint,xoffset, GLint,yoffset, GLsizei,width, GLsizei,height, GLenum,format, GLenum,type, const void*,pixels)
-OPENGL_FORWARD(void,glTextureSubImage3D ,GLuint,texture, GLint,level, GLint,xoffset, GLint,yoffset, GLint,zoffset, GLsizei,width, GLsizei,height, GLsizei,depth, GLenum,format, GLenum,type, const void*,pixels)
-OPENGL_FORWARD(void,glCompressedTextureSubImage1D ,GLuint,texture, GLint,level, GLint,xoffset, GLsizei,width, GLenum,format, GLsizei,imageSize, const void*,data)
-OPENGL_FORWARD(void,glCompressedTextureSubImage2D ,GLuint,texture, GLint,level, GLint,xoffset, GLint,yoffset, GLsizei,width, GLsizei,height, GLenum,format, GLsizei,imageSize, const void*,data)
-OPENGL_FORWARD(void,glCompressedTextureSubImage3D ,GLuint,texture, GLint,level, GLint,xoffset, GLint,yoffset, GLint,zoffset, GLsizei,width, GLsizei,height, GLsizei,depth, GLenum,format, GLsizei,imageSize, const void*,data)
-OPENGL_FORWARD(void,glCopyTextureSubImage1D ,GLuint,texture, GLint,level, GLint,xoffset, GLint,x, GLint,y, GLsizei,width)
-OPENGL_FORWARD(void,glCopyTextureSubImage2D ,GLuint,texture, GLint,level, GLint,xoffset, GLint,yoffset, GLint,x, GLint,y, GLsizei,width, GLsizei,height)
-OPENGL_FORWARD(void,glCopyTextureSubImage3D ,GLuint,texture, GLint,level, GLint,xoffset, GLint,yoffset, GLint,zoffset, GLint,x, GLint,y, GLsizei,width, GLsizei,height)
-OPENGL_FORWARD(void,glTextureParameterf ,GLuint,texture, GLenum,pname, GLfloat,param)
-OPENGL_FORWARD(void,glTextureParameterfv ,GLuint,texture, GLenum,pname, const GLfloat*,param)
-OPENGL_FORWARD(void,glTextureParameteri ,GLuint,texture, GLenum,pname, GLint,param)
-OPENGL_FORWARD(void,glTextureParameterIiv ,GLuint,texture, GLenum,pname, const GLint*,params)
-OPENGL_FORWARD(void,glTextureParameterIuiv ,GLuint,texture, GLenum,pname, const GLuint*,params)
-OPENGL_FORWARD(void,glTextureParameteriv ,GLuint,texture, GLenum,pname, const GLint*,param)
-OPENGL_FORWARD(void,glGenerateTextureMipmap ,GLuint,texture)
-OPENGL_FORWARD(void,glBindTextureUnit ,GLuint,unit, GLuint,texture)
-OPENGL_FORWARD(void,glGetTextureImage ,GLuint,texture, GLint,level, GLenum,format, GLenum,type, GLsizei,bufSize, void*,pixels)
-OPENGL_FORWARD(void,glGetCompressedTextureImage ,GLuint,texture, GLint,level, GLsizei,bufSize, void*,pixels)
-OPENGL_FORWARD(void,glGetTextureLevelParameterfv ,GLuint,texture, GLint,level, GLenum,pname, GLfloat*,params)
-OPENGL_FORWARD(void,glGetTextureLevelParameteriv ,GLuint,texture, GLint,level, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetTextureParameterfv ,GLuint,texture, GLenum,pname, GLfloat*,params)
-OPENGL_FORWARD(void,glGetTextureParameterIiv ,GLuint,texture, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glGetTextureParameterIuiv ,GLuint,texture, GLenum,pname, GLuint*,params)
-OPENGL_FORWARD(void,glGetTextureParameteriv ,GLuint,texture, GLenum,pname, GLint*,params)
-OPENGL_FORWARD(void,glCreateVertexArrays ,GLsizei,n, GLuint*,arrays)
-OPENGL_FORWARD(void,glDisableVertexArrayAttrib ,GLuint,vaobj, GLuint,index)
-OPENGL_FORWARD(void,glEnableVertexArrayAttrib ,GLuint,vaobj, GLuint,index)
-OPENGL_FORWARD(void,glVertexArrayElementBuffer ,GLuint,vaobj, GLuint,buffer)
-OPENGL_FORWARD(void,glVertexArrayVertexBuffer ,GLuint,vaobj, GLuint,bindingindex, GLuint,buffer, GLintptr,offset, GLsizei,stride)
-OPENGL_FORWARD(void,glVertexArrayVertexBuffers ,GLuint,vaobj, GLuint,first, GLsizei,count, const GLuint*,buffers, const GLintptr*,offsets, const GLsizei*,strides)
-OPENGL_FORWARD(void,glVertexArrayAttribBinding ,GLuint,vaobj, GLuint,attribindex, GLuint,bindingindex)
-OPENGL_FORWARD(void,glVertexArrayAttribFormat ,GLuint,vaobj, GLuint,attribindex, GLint,size, GLenum,type, GLboolean,normalized, GLuint,relativeoffset)
-OPENGL_FORWARD(void,glVertexArrayAttribIFormat ,GLuint,vaobj, GLuint,attribindex, GLint,size, GLenum,type, GLuint,relativeoffset)
-OPENGL_FORWARD(void,glVertexArrayAttribLFormat ,GLuint,vaobj, GLuint,attribindex, GLint,size, GLenum,type, GLuint,relativeoffset)
-OPENGL_FORWARD(void,glVertexArrayBindingDivisor ,GLuint,vaobj, GLuint,bindingindex, GLuint,divisor)
-OPENGL_FORWARD(void,glGetVertexArrayiv ,GLuint,vaobj, GLenum,pname, GLint*,param)
-OPENGL_FORWARD(void,glGetVertexArrayIndexediv ,GLuint,vaobj, GLuint,index, GLenum,pname, GLint*,param)
-OPENGL_FORWARD(void,glGetVertexArrayIndexed64iv ,GLuint,vaobj, GLuint,index, GLenum,pname, GLint64*,param)
-OPENGL_FORWARD(void,glCreateSamplers ,GLsizei,n, GLuint*,samplers)
-OPENGL_FORWARD(void,glCreateProgramPipelines ,GLsizei,n, GLuint*,pipelines)
-OPENGL_FORWARD(void,glCreateQueries ,GLenum,target, GLsizei,n, GLuint*,ids)
-OPENGL_FORWARD(void,glGetQueryBufferObjecti64v ,GLuint,id, GLuint,buffer, GLenum,pname, GLintptr,offset)
-OPENGL_FORWARD(void,glGetQueryBufferObjectiv ,GLuint,id, GLuint,buffer, GLenum,pname, GLintptr,offset)
-OPENGL_FORWARD(void,glGetQueryBufferObjectui64v ,GLuint,id, GLuint,buffer, GLenum,pname, GLintptr,offset)
-OPENGL_FORWARD(void,glGetQueryBufferObjectuiv ,GLuint,id, GLuint,buffer, GLenum,pname, GLintptr,offset)
-OPENGL_FORWARD(void,glMemoryBarrierByRegion ,GLbitfield,barriers)
-OPENGL_FORWARD(void,glGetTextureSubImage ,GLuint,texture, GLint,level, GLint,xoffset, GLint,yoffset, GLint,zoffset, GLsizei,width, GLsizei,height, GLsizei,depth, GLenum,format, GLenum,type, GLsizei,bufSize, void*,pixels)
-OPENGL_FORWARD(void,glGetCompressedTextureSubImage ,GLuint,texture, GLint,level, GLint,xoffset, GLint,yoffset, GLint,zoffset, GLsizei,width, GLsizei,height, GLsizei,depth, GLsizei,bufSize, void*,pixels)
-OPENGL_FORWARD(GLenum,glGetGraphicsResetStatus ,void,)
-OPENGL_FORWARD(void,glGetnCompressedTexImage ,GLenum,target, GLint,lod, GLsizei,bufSize, void*,pixels)
-OPENGL_FORWARD(void,glGetnTexImage ,GLenum,target, GLint,level, GLenum,format, GLenum,type, GLsizei,bufSize, void*,pixels)
-OPENGL_FORWARD(void,glGetnUniformdv ,GLuint,program, GLint,location, GLsizei,bufSize, GLdouble*,params)
-OPENGL_FORWARD(void,glGetnUniformfv ,GLuint,program, GLint,location, GLsizei,bufSize, GLfloat*,params)
-OPENGL_FORWARD(void,glGetnUniformiv ,GLuint,program, GLint,location, GLsizei,bufSize, GLint*,params)
-OPENGL_FORWARD(void,glGetnUniformuiv ,GLuint,program, GLint,location, GLsizei,bufSize, GLuint*,params)
-OPENGL_FORWARD(void,glReadnPixels ,GLint,x, GLint,y, GLsizei,width, GLsizei,height, GLenum,format, GLenum,type, GLsizei,bufSize, void*,data)
-OPENGL_FORWARD(void,glGetnMapdv ,GLenum,target, GLenum,query, GLsizei,bufSize, GLdouble*,v)
-OPENGL_FORWARD(void,glGetnMapfv ,GLenum,target, GLenum,query, GLsizei,bufSize, GLfloat*,v)
-OPENGL_FORWARD(void,glGetnMapiv ,GLenum,target, GLenum,query, GLsizei,bufSize, GLint*,v)
-OPENGL_FORWARD(void,glGetnPixelMapfv ,GLenum,map, GLsizei,bufSize, GLfloat*,values)
-OPENGL_FORWARD(void,glGetnPixelMapuiv ,GLenum,map, GLsizei,bufSize, GLuint*,values)
-OPENGL_FORWARD(void,glGetnPixelMapusv ,GLenum,map, GLsizei,bufSize, GLushort*,values)
-OPENGL_FORWARD(void,glGetnPolygonStipple ,GLsizei,bufSize, GLubyte*,pattern)
-OPENGL_FORWARD(void,glGetnColorTable ,GLenum,target, GLenum,format, GLenum,type, GLsizei,bufSize, void*,table)
-OPENGL_FORWARD(void,glGetnConvolutionFilter ,GLenum,target, GLenum,format, GLenum,type, GLsizei,bufSize, void*,image)
-OPENGL_FORWARD(void,glGetnSeparableFilter ,GLenum,target, GLenum,format, GLenum,type, GLsizei,rowBufSize, void*,row, GLsizei,columnBufSize, void*,column, void*,span)
-OPENGL_FORWARD(void,glGetnHistogram ,GLenum,target, GLboolean,reset, GLenum,format, GLenum,type, GLsizei,bufSize, void*,values)
-OPENGL_FORWARD(void,glGetnMinmax ,GLenum,target, GLboolean,reset, GLenum,format, GLenum,type, GLsizei,bufSize, void*,values)
-OPENGL_FORWARD(void,glTextureBarrier ,void,)
-OPENGL_FORWARD(void,glSpecializeShader ,GLuint,shader, const GLchar*,pEntryPoint, GLuint,numSpecializationConstants, const GLuint*,pConstantIndex, const GLuint*,pConstantValue)
-OPENGL_FORWARD(void,glMultiDrawArraysIndirectCount ,GLenum,mode, const void*,indirect, GLintptr,drawcount, GLsizei,maxdrawcount, GLsizei,stride)
-OPENGL_FORWARD(void,glMultiDrawElementsIndirectCount ,GLenum,mode, GLenum,type, const void*,indirect, GLintptr,drawcount, GLsizei,maxdrawcount, GLsizei,stride)
-OPENGL_FORWARD(void,glPolygonOffsetClamp ,GLfloat,factor, GLfloat,units, GLfloat,clamp)
+OPENGL_FORWARD(void, glDrawRangeElements, GLenum, mode, GLuint, start, GLuint, end, GLsizei, count, GLenum, type, const void*, indices)
+OPENGL_FORWARD(void, glTexImage3D, GLenum, target, GLint, level, GLint, internalformat, GLsizei, width, GLsizei, height, GLsizei, depth, GLint, border, GLenum, format, GLenum, type, const void*, pixels)
+OPENGL_FORWARD(void, glTexSubImage3D, GLenum, target, GLint, level, GLint, xoffset, GLint, yoffset, GLint, zoffset, GLsizei, width, GLsizei, height, GLsizei, depth, GLenum, format, GLenum, type, const void*, pixels)
+OPENGL_FORWARD(void, glCopyTexSubImage3D, GLenum, target, GLint, level, GLint, xoffset, GLint, yoffset, GLint, zoffset, GLint, x, GLint, y, GLsizei, width, GLsizei, height)
+OPENGL_FORWARD(void, glActiveTexture, GLenum, texture)
+OPENGL_FORWARD(void, glSampleCoverage, GLfloat, value, GLboolean, invert)
+OPENGL_FORWARD(void, glCompressedTexImage3D, GLenum, target, GLint, level, GLenum, internalformat, GLsizei, width, GLsizei, height, GLsizei, depth, GLint, border, GLsizei, imageSize, const void*, data)
+OPENGL_FORWARD(void, glCompressedTexImage2D, GLenum, target, GLint, level, GLenum, internalformat, GLsizei, width, GLsizei, height, GLint, border, GLsizei, imageSize, const void*, data)
+OPENGL_FORWARD(void, glCompressedTexImage1D, GLenum, target, GLint, level, GLenum, internalformat, GLsizei, width, GLint, border, GLsizei, imageSize, const void*, data)
+OPENGL_FORWARD(void, glCompressedTexSubImage3D, GLenum, target, GLint, level, GLint, xoffset, GLint, yoffset, GLint, zoffset, GLsizei, width, GLsizei, height, GLsizei, depth, GLenum, format, GLsizei, imageSize, const void*, data)
+OPENGL_FORWARD(void, glCompressedTexSubImage2D, GLenum, target, GLint, level, GLint, xoffset, GLint, yoffset, GLsizei, width, GLsizei, height, GLenum, format, GLsizei, imageSize, const void*, data)
+OPENGL_FORWARD(void, glCompressedTexSubImage1D, GLenum, target, GLint, level, GLint, xoffset, GLsizei, width, GLenum, format, GLsizei, imageSize, const void*, data)
+OPENGL_FORWARD(void, glGetCompressedTexImage, GLenum, target, GLint, level, void*, img)
+OPENGL_FORWARD(void, glClientActiveTexture, GLenum, texture)
+OPENGL_FORWARD(void, glMultiTexCoord1d, GLenum, target, GLdouble, s)
+OPENGL_FORWARD(void, glMultiTexCoord1dv, GLenum, target, const GLdouble*, v)
+OPENGL_FORWARD(void, glMultiTexCoord1f, GLenum, target, GLfloat, s)
+OPENGL_FORWARD(void, glMultiTexCoord1fv, GLenum, target, const GLfloat*, v)
+OPENGL_FORWARD(void, glMultiTexCoord1i, GLenum, target, GLint, s)
+OPENGL_FORWARD(void, glMultiTexCoord1iv, GLenum, target, const GLint*, v)
+OPENGL_FORWARD(void, glMultiTexCoord1s, GLenum, target, GLshort, s)
+OPENGL_FORWARD(void, glMultiTexCoord1sv, GLenum, target, const GLshort*, v)
+OPENGL_FORWARD(void, glMultiTexCoord2d, GLenum, target, GLdouble, s, GLdouble, t)
+OPENGL_FORWARD(void, glMultiTexCoord2dv, GLenum, target, const GLdouble*, v)
+OPENGL_FORWARD(void, glMultiTexCoord2f, GLenum, target, GLfloat, s, GLfloat, t)
+OPENGL_FORWARD(void, glMultiTexCoord2fv, GLenum, target, const GLfloat*, v)
+OPENGL_FORWARD(void, glMultiTexCoord2i, GLenum, target, GLint, s, GLint, t)
+OPENGL_FORWARD(void, glMultiTexCoord2iv, GLenum, target, const GLint*, v)
+OPENGL_FORWARD(void, glMultiTexCoord2s, GLenum, target, GLshort, s, GLshort, t)
+OPENGL_FORWARD(void, glMultiTexCoord2sv, GLenum, target, const GLshort*, v)
+OPENGL_FORWARD(void, glMultiTexCoord3d, GLenum, target, GLdouble, s, GLdouble, t, GLdouble, r)
+OPENGL_FORWARD(void, glMultiTexCoord3dv, GLenum, target, const GLdouble*, v)
+OPENGL_FORWARD(void, glMultiTexCoord3f, GLenum, target, GLfloat, s, GLfloat, t, GLfloat, r)
+OPENGL_FORWARD(void, glMultiTexCoord3fv, GLenum, target, const GLfloat*, v)
+OPENGL_FORWARD(void, glMultiTexCoord3i, GLenum, target, GLint, s, GLint, t, GLint, r)
+OPENGL_FORWARD(void, glMultiTexCoord3iv, GLenum, target, const GLint*, v)
+OPENGL_FORWARD(void, glMultiTexCoord3s, GLenum, target, GLshort, s, GLshort, t, GLshort, r)
+OPENGL_FORWARD(void, glMultiTexCoord3sv, GLenum, target, const GLshort*, v)
+OPENGL_FORWARD(void, glMultiTexCoord4d, GLenum, target, GLdouble, s, GLdouble, t, GLdouble, r, GLdouble, q)
+OPENGL_FORWARD(void, glMultiTexCoord4dv, GLenum, target, const GLdouble*, v)
+OPENGL_FORWARD(void, glMultiTexCoord4f, GLenum, target, GLfloat, s, GLfloat, t, GLfloat, r, GLfloat, q)
+OPENGL_FORWARD(void, glMultiTexCoord4fv, GLenum, target, const GLfloat*, v)
+OPENGL_FORWARD(void, glMultiTexCoord4i, GLenum, target, GLint, s, GLint, t, GLint, r, GLint, q)
+OPENGL_FORWARD(void, glMultiTexCoord4iv, GLenum, target, const GLint*, v)
+OPENGL_FORWARD(void, glMultiTexCoord4s, GLenum, target, GLshort, s, GLshort, t, GLshort, r, GLshort, q)
+OPENGL_FORWARD(void, glMultiTexCoord4sv, GLenum, target, const GLshort*, v)
+OPENGL_FORWARD(void, glLoadTransposeMatrixf, const GLfloat*, m)
+OPENGL_FORWARD(void, glLoadTransposeMatrixd, const GLdouble*, m)
+OPENGL_FORWARD(void, glMultTransposeMatrixf, const GLfloat*, m)
+OPENGL_FORWARD(void, glMultTransposeMatrixd, const GLdouble*, m)
+OPENGL_FORWARD(void, glBlendFuncSeparate, GLenum, sfactorRGB, GLenum, dfactorRGB, GLenum, sfactorAlpha, GLenum, dfactorAlpha)
+OPENGL_FORWARD(void, glMultiDrawArrays, GLenum, mode, const GLint*, first, const GLsizei*, count, GLsizei, drawcount)
+OPENGL_FORWARD(void, glMultiDrawElements, GLenum, mode, const GLsizei*, count, GLenum, type, const void* const*, indices, GLsizei, drawcount)
+OPENGL_FORWARD(void, glPointParameterf, GLenum, pname, GLfloat, param)
+OPENGL_FORWARD(void, glPointParameterfv, GLenum, pname, const GLfloat*, params)
+OPENGL_FORWARD(void, glPointParameteri, GLenum, pname, GLint, param)
+OPENGL_FORWARD(void, glPointParameteriv, GLenum, pname, const GLint*, params)
+OPENGL_FORWARD(void, glFogCoordf, GLfloat, coord)
+OPENGL_FORWARD(void, glFogCoordfv, const GLfloat*, coord)
+OPENGL_FORWARD(void, glFogCoordd, GLdouble, coord)
+OPENGL_FORWARD(void, glFogCoorddv, const GLdouble*, coord)
+OPENGL_FORWARD(void, glFogCoordPointer, GLenum, type, GLsizei, stride, const void*, pointer)
+OPENGL_FORWARD(void, glSecondaryColor3b, GLbyte, red, GLbyte, green, GLbyte, blue)
+OPENGL_FORWARD(void, glSecondaryColor3bv, const GLbyte*, v)
+OPENGL_FORWARD(void, glSecondaryColor3d, GLdouble, red, GLdouble, green, GLdouble, blue)
+OPENGL_FORWARD(void, glSecondaryColor3dv, const GLdouble*, v)
+OPENGL_FORWARD(void, glSecondaryColor3f, GLfloat, red, GLfloat, green, GLfloat, blue)
+OPENGL_FORWARD(void, glSecondaryColor3fv, const GLfloat*, v)
+OPENGL_FORWARD(void, glSecondaryColor3i, GLint, red, GLint, green, GLint, blue)
+OPENGL_FORWARD(void, glSecondaryColor3iv, const GLint*, v)
+OPENGL_FORWARD(void, glSecondaryColor3s, GLshort, red, GLshort, green, GLshort, blue)
+OPENGL_FORWARD(void, glSecondaryColor3sv, const GLshort*, v)
+OPENGL_FORWARD(void, glSecondaryColor3ub, GLubyte, red, GLubyte, green, GLubyte, blue)
+OPENGL_FORWARD(void, glSecondaryColor3ubv, const GLubyte*, v)
+OPENGL_FORWARD(void, glSecondaryColor3ui, GLuint, red, GLuint, green, GLuint, blue)
+OPENGL_FORWARD(void, glSecondaryColor3uiv, const GLuint*, v)
+OPENGL_FORWARD(void, glSecondaryColor3us, GLushort, red, GLushort, green, GLushort, blue)
+OPENGL_FORWARD(void, glSecondaryColor3usv, const GLushort*, v)
+OPENGL_FORWARD(void, glSecondaryColorPointer, GLint, size, GLenum, type, GLsizei, stride, const void*, pointer)
+OPENGL_FORWARD(void, glWindowPos2d, GLdouble, x, GLdouble, y)
+OPENGL_FORWARD(void, glWindowPos2dv, const GLdouble*, v)
+OPENGL_FORWARD(void, glWindowPos2f, GLfloat, x, GLfloat, y)
+OPENGL_FORWARD(void, glWindowPos2fv, const GLfloat*, v)
+OPENGL_FORWARD(void, glWindowPos2i, GLint, x, GLint, y)
+OPENGL_FORWARD(void, glWindowPos2iv, const GLint*, v)
+OPENGL_FORWARD(void, glWindowPos2s, GLshort, x, GLshort, y)
+OPENGL_FORWARD(void, glWindowPos2sv, const GLshort*, v)
+OPENGL_FORWARD(void, glWindowPos3d, GLdouble, x, GLdouble, y, GLdouble, z)
+OPENGL_FORWARD(void, glWindowPos3dv, const GLdouble*, v)
+OPENGL_FORWARD(void, glWindowPos3f, GLfloat, x, GLfloat, y, GLfloat, z)
+OPENGL_FORWARD(void, glWindowPos3fv, const GLfloat*, v)
+OPENGL_FORWARD(void, glWindowPos3i, GLint, x, GLint, y, GLint, z)
+OPENGL_FORWARD(void, glWindowPos3iv, const GLint*, v)
+OPENGL_FORWARD(void, glWindowPos3s, GLshort, x, GLshort, y, GLshort, z)
+OPENGL_FORWARD(void, glWindowPos3sv, const GLshort*, v)
+OPENGL_FORWARD(void, glBlendColor, GLfloat, red, GLfloat, green, GLfloat, blue, GLfloat, alpha)
+OPENGL_FORWARD(void, glBlendEquation, GLenum, mode)
+OPENGL_FORWARD(void, glGenQueries, GLsizei, n, GLuint*, ids)
+OPENGL_FORWARD(void, glDeleteQueries, GLsizei, n, const GLuint*, ids)
+OPENGL_FORWARD(GLboolean, glIsQuery, GLuint, id)
+OPENGL_FORWARD(void, glBeginQuery, GLenum, target, GLuint, id)
+OPENGL_FORWARD(void, glEndQuery, GLenum, target)
+OPENGL_FORWARD(void, glGetQueryiv, GLenum, target, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetQueryObjectiv, GLuint, id, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetQueryObjectuiv, GLuint, id, GLenum, pname, GLuint*, params)
+OPENGL_FORWARD(void, glBindBuffer, GLenum, target, GLuint, buffer)
+OPENGL_FORWARD(void, glDeleteBuffers, GLsizei, n, const GLuint*, buffers)
+OPENGL_FORWARD(void, glGenBuffers, GLsizei, n, GLuint*, buffers)
+OPENGL_FORWARD(GLboolean, glIsBuffer, GLuint, buffer)
+OPENGL_FORWARD(void, glBufferData, GLenum, target, GLsizeiptr, size, const void*, data, GLenum, usage)
+OPENGL_FORWARD(void, glBufferSubData, GLenum, target, GLintptr, offset, GLsizeiptr, size, const void*, data)
+OPENGL_FORWARD(void, glGetBufferSubData, GLenum, target, GLintptr, offset, GLsizeiptr, size, void*, data)
+OPENGL_FORWARD(void*, glMapBuffer, GLenum, target, GLenum, access)
+OPENGL_FORWARD(GLboolean, glUnmapBuffer, GLenum, target)
+OPENGL_FORWARD(void, glGetBufferParameteriv, GLenum, target, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetBufferPointerv, GLenum, target, GLenum, pname, void**, params)
+OPENGL_FORWARD(void, glBlendEquationSeparate, GLenum, modeRGB, GLenum, modeAlpha)
+OPENGL_FORWARD(void, glDrawBuffers, GLsizei, n, const GLenum*, bufs)
+OPENGL_FORWARD(void, glStencilOpSeparate, GLenum, face, GLenum, sfail, GLenum, dpfail, GLenum, dppass)
+OPENGL_FORWARD(void, glStencilFuncSeparate, GLenum, face, GLenum, func, GLint, ref, GLuint, mask)
+OPENGL_FORWARD(void, glStencilMaskSeparate, GLenum, face, GLuint, mask)
+OPENGL_FORWARD(void, glAttachShader, GLuint, program, GLuint, shader)
+OPENGL_FORWARD(void, glBindAttribLocation, GLuint, program, GLuint, index, const GLchar*, name)
+OPENGL_FORWARD(void, glCompileShader, GLuint, shader)
+OPENGL_FORWARD(GLuint, glCreateProgram, void, )
+OPENGL_FORWARD(GLuint, glCreateShader, GLenum, type)
+OPENGL_FORWARD(void, glDeleteProgram, GLuint, program)
+OPENGL_FORWARD(void, glDeleteShader, GLuint, shader)
+OPENGL_FORWARD(void, glDetachShader, GLuint, program, GLuint, shader)
+OPENGL_FORWARD(void, glDisableVertexAttribArray, GLuint, index)
+OPENGL_FORWARD(void, glEnableVertexAttribArray, GLuint, index)
+OPENGL_FORWARD(void, glGetActiveAttrib, GLuint, program, GLuint, index, GLsizei, bufSize, GLsizei*, length, GLint*, size, GLenum*, type, GLchar*, name)
+OPENGL_FORWARD(void, glGetActiveUniform, GLuint, program, GLuint, index, GLsizei, bufSize, GLsizei*, length, GLint*, size, GLenum*, type, GLchar*, name)
+OPENGL_FORWARD(void, glGetAttachedShaders, GLuint, program, GLsizei, maxCount, GLsizei*, count, GLuint*, shaders)
+OPENGL_FORWARD(GLint, glGetAttribLocation, GLuint, program, const GLchar*, name)
+OPENGL_FORWARD(void, glGetProgramiv, GLuint, program, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetProgramInfoLog, GLuint, program, GLsizei, bufSize, GLsizei*, length, GLchar*, infoLog)
+OPENGL_FORWARD(void, glGetShaderiv, GLuint, shader, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetShaderInfoLog, GLuint, shader, GLsizei, bufSize, GLsizei*, length, GLchar*, infoLog)
+OPENGL_FORWARD(void, glGetShaderSource, GLuint, shader, GLsizei, bufSize, GLsizei*, length, GLchar*, source)
+OPENGL_FORWARD(GLint, glGetUniformLocation, GLuint, program, const GLchar*, name)
+OPENGL_FORWARD(void, glGetUniformfv, GLuint, program, GLint, location, GLfloat*, params)
+OPENGL_FORWARD(void, glGetUniformiv, GLuint, program, GLint, location, GLint*, params)
+OPENGL_FORWARD(void, glGetVertexAttribdv, GLuint, index, GLenum, pname, GLdouble*, params)
+OPENGL_FORWARD(void, glGetVertexAttribfv, GLuint, index, GLenum, pname, GLfloat*, params)
+OPENGL_FORWARD(void, glGetVertexAttribiv, GLuint, index, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetVertexAttribPointerv, GLuint, index, GLenum, pname, void**, pointer)
+OPENGL_FORWARD(GLboolean, glIsProgram, GLuint, program)
+OPENGL_FORWARD(GLboolean, glIsShader, GLuint, shader)
+OPENGL_FORWARD(void, glLinkProgram, GLuint, program)
+OPENGL_FORWARD(void, glShaderSource, GLuint, shader, GLsizei, count, const GLchar* const*, string, const GLint*, length)
+OPENGL_FORWARD(void, glUseProgram, GLuint, program)
+OPENGL_FORWARD(void, glUniform1f, GLint, location, GLfloat, v0)
+OPENGL_FORWARD(void, glUniform2f, GLint, location, GLfloat, v0, GLfloat, v1)
+OPENGL_FORWARD(void, glUniform3f, GLint, location, GLfloat, v0, GLfloat, v1, GLfloat, v2)
+OPENGL_FORWARD(void, glUniform4f, GLint, location, GLfloat, v0, GLfloat, v1, GLfloat, v2, GLfloat, v3)
+OPENGL_FORWARD(void, glUniform1i, GLint, location, GLint, v0)
+OPENGL_FORWARD(void, glUniform2i, GLint, location, GLint, v0, GLint, v1)
+OPENGL_FORWARD(void, glUniform3i, GLint, location, GLint, v0, GLint, v1, GLint, v2)
+OPENGL_FORWARD(void, glUniform4i, GLint, location, GLint, v0, GLint, v1, GLint, v2, GLint, v3)
+OPENGL_FORWARD(void, glUniform1fv, GLint, location, GLsizei, count, const GLfloat*, value)
+OPENGL_FORWARD(void, glUniform2fv, GLint, location, GLsizei, count, const GLfloat*, value)
+OPENGL_FORWARD(void, glUniform3fv, GLint, location, GLsizei, count, const GLfloat*, value)
+OPENGL_FORWARD(void, glUniform4fv, GLint, location, GLsizei, count, const GLfloat*, value)
+OPENGL_FORWARD(void, glUniform1iv, GLint, location, GLsizei, count, const GLint*, value)
+OPENGL_FORWARD(void, glUniform2iv, GLint, location, GLsizei, count, const GLint*, value)
+OPENGL_FORWARD(void, glUniform3iv, GLint, location, GLsizei, count, const GLint*, value)
+OPENGL_FORWARD(void, glUniform4iv, GLint, location, GLsizei, count, const GLint*, value)
+OPENGL_FORWARD(void, glUniformMatrix2fv, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glUniformMatrix3fv, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glUniformMatrix4fv, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glValidateProgram, GLuint, program)
+OPENGL_FORWARD(void, glVertexAttrib1d, GLuint, index, GLdouble, x)
+OPENGL_FORWARD(void, glVertexAttrib1dv, GLuint, index, const GLdouble*, v)
+OPENGL_FORWARD(void, glVertexAttrib1f, GLuint, index, GLfloat, x)
+OPENGL_FORWARD(void, glVertexAttrib1fv, GLuint, index, const GLfloat*, v)
+OPENGL_FORWARD(void, glVertexAttrib1s, GLuint, index, GLshort, x)
+OPENGL_FORWARD(void, glVertexAttrib1sv, GLuint, index, const GLshort*, v)
+OPENGL_FORWARD(void, glVertexAttrib2d, GLuint, index, GLdouble, x, GLdouble, y)
+OPENGL_FORWARD(void, glVertexAttrib2dv, GLuint, index, const GLdouble*, v)
+OPENGL_FORWARD(void, glVertexAttrib2f, GLuint, index, GLfloat, x, GLfloat, y)
+OPENGL_FORWARD(void, glVertexAttrib2fv, GLuint, index, const GLfloat*, v)
+OPENGL_FORWARD(void, glVertexAttrib2s, GLuint, index, GLshort, x, GLshort, y)
+OPENGL_FORWARD(void, glVertexAttrib2sv, GLuint, index, const GLshort*, v)
+OPENGL_FORWARD(void, glVertexAttrib3d, GLuint, index, GLdouble, x, GLdouble, y, GLdouble, z)
+OPENGL_FORWARD(void, glVertexAttrib3dv, GLuint, index, const GLdouble*, v)
+OPENGL_FORWARD(void, glVertexAttrib3f, GLuint, index, GLfloat, x, GLfloat, y, GLfloat, z)
+OPENGL_FORWARD(void, glVertexAttrib3fv, GLuint, index, const GLfloat*, v)
+OPENGL_FORWARD(void, glVertexAttrib3s, GLuint, index, GLshort, x, GLshort, y, GLshort, z)
+OPENGL_FORWARD(void, glVertexAttrib3sv, GLuint, index, const GLshort*, v)
+OPENGL_FORWARD(void, glVertexAttrib4Nbv, GLuint, index, const GLbyte*, v)
+OPENGL_FORWARD(void, glVertexAttrib4Niv, GLuint, index, const GLint*, v)
+OPENGL_FORWARD(void, glVertexAttrib4Nsv, GLuint, index, const GLshort*, v)
+OPENGL_FORWARD(void, glVertexAttrib4Nub, GLuint, index, GLubyte, x, GLubyte, y, GLubyte, z, GLubyte, w)
+OPENGL_FORWARD(void, glVertexAttrib4Nubv, GLuint, index, const GLubyte*, v)
+OPENGL_FORWARD(void, glVertexAttrib4Nuiv, GLuint, index, const GLuint*, v)
+OPENGL_FORWARD(void, glVertexAttrib4Nusv, GLuint, index, const GLushort*, v)
+OPENGL_FORWARD(void, glVertexAttrib4bv, GLuint, index, const GLbyte*, v)
+OPENGL_FORWARD(void, glVertexAttrib4d, GLuint, index, GLdouble, x, GLdouble, y, GLdouble, z, GLdouble, w)
+OPENGL_FORWARD(void, glVertexAttrib4dv, GLuint, index, const GLdouble*, v)
+OPENGL_FORWARD(void, glVertexAttrib4f, GLuint, index, GLfloat, x, GLfloat, y, GLfloat, z, GLfloat, w)
+OPENGL_FORWARD(void, glVertexAttrib4fv, GLuint, index, const GLfloat*, v)
+OPENGL_FORWARD(void, glVertexAttrib4iv, GLuint, index, const GLint*, v)
+OPENGL_FORWARD(void, glVertexAttrib4s, GLuint, index, GLshort, x, GLshort, y, GLshort, z, GLshort, w)
+OPENGL_FORWARD(void, glVertexAttrib4sv, GLuint, index, const GLshort*, v)
+OPENGL_FORWARD(void, glVertexAttrib4ubv, GLuint, index, const GLubyte*, v)
+OPENGL_FORWARD(void, glVertexAttrib4uiv, GLuint, index, const GLuint*, v)
+OPENGL_FORWARD(void, glVertexAttrib4usv, GLuint, index, const GLushort*, v)
+OPENGL_FORWARD(void, glVertexAttribPointer, GLuint, index, GLint, size, GLenum, type, GLboolean, normalized, GLsizei, stride, const void*, pointer)
+OPENGL_FORWARD(void, glUniformMatrix2x3fv, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glUniformMatrix3x2fv, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glUniformMatrix2x4fv, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glUniformMatrix4x2fv, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glUniformMatrix3x4fv, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glUniformMatrix4x3fv, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glColorMaski, GLuint, index, GLboolean, r, GLboolean, g, GLboolean, b, GLboolean, a)
+OPENGL_FORWARD(void, glGetBooleani_v, GLenum, target, GLuint, index, GLboolean*, data)
+OPENGL_FORWARD(void, glGetIntegeri_v, GLenum, target, GLuint, index, GLint*, data)
+OPENGL_FORWARD(void, glEnablei, GLenum, target, GLuint, index)
+OPENGL_FORWARD(void, glDisablei, GLenum, target, GLuint, index)
+OPENGL_FORWARD(GLboolean, glIsEnabledi, GLenum, target, GLuint, index)
+OPENGL_FORWARD(void, glBeginTransformFeedback, GLenum, primitiveMode)
+OPENGL_FORWARD(void, glEndTransformFeedback, void, )
+OPENGL_FORWARD(void, glBindBufferRange, GLenum, target, GLuint, index, GLuint, buffer, GLintptr, offset, GLsizeiptr, size)
+OPENGL_FORWARD(void, glBindBufferBase, GLenum, target, GLuint, index, GLuint, buffer)
+OPENGL_FORWARD(void, glTransformFeedbackVaryings, GLuint, program, GLsizei, count, const GLchar* const*, varyings, GLenum, bufferMode)
+OPENGL_FORWARD(void, glGetTransformFeedbackVarying, GLuint, program, GLuint, index, GLsizei, bufSize, GLsizei*, length, GLsizei*, size, GLenum*, type, GLchar*, name)
+OPENGL_FORWARD(void, glClampColor, GLenum, target, GLenum, clamp)
+OPENGL_FORWARD(void, glBeginConditionalRender, GLuint, id, GLenum, mode)
+OPENGL_FORWARD(void, glEndConditionalRender, void, )
+OPENGL_FORWARD(void, glVertexAttribIPointer, GLuint, index, GLint, size, GLenum, type, GLsizei, stride, const void*, pointer)
+OPENGL_FORWARD(void, glGetVertexAttribIiv, GLuint, index, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetVertexAttribIuiv, GLuint, index, GLenum, pname, GLuint*, params)
+OPENGL_FORWARD(void, glVertexAttribI1i, GLuint, index, GLint, x)
+OPENGL_FORWARD(void, glVertexAttribI2i, GLuint, index, GLint, x, GLint, y)
+OPENGL_FORWARD(void, glVertexAttribI3i, GLuint, index, GLint, x, GLint, y, GLint, z)
+OPENGL_FORWARD(void, glVertexAttribI4i, GLuint, index, GLint, x, GLint, y, GLint, z, GLint, w)
+OPENGL_FORWARD(void, glVertexAttribI1ui, GLuint, index, GLuint, x)
+OPENGL_FORWARD(void, glVertexAttribI2ui, GLuint, index, GLuint, x, GLuint, y)
+OPENGL_FORWARD(void, glVertexAttribI3ui, GLuint, index, GLuint, x, GLuint, y, GLuint, z)
+OPENGL_FORWARD(void, glVertexAttribI4ui, GLuint, index, GLuint, x, GLuint, y, GLuint, z, GLuint, w)
+OPENGL_FORWARD(void, glVertexAttribI1iv, GLuint, index, const GLint*, v)
+OPENGL_FORWARD(void, glVertexAttribI2iv, GLuint, index, const GLint*, v)
+OPENGL_FORWARD(void, glVertexAttribI3iv, GLuint, index, const GLint*, v)
+OPENGL_FORWARD(void, glVertexAttribI4iv, GLuint, index, const GLint*, v)
+OPENGL_FORWARD(void, glVertexAttribI1uiv, GLuint, index, const GLuint*, v)
+OPENGL_FORWARD(void, glVertexAttribI2uiv, GLuint, index, const GLuint*, v)
+OPENGL_FORWARD(void, glVertexAttribI3uiv, GLuint, index, const GLuint*, v)
+OPENGL_FORWARD(void, glVertexAttribI4uiv, GLuint, index, const GLuint*, v)
+OPENGL_FORWARD(void, glVertexAttribI4bv, GLuint, index, const GLbyte*, v)
+OPENGL_FORWARD(void, glVertexAttribI4sv, GLuint, index, const GLshort*, v)
+OPENGL_FORWARD(void, glVertexAttribI4ubv, GLuint, index, const GLubyte*, v)
+OPENGL_FORWARD(void, glVertexAttribI4usv, GLuint, index, const GLushort*, v)
+OPENGL_FORWARD(void, glGetUniformuiv, GLuint, program, GLint, location, GLuint*, params)
+OPENGL_FORWARD(void, glBindFragDataLocation, GLuint, program, GLuint, color, const GLchar*, name)
+OPENGL_FORWARD(GLint, glGetFragDataLocation, GLuint, program, const GLchar*, name)
+OPENGL_FORWARD(void, glUniform1ui, GLint, location, GLuint, v0)
+OPENGL_FORWARD(void, glUniform2ui, GLint, location, GLuint, v0, GLuint, v1)
+OPENGL_FORWARD(void, glUniform3ui, GLint, location, GLuint, v0, GLuint, v1, GLuint, v2)
+OPENGL_FORWARD(void, glUniform4ui, GLint, location, GLuint, v0, GLuint, v1, GLuint, v2, GLuint, v3)
+OPENGL_FORWARD(void, glUniform1uiv, GLint, location, GLsizei, count, const GLuint*, value)
+OPENGL_FORWARD(void, glUniform2uiv, GLint, location, GLsizei, count, const GLuint*, value)
+OPENGL_FORWARD(void, glUniform3uiv, GLint, location, GLsizei, count, const GLuint*, value)
+OPENGL_FORWARD(void, glUniform4uiv, GLint, location, GLsizei, count, const GLuint*, value)
+OPENGL_FORWARD(void, glTexParameterIiv, GLenum, target, GLenum, pname, const GLint*, params)
+OPENGL_FORWARD(void, glTexParameterIuiv, GLenum, target, GLenum, pname, const GLuint*, params)
+OPENGL_FORWARD(void, glGetTexParameterIiv, GLenum, target, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetTexParameterIuiv, GLenum, target, GLenum, pname, GLuint*, params)
+OPENGL_FORWARD(void, glClearBufferiv, GLenum, buffer, GLint, drawbuffer, const GLint*, value)
+OPENGL_FORWARD(void, glClearBufferuiv, GLenum, buffer, GLint, drawbuffer, const GLuint*, value)
+OPENGL_FORWARD(void, glClearBufferfv, GLenum, buffer, GLint, drawbuffer, const GLfloat*, value)
+OPENGL_FORWARD(void, glClearBufferfi, GLenum, buffer, GLint, drawbuffer, GLfloat, depth, GLint, stencil)
+OPENGL_FORWARD(const GLubyte*, glGetStringi, GLenum, name, GLuint, index)
+OPENGL_FORWARD(GLboolean, glIsRenderbuffer, GLuint, renderbuffer)
+OPENGL_FORWARD(void, glBindRenderbuffer, GLenum, target, GLuint, renderbuffer)
+OPENGL_FORWARD(void, glDeleteRenderbuffers, GLsizei, n, const GLuint*, renderbuffers)
+OPENGL_FORWARD(void, glGenRenderbuffers, GLsizei, n, GLuint*, renderbuffers)
+OPENGL_FORWARD(void, glRenderbufferStorage, GLenum, target, GLenum, internalformat, GLsizei, width, GLsizei, height)
+OPENGL_FORWARD(void, glGetRenderbufferParameteriv, GLenum, target, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(GLboolean, glIsFramebuffer, GLuint, framebuffer)
+OPENGL_FORWARD(void, glBindFramebuffer, GLenum, target, GLuint, framebuffer)
+OPENGL_FORWARD(void, glDeleteFramebuffers, GLsizei, n, const GLuint*, framebuffers)
+OPENGL_FORWARD(void, glGenFramebuffers, GLsizei, n, GLuint*, framebuffers)
+OPENGL_FORWARD(GLenum, glCheckFramebufferStatus, GLenum, target)
+OPENGL_FORWARD(void, glFramebufferTexture1D, GLenum, target, GLenum, attachment, GLenum, textarget, GLuint, texture, GLint, level)
+OPENGL_FORWARD(void, glFramebufferTexture2D, GLenum, target, GLenum, attachment, GLenum, textarget, GLuint, texture, GLint, level)
+OPENGL_FORWARD(void, glFramebufferTexture3D, GLenum, target, GLenum, attachment, GLenum, textarget, GLuint, texture, GLint, level, GLint, zoffset)
+OPENGL_FORWARD(void, glFramebufferRenderbuffer, GLenum, target, GLenum, attachment, GLenum, renderbuffertarget, GLuint, renderbuffer)
+OPENGL_FORWARD(void, glGetFramebufferAttachmentParameteriv, GLenum, target, GLenum, attachment, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGenerateMipmap, GLenum, target)
+OPENGL_FORWARD(void, glBlitFramebuffer, GLint, srcX0, GLint, srcY0, GLint, srcX1, GLint, srcY1, GLint, dstX0, GLint, dstY0, GLint, dstX1, GLint, dstY1, GLbitfield, mask, GLenum, filter)
+OPENGL_FORWARD(void, glRenderbufferStorageMultisample, GLenum, target, GLsizei, samples, GLenum, internalformat, GLsizei, width, GLsizei, height)
+OPENGL_FORWARD(void, glFramebufferTextureLayer, GLenum, target, GLenum, attachment, GLuint, texture, GLint, level, GLint, layer)
+OPENGL_FORWARD(void*, glMapBufferRange, GLenum, target, GLintptr, offset, GLsizeiptr, length, GLbitfield, access)
+OPENGL_FORWARD(void, glFlushMappedBufferRange, GLenum, target, GLintptr, offset, GLsizeiptr, length)
+OPENGL_FORWARD(void, glBindVertexArray, GLuint, array)
+OPENGL_FORWARD(void, glDeleteVertexArrays, GLsizei, n, const GLuint*, arrays)
+OPENGL_FORWARD(void, glGenVertexArrays, GLsizei, n, GLuint*, arrays)
+OPENGL_FORWARD(GLboolean, glIsVertexArray, GLuint, array)
+OPENGL_FORWARD(void, glDrawArraysInstanced, GLenum, mode, GLint, first, GLsizei, count, GLsizei, instancecount)
+OPENGL_FORWARD(void, glDrawElementsInstanced, GLenum, mode, GLsizei, count, GLenum, type, const void*, indices, GLsizei, instancecount)
+OPENGL_FORWARD(void, glTexBuffer, GLenum, target, GLenum, internalformat, GLuint, buffer)
+OPENGL_FORWARD(void, glPrimitiveRestartIndex, GLuint, index)
+OPENGL_FORWARD(void, glCopyBufferSubData, GLenum, readTarget, GLenum, writeTarget, GLintptr, readOffset, GLintptr, writeOffset, GLsizeiptr, size)
+OPENGL_FORWARD(void, glGetUniformIndices, GLuint, program, GLsizei, uniformCount, const GLchar* const*, uniformNames, GLuint*, uniformIndices)
+OPENGL_FORWARD(void, glGetActiveUniformsiv, GLuint, program, GLsizei, uniformCount, const GLuint*, uniformIndices, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetActiveUniformName, GLuint, program, GLuint, uniformIndex, GLsizei, bufSize, GLsizei*, length, GLchar*, uniformName)
+OPENGL_FORWARD(GLuint, glGetUniformBlockIndex, GLuint, program, const GLchar*, uniformBlockName)
+OPENGL_FORWARD(void, glGetActiveUniformBlockiv, GLuint, program, GLuint, uniformBlockIndex, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetActiveUniformBlockName, GLuint, program, GLuint, uniformBlockIndex, GLsizei, bufSize, GLsizei*, length, GLchar*, uniformBlockName)
+OPENGL_FORWARD(void, glUniformBlockBinding, GLuint, program, GLuint, uniformBlockIndex, GLuint, uniformBlockBinding)
+OPENGL_FORWARD(void, glDrawElementsBaseVertex, GLenum, mode, GLsizei, count, GLenum, type, const void*, indices, GLint, basevertex)
+OPENGL_FORWARD(void, glDrawRangeElementsBaseVertex, GLenum, mode, GLuint, start, GLuint, end, GLsizei, count, GLenum, type, const void*, indices, GLint, basevertex)
+OPENGL_FORWARD(void, glDrawElementsInstancedBaseVertex, GLenum, mode, GLsizei, count, GLenum, type, const void*, indices, GLsizei, instancecount, GLint, basevertex)
+OPENGL_FORWARD(void, glMultiDrawElementsBaseVertex, GLenum, mode, const GLsizei*, count, GLenum, type, const void* const*, indices, GLsizei, drawcount, const GLint*, basevertex)
+OPENGL_FORWARD(void, glProvokingVertex, GLenum, mode)
+OPENGL_FORWARD(GLsync, glFenceSync, GLenum, condition, GLbitfield, flags)
+OPENGL_FORWARD(GLboolean, glIsSync, GLsync, sync)
+OPENGL_FORWARD(void, glDeleteSync, GLsync, sync)
+OPENGL_FORWARD(GLenum, glClientWaitSync, GLsync, sync, GLbitfield, flags, GLuint64, timeout)
+OPENGL_FORWARD(void, glWaitSync, GLsync, sync, GLbitfield, flags, GLuint64, timeout)
+OPENGL_FORWARD(void, glGetInteger64v, GLenum, pname, GLint64*, data)
+OPENGL_FORWARD(void, glGetSynciv, GLsync, sync, GLenum, pname, GLsizei, bufSize, GLsizei*, length, GLint*, values)
+OPENGL_FORWARD(void, glGetInteger64i_v, GLenum, target, GLuint, index, GLint64*, data)
+OPENGL_FORWARD(void, glGetBufferParameteri64v, GLenum, target, GLenum, pname, GLint64*, params)
+OPENGL_FORWARD(void, glFramebufferTexture, GLenum, target, GLenum, attachment, GLuint, texture, GLint, level)
+OPENGL_FORWARD(void, glTexImage2DMultisample, GLenum, target, GLsizei, samples, GLenum, internalformat, GLsizei, width, GLsizei, height, GLboolean, fixedsamplelocations)
+OPENGL_FORWARD(void, glTexImage3DMultisample, GLenum, target, GLsizei, samples, GLenum, internalformat, GLsizei, width, GLsizei, height, GLsizei, depth, GLboolean, fixedsamplelocations)
+OPENGL_FORWARD(void, glGetMultisamplefv, GLenum, pname, GLuint, index, GLfloat*, val)
+OPENGL_FORWARD(void, glSampleMaski, GLuint, maskNumber, GLbitfield, mask)
+OPENGL_FORWARD(void, glBindFragDataLocationIndexed, GLuint, program, GLuint, colorNumber, GLuint, index, const GLchar*, name)
+OPENGL_FORWARD(GLint, glGetFragDataIndex, GLuint, program, const GLchar*, name)
+OPENGL_FORWARD(void, glGenSamplers, GLsizei, count, GLuint*, samplers)
+OPENGL_FORWARD(void, glDeleteSamplers, GLsizei, count, const GLuint*, samplers)
+OPENGL_FORWARD(GLboolean, glIsSampler, GLuint, sampler)
+OPENGL_FORWARD(void, glBindSampler, GLuint, unit, GLuint, sampler)
+OPENGL_FORWARD(void, glSamplerParameteri, GLuint, sampler, GLenum, pname, GLint, param)
+OPENGL_FORWARD(void, glSamplerParameteriv, GLuint, sampler, GLenum, pname, const GLint*, param)
+OPENGL_FORWARD(void, glSamplerParameterf, GLuint, sampler, GLenum, pname, GLfloat, param)
+OPENGL_FORWARD(void, glSamplerParameterfv, GLuint, sampler, GLenum, pname, const GLfloat*, param)
+OPENGL_FORWARD(void, glSamplerParameterIiv, GLuint, sampler, GLenum, pname, const GLint*, param)
+OPENGL_FORWARD(void, glSamplerParameterIuiv, GLuint, sampler, GLenum, pname, const GLuint*, param)
+OPENGL_FORWARD(void, glGetSamplerParameteriv, GLuint, sampler, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetSamplerParameterIiv, GLuint, sampler, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetSamplerParameterfv, GLuint, sampler, GLenum, pname, GLfloat*, params)
+OPENGL_FORWARD(void, glGetSamplerParameterIuiv, GLuint, sampler, GLenum, pname, GLuint*, params)
+OPENGL_FORWARD(void, glQueryCounter, GLuint, id, GLenum, target)
+OPENGL_FORWARD(void, glGetQueryObjecti64v, GLuint, id, GLenum, pname, GLint64*, params)
+OPENGL_FORWARD(void, glGetQueryObjectui64v, GLuint, id, GLenum, pname, GLuint64*, params)
+OPENGL_FORWARD(void, glVertexAttribDivisor, GLuint, index, GLuint, divisor)
+OPENGL_FORWARD(void, glVertexAttribP1ui, GLuint, index, GLenum, type, GLboolean, normalized, GLuint, value)
+OPENGL_FORWARD(void, glVertexAttribP1uiv, GLuint, index, GLenum, type, GLboolean, normalized, const GLuint*, value)
+OPENGL_FORWARD(void, glVertexAttribP2ui, GLuint, index, GLenum, type, GLboolean, normalized, GLuint, value)
+OPENGL_FORWARD(void, glVertexAttribP2uiv, GLuint, index, GLenum, type, GLboolean, normalized, const GLuint*, value)
+OPENGL_FORWARD(void, glVertexAttribP3ui, GLuint, index, GLenum, type, GLboolean, normalized, GLuint, value)
+OPENGL_FORWARD(void, glVertexAttribP3uiv, GLuint, index, GLenum, type, GLboolean, normalized, const GLuint*, value)
+OPENGL_FORWARD(void, glVertexAttribP4ui, GLuint, index, GLenum, type, GLboolean, normalized, GLuint, value)
+OPENGL_FORWARD(void, glVertexAttribP4uiv, GLuint, index, GLenum, type, GLboolean, normalized, const GLuint*, value)
+OPENGL_FORWARD(void, glVertexP2ui, GLenum, type, GLuint, value)
+OPENGL_FORWARD(void, glVertexP2uiv, GLenum, type, const GLuint*, value)
+OPENGL_FORWARD(void, glVertexP3ui, GLenum, type, GLuint, value)
+OPENGL_FORWARD(void, glVertexP3uiv, GLenum, type, const GLuint*, value)
+OPENGL_FORWARD(void, glVertexP4ui, GLenum, type, GLuint, value)
+OPENGL_FORWARD(void, glVertexP4uiv, GLenum, type, const GLuint*, value)
+OPENGL_FORWARD(void, glTexCoordP1ui, GLenum, type, GLuint, coords)
+OPENGL_FORWARD(void, glTexCoordP1uiv, GLenum, type, const GLuint*, coords)
+OPENGL_FORWARD(void, glTexCoordP2ui, GLenum, type, GLuint, coords)
+OPENGL_FORWARD(void, glTexCoordP2uiv, GLenum, type, const GLuint*, coords)
+OPENGL_FORWARD(void, glTexCoordP3ui, GLenum, type, GLuint, coords)
+OPENGL_FORWARD(void, glTexCoordP3uiv, GLenum, type, const GLuint*, coords)
+OPENGL_FORWARD(void, glTexCoordP4ui, GLenum, type, GLuint, coords)
+OPENGL_FORWARD(void, glTexCoordP4uiv, GLenum, type, const GLuint*, coords)
+OPENGL_FORWARD(void, glMultiTexCoordP1ui, GLenum, texture, GLenum, type, GLuint, coords)
+OPENGL_FORWARD(void, glMultiTexCoordP1uiv, GLenum, texture, GLenum, type, const GLuint*, coords)
+OPENGL_FORWARD(void, glMultiTexCoordP2ui, GLenum, texture, GLenum, type, GLuint, coords)
+OPENGL_FORWARD(void, glMultiTexCoordP2uiv, GLenum, texture, GLenum, type, const GLuint*, coords)
+OPENGL_FORWARD(void, glMultiTexCoordP3ui, GLenum, texture, GLenum, type, GLuint, coords)
+OPENGL_FORWARD(void, glMultiTexCoordP3uiv, GLenum, texture, GLenum, type, const GLuint*, coords)
+OPENGL_FORWARD(void, glMultiTexCoordP4ui, GLenum, texture, GLenum, type, GLuint, coords)
+OPENGL_FORWARD(void, glMultiTexCoordP4uiv, GLenum, texture, GLenum, type, const GLuint*, coords)
+OPENGL_FORWARD(void, glNormalP3ui, GLenum, type, GLuint, coords)
+OPENGL_FORWARD(void, glNormalP3uiv, GLenum, type, const GLuint*, coords)
+OPENGL_FORWARD(void, glColorP3ui, GLenum, type, GLuint, color)
+OPENGL_FORWARD(void, glColorP3uiv, GLenum, type, const GLuint*, color)
+OPENGL_FORWARD(void, glColorP4ui, GLenum, type, GLuint, color)
+OPENGL_FORWARD(void, glColorP4uiv, GLenum, type, const GLuint*, color)
+OPENGL_FORWARD(void, glSecondaryColorP3ui, GLenum, type, GLuint, color)
+OPENGL_FORWARD(void, glSecondaryColorP3uiv, GLenum, type, const GLuint*, color)
+OPENGL_FORWARD(void, glMinSampleShading, GLfloat, value)
+OPENGL_FORWARD(void, glBlendEquationi, GLuint, buf, GLenum, mode)
+OPENGL_FORWARD(void, glBlendEquationSeparatei, GLuint, buf, GLenum, modeRGB, GLenum, modeAlpha)
+OPENGL_FORWARD(void, glBlendFunci, GLuint, buf, GLenum, src, GLenum, dst)
+OPENGL_FORWARD(void, glBlendFuncSeparatei, GLuint, buf, GLenum, srcRGB, GLenum, dstRGB, GLenum, srcAlpha, GLenum, dstAlpha)
+OPENGL_FORWARD(void, glDrawArraysIndirect, GLenum, mode, const void*, indirect)
+OPENGL_FORWARD(void, glDrawElementsIndirect, GLenum, mode, GLenum, type, const void*, indirect)
+OPENGL_FORWARD(void, glUniform1d, GLint, location, GLdouble, x)
+OPENGL_FORWARD(void, glUniform2d, GLint, location, GLdouble, x, GLdouble, y)
+OPENGL_FORWARD(void, glUniform3d, GLint, location, GLdouble, x, GLdouble, y, GLdouble, z)
+OPENGL_FORWARD(void, glUniform4d, GLint, location, GLdouble, x, GLdouble, y, GLdouble, z, GLdouble, w)
+OPENGL_FORWARD(void, glUniform1dv, GLint, location, GLsizei, count, const GLdouble*, value)
+OPENGL_FORWARD(void, glUniform2dv, GLint, location, GLsizei, count, const GLdouble*, value)
+OPENGL_FORWARD(void, glUniform3dv, GLint, location, GLsizei, count, const GLdouble*, value)
+OPENGL_FORWARD(void, glUniform4dv, GLint, location, GLsizei, count, const GLdouble*, value)
+OPENGL_FORWARD(void, glUniformMatrix2dv, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glUniformMatrix3dv, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glUniformMatrix4dv, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glUniformMatrix2x3dv, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glUniformMatrix2x4dv, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glUniformMatrix3x2dv, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glUniformMatrix3x4dv, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glUniformMatrix4x2dv, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glUniformMatrix4x3dv, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glGetUniformdv, GLuint, program, GLint, location, GLdouble*, params)
+OPENGL_FORWARD(GLint, glGetSubroutineUniformLocation, GLuint, program, GLenum, shadertype, const GLchar*, name)
+OPENGL_FORWARD(GLuint, glGetSubroutineIndex, GLuint, program, GLenum, shadertype, const GLchar*, name)
+OPENGL_FORWARD(void, glGetActiveSubroutineUniformiv, GLuint, program, GLenum, shadertype, GLuint, index, GLenum, pname, GLint*, values)
+OPENGL_FORWARD(void, glGetActiveSubroutineUniformName, GLuint, program, GLenum, shadertype, GLuint, index, GLsizei, bufsize, GLsizei*, length, GLchar*, name)
+OPENGL_FORWARD(void, glGetActiveSubroutineName, GLuint, program, GLenum, shadertype, GLuint, index, GLsizei, bufsize, GLsizei*, length, GLchar*, name)
+OPENGL_FORWARD(void, glUniformSubroutinesuiv, GLenum, shadertype, GLsizei, count, const GLuint*, indices)
+OPENGL_FORWARD(void, glGetUniformSubroutineuiv, GLenum, shadertype, GLint, location, GLuint*, params)
+OPENGL_FORWARD(void, glGetProgramStageiv, GLuint, program, GLenum, shadertype, GLenum, pname, GLint*, values)
+OPENGL_FORWARD(void, glPatchParameteri, GLenum, pname, GLint, value)
+OPENGL_FORWARD(void, glPatchParameterfv, GLenum, pname, const GLfloat*, values)
+OPENGL_FORWARD(void, glBindTransformFeedback, GLenum, target, GLuint, id)
+OPENGL_FORWARD(void, glDeleteTransformFeedbacks, GLsizei, n, const GLuint*, ids)
+OPENGL_FORWARD(void, glGenTransformFeedbacks, GLsizei, n, GLuint*, ids)
+OPENGL_FORWARD(GLboolean, glIsTransformFeedback, GLuint, id)
+OPENGL_FORWARD(void, glPauseTransformFeedback, void, )
+OPENGL_FORWARD(void, glResumeTransformFeedback, void, )
+OPENGL_FORWARD(void, glDrawTransformFeedback, GLenum, mode, GLuint, id)
+OPENGL_FORWARD(void, glDrawTransformFeedbackStream, GLenum, mode, GLuint, id, GLuint, stream)
+OPENGL_FORWARD(void, glBeginQueryIndexed, GLenum, target, GLuint, index, GLuint, id)
+OPENGL_FORWARD(void, glEndQueryIndexed, GLenum, target, GLuint, index)
+OPENGL_FORWARD(void, glGetQueryIndexediv, GLenum, target, GLuint, index, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glReleaseShaderCompiler, void, )
+OPENGL_FORWARD(void, glShaderBinary, GLsizei, count, const GLuint*, shaders, GLenum, binaryformat, const void*, binary, GLsizei, length)
+OPENGL_FORWARD(void, glGetShaderPrecisionFormat, GLenum, shadertype, GLenum, precisiontype, GLint*, range, GLint*, precision)
+OPENGL_FORWARD(void, glDepthRangef, GLfloat, n, GLfloat, f)
+OPENGL_FORWARD(void, glClearDepthf, GLfloat, d)
+OPENGL_FORWARD(void, glGetProgramBinary, GLuint, program, GLsizei, bufSize, GLsizei*, length, GLenum*, binaryFormat, void*, binary)
+OPENGL_FORWARD(void, glProgramBinary, GLuint, program, GLenum, binaryFormat, const void*, binary, GLsizei, length)
+OPENGL_FORWARD(void, glProgramParameteri, GLuint, program, GLenum, pname, GLint, value)
+OPENGL_FORWARD(void, glUseProgramStages, GLuint, pipeline, GLbitfield, stages, GLuint, program)
+OPENGL_FORWARD(void, glActiveShaderProgram, GLuint, pipeline, GLuint, program)
+OPENGL_FORWARD(GLuint, glCreateShaderProgramv, GLenum, type, GLsizei, count, const GLchar* const*, strings)
+OPENGL_FORWARD(void, glBindProgramPipeline, GLuint, pipeline)
+OPENGL_FORWARD(void, glDeleteProgramPipelines, GLsizei, n, const GLuint*, pipelines)
+OPENGL_FORWARD(void, glGenProgramPipelines, GLsizei, n, GLuint*, pipelines)
+OPENGL_FORWARD(GLboolean, glIsProgramPipeline, GLuint, pipeline)
+OPENGL_FORWARD(void, glGetProgramPipelineiv, GLuint, pipeline, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glProgramUniform1i, GLuint, program, GLint, location, GLint, v0)
+OPENGL_FORWARD(void, glProgramUniform1iv, GLuint, program, GLint, location, GLsizei, count, const GLint*, value)
+OPENGL_FORWARD(void, glProgramUniform1f, GLuint, program, GLint, location, GLfloat, v0)
+OPENGL_FORWARD(void, glProgramUniform1fv, GLuint, program, GLint, location, GLsizei, count, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniform1d, GLuint, program, GLint, location, GLdouble, v0)
+OPENGL_FORWARD(void, glProgramUniform1dv, GLuint, program, GLint, location, GLsizei, count, const GLdouble*, value)
+OPENGL_FORWARD(void, glProgramUniform1ui, GLuint, program, GLint, location, GLuint, v0)
+OPENGL_FORWARD(void, glProgramUniform1uiv, GLuint, program, GLint, location, GLsizei, count, const GLuint*, value)
+OPENGL_FORWARD(void, glProgramUniform2i, GLuint, program, GLint, location, GLint, v0, GLint, v1)
+OPENGL_FORWARD(void, glProgramUniform2iv, GLuint, program, GLint, location, GLsizei, count, const GLint*, value)
+OPENGL_FORWARD(void, glProgramUniform2f, GLuint, program, GLint, location, GLfloat, v0, GLfloat, v1)
+OPENGL_FORWARD(void, glProgramUniform2fv, GLuint, program, GLint, location, GLsizei, count, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniform2d, GLuint, program, GLint, location, GLdouble, v0, GLdouble, v1)
+OPENGL_FORWARD(void, glProgramUniform2dv, GLuint, program, GLint, location, GLsizei, count, const GLdouble*, value)
+OPENGL_FORWARD(void, glProgramUniform2ui, GLuint, program, GLint, location, GLuint, v0, GLuint, v1)
+OPENGL_FORWARD(void, glProgramUniform2uiv, GLuint, program, GLint, location, GLsizei, count, const GLuint*, value)
+OPENGL_FORWARD(void, glProgramUniform3i, GLuint, program, GLint, location, GLint, v0, GLint, v1, GLint, v2)
+OPENGL_FORWARD(void, glProgramUniform3iv, GLuint, program, GLint, location, GLsizei, count, const GLint*, value)
+OPENGL_FORWARD(void, glProgramUniform3f, GLuint, program, GLint, location, GLfloat, v0, GLfloat, v1, GLfloat, v2)
+OPENGL_FORWARD(void, glProgramUniform3fv, GLuint, program, GLint, location, GLsizei, count, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniform3d, GLuint, program, GLint, location, GLdouble, v0, GLdouble, v1, GLdouble, v2)
+OPENGL_FORWARD(void, glProgramUniform3dv, GLuint, program, GLint, location, GLsizei, count, const GLdouble*, value)
+OPENGL_FORWARD(void, glProgramUniform3ui, GLuint, program, GLint, location, GLuint, v0, GLuint, v1, GLuint, v2)
+OPENGL_FORWARD(void, glProgramUniform3uiv, GLuint, program, GLint, location, GLsizei, count, const GLuint*, value)
+OPENGL_FORWARD(void, glProgramUniform4i, GLuint, program, GLint, location, GLint, v0, GLint, v1, GLint, v2, GLint, v3)
+OPENGL_FORWARD(void, glProgramUniform4iv, GLuint, program, GLint, location, GLsizei, count, const GLint*, value)
+OPENGL_FORWARD(void, glProgramUniform4f, GLuint, program, GLint, location, GLfloat, v0, GLfloat, v1, GLfloat, v2, GLfloat, v3)
+OPENGL_FORWARD(void, glProgramUniform4fv, GLuint, program, GLint, location, GLsizei, count, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniform4d, GLuint, program, GLint, location, GLdouble, v0, GLdouble, v1, GLdouble, v2, GLdouble, v3)
+OPENGL_FORWARD(void, glProgramUniform4dv, GLuint, program, GLint, location, GLsizei, count, const GLdouble*, value)
+OPENGL_FORWARD(void, glProgramUniform4ui, GLuint, program, GLint, location, GLuint, v0, GLuint, v1, GLuint, v2, GLuint, v3)
+OPENGL_FORWARD(void, glProgramUniform4uiv, GLuint, program, GLint, location, GLsizei, count, const GLuint*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix2fv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix3fv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix4fv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix2dv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix3dv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix4dv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix2x3fv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix3x2fv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix2x4fv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix4x2fv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix3x4fv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix4x3fv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix2x3dv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix3x2dv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix2x4dv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix4x2dv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix3x4dv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glProgramUniformMatrix4x3dv, GLuint, program, GLint, location, GLsizei, count, GLboolean, transpose, const GLdouble*, value)
+OPENGL_FORWARD(void, glValidateProgramPipeline, GLuint, pipeline)
+OPENGL_FORWARD(void, glGetProgramPipelineInfoLog, GLuint, pipeline, GLsizei, bufSize, GLsizei*, length, GLchar*, infoLog)
+OPENGL_FORWARD(void, glVertexAttribL1d, GLuint, index, GLdouble, x)
+OPENGL_FORWARD(void, glVertexAttribL2d, GLuint, index, GLdouble, x, GLdouble, y)
+OPENGL_FORWARD(void, glVertexAttribL3d, GLuint, index, GLdouble, x, GLdouble, y, GLdouble, z)
+OPENGL_FORWARD(void, glVertexAttribL4d, GLuint, index, GLdouble, x, GLdouble, y, GLdouble, z, GLdouble, w)
+OPENGL_FORWARD(void, glVertexAttribL1dv, GLuint, index, const GLdouble*, v)
+OPENGL_FORWARD(void, glVertexAttribL2dv, GLuint, index, const GLdouble*, v)
+OPENGL_FORWARD(void, glVertexAttribL3dv, GLuint, index, const GLdouble*, v)
+OPENGL_FORWARD(void, glVertexAttribL4dv, GLuint, index, const GLdouble*, v)
+OPENGL_FORWARD(void, glVertexAttribLPointer, GLuint, index, GLint, size, GLenum, type, GLsizei, stride, const void*, pointer)
+OPENGL_FORWARD(void, glGetVertexAttribLdv, GLuint, index, GLenum, pname, GLdouble*, params)
+OPENGL_FORWARD(void, glViewportArrayv, GLuint, first, GLsizei, count, const GLfloat*, v)
+OPENGL_FORWARD(void, glViewportIndexedf, GLuint, index, GLfloat, x, GLfloat, y, GLfloat, w, GLfloat, h)
+OPENGL_FORWARD(void, glViewportIndexedfv, GLuint, index, const GLfloat*, v)
+OPENGL_FORWARD(void, glScissorArrayv, GLuint, first, GLsizei, count, const GLint*, v)
+OPENGL_FORWARD(void, glScissorIndexed, GLuint, index, GLint, left, GLint, bottom, GLsizei, width, GLsizei, height)
+OPENGL_FORWARD(void, glScissorIndexedv, GLuint, index, const GLint*, v)
+OPENGL_FORWARD(void, glDepthRangeArrayv, GLuint, first, GLsizei, count, const GLdouble*, v)
+OPENGL_FORWARD(void, glDepthRangeIndexed, GLuint, index, GLdouble, n, GLdouble, f)
+OPENGL_FORWARD(void, glGetFloati_v, GLenum, target, GLuint, index, GLfloat*, data)
+OPENGL_FORWARD(void, glGetDoublei_v, GLenum, target, GLuint, index, GLdouble*, data)
+OPENGL_FORWARD(void, glDrawArraysInstancedBaseInstance, GLenum, mode, GLint, first, GLsizei, count, GLsizei, instancecount, GLuint, baseinstance)
+OPENGL_FORWARD(void, glDrawElementsInstancedBaseInstance, GLenum, mode, GLsizei, count, GLenum, type, const void*, indices, GLsizei, instancecount, GLuint, baseinstance)
+OPENGL_FORWARD(void, glDrawElementsInstancedBaseVertexBaseInstance, GLenum, mode, GLsizei, count, GLenum, type, const void*, indices, GLsizei, instancecount, GLint, basevertex, GLuint, baseinstance)
+OPENGL_FORWARD(void, glGetInternalformativ, GLenum, target, GLenum, internalformat, GLenum, pname, GLsizei, bufSize, GLint*, params)
+OPENGL_FORWARD(void, glGetActiveAtomicCounterBufferiv, GLuint, program, GLuint, bufferIndex, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glBindImageTexture, GLuint, unit, GLuint, texture, GLint, level, GLboolean, layered, GLint, layer, GLenum, access, GLenum, format)
+OPENGL_FORWARD(void, glMemoryBarrier, GLbitfield, barriers)
+OPENGL_FORWARD(void, glTexStorage1D, GLenum, target, GLsizei, levels, GLenum, internalformat, GLsizei, width)
+OPENGL_FORWARD(void, glTexStorage2D, GLenum, target, GLsizei, levels, GLenum, internalformat, GLsizei, width, GLsizei, height)
+OPENGL_FORWARD(void, glTexStorage3D, GLenum, target, GLsizei, levels, GLenum, internalformat, GLsizei, width, GLsizei, height, GLsizei, depth)
+OPENGL_FORWARD(void, glDrawTransformFeedbackInstanced, GLenum, mode, GLuint, id, GLsizei, instancecount)
+OPENGL_FORWARD(void, glDrawTransformFeedbackStreamInstanced, GLenum, mode, GLuint, id, GLuint, stream, GLsizei, instancecount)
+OPENGL_FORWARD(void, glClearBufferData, GLenum, target, GLenum, internalformat, GLenum, format, GLenum, type, const void*, data)
+OPENGL_FORWARD(void, glClearBufferSubData, GLenum, target, GLenum, internalformat, GLintptr, offset, GLsizeiptr, size, GLenum, format, GLenum, type, const void*, data)
+OPENGL_FORWARD(void, glDispatchCompute, GLuint, num_groups_x, GLuint, num_groups_y, GLuint, num_groups_z)
+OPENGL_FORWARD(void, glDispatchComputeIndirect, GLintptr, indirect)
+OPENGL_FORWARD(void, glCopyImageSubData, GLuint, srcName, GLenum, srcTarget, GLint, srcLevel, GLint, srcX, GLint, srcY, GLint, srcZ, GLuint, dstName, GLenum, dstTarget, GLint, dstLevel, GLint, dstX, GLint, dstY, GLint, dstZ, GLsizei, srcWidth, GLsizei, srcHeight, GLsizei, srcDepth)
+OPENGL_FORWARD(void, glFramebufferParameteri, GLenum, target, GLenum, pname, GLint, param)
+OPENGL_FORWARD(void, glGetFramebufferParameteriv, GLenum, target, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetInternalformati64v, GLenum, target, GLenum, internalformat, GLenum, pname, GLsizei, bufSize, GLint64*, params)
+OPENGL_FORWARD(void, glInvalidateTexSubImage, GLuint, texture, GLint, level, GLint, xoffset, GLint, yoffset, GLint, zoffset, GLsizei, width, GLsizei, height, GLsizei, depth)
+OPENGL_FORWARD(void, glInvalidateTexImage, GLuint, texture, GLint, level)
+OPENGL_FORWARD(void, glInvalidateBufferSubData, GLuint, buffer, GLintptr, offset, GLsizeiptr, length)
+OPENGL_FORWARD(void, glInvalidateBufferData, GLuint, buffer)
+OPENGL_FORWARD(void, glInvalidateFramebuffer, GLenum, target, GLsizei, numAttachments, const GLenum*, attachments)
+OPENGL_FORWARD(void, glInvalidateSubFramebuffer, GLenum, target, GLsizei, numAttachments, const GLenum*, attachments, GLint, x, GLint, y, GLsizei, width, GLsizei, height)
+OPENGL_FORWARD(void, glMultiDrawArraysIndirect, GLenum, mode, const void*, indirect, GLsizei, drawcount, GLsizei, stride)
+OPENGL_FORWARD(void, glMultiDrawElementsIndirect, GLenum, mode, GLenum, type, const void*, indirect, GLsizei, drawcount, GLsizei, stride)
+OPENGL_FORWARD(void, glGetProgramInterfaceiv, GLuint, program, GLenum, programInterface, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(GLuint, glGetProgramResourceIndex, GLuint, program, GLenum, programInterface, const GLchar*, name)
+OPENGL_FORWARD(void, glGetProgramResourceName, GLuint, program, GLenum, programInterface, GLuint, index, GLsizei, bufSize, GLsizei*, length, GLchar*, name)
+OPENGL_FORWARD(void, glGetProgramResourceiv, GLuint, program, GLenum, programInterface, GLuint, index, GLsizei, propCount, const GLenum*, props, GLsizei, bufSize, GLsizei*, length, GLint*, params)
+OPENGL_FORWARD(GLint, glGetProgramResourceLocation, GLuint, program, GLenum, programInterface, const GLchar*, name)
+OPENGL_FORWARD(GLint, glGetProgramResourceLocationIndex, GLuint, program, GLenum, programInterface, const GLchar*, name)
+OPENGL_FORWARD(void, glShaderStorageBlockBinding, GLuint, program, GLuint, storageBlockIndex, GLuint, storageBlockBinding)
+OPENGL_FORWARD(void, glTexBufferRange, GLenum, target, GLenum, internalformat, GLuint, buffer, GLintptr, offset, GLsizeiptr, size)
+OPENGL_FORWARD(void, glTexStorage2DMultisample, GLenum, target, GLsizei, samples, GLenum, internalformat, GLsizei, width, GLsizei, height, GLboolean, fixedsamplelocations)
+OPENGL_FORWARD(void, glTexStorage3DMultisample, GLenum, target, GLsizei, samples, GLenum, internalformat, GLsizei, width, GLsizei, height, GLsizei, depth, GLboolean, fixedsamplelocations)
+OPENGL_FORWARD(void, glTextureView, GLuint, texture, GLenum, target, GLuint, origtexture, GLenum, internalformat, GLuint, minlevel, GLuint, numlevels, GLuint, minlayer, GLuint, numlayers)
+OPENGL_FORWARD(void, glBindVertexBuffer, GLuint, bindingindex, GLuint, buffer, GLintptr, offset, GLsizei, stride)
+OPENGL_FORWARD(void, glVertexAttribFormat, GLuint, attribindex, GLint, size, GLenum, type, GLboolean, normalized, GLuint, relativeoffset)
+OPENGL_FORWARD(void, glVertexAttribIFormat, GLuint, attribindex, GLint, size, GLenum, type, GLuint, relativeoffset)
+OPENGL_FORWARD(void, glVertexAttribLFormat, GLuint, attribindex, GLint, size, GLenum, type, GLuint, relativeoffset)
+OPENGL_FORWARD(void, glVertexAttribBinding, GLuint, attribindex, GLuint, bindingindex)
+OPENGL_FORWARD(void, glVertexBindingDivisor, GLuint, bindingindex, GLuint, divisor)
+OPENGL_FORWARD(void, glDebugMessageControl, GLenum, source, GLenum, type, GLenum, severity, GLsizei, count, const GLuint*, ids, GLboolean, enabled)
+OPENGL_FORWARD(void, glDebugMessageInsert, GLenum, source, GLenum, type, GLuint, id, GLenum, severity, GLsizei, length, const GLchar*, buf)
+OPENGL_FORWARD(void, glDebugMessageCallback, GLDEBUGPROC, callback, const void*, userParam)
+OPENGL_FORWARD(GLuint, glGetDebugMessageLog, GLuint, count, GLsizei, bufSize, GLenum*, sources, GLenum*, types, GLuint*, ids, GLenum*, severities, GLsizei*, lengths, GLchar*, messageLog)
+OPENGL_FORWARD(void, glPushDebugGroup, GLenum, source, GLuint, id, GLsizei, length, const GLchar*, message)
+OPENGL_FORWARD(void, glPopDebugGroup, void, )
+OPENGL_FORWARD(void, glObjectLabel, GLenum, identifier, GLuint, name, GLsizei, length, const GLchar*, label)
+OPENGL_FORWARD(void, glGetObjectLabel, GLenum, identifier, GLuint, name, GLsizei, bufSize, GLsizei*, length, GLchar*, label)
+OPENGL_FORWARD(void, glObjectPtrLabel, const void*, ptr, GLsizei, length, const GLchar*, label)
+OPENGL_FORWARD(void, glGetObjectPtrLabel, const void*, ptr, GLsizei, bufSize, GLsizei*, length, GLchar*, label)
+OPENGL_FORWARD(void, glBufferStorage, GLenum, target, GLsizeiptr, size, const void*, data, GLbitfield, flags)
+OPENGL_FORWARD(void, glClearTexImage, GLuint, texture, GLint, level, GLenum, format, GLenum, type, const void*, data)
+OPENGL_FORWARD(void, glClearTexSubImage, GLuint, texture, GLint, level, GLint, xoffset, GLint, yoffset, GLint, zoffset, GLsizei, width, GLsizei, height, GLsizei, depth, GLenum, format, GLenum, type, const void*, data)
+OPENGL_FORWARD(void, glBindBuffersBase, GLenum, target, GLuint, first, GLsizei, count, const GLuint*, buffers)
+OPENGL_FORWARD(void, glBindBuffersRange, GLenum, target, GLuint, first, GLsizei, count, const GLuint*, buffers, const GLintptr*, offsets, const GLsizeiptr*, sizes)
+OPENGL_FORWARD(void, glBindTextures, GLuint, first, GLsizei, count, const GLuint*, textures)
+OPENGL_FORWARD(void, glBindSamplers, GLuint, first, GLsizei, count, const GLuint*, samplers)
+OPENGL_FORWARD(void, glBindImageTextures, GLuint, first, GLsizei, count, const GLuint*, textures)
+OPENGL_FORWARD(void, glBindVertexBuffers, GLuint, first, GLsizei, count, const GLuint*, buffers, const GLintptr*, offsets, const GLsizei*, strides)
+OPENGL_FORWARD(void, glClipControl, GLenum, origin, GLenum, depth)
+OPENGL_FORWARD(void, glCreateTransformFeedbacks, GLsizei, n, GLuint*, ids)
+OPENGL_FORWARD(void, glTransformFeedbackBufferBase, GLuint, xfb, GLuint, index, GLuint, buffer)
+OPENGL_FORWARD(void, glTransformFeedbackBufferRange, GLuint, xfb, GLuint, index, GLuint, buffer, GLintptr, offset, GLsizeiptr, size)
+OPENGL_FORWARD(void, glGetTransformFeedbackiv, GLuint, xfb, GLenum, pname, GLint*, param)
+OPENGL_FORWARD(void, glGetTransformFeedbacki_v, GLuint, xfb, GLenum, pname, GLuint, index, GLint*, param)
+OPENGL_FORWARD(void, glGetTransformFeedbacki64_v, GLuint, xfb, GLenum, pname, GLuint, index, GLint64*, param)
+OPENGL_FORWARD(void, glCreateBuffers, GLsizei, n, GLuint*, buffers)
+OPENGL_FORWARD(void, glNamedBufferStorage, GLuint, buffer, GLsizeiptr, size, const void*, data, GLbitfield, flags)
+OPENGL_FORWARD(void, glNamedBufferData, GLuint, buffer, GLsizeiptr, size, const void*, data, GLenum, usage)
+OPENGL_FORWARD(void, glNamedBufferSubData, GLuint, buffer, GLintptr, offset, GLsizeiptr, size, const void*, data)
+OPENGL_FORWARD(void, glCopyNamedBufferSubData, GLuint, readBuffer, GLuint, writeBuffer, GLintptr, readOffset, GLintptr, writeOffset, GLsizeiptr, size)
+OPENGL_FORWARD(void, glClearNamedBufferData, GLuint, buffer, GLenum, internalformat, GLenum, format, GLenum, type, const void*, data)
+OPENGL_FORWARD(void, glClearNamedBufferSubData, GLuint, buffer, GLenum, internalformat, GLintptr, offset, GLsizeiptr, size, GLenum, format, GLenum, type, const void*, data)
+OPENGL_FORWARD(void*, glMapNamedBuffer, GLuint, buffer, GLenum, access)
+OPENGL_FORWARD(void*, glMapNamedBufferRange, GLuint, buffer, GLintptr, offset, GLsizeiptr, length, GLbitfield, access)
+OPENGL_FORWARD(GLboolean, glUnmapNamedBuffer, GLuint, buffer)
+OPENGL_FORWARD(void, glFlushMappedNamedBufferRange, GLuint, buffer, GLintptr, offset, GLsizeiptr, length)
+OPENGL_FORWARD(void, glGetNamedBufferParameteriv, GLuint, buffer, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetNamedBufferParameteri64v, GLuint, buffer, GLenum, pname, GLint64*, params)
+OPENGL_FORWARD(void, glGetNamedBufferPointerv, GLuint, buffer, GLenum, pname, void**, params)
+OPENGL_FORWARD(void, glGetNamedBufferSubData, GLuint, buffer, GLintptr, offset, GLsizeiptr, size, void*, data)
+OPENGL_FORWARD(void, glCreateFramebuffers, GLsizei, n, GLuint*, framebuffers)
+OPENGL_FORWARD(void, glNamedFramebufferRenderbuffer, GLuint, framebuffer, GLenum, attachment, GLenum, renderbuffertarget, GLuint, renderbuffer)
+OPENGL_FORWARD(void, glNamedFramebufferParameteri, GLuint, framebuffer, GLenum, pname, GLint, param)
+OPENGL_FORWARD(void, glNamedFramebufferTexture, GLuint, framebuffer, GLenum, attachment, GLuint, texture, GLint, level)
+OPENGL_FORWARD(void, glNamedFramebufferTextureLayer, GLuint, framebuffer, GLenum, attachment, GLuint, texture, GLint, level, GLint, layer)
+OPENGL_FORWARD(void, glNamedFramebufferDrawBuffer, GLuint, framebuffer, GLenum, buf)
+OPENGL_FORWARD(void, glNamedFramebufferDrawBuffers, GLuint, framebuffer, GLsizei, n, const GLenum*, bufs)
+OPENGL_FORWARD(void, glNamedFramebufferReadBuffer, GLuint, framebuffer, GLenum, src)
+OPENGL_FORWARD(void, glInvalidateNamedFramebufferData, GLuint, framebuffer, GLsizei, numAttachments, const GLenum*, attachments)
+OPENGL_FORWARD(void, glInvalidateNamedFramebufferSubData, GLuint, framebuffer, GLsizei, numAttachments, const GLenum*, attachments, GLint, x, GLint, y, GLsizei, width, GLsizei, height)
+OPENGL_FORWARD(void, glClearNamedFramebufferiv, GLuint, framebuffer, GLenum, buffer, GLint, drawbuffer, const GLint*, value)
+OPENGL_FORWARD(void, glClearNamedFramebufferuiv, GLuint, framebuffer, GLenum, buffer, GLint, drawbuffer, const GLuint*, value)
+OPENGL_FORWARD(void, glClearNamedFramebufferfv, GLuint, framebuffer, GLenum, buffer, GLint, drawbuffer, const GLfloat*, value)
+OPENGL_FORWARD(void, glClearNamedFramebufferfi, GLuint, framebuffer, GLenum, buffer, GLint, drawbuffer, GLfloat, depth, GLint, stencil)
+OPENGL_FORWARD(void, glBlitNamedFramebuffer, GLuint, readFramebuffer, GLuint, drawFramebuffer, GLint, srcX0, GLint, srcY0, GLint, srcX1, GLint, srcY1, GLint, dstX0, GLint, dstY0, GLint, dstX1, GLint, dstY1, GLbitfield, mask, GLenum, filter)
+OPENGL_FORWARD(GLenum, glCheckNamedFramebufferStatus, GLuint, framebuffer, GLenum, target)
+OPENGL_FORWARD(void, glGetNamedFramebufferParameteriv, GLuint, framebuffer, GLenum, pname, GLint*, param)
+OPENGL_FORWARD(void, glGetNamedFramebufferAttachmentParameteriv, GLuint, framebuffer, GLenum, attachment, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glCreateRenderbuffers, GLsizei, n, GLuint*, renderbuffers)
+OPENGL_FORWARD(void, glNamedRenderbufferStorage, GLuint, renderbuffer, GLenum, internalformat, GLsizei, width, GLsizei, height)
+OPENGL_FORWARD(void, glNamedRenderbufferStorageMultisample, GLuint, renderbuffer, GLsizei, samples, GLenum, internalformat, GLsizei, width, GLsizei, height)
+OPENGL_FORWARD(void, glGetNamedRenderbufferParameteriv, GLuint, renderbuffer, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glCreateTextures, GLenum, target, GLsizei, n, GLuint*, textures)
+OPENGL_FORWARD(void, glTextureBuffer, GLuint, texture, GLenum, internalformat, GLuint, buffer)
+OPENGL_FORWARD(void, glTextureBufferRange, GLuint, texture, GLenum, internalformat, GLuint, buffer, GLintptr, offset, GLsizeiptr, size)
+OPENGL_FORWARD(void, glTextureStorage1D, GLuint, texture, GLsizei, levels, GLenum, internalformat, GLsizei, width)
+OPENGL_FORWARD(void, glTextureStorage2D, GLuint, texture, GLsizei, levels, GLenum, internalformat, GLsizei, width, GLsizei, height)
+OPENGL_FORWARD(void, glTextureStorage3D, GLuint, texture, GLsizei, levels, GLenum, internalformat, GLsizei, width, GLsizei, height, GLsizei, depth)
+OPENGL_FORWARD(void, glTextureStorage2DMultisample, GLuint, texture, GLsizei, samples, GLenum, internalformat, GLsizei, width, GLsizei, height, GLboolean, fixedsamplelocations)
+OPENGL_FORWARD(void, glTextureStorage3DMultisample, GLuint, texture, GLsizei, samples, GLenum, internalformat, GLsizei, width, GLsizei, height, GLsizei, depth, GLboolean, fixedsamplelocations)
+OPENGL_FORWARD(void, glTextureSubImage1D, GLuint, texture, GLint, level, GLint, xoffset, GLsizei, width, GLenum, format, GLenum, type, const void*, pixels)
+OPENGL_FORWARD(void, glTextureSubImage2D, GLuint, texture, GLint, level, GLint, xoffset, GLint, yoffset, GLsizei, width, GLsizei, height, GLenum, format, GLenum, type, const void*, pixels)
+OPENGL_FORWARD(void, glTextureSubImage3D, GLuint, texture, GLint, level, GLint, xoffset, GLint, yoffset, GLint, zoffset, GLsizei, width, GLsizei, height, GLsizei, depth, GLenum, format, GLenum, type, const void*, pixels)
+OPENGL_FORWARD(void, glCompressedTextureSubImage1D, GLuint, texture, GLint, level, GLint, xoffset, GLsizei, width, GLenum, format, GLsizei, imageSize, const void*, data)
+OPENGL_FORWARD(void, glCompressedTextureSubImage2D, GLuint, texture, GLint, level, GLint, xoffset, GLint, yoffset, GLsizei, width, GLsizei, height, GLenum, format, GLsizei, imageSize, const void*, data)
+OPENGL_FORWARD(void, glCompressedTextureSubImage3D, GLuint, texture, GLint, level, GLint, xoffset, GLint, yoffset, GLint, zoffset, GLsizei, width, GLsizei, height, GLsizei, depth, GLenum, format, GLsizei, imageSize, const void*, data)
+OPENGL_FORWARD(void, glCopyTextureSubImage1D, GLuint, texture, GLint, level, GLint, xoffset, GLint, x, GLint, y, GLsizei, width)
+OPENGL_FORWARD(void, glCopyTextureSubImage2D, GLuint, texture, GLint, level, GLint, xoffset, GLint, yoffset, GLint, x, GLint, y, GLsizei, width, GLsizei, height)
+OPENGL_FORWARD(void, glCopyTextureSubImage3D, GLuint, texture, GLint, level, GLint, xoffset, GLint, yoffset, GLint, zoffset, GLint, x, GLint, y, GLsizei, width, GLsizei, height)
+OPENGL_FORWARD(void, glTextureParameterf, GLuint, texture, GLenum, pname, GLfloat, param)
+OPENGL_FORWARD(void, glTextureParameterfv, GLuint, texture, GLenum, pname, const GLfloat*, param)
+OPENGL_FORWARD(void, glTextureParameteri, GLuint, texture, GLenum, pname, GLint, param)
+OPENGL_FORWARD(void, glTextureParameterIiv, GLuint, texture, GLenum, pname, const GLint*, params)
+OPENGL_FORWARD(void, glTextureParameterIuiv, GLuint, texture, GLenum, pname, const GLuint*, params)
+OPENGL_FORWARD(void, glTextureParameteriv, GLuint, texture, GLenum, pname, const GLint*, param)
+OPENGL_FORWARD(void, glGenerateTextureMipmap, GLuint, texture)
+OPENGL_FORWARD(void, glBindTextureUnit, GLuint, unit, GLuint, texture)
+OPENGL_FORWARD(void, glGetTextureImage, GLuint, texture, GLint, level, GLenum, format, GLenum, type, GLsizei, bufSize, void*, pixels)
+OPENGL_FORWARD(void, glGetCompressedTextureImage, GLuint, texture, GLint, level, GLsizei, bufSize, void*, pixels)
+OPENGL_FORWARD(void, glGetTextureLevelParameterfv, GLuint, texture, GLint, level, GLenum, pname, GLfloat*, params)
+OPENGL_FORWARD(void, glGetTextureLevelParameteriv, GLuint, texture, GLint, level, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetTextureParameterfv, GLuint, texture, GLenum, pname, GLfloat*, params)
+OPENGL_FORWARD(void, glGetTextureParameterIiv, GLuint, texture, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glGetTextureParameterIuiv, GLuint, texture, GLenum, pname, GLuint*, params)
+OPENGL_FORWARD(void, glGetTextureParameteriv, GLuint, texture, GLenum, pname, GLint*, params)
+OPENGL_FORWARD(void, glCreateVertexArrays, GLsizei, n, GLuint*, arrays)
+OPENGL_FORWARD(void, glDisableVertexArrayAttrib, GLuint, vaobj, GLuint, index)
+OPENGL_FORWARD(void, glEnableVertexArrayAttrib, GLuint, vaobj, GLuint, index)
+OPENGL_FORWARD(void, glVertexArrayElementBuffer, GLuint, vaobj, GLuint, buffer)
+OPENGL_FORWARD(void, glVertexArrayVertexBuffer, GLuint, vaobj, GLuint, bindingindex, GLuint, buffer, GLintptr, offset, GLsizei, stride)
+OPENGL_FORWARD(void, glVertexArrayVertexBuffers, GLuint, vaobj, GLuint, first, GLsizei, count, const GLuint*, buffers, const GLintptr*, offsets, const GLsizei*, strides)
+OPENGL_FORWARD(void, glVertexArrayAttribBinding, GLuint, vaobj, GLuint, attribindex, GLuint, bindingindex)
+OPENGL_FORWARD(void, glVertexArrayAttribFormat, GLuint, vaobj, GLuint, attribindex, GLint, size, GLenum, type, GLboolean, normalized, GLuint, relativeoffset)
+OPENGL_FORWARD(void, glVertexArrayAttribIFormat, GLuint, vaobj, GLuint, attribindex, GLint, size, GLenum, type, GLuint, relativeoffset)
+OPENGL_FORWARD(void, glVertexArrayAttribLFormat, GLuint, vaobj, GLuint, attribindex, GLint, size, GLenum, type, GLuint, relativeoffset)
+OPENGL_FORWARD(void, glVertexArrayBindingDivisor, GLuint, vaobj, GLuint, bindingindex, GLuint, divisor)
+OPENGL_FORWARD(void, glGetVertexArrayiv, GLuint, vaobj, GLenum, pname, GLint*, param)
+OPENGL_FORWARD(void, glGetVertexArrayIndexediv, GLuint, vaobj, GLuint, index, GLenum, pname, GLint*, param)
+OPENGL_FORWARD(void, glGetVertexArrayIndexed64iv, GLuint, vaobj, GLuint, index, GLenum, pname, GLint64*, param)
+OPENGL_FORWARD(void, glCreateSamplers, GLsizei, n, GLuint*, samplers)
+OPENGL_FORWARD(void, glCreateProgramPipelines, GLsizei, n, GLuint*, pipelines)
+OPENGL_FORWARD(void, glCreateQueries, GLenum, target, GLsizei, n, GLuint*, ids)
+OPENGL_FORWARD(void, glGetQueryBufferObjecti64v, GLuint, id, GLuint, buffer, GLenum, pname, GLintptr, offset)
+OPENGL_FORWARD(void, glGetQueryBufferObjectiv, GLuint, id, GLuint, buffer, GLenum, pname, GLintptr, offset)
+OPENGL_FORWARD(void, glGetQueryBufferObjectui64v, GLuint, id, GLuint, buffer, GLenum, pname, GLintptr, offset)
+OPENGL_FORWARD(void, glGetQueryBufferObjectuiv, GLuint, id, GLuint, buffer, GLenum, pname, GLintptr, offset)
+OPENGL_FORWARD(void, glMemoryBarrierByRegion, GLbitfield, barriers)
+OPENGL_FORWARD(void, glGetTextureSubImage, GLuint, texture, GLint, level, GLint, xoffset, GLint, yoffset, GLint, zoffset, GLsizei, width, GLsizei, height, GLsizei, depth, GLenum, format, GLenum, type, GLsizei, bufSize, void*, pixels)
+OPENGL_FORWARD(void, glGetCompressedTextureSubImage, GLuint, texture, GLint, level, GLint, xoffset, GLint, yoffset, GLint, zoffset, GLsizei, width, GLsizei, height, GLsizei, depth, GLsizei, bufSize, void*, pixels)
+OPENGL_FORWARD(GLenum, glGetGraphicsResetStatus, void, )
+OPENGL_FORWARD(void, glGetnCompressedTexImage, GLenum, target, GLint, lod, GLsizei, bufSize, void*, pixels)
+OPENGL_FORWARD(void, glGetnTexImage, GLenum, target, GLint, level, GLenum, format, GLenum, type, GLsizei, bufSize, void*, pixels)
+OPENGL_FORWARD(void, glGetnUniformdv, GLuint, program, GLint, location, GLsizei, bufSize, GLdouble*, params)
+OPENGL_FORWARD(void, glGetnUniformfv, GLuint, program, GLint, location, GLsizei, bufSize, GLfloat*, params)
+OPENGL_FORWARD(void, glGetnUniformiv, GLuint, program, GLint, location, GLsizei, bufSize, GLint*, params)
+OPENGL_FORWARD(void, glGetnUniformuiv, GLuint, program, GLint, location, GLsizei, bufSize, GLuint*, params)
+OPENGL_FORWARD(void, glReadnPixels, GLint, x, GLint, y, GLsizei, width, GLsizei, height, GLenum, format, GLenum, type, GLsizei, bufSize, void*, data)
+OPENGL_FORWARD(void, glGetnMapdv, GLenum, target, GLenum, query, GLsizei, bufSize, GLdouble*, v)
+OPENGL_FORWARD(void, glGetnMapfv, GLenum, target, GLenum, query, GLsizei, bufSize, GLfloat*, v)
+OPENGL_FORWARD(void, glGetnMapiv, GLenum, target, GLenum, query, GLsizei, bufSize, GLint*, v)
+OPENGL_FORWARD(void, glGetnPixelMapfv, GLenum, map, GLsizei, bufSize, GLfloat*, values)
+OPENGL_FORWARD(void, glGetnPixelMapuiv, GLenum, map, GLsizei, bufSize, GLuint*, values)
+OPENGL_FORWARD(void, glGetnPixelMapusv, GLenum, map, GLsizei, bufSize, GLushort*, values)
+OPENGL_FORWARD(void, glGetnPolygonStipple, GLsizei, bufSize, GLubyte*, pattern)
+OPENGL_FORWARD(void, glGetnColorTable, GLenum, target, GLenum, format, GLenum, type, GLsizei, bufSize, void*, table)
+OPENGL_FORWARD(void, glGetnConvolutionFilter, GLenum, target, GLenum, format, GLenum, type, GLsizei, bufSize, void*, image)
+OPENGL_FORWARD(void, glGetnSeparableFilter, GLenum, target, GLenum, format, GLenum, type, GLsizei, rowBufSize, void*, row, GLsizei, columnBufSize, void*, column, void*, span)
+OPENGL_FORWARD(void, glGetnHistogram, GLenum, target, GLboolean, reset, GLenum, format, GLenum, type, GLsizei, bufSize, void*, values)
+OPENGL_FORWARD(void, glGetnMinmax, GLenum, target, GLboolean, reset, GLenum, format, GLenum, type, GLsizei, bufSize, void*, values)
+OPENGL_FORWARD(void, glTextureBarrier, void, )
+OPENGL_FORWARD(void, glSpecializeShader, GLuint, shader, const GLchar*, pEntryPoint, GLuint, numSpecializationConstants, const GLuint*, pConstantIndex, const GLuint*, pConstantValue)
+OPENGL_FORWARD(void, glMultiDrawArraysIndirectCount, GLenum, mode, const void*, indirect, GLintptr, drawcount, GLsizei, maxdrawcount, GLsizei, stride)
+OPENGL_FORWARD(void, glMultiDrawElementsIndirectCount, GLenum, mode, GLenum, type, const void*, indirect, GLintptr, drawcount, GLsizei, maxdrawcount, GLsizei, stride)
+OPENGL_FORWARD(void, glPolygonOffsetClamp, GLfloat, factor, GLfloat, units, GLfloat, clamp)
 /*
 OPENGL_FORWARD(void,glPrimitiveBoundingBoxARB ,GLfloat,minX, GLfloat,minY, GLfloat,minZ, GLfloat,minW, GLfloat,maxX, GLfloat,maxY, GLfloat,maxZ, GLfloat,maxW)
 OPENGL_FORWARD(GLuint64,glGetTextureHandleARB ,GLuint,texture)
@@ -1532,33 +1528,33 @@ OPENGL_FORWARD(void,glDeleteObjectARB ,GLhandleARB,obj)
 OPENGL_FORWARD(GLhandleARB,glGetHandleARB ,GLenum,pname)
 OPENGL_FORWARD(void,glDetachObjectARB ,GLhandleARB,containerObj, GLhandleARB,attachedObj)
 */
-OPENGL_FORWARD_REDIRECT(GLhandleARB,glCreateShaderObjectARB,glCreateShader,GLenum,shaderType)
-OPENGL_FORWARD_EXT(ARB,void,glShaderSource ,GLhandleARB,shaderObj, GLsizei,count, const GLcharARB**,string, const GLint*,length)
-OPENGL_FORWARD_EXT(ARB,void,glCompileShader ,GLhandleARB,shaderObj)
-OPENGL_FORWARD_EXT(ObjectARB, GLhandleARB,glCreateProgram,void,)
-OPENGL_FORWARD_REDIRECT(void,glAttachObjectARB, glAttachShader,GLhandleARB,containerObj, GLhandleARB,obj)
-OPENGL_FORWARD_EXT(ARB,void,glLinkProgram,GLhandleARB,programObj)
-OPENGL_FORWARD_EXT(ObjectARB,void,glUseProgram,GLhandleARB,programObj)
+OPENGL_FORWARD_REDIRECT(GLhandleARB, glCreateShaderObjectARB, glCreateShader, GLenum, shaderType)
+OPENGL_FORWARD_EXT(ARB, void, glShaderSource, GLhandleARB, shaderObj, GLsizei, count, const GLcharARB**, string, const GLint*, length)
+OPENGL_FORWARD_EXT(ARB, void, glCompileShader, GLhandleARB, shaderObj)
+OPENGL_FORWARD_EXT(ObjectARB, GLhandleARB, glCreateProgram, void, )
+OPENGL_FORWARD_REDIRECT(void, glAttachObjectARB, glAttachShader, GLhandleARB, containerObj, GLhandleARB, obj)
+OPENGL_FORWARD_EXT(ARB, void, glLinkProgram, GLhandleARB, programObj)
+OPENGL_FORWARD_EXT(ObjectARB, void, glUseProgram, GLhandleARB, programObj)
 //OPENGL_FORWARD(void,glValidateProgramARB ,GLhandleARB,programObj)
-OPENGL_FORWARD_EXT(ARB,void,glUniform1f ,GLint,location, GLfloat,v0)
-OPENGL_FORWARD_EXT(ARB,void,glUniform2f ,GLint,location, GLfloat,v0, GLfloat,v1)
-OPENGL_FORWARD_EXT(ARB,void,glUniform3f ,GLint,location, GLfloat,v0, GLfloat,v1, GLfloat,v2)
-OPENGL_FORWARD_EXT(ARB,void,glUniform4f ,GLint,location, GLfloat,v0, GLfloat,v1, GLfloat,v2, GLfloat,v3)
-OPENGL_FORWARD_EXT(ARB,void,glUniform1i ,GLint,location, GLint,v0)
-OPENGL_FORWARD_EXT(ARB,void,glUniform2i ,GLint,location, GLint,v0, GLint,v1)
-OPENGL_FORWARD_EXT(ARB,void,glUniform3i ,GLint,location, GLint,v0, GLint,v1, GLint,v2)
-OPENGL_FORWARD_EXT(ARB,void,glUniform4i ,GLint,location, GLint,v0, GLint,v1, GLint,v2, GLint,v3)
-OPENGL_FORWARD_EXT(ARB,void,glUniform1fv ,GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD_EXT(ARB,void,glUniform2fv ,GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD_EXT(ARB,void,glUniform3fv ,GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD_EXT(ARB,void,glUniform4fv ,GLint,location, GLsizei,count, const GLfloat*,value)
-OPENGL_FORWARD_EXT(ARB,void,glUniform1iv ,GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD_EXT(ARB,void,glUniform2iv ,GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD_EXT(ARB,void,glUniform3iv ,GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD_EXT(ARB,void,glUniform4iv ,GLint,location, GLsizei,count, const GLint*,value)
-OPENGL_FORWARD_EXT(ARB,void,glUniformMatrix2fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD_EXT(ARB,void,glUniformMatrix3fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
-OPENGL_FORWARD_EXT(ARB,void,glUniformMatrix4fv ,GLint,location, GLsizei,count, GLboolean,transpose, const GLfloat*,value)
+OPENGL_FORWARD_EXT(ARB, void, glUniform1f, GLint, location, GLfloat, v0)
+OPENGL_FORWARD_EXT(ARB, void, glUniform2f, GLint, location, GLfloat, v0, GLfloat, v1)
+OPENGL_FORWARD_EXT(ARB, void, glUniform3f, GLint, location, GLfloat, v0, GLfloat, v1, GLfloat, v2)
+OPENGL_FORWARD_EXT(ARB, void, glUniform4f, GLint, location, GLfloat, v0, GLfloat, v1, GLfloat, v2, GLfloat, v3)
+OPENGL_FORWARD_EXT(ARB, void, glUniform1i, GLint, location, GLint, v0)
+OPENGL_FORWARD_EXT(ARB, void, glUniform2i, GLint, location, GLint, v0, GLint, v1)
+OPENGL_FORWARD_EXT(ARB, void, glUniform3i, GLint, location, GLint, v0, GLint, v1, GLint, v2)
+OPENGL_FORWARD_EXT(ARB, void, glUniform4i, GLint, location, GLint, v0, GLint, v1, GLint, v2, GLint, v3)
+OPENGL_FORWARD_EXT(ARB, void, glUniform1fv, GLint, location, GLsizei, count, const GLfloat*, value)
+OPENGL_FORWARD_EXT(ARB, void, glUniform2fv, GLint, location, GLsizei, count, const GLfloat*, value)
+OPENGL_FORWARD_EXT(ARB, void, glUniform3fv, GLint, location, GLsizei, count, const GLfloat*, value)
+OPENGL_FORWARD_EXT(ARB, void, glUniform4fv, GLint, location, GLsizei, count, const GLfloat*, value)
+OPENGL_FORWARD_EXT(ARB, void, glUniform1iv, GLint, location, GLsizei, count, const GLint*, value)
+OPENGL_FORWARD_EXT(ARB, void, glUniform2iv, GLint, location, GLsizei, count, const GLint*, value)
+OPENGL_FORWARD_EXT(ARB, void, glUniform3iv, GLint, location, GLsizei, count, const GLint*, value)
+OPENGL_FORWARD_EXT(ARB, void, glUniform4iv, GLint, location, GLsizei, count, const GLint*, value)
+OPENGL_FORWARD_EXT(ARB, void, glUniformMatrix2fv, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD_EXT(ARB, void, glUniformMatrix3fv, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
+OPENGL_FORWARD_EXT(ARB, void, glUniformMatrix4fv, GLint, location, GLsizei, count, GLboolean, transpose, const GLfloat*, value)
 /*
 OPENGL_FORWARD(void,glGetObjectParameterfvARB ,GLhandleARB,obj, GLenum,pname, GLfloat*,params)
 OPENGL_FORWARD(void,glGetObjectParameterivARB ,GLhandleARB,obj, GLenum,pname, GLint*,params)
@@ -3246,7 +3242,6 @@ OPENGL_FORWARD(void,glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN ,co
  * EXT END
  */
 
-
 /// Register all OpenGLAPI calls, defined above
 void OpenglRedirectorBase::registerOpenGLSymbols()
 {
@@ -3258,11 +3253,9 @@ void OpenglRedirectorBase::registerOpenGLSymbols()
             redirector.addRedirection(symbol, helper::definedAPIFunctions[symbol]);
         }
     }*/
-    
-    for(auto& pair: helper::definedAPIFunctions)
+
+    for (auto& pair : helper::definedAPIFunctions)
     {
         redirector.addRedirection(pair.first, pair.second);
     }
 }
-
-

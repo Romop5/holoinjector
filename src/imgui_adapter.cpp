@@ -20,30 +20,44 @@ using namespace ve;
 
 namespace helper
 {
-    size_t mapXKeyTo256Array(size_t xkey)
+size_t mapXKeyTo256Array(size_t xkey)
+{
+    // Map ASCII to ASCII A-Z (already done by X11 lib)
+    if (XK_space <= xkey && XK_asciitilde >= xkey)
+        return xkey;
+    switch (xkey)
     {
-        // Map ASCII to ASCII A-Z (already done by X11 lib)
-        if(XK_space<= xkey && XK_asciitilde >= xkey)
-            return xkey;
-        switch(xkey)
-        {
-            case XK_Tab: return 0;
-            case XK_Left: return 1;
-            case XK_Right: return 2;
-            case XK_Up: return 4;
-            case XK_Down: return 5;
-            case XK_Page_Up: return 6;
-            case XK_Page_Down: return 7;
-            case XK_Home: return 8;
-            case XK_End: return 9;
-            case XK_Insert: return 10;
-            case XK_Delete: return 11;
-            case XK_space: return 12;
-            case XK_Return: return 13;
-            case XK_Escape: return 14;
-        }
-        return 255;
+    case XK_Tab:
+        return 0;
+    case XK_Left:
+        return 1;
+    case XK_Right:
+        return 2;
+    case XK_Up:
+        return 4;
+    case XK_Down:
+        return 5;
+    case XK_Page_Up:
+        return 6;
+    case XK_Page_Down:
+        return 7;
+    case XK_Home:
+        return 8;
+    case XK_End:
+        return 9;
+    case XK_Insert:
+        return 10;
+    case XK_Delete:
+        return 11;
+    case XK_space:
+        return 12;
+    case XK_Return:
+        return 13;
+    case XK_Escape:
+        return 14;
     }
+    return 255;
+}
 };
 
 bool ve::ImguiAdapter::initialize()
@@ -51,9 +65,9 @@ bool ve::ImguiAdapter::initialize()
     glewInit();
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); 
+    ImGuiIO& io = ImGui::GetIO();
     io.WantCaptureMouse = true;
-    io.WantCaptureKeyboard= true;
+    io.WantCaptureKeyboard = true;
     //io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
     //io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
     io.ConfigFlags = ImGuiConfigFlags_NavEnableKeyboard;
@@ -96,7 +110,7 @@ void ve::ImguiAdapter::beginFrame(Context& context)
     w = context.getCurrentViewport().getWidth();
     h = context.getCurrentViewport().getHeight();
     io.DisplaySize = ImVec2((float)w, (float)h);
-    io.DisplayFramebufferScale = ImVec2(1.0,1.0);
+    io.DisplayFramebufferScale = ImVec2(1.0, 1.0);
     io.FontGlobalScale = m_Scaling;
 
     // Setup time step
@@ -123,7 +137,7 @@ void ve::ImguiAdapter::onKey(size_t key, bool isDown)
 {
     ImGuiIO& io = ImGui::GetIO();
     io.KeysDown[helper::mapXKeyTo256Array(key)] = isDown;
-    if(isDown && std::isalnum(key))
+    if (isDown && std::isalnum(key))
     {
         io.AddInputCharacter(key);
     }
@@ -134,21 +148,23 @@ void ve::ImguiAdapter::onMousePosition(float x, float y)
     posX += x;
     posY += y;
     ImGuiIO& io = ImGui::GetIO();
-    io.MousePos = ImVec2(posX,posY);
+    io.MousePos = ImVec2(posX, posY);
 }
 
 void ve::ImguiAdapter::onButton(size_t buttonID, bool isPressed)
 {
     assert(buttonID < 5);
     ImGuiIO& io = ImGui::GetIO();
-    io.MousePos = ImVec2(posX,posY);
-    if(buttonID == 3)
+    io.MousePos = ImVec2(posX, posY);
+    if (buttonID == 3)
     {
         io.MouseWheel = 1.0;
-    } else if(buttonID == 4)
+    }
+    else if (buttonID == 4)
     {
         io.MouseWheel = -1.0;
-    } else 
+    }
+    else
     {
         io.MouseDown[buttonID] = isPressed;
     }

@@ -12,13 +12,12 @@
 #define GL_GLEXT_PROTOTYPES 1
 #include "GL/gl.h"
 
-#include "pipeline/output_fbo.hpp"
 #include "pipeline/camera_parameters.hpp"
-#include "utils/opengl_objects.hpp"
+#include "pipeline/output_fbo.hpp"
 #include "utils/opengl_debug.hpp"
+#include "utils/opengl_objects.hpp"
 
 #include "logger.hpp"
-
 
 using namespace ve;
 using namespace ve::pipeline;
@@ -36,7 +35,7 @@ size_t OutputFBOParameters::getTextureHeight() const
 }
 size_t OutputFBOParameters::getLayers() const
 {
-    return gridXSize*gridYSize;
+    return gridXSize * gridYSize;
 }
 size_t OutputFBOParameters::getGridSizeX() const
 {
@@ -60,12 +59,12 @@ void OutputFBO::initialize(OutputFBOParameters params)
     m_Params = params;
 
     auto countOfLayers = params.getLayers();
-    for(size_t i = 0; i < countOfLayers; i++)
+    for (size_t i = 0; i < countOfLayers; i++)
         m_proxyFBO.push_back(std::move(ve::utils::FBORAII(0)));
 
     glGenFramebuffers(1, &m_FBOId);
     ASSERT_GL_ERROR()
-    glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_FBOId);
     ASSERT_GL_ERROR()
 
     glGenTextures(1, &m_LayeredColorBuffer);
@@ -73,10 +72,9 @@ void OutputFBO::initialize(OutputFBOParameters params)
     glGenTextures(1, &m_LayeredDepthStencilBuffer);
     ASSERT_GL_ERROR()
 
-
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
     ASSERT_GL_ERROR()
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, params.getTextureWidth(),params.getTextureHeight(), countOfLayers);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, params.getTextureWidth(), params.getTextureHeight(), countOfLayers);
     ASSERT_GL_ERROR()
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -85,7 +83,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_LayeredColorBuffer, 0);
     ASSERT_GL_ERROR()
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredDepthStencilBuffer);
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, params.getTextureWidth(),params.getTextureHeight(), countOfLayers);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH24_STENCIL8, params.getTextureWidth(), params.getTextureHeight(), countOfLayers);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -97,14 +95,13 @@ void OutputFBO::initialize(OutputFBOParameters params)
     ASSERT_GL_ERROR()
 
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if(status != GL_FRAMEBUFFER_COMPLETE)
+    if (status != GL_FRAMEBUFFER_COMPLETE)
     {
         Logger::logError("Failed to create FBO for layered rendering: Status: glEnum: ", status);
     }
     assert(status == GL_FRAMEBUFFER_COMPLETE);
-    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ASSERT_GL_ERROR()
-
 
     /*
      * Create shader program for displaying layered color buffer
@@ -216,35 +213,35 @@ void OutputFBO::initialize(OutputFBOParameters params)
     auto vs = ve::utils::glShader(VS, GL_VERTEX_SHADER);
     assert(vs.getID() != 0);
 
-    auto program = ve::utils::glProgram(std::move(vs),std::move(fs));
+    auto program = ve::utils::glProgram(std::move(vs), std::move(fs));
     assert(program.getID() != 0);
     m_ViewerProgram = program.releaseID();
 
     m_VAO = std::make_shared<ve::utils::glFullscreenVAO>();
 
-    setHoloDisplayParameters(HoloDisplayParameters{});
+    setHoloDisplayParameters(HoloDisplayParameters {});
 }
 
 void OutputFBO::deinitialize()
 {
-    if(m_FBOId)
+    if (m_FBOId)
     {
-        glDeleteFramebuffers(1,&m_FBOId);
+        glDeleteFramebuffers(1, &m_FBOId);
         m_FBOId = 0;
     }
-    if(m_LayeredColorBuffer)
+    if (m_LayeredColorBuffer)
     {
-        glDeleteTextures(1,&m_LayeredColorBuffer);
+        glDeleteTextures(1, &m_LayeredColorBuffer);
         m_LayeredColorBuffer = 0;
     }
 
-    if(m_LayeredDepthStencilBuffer)
+    if (m_LayeredDepthStencilBuffer)
     {
-        glDeleteTextures(1,&m_LayeredDepthStencilBuffer);
+        glDeleteTextures(1, &m_LayeredDepthStencilBuffer);
         m_LayeredDepthStencilBuffer = 0;
     }
 
-    if(m_ViewerProgram)
+    if (m_ViewerProgram)
     {
         glDeleteProgram(m_ViewerProgram);
         m_ViewerProgram = 0;
@@ -259,10 +256,12 @@ void OutputFBO::renderToBackbuffer(const CameraParameters& params)
     glGetIntegerv(GL_CURRENT_PROGRAM, &oldProgram);
 
     bool result = true;
-    if(result)
+    if (result)
     {
         renderGridLayout();
-    } else {
+    }
+    else
+    {
         renderParalax(params);
     }
     glUseProgram(oldProgram);
@@ -270,7 +269,7 @@ void OutputFBO::renderToBackbuffer(const CameraParameters& params)
 
 void OutputFBO::clearBuffers()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_FBOId);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
@@ -305,7 +304,7 @@ GLuint OutputFBO::createProxyFBO(size_t layer)
     // Clear GlError
     glGetError();
     // Use cache
-    if(layer < m_proxyFBO.size() && m_proxyFBO[layer].getID() != 0)
+    if (layer < m_proxyFBO.size() && m_proxyFBO[layer].getID() != 0)
     {
         return m_proxyFBO[layer].getID();
     }
@@ -316,20 +315,20 @@ GLuint OutputFBO::createProxyFBO(size_t layer)
     assert(m_LayeredDepthStencilBuffer != 0);
 
     GLuint proxyFBO;
-    glGenFramebuffers(1,&proxyFBO);
+    glGenFramebuffers(1, &proxyFBO);
     ASSERT_GL_ERROR()
     // Hack: OpenGL require at least one bind before attaching
-    glBindFramebuffer(GL_FRAMEBUFFER,proxyFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, proxyFBO);
     ASSERT_GL_ERROR()
     //glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_LayeredColorBuffer,0, layer);
-    glNamedFramebufferTextureLayer(proxyFBO, GL_COLOR_ATTACHMENT0, m_LayeredColorBuffer,0, layer);
+    glNamedFramebufferTextureLayer(proxyFBO, GL_COLOR_ATTACHMENT0, m_LayeredColorBuffer, 0, layer);
     ASSERT_GL_ERROR()
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredDepthStencilBuffer);
-    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,m_LayeredDepthStencilBuffer,0,layer);
+    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, m_LayeredDepthStencilBuffer, 0, layer);
     ASSERT_GL_ERROR()
 
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     assert(status == GL_FRAMEBUFFER_COMPLETE);
 
     m_proxyFBO[layer] = std::move(ve::utils::FBORAII(proxyFBO));
@@ -347,7 +346,6 @@ void OutputFBO::toggleSingleViewGridView()
     shouldDisplayOnlySingleQuiltImage = !shouldDisplayOnlySingleQuiltImage;
 }
 
-
 void OutputFBO::setOnlyQuiltImageID(size_t id)
 {
     m_OnlyQuiltImageID = id;
@@ -360,24 +358,24 @@ const HoloDisplayParameters OutputFBO::getHoloDisplayParameters() const
 
 void OutputFBO::setHoloDisplayParameters(const HoloDisplayParameters params)
 {
-    if(m_HoloParameters.m_Pitch != params.m_Pitch)
+    if (m_HoloParameters.m_Pitch != params.m_Pitch)
     {
-        glUniform1f(glGetUniformLocation(m_ViewerProgram,"pitch"),params.m_Pitch);
+        glUniform1f(glGetUniformLocation(m_ViewerProgram, "pitch"), params.m_Pitch);
     }
 
-    if(m_HoloParameters.m_Tilt != params.m_Tilt)
+    if (m_HoloParameters.m_Tilt != params.m_Tilt)
     {
-        glUniform1f(glGetUniformLocation(m_ViewerProgram,"til"),params.m_Tilt);
+        glUniform1f(glGetUniformLocation(m_ViewerProgram, "til"), params.m_Tilt);
     }
 
-    if(m_HoloParameters.m_Center != params.m_Center)
+    if (m_HoloParameters.m_Center != params.m_Center)
     {
-        glUniform1f(glGetUniformLocation(m_ViewerProgram,"center"),params.m_Center);
+        glUniform1f(glGetUniformLocation(m_ViewerProgram, "center"), params.m_Center);
     }
 
-    if(m_HoloParameters.m_SubpixelSize != params.m_SubpixelSize)
+    if (m_HoloParameters.m_SubpixelSize != params.m_SubpixelSize)
     {
-        glUniform1f(glGetUniformLocation(m_ViewerProgram,"subp"),params.m_SubpixelSize);
+        glUniform1f(glGetUniformLocation(m_ViewerProgram, "subp"), params.m_SubpixelSize);
     }
 
     m_HoloParameters = params;
@@ -398,51 +396,50 @@ void OutputFBO::renderGridLayout()
     auto singleViewQuilt = glGetUniformLocation(m_ViewerProgram, "shouldSingleViewQuilt");
     glUniform1i(singleViewQuilt, shouldDisplayOnlySingleQuiltImage);
 
-    auto quiltSingle = glGetUniformLocation(m_ViewerProgram,"singleViewID");
+    auto quiltSingle = glGetUniformLocation(m_ViewerProgram, "singleViewID");
     glUniform1i(quiltSingle, m_OnlyQuiltImageID);
 
     auto& params = m_HoloParameters;
-    glUniform1f(glGetUniformLocation(m_ViewerProgram,"pitch"),params.m_Pitch);
-    glUniform1f(glGetUniformLocation(m_ViewerProgram,"tilt"),params.m_Tilt);
-    glUniform1f(glGetUniformLocation(m_ViewerProgram,"center"),params.m_Center);
+    glUniform1f(glGetUniformLocation(m_ViewerProgram, "pitch"), params.m_Pitch);
+    glUniform1f(glGetUniformLocation(m_ViewerProgram, "tilt"), params.m_Tilt);
+    glUniform1f(glGetUniformLocation(m_ViewerProgram, "center"), params.m_Center);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, m_LayeredColorBuffer);
     m_VAO->draw();
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
-
+    glBindFramebuffer(GL_FRAMEBUFFER, m_FBOId);
 };
 
 void OutputFBO::renderParalax(const CameraParameters& params)
 {
     static GLuint m_colorBuffer = 0;
     static GLuint m_depthBuffer = 0;
-    if(!m_colorBuffer || !m_depthBuffer)
+    if (!m_colorBuffer || !m_depthBuffer)
     {
-        size_t layers = m_Params.gridXSize*m_Params.gridYSize;
-        size_t zeroLayer = layers/2;
+        size_t layers = m_Params.gridXSize * m_Params.gridYSize;
+        size_t zeroLayer = layers / 2;
         glGenTextures(1, &m_colorBuffer);
-        glTextureView(m_colorBuffer, GL_TEXTURE_2D, m_LayeredColorBuffer, GL_RGBA8,0,1,zeroLayer,1);
+        glTextureView(m_colorBuffer, GL_TEXTURE_2D, m_LayeredColorBuffer, GL_RGBA8, 0, 1, zeroLayer, 1);
 
         glGenTextures(1, &m_depthBuffer);
-        glTextureView(m_depthBuffer, GL_TEXTURE_2D, m_LayeredDepthStencilBuffer, GL_DEPTH24_STENCIL8,0,1,zeroLayer,1);
+        glTextureView(m_depthBuffer, GL_TEXTURE_2D, m_LayeredDepthStencilBuffer, GL_DEPTH24_STENCIL8, 0, 1, zeroLayer, 1);
         m_Pm.initializeResources();
     }
 
     /*
      * TODO: make sure that TU 78/79 are not used by native app
      */
-    glActiveTexture(GL_TEXTURE0+79);
+    glActiveTexture(GL_TEXTURE0 + 79);
     glBindTexture(GL_TEXTURE_2D, m_colorBuffer);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    glActiveTexture(GL_TEXTURE0+78);
+    glActiveTexture(GL_TEXTURE0 + 78);
     glBindTexture(GL_TEXTURE_2D, m_depthBuffer);
     // Hack: needed for DEPTH+STENCIL texture
-    glTexParameteri (GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+    glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glActiveTexture(GL_TEXTURE0);
@@ -451,14 +448,13 @@ void OutputFBO::renderParalax(const CameraParameters& params)
     m_Pm.bindInputDepthBuffer(78);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    const auto disparityRatio = std::max(0.0,1.0-1.0/params.m_XShiftMultiplier);
-    const auto centerRatio = std::max(0.0,1.0-1.0/params.m_frontOpticalAxisCentreDistance);
+    const auto disparityRatio = std::max(0.0, 1.0 - 1.0 / params.m_XShiftMultiplier);
+    const auto centerRatio = std::max(0.0, 1.0 - 1.0 / params.m_frontOpticalAxisCentreDistance);
     m_Pm.draw(m_Params.getGridSizeX(), m_Params.getGridSizeY(), disparityRatio, centerRatio);
 
-
-    glActiveTexture(GL_TEXTURE0+79);
+    glActiveTexture(GL_TEXTURE0 + 79);
     glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTexture(GL_TEXTURE0+78);
+    glActiveTexture(GL_TEXTURE0 + 78);
     glBindTexture(GL_TEXTURE_2D, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER,m_FBOId);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_FBOId);
 }

@@ -8,16 +8,16 @@
 
 #ifndef VE_UTILS_OPENGL_UTILS_HPP
 #define VE_UTILS_OPENGL_UTILS_HPP
-#include <string>
 #include <GL/gl.h>
 #include <glm/glm.hpp>
 #include <optional>
+#include <string>
 
-namespace ve 
+namespace ve
 {
 namespace opengl_utils
 {
-    template<typename T>
+    template <typename T>
     void dumpOpenglMatrix(const T* m);
 
     glm::mat4 createMatrixFromRawGL(const GLfloat* values);

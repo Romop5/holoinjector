@@ -12,19 +12,18 @@ using namespace ve;
 
 namespace helper
 {
-    void dumpShaderSources(const GLchar* const* strings, GLsizei count)
+void dumpShaderSources(const GLchar* const* strings, GLsizei count)
+{
+    for (size_t i = 0; i < count; i++)
     {
-        for(size_t i=0; i < count; i++)
-        {
-            Logger::log("Dumping shader source i: {}\n", i);
-            puts(strings[i]);
-            Logger::log("---\n");
-        }
+        Logger::log("Dumping shader source i: {}\n", i);
+        puts(strings[i]);
+        Logger::log("---\n");
     }
+}
 } // namespace helper
 
-
-void ShaderDumper::registerCallbacks() 
+void ShaderDumper::registerCallbacks()
 {
     registerOpenGLSymbols();
 }
@@ -35,18 +34,15 @@ GLuint ShaderDumper::glCreateShader(GLenum shaderType)
     return id;
 }
 
-void ShaderDumper::glShaderSource (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length)
+void ShaderDumper::glShaderSource(GLuint shader, GLsizei count, const GLchar* const* string, const GLint* length)
 {
     Logger::log("[ShaderDumper] glShaderSource: \n");
     helper::dumpShaderSources(string, count);
-    OpenglRedirectorBase::glShaderSource(shader,count,string,length);
+    OpenglRedirectorBase::glShaderSource(shader, count, string, length);
 }
-void ShaderDumper::glShaderSourceARB (GLuint shader, GLsizei count, const GLchar* const*string, const GLint* length)
+void ShaderDumper::glShaderSourceARB(GLuint shader, GLsizei count, const GLchar* const* string, const GLint* length)
 {
     Logger::log("[ShaderDumper] glShaderSource: \n");
     helper::dumpShaderSources(string, count);
-    OpenglRedirectorBase::glShaderSource(shader,count,string,length);
+    OpenglRedirectorBase::glShaderSource(shader, count, string, length);
 }
-
-
-

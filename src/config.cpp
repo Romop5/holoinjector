@@ -6,19 +6,18 @@
 *
 *****************************************************************************/
 
-#include <sstream>
-#include <vector>
+#include "yaml-cpp/yaml.h"
 #include <filesystem>
 #include <fstream>
-#include "yaml-cpp/yaml.h"
+#include <sstream>
+#include <vector>
 
 #include "config.hpp"
 #include "context.hpp"
-#include "utils/enviroment.hpp"
 #include "logger.hpp"
+#include "utils/enviroment.hpp"
 
 using namespace ve;
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // ConfigDict
@@ -45,9 +44,9 @@ const std::string& Config::ConfigDict::getAsString(const std::string& key) const
 const std::string Config::ConfigDict::toString() const
 {
     std::stringstream ss;
-    for(const auto&[key, value]: *this)
+    for (const auto& [key, value] : *this)
     {
-        ss << key << " [ " << value << " ], "; 
+        ss << key << " [ " << value << " ], ";
     }
     return ss.str();
 }
@@ -59,9 +58,9 @@ const Config::ConfigDict Config::load()
     ConfigDict dict;
     const auto configFile = getConfigPath();
     Logger::log("Loading config from: ", configFile);
-    if(!configFile.empty())
+    if (!configFile.empty())
     {
-        loadFromFile(dict,configFile);
+        loadFromFile(dict, configFile);
     }
     loadFromEnvironment(dict);
     return dict;
@@ -70,25 +69,25 @@ const Config::ConfigDict Config::load()
 const std::string Config::getConfigPath() const
 {
     // 1. has enviroment variable ENHANCER_CONFIG
-    if(enviroment::hasEnviromentalVariable("EHANCER_CONFIG"))
+    if (enviroment::hasEnviromentalVariable("EHANCER_CONFIG"))
     {
         return enviroment::getEnviromentValueStr("ENHANCER_CONFIG", "");
     }
     // 2. has enhancer.cfg in current work dir?
     const auto relativeConfig = std::filesystem::current_path() / "enhancer.cfg";
-    if(std::filesystem::exists(relativeConfig))
+    if (std::filesystem::exists(relativeConfig))
     {
         return relativeConfig;
     }
     // 3. has enhancer.cfg in ~/.config/enhancer/
     const auto homeDir = enviroment::getEnviromentValueStr("HOME", "/tmp");
     const auto relativeHomeConfig = std::filesystem::path(homeDir) / ".config/enhancer/enhancer.cfg";
-    if(std::filesystem::exists(relativeHomeConfig))
+    if (std::filesystem::exists(relativeHomeConfig))
     {
         return relativeHomeConfig;
     }
     // 4. search for system-wide config
-    if(std::filesystem::exists("/etc/enhancer.cfg"))
+    if (std::filesystem::exists("/etc/enhancer.cfg"))
     {
         return "/etc/enhancer.cfg";
     }
@@ -96,22 +95,21 @@ const std::string Config::getConfigPath() const
     return "";
 }
 
-void Config::loadFromFile(ConfigDict& dict,const std::string& fileName)
+void Config::loadFromFile(ConfigDict& dict, const std::string& fileName)
 {
-    static std::vector<std::pair<std::string, std::string>> keyDefaultValues =
-    {
-        {"outputXSize", "512"},
-        {"outputYSize", "512"},
-        {"gridXSize", "3"},
-        {"gridYSize", "3"},
+    static std::vector<std::pair<std::string, std::string>> keyDefaultValues = {
+        { "outputXSize", "512" },
+        { "outputYSize", "512" },
+        { "gridXSize", "3" },
+        { "gridYSize", "3" },
     };
-    
+
     YAML::Node config = YAML::LoadFile(fileName);
-    for(const auto& entry: keyDefaultValues)
+    for (const auto& entry : keyDefaultValues)
     {
         const auto& key = entry.first;
         const auto& defaultValue = entry.second;
-        if(config[key])
+        if (config[key])
             dict[key] = config[key].as<std::string>();
         else
         {
@@ -125,26 +123,25 @@ void Config::loadFromFile(ConfigDict& dict,const std::string& fileName)
 }
 void Config::loadFromEnvironment(ConfigDict& dict)
 {
-    static std::vector<std::pair<std::string, std::string>> enviromentVariables =
-    {
-        {"ENHANCER_XMULTIPLIER", "xmultiplier"},
-        {"ENHANCER_DISTANCE", "distance"},
-        {"ENHANCER_NOW", "now"},
-        {"ENHANCER_QUILT", "quilt"},
-        {"ENHANCER_WIDE", "wide"},
-        {"ENHANCER_QUILTX", "gridXSize"},
-        {"ENHANCER_QUILTY", "gridYSize"},
-        {"ENHANCER_EXIT_AFTER", "exitAfterFrames"},
-        {"ENHANCER_CAMERAID", "onlyShownCameraID"},
-        {"ENHANCER_SCREENSHOT", "screenshotFormatString"},
-        {"ENHANCER_NONINTRUSIVE", "shouldBeNonIntrusive"},
-        {"ENHANCER_RUNINBG", "runInBackground"},
+    static std::vector<std::pair<std::string, std::string>> enviromentVariables = {
+        { "ENHANCER_XMULTIPLIER", "xmultiplier" },
+        { "ENHANCER_DISTANCE", "distance" },
+        { "ENHANCER_NOW", "now" },
+        { "ENHANCER_QUILT", "quilt" },
+        { "ENHANCER_WIDE", "wide" },
+        { "ENHANCER_QUILTX", "gridXSize" },
+        { "ENHANCER_QUILTY", "gridYSize" },
+        { "ENHANCER_EXIT_AFTER", "exitAfterFrames" },
+        { "ENHANCER_CAMERAID", "onlyShownCameraID" },
+        { "ENHANCER_SCREENSHOT", "screenshotFormatString" },
+        { "ENHANCER_NONINTRUSIVE", "shouldBeNonIntrusive" },
+        { "ENHANCER_RUNINBG", "runInBackground" },
     };
-    for(const auto& entry: enviromentVariables)
+    for (const auto& entry : enviromentVariables)
     {
         const auto& enviromentName = entry.first;
         const auto& keyName = entry.second;
-        if(enviroment::hasEnviromentalVariable(enviromentName))
+        if (enviroment::hasEnviromentalVariable(enviromentName))
             dict[keyName] = enviroment::getEnviromentValueStr(enviromentName);
     }
 }

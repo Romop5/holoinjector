@@ -14,14 +14,18 @@
 
 namespace ve
 {
-namespace pipeline 
+namespace pipeline
 {
     class ShaderInspector
     {
-        protected:
+    protected:
         std::string sourceCode;
-        public:
-        ShaderInspector(std::string code): sourceCode(std::move(code)) {}
+
+    public:
+        ShaderInspector(std::string code)
+            : sourceCode(std::move(code))
+        {
+        }
 
         enum AnalysisType
         {
@@ -64,7 +68,7 @@ namespace pipeline
         /// Finds all assigment to gl_Position, and returns text string, representing such statment
         std::vector<VertextAssignment> findAllOutVertexAssignments() const;
 
-        /// Compute final statement 
+        /// Compute final statement
         std::string replaceGLAssignement(VertextAssignment originalStatement);
 
         /// Injects Enhancer-specific transformation into shader and returns modified code
@@ -84,7 +88,6 @@ namespace pipeline
         TypeNamePairList getListOfVaryings() const;
         TypeNamePairList mergeList(const TypeNamePairList a, const TypeNamePairList b) const;
 
-
         Analysis analyzeGLPositionAssignment(std::string& assignment) const;
         std::string replaceGLPositionAssignment(VertextAssignment assignment) const;
 
@@ -100,7 +103,7 @@ namespace pipeline
         static void injectCommonCode(std::string& sourceOriginal);
 
         //TODO: separate into logic module
-	static std::string getCommonTransformationShader();
+        static std::string getCommonTransformationShader();
     };
 } //namespace pipeline
 } //namespace ve

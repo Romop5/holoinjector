@@ -10,32 +10,31 @@
 #include "GL/gl.h"
 #include "GL/glext.h"
 
-#include "opengl_debug.hpp"
 #include "logger.hpp"
+#include "opengl_debug.hpp"
 
 #include "GL/glu.h"
 
-
 namespace ve::debug
 {
-    void logOpenglDebugMessage(std::string file,size_t location, GLenum errorCode)
-    {
-        Logger::logError("OpenGL error:", errorCode,"(",reinterpret_cast<const char*>(gluErrorString(errorCode)),")", " at ",file,":",location);\
-    }
+void logOpenglDebugMessage(std::string file, size_t location, GLenum errorCode)
+{
+    Logger::logError("OpenGL error:", errorCode, "(", reinterpret_cast<const char*>(gluErrorString(errorCode)), ")", " at ", file, ":", location);
+}
 
-    std::string convertErrorToString(GLenum errorCode)
-    {
-        return reinterpret_cast<const char*>(gluErrorString(errorCode));
-    }
+std::string convertErrorToString(GLenum errorCode)
+{
+    return reinterpret_cast<const char*>(gluErrorString(errorCode));
+}
 
-    void logOpenglDebugMessageStr(std::string file,size_t location, std::string error)
-    {
-        Logger::logError("OpenGL error:", error, " at ",file,":",location);\
-    }
+void logOpenglDebugMessageStr(std::string file, size_t location, std::string error)
+{
+    Logger::logError("OpenGL error:", error, " at ", file, ":", location);
+}
 
-    void logTrace(const std::string msg)
-    {
-        glGetUniformLocation(0, ("trace: "+msg).c_str());
-        CLEAR_GL_ERROR();
-    }
+void logTrace(const std::string msg)
+{
+    glGetUniformLocation(0, ("trace: " + msg).c_str());
+    CLEAR_GL_ERROR();
+}
 }
