@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        utils/opengl_debug.hpp
+*
+*****************************************************************************/
+
 #ifndef OPENGL_DEBUG_HPP
 #define OPENGL_DEBUG_HPP
 

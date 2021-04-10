@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        pipeline/pipeline_injector.hpp
+*
+*****************************************************************************/
+
 #ifndef PIPELINE_INJECTOR_HPP
 #define PIPELINE_INJECTOR_HPP
 

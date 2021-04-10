@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        startup_repeater.cpp
+*
+*****************************************************************************/
+
 #include "startup_enhancer.hpp"
 #include "repeater.hpp"
 

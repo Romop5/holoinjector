@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        trackers/legacy_tracker.hpp
+*
+*****************************************************************************/
+
 #include <GL/gl.h>
 #include <glm/glm.hpp>
 

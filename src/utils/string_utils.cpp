@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        utils/string_utils.cpp
+*
+*****************************************************************************/
+
 #include "utils/string_utils.hpp"
 
 using namespace ve::utils;

@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        imgui_adapter.hpp
+*
+*****************************************************************************/
+
 #ifndef VE_IMGUI_ADAPTER_HPP
 #define VE_IMGUI_ADAPTER_HPP
 

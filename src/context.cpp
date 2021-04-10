@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        context.cpp
+*
+*****************************************************************************/
+
 #include "context.hpp"
 
 #include "trackers/shader_tracker.hpp"

@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        utils/string_utils.hpp
+*
+*****************************************************************************/
+
 #ifndef STRING_UTILS_HPP
 #define STRING_UTILS_HPP
 #include <string>

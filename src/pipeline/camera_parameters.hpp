@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        pipeline/camera_parameters.hpp
+*
+*****************************************************************************/
+
 #ifndef ENHANCER_CAMERA_PARAMETERS_HPP
 #define ENHANCER_CAMERA_PARAMETERS_HPP
 

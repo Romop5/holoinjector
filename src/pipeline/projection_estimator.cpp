@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        pipeline/projection_estimator.cpp
+*
+*****************************************************************************/
+
 #include "pipeline/projection_estimator.hpp"
 
 #include <glm/gtx/string_cast.hpp>

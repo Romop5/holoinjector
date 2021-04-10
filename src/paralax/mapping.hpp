@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        paralax/mapping.hpp
+*
+*****************************************************************************/
+
 #ifndef PARALAX_MAPPING_HPP
 #define PARALAX_MAPPING_HPP
 

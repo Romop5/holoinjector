@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        ui/inspector_widget.hpp
+*
+*****************************************************************************/
+
 #ifndef VE_INSPECTOR_WIDGET_HPP
 #define VE_INSPECTOR_WIDGET_HPP
 

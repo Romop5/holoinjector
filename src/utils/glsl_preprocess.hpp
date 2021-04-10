@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        utils/glsl_preprocess.hpp
+*
+*****************************************************************************/
+
 #ifndef VE_GLSL_PREPROCESS_HPP
 #define VE_GLSL_PREPROCESS_HPP
 

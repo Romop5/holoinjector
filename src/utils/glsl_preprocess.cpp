@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        utils/glsl_preprocess.cpp
+*
+*****************************************************************************/
+
 #include <regex>
 #include "simplecpp.h" // CPP preprocessor
 

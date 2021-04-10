@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        paralax/mapping.cpp
+*
+*****************************************************************************/
+
 #include "paralax/mapping.hpp"
 #include "utils/opengl_objects.hpp"
 

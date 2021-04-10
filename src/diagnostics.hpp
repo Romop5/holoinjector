@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        diagnostics.hpp
+*
+*****************************************************************************/
+
 #ifndef VE_DIAGNOSTICS_HPP
 #define VE_DIAGNOSTICS_HPP
 #include <cstddef>

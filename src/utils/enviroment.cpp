@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        utils/enviroment.cpp
+*
+*****************************************************************************/
+
 #include "utils/enviroment.hpp"
 #include "logger.hpp"
 

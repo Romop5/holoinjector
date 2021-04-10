@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        utils/opengl_state.cpp
+*
+*****************************************************************************/
+
 #include "utils/opengl_state.hpp"
 
 namespace ve::utils

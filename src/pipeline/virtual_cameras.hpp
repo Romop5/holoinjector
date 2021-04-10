@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        pipeline/virtual_cameras.hpp
+*
+*****************************************************************************/
+
 #ifndef ENHANCER_VIRTUAL_CAMERAS_HPP
 #define ENHANCER_VIRTUAL_CAMERAS_HPP
 #include <vector>

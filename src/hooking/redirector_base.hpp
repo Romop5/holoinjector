@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        hooking/redirector_base.hpp
+*
+*****************************************************************************/
+
 #ifndef __REDIRECTOR_BASE_HPP
 #define __REDIRECTOR_BASE_HPP
 #include <functional>

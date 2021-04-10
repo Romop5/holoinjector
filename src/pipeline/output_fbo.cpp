@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        pipeline/output_fbo.cpp
+*
+*****************************************************************************/
+
 #include <cassert>
 #include <string>
 

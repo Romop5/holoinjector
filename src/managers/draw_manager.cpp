@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        managers/draw_manager.cpp
+*
+*****************************************************************************/
+
 #define GL_GLEXT_PROTOTYPES 1
 #include <GL/gl.h>
 

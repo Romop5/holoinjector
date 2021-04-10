@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        startup_enhancer.hpp
+*
+*****************************************************************************/
+
 #ifndef __STARTUP_ENHANCER__HPP
 #define __STARTUP_ENHANCER__HPP
 #include <memory>

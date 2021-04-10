@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        ui/settings_widget.cpp
+*
+*****************************************************************************/
+
 #include "settings_widget.hpp"
 #include <imgui.h>
 

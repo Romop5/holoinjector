@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        trackers/framebuffer_tracker.hpp
+*
+*****************************************************************************/
+
 #ifndef VE_FRAMEBUFFER_TRACKER_HPP
 #define VE_FRAMEBUFFER_TRACKER_HPP
 

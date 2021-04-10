@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        ui/x11_sniffer.hpp
+*
+*****************************************************************************/
+
 #ifndef VE_UI_X11_SNIFFER_HPP
 #define VE_UI_X11_SNIFFER_HPP
 

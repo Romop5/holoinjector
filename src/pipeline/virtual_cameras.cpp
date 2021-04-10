@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        pipeline/virtual_cameras.cpp
+*
+*****************************************************************************/
+
 #include "pipeline/virtual_cameras.hpp"
 #include <glm/gtx/transform.hpp>
 #include <cassert>

@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        pipeline/shader_inspector.hpp
+*
+*****************************************************************************/
+
 #ifndef VE_SHADER_INSPECTOR_HPP
 #define VE_SHADER_INSPECTOR_HPP
 

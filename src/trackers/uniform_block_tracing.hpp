@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        trackers/uniform_block_tracing.hpp
+*
+*****************************************************************************/
+
 #ifndef VE_UNIFORM_BLOCK_TRACING_HPP
 #define VE_UNIFORM_BLOCK_TRACING_HPP
 #include <glm/glm.hpp>

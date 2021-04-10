@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        pipeline/viewport_area.hpp
+*
+*****************************************************************************/
+
 #ifndef ENHANCER_VIEWPORT_AREA_HPP
 #define ENHANCER_VIEWPORT_AREA_HPP
 #include <GL/gl.h>

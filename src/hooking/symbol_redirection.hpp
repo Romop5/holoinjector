@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        hooking/symbol_redirection.hpp
+*
+*****************************************************************************/
+
 #include <unordered_map>
 #include <string>
 namespace ve

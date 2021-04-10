@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        trackers/texture_tracker.hpp
+*
+*****************************************************************************/
+
 #ifndef VE_TEXTURE_TRACKER_HPP
 #define VE_TEXTURE_TRACKER_HPP
 #include <memory>

@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        main.cpp
+*
+*****************************************************************************/
+
 #include <dlfcn.h>
 #include "GL/gl.h"
 #include <iostream>

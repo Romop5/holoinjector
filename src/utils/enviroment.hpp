@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        utils/enviroment.hpp
+*
+*****************************************************************************/
+
 #ifndef VE_UTILS_ENVIROMENT_HPP
 #define VE_UTILS_ENVIROMENT_HPP
 

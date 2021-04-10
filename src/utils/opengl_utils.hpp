@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        utils/opengl_utils.hpp
+*
+*****************************************************************************/
+
 #ifndef VE_UTILS_OPENGL_UTILS_HPP
 #define VE_UTILS_OPENGL_UTILS_HPP
 #include <string>

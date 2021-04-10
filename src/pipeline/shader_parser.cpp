@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        pipeline/shader_parser.cpp
+*
+*****************************************************************************/
+
 #include "pipeline/shader_parser.hpp"
 
 #include <regex>

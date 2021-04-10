@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        trackers/uniform_block_tracing.cpp
+*
+*****************************************************************************/
+
 #include "trackers/uniform_block_tracing.hpp"
 
 using namespace ve;

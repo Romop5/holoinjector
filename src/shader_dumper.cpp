@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        shader_dumper.cpp
+*
+*****************************************************************************/
+
 #include "shader_dumper.hpp"
 
 using namespace ve;

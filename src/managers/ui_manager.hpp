@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        managers/ui_manager.hpp
+*
+*****************************************************************************/
+
 #ifndef VE_UI_MANAGER_HPP
 #define VE_UI_MANAGER_HPP
 

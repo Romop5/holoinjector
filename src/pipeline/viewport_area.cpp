@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        pipeline/viewport_area.cpp
+*
+*****************************************************************************/
+
 #include "pipeline/viewport_area.hpp"
 #include <cstdlib> // size_t
 #include <cstring> // memcmp

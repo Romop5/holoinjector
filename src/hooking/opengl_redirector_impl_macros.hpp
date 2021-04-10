@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        hooking/opengl_redirector_impl_macros.hpp
+*
+*****************************************************************************/
+
 /**
  * Simple reflection library for defining entities with same-type attributes,
  * and having ability to enumerate these attributes when compiled.

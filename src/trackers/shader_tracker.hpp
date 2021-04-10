@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        trackers/shader_tracker.hpp
+*
+*****************************************************************************/
+
 #include <string>
 #include <unordered_map>
 #include <unordered_set>

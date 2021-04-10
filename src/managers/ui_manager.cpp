@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        managers/ui_manager.cpp
+*
+*****************************************************************************/
+
 #include "managers/ui_manager.hpp"
 
 #include "context.hpp"

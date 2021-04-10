@@ -1,3 +1,11 @@
+/*****************************************************************************
+*
+*  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
+*  LICENSE:     See LICENSE in the top level directory
+*  FILE:        config.hpp
+*
+*****************************************************************************/
+
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 #include <string>
