@@ -18,6 +18,8 @@ supports a subset of OpenGL-based 3D applications and some of them may require m
 
 Currently, this tool is directly outputing Looking Glass's native format. 
 
+See [holoinjector-tests](https://github.com/Romop5/holoinjector-tests/) for examples of converted OpenGL applications to the quilt representation.
+
 ## Features
 - intercepting draw calls & dispatching duplicated draw calls 
 - automated detection of MVP or VP matrix uniforms in pipeline
