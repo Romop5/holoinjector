@@ -114,6 +114,11 @@ void Repeater::initialize()
         m_Context.getDiagnostics().setNonIntrusiveness(true);
     }
 
+    if (settings.hasKey("shouldRecordFPS"))
+    {
+        m_Context.getDiagnostics().setFPSMeasuringState(true);
+    }
+
     // Initialize oputput FBO
     ve::pipeline::OutputFBOParameters outParameters;
     if (settings.hasKey("outputXSize"))

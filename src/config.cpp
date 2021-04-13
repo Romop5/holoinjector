@@ -136,6 +136,7 @@ void Config::loadFromEnvironment(ConfigDict& dict)
         { "ENHANCER_SCREENSHOT", "screenshotFormatString" },
         { "ENHANCER_NONINTRUSIVE", "shouldBeNonIntrusive" },
         { "ENHANCER_RUNINBG", "runInBackground" },
+        { "ENHANCER_RECORDFPS", "shouldRecordFPS" },
     };
     for (const auto& entry : enviromentVariables)
     {

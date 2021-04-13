@@ -43,6 +43,7 @@ public:
 
     bool shouldNotBeIntrusive() const;
     void setNonIntrusiveness(bool shouldBeNonIntrusive);
+    void setFPSMeasuringState(bool isOn);
 
 private:
     /// Debug option: count rendered frames
@@ -59,6 +60,9 @@ private:
 
     /// Don't affect shaders, push transforms, etc.
     bool m_shouldNotBeIntrusive = false;
+
+    /// Should measure FPS's time in each frame
+    bool m_shouldMeasureFPS = false;
 };
 } // namespace ve
 #endif
