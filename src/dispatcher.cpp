@@ -2,11 +2,11 @@
 *
 *  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
 *  LICENSE:     See LICENSE in the top level directory
-*  FILE:        repeater.cpp
+*  FILE:        dispatcher.cpp
 *
 *****************************************************************************/
 
-#include "repeater.hpp"
+#include "dispatcher.hpp"
 #include <cassert>
 #include <iostream>
 #include <regex>
@@ -46,11 +46,11 @@
 
 using namespace ve;
 
-void Repeater::initialize()
+void Dispatcher::initialize()
 {
     m_IsInitialized = true;
 
-    Logger::log("Repeater::initialize");
+    Logger::log("Dispatcher::initialize");
 
     // Load config
     Config cfg;
@@ -197,7 +197,7 @@ void Repeater::initialize()
     Logger::log("Initialized with settings: ", settings.toString());
 }
 
-void Repeater::deinitialize()
+void Dispatcher::deinitialize()
 {
     // Clean up layered FBO & shaders
     m_Context.getOutputFBO().deinitialize();
@@ -211,24 +211,24 @@ void Repeater::deinitialize()
     m_IsInitialized = false;
 }
 
-GLint Repeater::getCurrentID(GLenum target)
+GLint Dispatcher::getCurrentID(GLenum target)
 {
     GLint id;
     OpenglRedirectorBase::glGetIntegerv(target, &id);
     return id;
 }
 
-void Repeater::glClear(GLbitfield mask)
+void Dispatcher::glClear(GLbitfield mask)
 {
     m_FramebufferManager.clear(m_Context, mask);
 }
 
-void Repeater::registerCallbacks()
+void Dispatcher::registerCallbacks()
 {
     registerOpenGLSymbols();
 }
 
-GLXContext Repeater::glXCreateContext(Display* dpy, XVisualInfo* vis, GLXContext shareList, Bool direct)
+GLXContext Dispatcher::glXCreateContext(Display* dpy, XVisualInfo* vis, GLXContext shareList, Bool direct)
 {
     // TODO: code below does not work as expected in practices
     // Hint: XVisualInfo needs to be converted into corresponding visual_attribs
@@ -284,7 +284,7 @@ GLXContext Repeater::glXCreateContext(Display* dpy, XVisualInfo* vis, GLXContext
     return OpenglRedirectorBase::glXCreateContext(dpy, vis, shareList, direct);
 }
 
-void Repeater::glXSwapBuffers(Display* dpy, GLXDrawable drawable)
+void Dispatcher::glXSwapBuffers(Display* dpy, GLXDrawable drawable)
 {
     // Render content of OutputFBO
     m_FramebufferManager.renderFromOutputFBO(m_Context);
@@ -320,12 +320,12 @@ void Repeater::glXSwapBuffers(Display* dpy, GLXDrawable drawable)
         });
 }
 
-Bool Repeater::glXMakeCurrent(Display* dpy, GLXDrawable drawable, GLXContext context)
+Bool Dispatcher::glXMakeCurrent(Display* dpy, GLXDrawable drawable, GLXContext context)
 {
-    return Repeater::glXMakeContextCurrent(dpy, drawable, drawable, context);
+    return Dispatcher::glXMakeContextCurrent(dpy, drawable, drawable, context);
 }
 
-Bool Repeater::glXMakeContextCurrent(Display* dpy, GLXDrawable draw, GLXDrawable read, GLXContext context)
+Bool Dispatcher::glXMakeContextCurrent(Display* dpy, GLXDrawable draw, GLXDrawable read, GLXContext context)
 {
     if (m_IsInitialized)
     {
@@ -346,7 +346,7 @@ Bool Repeater::glXMakeContextCurrent(Display* dpy, GLXDrawable draw, GLXDrawable
     }
 }
 
-void Repeater::glGenTextures(GLsizei n, GLuint* textures)
+void Dispatcher::glGenTextures(GLsizei n, GLuint* textures)
 {
     OpenglRedirectorBase::glGenTextures(n, textures);
 
@@ -357,7 +357,7 @@ void Repeater::glGenTextures(GLsizei n, GLuint* textures)
     }
 }
 
-void Repeater::glDeleteTextures(GLsizei n, const GLuint* textures)
+void Dispatcher::glDeleteTextures(GLsizei n, const GLuint* textures)
 {
     OpenglRedirectorBase::glDeleteTextures(n, textures);
 
@@ -367,27 +367,27 @@ void Repeater::glDeleteTextures(GLsizei n, const GLuint* textures)
     }
 }
 
-void Repeater::glTexImage1D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
+void Dispatcher::glTexImage1D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
     auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat) ? ve::trackers::TextureTracker::convertToSizedFormat(format, type) : internalFormat;
     m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, 0, level, 0, finalFormat);
 }
-void Repeater::glTexImage2D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
+void Dispatcher::glTexImage2D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
     auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat) ? ve::trackers::TextureTracker::convertToSizedFormat(format, type) : internalFormat;
     m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, level, 0, finalFormat);
 }
 
-void Repeater::glTexImage3D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels)
+void Dispatcher::glTexImage3D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels)
 {
     OpenglRedirectorBase::glTexImage3D(target, level, internalformat, width, height, depth, border, format, type, pixels);
     auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalformat) ? ve::trackers::TextureTracker::convertToSizedFormat(format, type) : internalformat;
     m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, level, 0, finalFormat);
 }
 
-void Repeater::glTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid* pixels)
+void Dispatcher::glTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexSubImage1D(target, level, xoffset, width, format, type, pixels);
     if (xoffset > 0)
@@ -399,7 +399,7 @@ void Repeater::glTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsize
     m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, 0, level, 0, finalFormat);
 }
 
-void Repeater::glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels)
+void Dispatcher::glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
     if (xoffset > 0 || yoffset > 0)
@@ -411,7 +411,7 @@ void Repeater::glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint 
     m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, level, 0, finalFormat);
 }
 
-void Repeater::glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels)
+void Dispatcher::glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels)
 {
     OpenglRedirectorBase::glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
     if (xoffset > 0 || yoffset > 0 || zoffset > 0)
@@ -423,39 +423,39 @@ void Repeater::glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint 
     m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, level, depth, finalFormat);
 }
 
-void Repeater::glTexStorage1D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
+void Dispatcher::glTexStorage1D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
 {
     OpenglRedirectorBase::glTexStorage1D(target, levels, internalformat, width);
     m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, 0, levels, 0, internalformat);
 }
-void Repeater::glTexStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
+void Dispatcher::glTexStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
 {
     OpenglRedirectorBase::glTexStorage2D(target, levels, internalformat, width, height);
     m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, levels, 0, internalformat);
 }
-void Repeater::glTexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
+void Dispatcher::glTexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
 {
     OpenglRedirectorBase::glTexStorage3D(target, levels, internalformat, width, height, depth);
     m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, levels, depth, internalformat);
 }
 
-void Repeater::glTextureStorage1D(GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width)
+void Dispatcher::glTextureStorage1D(GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width)
 {
     OpenglRedirectorBase::glTextureStorage1D(texture, levels, internalformat, width);
     m_Context.getTextureTracker().get(texture)->setStorage(GL_TEXTURE_1D, width, 0, levels, 0, internalformat);
 }
-void Repeater::glTextureStorage2D(GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
+void Dispatcher::glTextureStorage2D(GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
 {
     OpenglRedirectorBase::glTextureStorage2D(texture, levels, internalformat, width, height);
     m_Context.getTextureTracker().get(texture)->setStorage(GL_TEXTURE_2D, width, height, levels, 0, internalformat);
 }
-void Repeater::glTextureStorage3D(GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
+void Dispatcher::glTextureStorage3D(GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
 {
     OpenglRedirectorBase::glTextureStorage3D(texture, levels, internalformat, width, height, depth);
     m_Context.getTextureTracker().get(texture)->setStorage(GL_TEXTURE_3D, width, height, levels, depth, internalformat);
 }
 
-void Repeater::glGenRenderbuffers(GLsizei n, GLuint* renderbuffers)
+void Dispatcher::glGenRenderbuffers(GLsizei n, GLuint* renderbuffers)
 {
     OpenglRedirectorBase::glGenRenderbuffers(n, renderbuffers);
 
@@ -465,7 +465,7 @@ void Repeater::glGenRenderbuffers(GLsizei n, GLuint* renderbuffers)
     }
 }
 
-void Repeater::glDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffers)
+void Dispatcher::glDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffers)
 {
     OpenglRedirectorBase::glDeleteRenderbuffers(n, renderbuffers);
     for (size_t i = 0; i < n; i++)
@@ -474,7 +474,7 @@ void Repeater::glDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffers)
     }
 }
 
-void Repeater::glRenderbufferStorage(GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
+void Dispatcher::glRenderbufferStorage(GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
 {
     OpenglRedirectorBase::glRenderbufferStorage(target, internalformat, width, height);
     // Fix internal format when transfering renderbuffer to texture
@@ -482,7 +482,7 @@ void Repeater::glRenderbufferStorage(GLenum target, GLenum internalformat, GLsiz
     m_Context.getRenderbufferTracker().get(getCurrentID(GL_RENDERBUFFER_BINDING))->setStorage(target, width, height, 0, 0, internalformat);
 }
 
-void Repeater::glRenderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
+void Dispatcher::glRenderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
 {
     OpenglRedirectorBase::glRenderbufferStorage(target, internalformat, width, height);
     // Fix internal format when transfering renderbuffer to texture
@@ -490,7 +490,7 @@ void Repeater::glRenderbufferStorageMultisample(GLenum target, GLsizei samples, 
     m_Context.getRenderbufferTracker().get(getCurrentID(GL_RENDERBUFFER_BINDING))->setStorage(target, width, height, 0, 0, internalformat);
 }
 
-void Repeater::glBindTexture(GLenum target, GLuint texture)
+void Dispatcher::glBindTexture(GLenum target, GLuint texture)
 {
     m_Context.getTextureTracker().bind(target, texture);
     auto fakeTextureId = texture;
@@ -505,58 +505,58 @@ void Repeater::glBindTexture(GLenum target, GLuint texture)
     OpenglRedirectorBase::glBindTexture(target, fakeTextureId);
 }
 
-void Repeater::glActiveTexture(GLenum texture)
+void Dispatcher::glActiveTexture(GLenum texture)
 {
     OpenglRedirectorBase::glActiveTexture(texture);
     m_Context.getTextureTracker().activate(texture - GL_TEXTURE0);
 }
 
-GLuint Repeater::glCreateShader(GLenum shaderType)
+GLuint Dispatcher::glCreateShader(GLenum shaderType)
 {
     return m_ShaderManager.createShader(m_Context, shaderType);
 }
 
-void Repeater::glDeleteShader(GLuint shader)
+void Dispatcher::glDeleteShader(GLuint shader)
 {
     m_ShaderManager.deleteShader(m_Context, shader);
 }
 
-void Repeater::glShaderSource(GLuint shaderId, GLsizei count, const GLchar* const* string, const GLint* length)
+void Dispatcher::glShaderSource(GLuint shaderId, GLsizei count, const GLchar* const* string, const GLint* length)
 {
     m_ShaderManager.shaderSource(m_Context, shaderId, count, string, length);
 }
 
-void Repeater::glLinkProgram(GLuint programId)
+void Dispatcher::glLinkProgram(GLuint programId)
 {
     m_ShaderManager.linkProgram(m_Context, programId);
 }
 
-void Repeater::glCompileShader(GLuint shader)
+void Dispatcher::glCompileShader(GLuint shader)
 {
     m_ShaderManager.compileShader(m_Context, shader);
 }
 
-void Repeater::glAttachShader(GLuint program, GLuint shader)
+void Dispatcher::glAttachShader(GLuint program, GLuint shader)
 {
     m_ShaderManager.attachShader(m_Context, program, shader);
 }
 
-GLuint Repeater::glCreateProgram(void)
+GLuint Dispatcher::glCreateProgram(void)
 {
     return m_ShaderManager.createProgram(m_Context);
 }
 
-void Repeater::glDeleteProgram(GLuint program)
+void Dispatcher::glDeleteProgram(GLuint program)
 {
     return m_ShaderManager.deleteProgram(m_Context, program);
 }
 
-void Repeater::glUseProgram(GLuint program)
+void Dispatcher::glUseProgram(GLuint program)
 {
     m_ShaderManager.useProgram(m_Context, program);
 }
 
-void Repeater::glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+void Dispatcher::glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
     OpenglRedirectorBase::glUniformMatrix4fv(location, count, transpose, value);
 
@@ -593,14 +593,14 @@ void Repeater::glUniformMatrix4fv(GLint location, GLsizei count, GLboolean trans
     m_DrawManager.setEnhancerDecodedProjection(m_Context, programID, estimatedParameters);
 }
 
-void Repeater::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
+void Dispatcher::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
     OpenglRedirectorBase::glViewport(x, y, width, height);
     m_Context.getCurrentViewport().set(x, y, width, height);
     m_Context.getCameras().updateViewports(m_Context.getCurrentViewport());
 }
 
-void Repeater::glScissor(GLint x, GLint y, GLsizei width, GLsizei height)
+void Dispatcher::glScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 {
     OpenglRedirectorBase::glScissor(x, y, width, height);
     m_Context.getCurrentScissorArea().set(x, y, width, height);
@@ -610,52 +610,52 @@ void Repeater::glScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 // Duplicate API calls
 //-----------------------------------------------------------------------------
 
-void Repeater::glDrawArrays(GLenum mode, GLint first, GLsizei count)
+void Dispatcher::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
     m_DrawManager.draw(m_Context, [&]() { OpenglRedirectorBase::glDrawArrays(mode, first, count); });
 }
 
-void Repeater::glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei instancecount)
+void Dispatcher::glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei instancecount)
 {
     m_DrawManager.draw(m_Context, [&]() { OpenglRedirectorBase::glDrawArraysInstanced(mode, first, count, instancecount); });
 }
 
-void Repeater::glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices)
+void Dispatcher::glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices)
 {
     m_DrawManager.draw(m_Context, [&]() { OpenglRedirectorBase::glDrawElements(mode, count, type, indices); });
 }
 
-void Repeater::glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount)
+void Dispatcher::glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount)
 {
     m_DrawManager.draw(m_Context, [&]() { OpenglRedirectorBase::glDrawElementsInstanced(mode, count, type, indices, instancecount); });
 }
 
-void Repeater::glDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices)
+void Dispatcher::glDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices)
 {
     m_DrawManager.draw(m_Context, [&]() { OpenglRedirectorBase::glDrawRangeElements(mode, start, end, count, type, indices); });
 }
 
-void Repeater::glDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, const void* indices, GLint basevertex)
+void Dispatcher::glDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, const void* indices, GLint basevertex)
 {
     m_DrawManager.draw(m_Context, [&]() { OpenglRedirectorBase::glDrawElementsBaseVertex(mode, count, type, indices, basevertex); });
 }
-void Repeater::glDrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices, GLint basevertex)
+void Dispatcher::glDrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices, GLint basevertex)
 {
     m_DrawManager.draw(m_Context, [&]() { OpenglRedirectorBase::glDrawRangeElementsBaseVertex(mode, start, end, count, type, indices, basevertex); });
 }
-void Repeater::glDrawElementsInstancedBaseVertex(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount, GLint basevertex)
+void Dispatcher::glDrawElementsInstancedBaseVertex(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount, GLint basevertex)
 {
     m_DrawManager.draw(m_Context, [&]() { OpenglRedirectorBase::glDrawElementsInstancedBaseVertex(mode, count, type, indices, instancecount, basevertex); });
 }
 
-void Repeater::glMultiDrawElementsBaseVertex(GLenum mode, const GLsizei* count, GLenum type, const void* const* indices, GLsizei drawcount, const GLint* basevertex)
+void Dispatcher::glMultiDrawElementsBaseVertex(GLenum mode, const GLsizei* count, GLenum type, const void* const* indices, GLsizei drawcount, const GLint* basevertex)
 {
     m_DrawManager.draw(m_Context, [&]() { OpenglRedirectorBase::glMultiDrawElementsBaseVertex(mode, count, type, indices, drawcount, basevertex); });
 }
 
 // ----------------------------------------------------------------------------
 
-void Repeater::glGenFramebuffers(GLsizei n, GLuint* framebuffers)
+void Dispatcher::glGenFramebuffers(GLsizei n, GLuint* framebuffers)
 {
     OpenglRedirectorBase::glGenFramebuffers(n, framebuffers);
     for (size_t i = 0; i < n; i++)
@@ -665,7 +665,7 @@ void Repeater::glGenFramebuffers(GLsizei n, GLuint* framebuffers)
     }
 }
 
-void Repeater::glDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
+void Dispatcher::glDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
 {
     OpenglRedirectorBase::glDeleteFramebuffers(n, framebuffers);
     for (size_t i = 0; i < n; i++)
@@ -674,12 +674,12 @@ void Repeater::glDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
     }
 }
 
-void Repeater::glBindFramebuffer(GLenum target, GLuint framebuffer)
+void Dispatcher::glBindFramebuffer(GLenum target, GLuint framebuffer)
 {
     m_FramebufferManager.bindFramebuffer(m_Context, target, framebuffer);
 }
 
-void Repeater::glFramebufferTexture(GLenum target, GLenum attachment, GLuint texture, GLint level)
+void Dispatcher::glFramebufferTexture(GLenum target, GLenum attachment, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture(target, attachment, texture, level);
 
@@ -687,29 +687,29 @@ void Repeater::glFramebufferTexture(GLenum target, GLenum attachment, GLuint tex
     m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture));
 }
 
-void Repeater::glFramebufferTexture1D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
+void Dispatcher::glFramebufferTexture1D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture1D(target, attachment, textarget, texture, level);
     m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture), attachment);
 }
-void Repeater::glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
+void Dispatcher::glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 {
     OpenglRedirectorBase::glFramebufferTexture2D(target, attachment, textarget, texture, level);
     m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture), attachment);
 }
-void Repeater::glFramebufferTexture3D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset)
+void Dispatcher::glFramebufferTexture3D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset)
 {
     OpenglRedirectorBase::glFramebufferTexture3D(target, attachment, textarget, texture, level, zoffset);
     m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getTextureTracker().get(texture), attachment);
 }
 
-void Repeater::glFramebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
+void Dispatcher::glFramebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
 {
     OpenglRedirectorBase::glFramebufferRenderbuffer(target, attachment, renderbuffertarget, renderbuffer);
     m_Context.getFBOTracker().getBound()->attach(attachment, m_Context.getRenderbufferTracker().get(renderbuffer), attachment);
 }
 // ----------------------------------------------------------------------------
-GLuint Repeater::glGetUniformBlockIndex(GLuint program, const GLchar* uniformBlockName)
+GLuint Dispatcher::glGetUniformBlockIndex(GLuint program, const GLchar* uniformBlockName)
 {
     auto result = OpenglRedirectorBase::glGetUniformBlockIndex(program, uniformBlockName);
     if (!m_Context.getManager().has(program))
@@ -724,7 +724,7 @@ GLuint Repeater::glGetUniformBlockIndex(GLuint program, const GLchar* uniformBlo
     return result;
 }
 
-void Repeater::glDrawBuffers(GLsizei n, const GLenum* bufs)
+void Dispatcher::glDrawBuffers(GLsizei n, const GLenum* bufs)
 {
     OpenglRedirectorBase::glDrawBuffers(n, bufs);
     if (m_Context.getFBOTracker().hasBounded())
@@ -736,7 +736,7 @@ void Repeater::glDrawBuffers(GLsizei n, const GLenum* bufs)
     }
 }
 
-void Repeater::glUniformBlockBinding(GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding)
+void Dispatcher::glUniformBlockBinding(GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding)
 {
     OpenglRedirectorBase::glUniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding);
     if (!m_Context.getManager().has(program))
@@ -769,20 +769,20 @@ void Repeater::glUniformBlockBinding(GLuint program, GLuint uniformBlockIndex, G
     }
 }
 
-void Repeater::glBindBufferRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
+void Dispatcher::glBindBufferRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
 {
     OpenglRedirectorBase::glBindBufferRange(target, index, buffer, offset, size);
     if (target == GL_UNIFORM_BUFFER)
         m_Context.getUniformBlocksTracker().setUniformBinding(buffer, index);
 }
-void Repeater::glBindBufferBase(GLenum target, GLuint index, GLuint buffer)
+void Dispatcher::glBindBufferBase(GLenum target, GLuint index, GLuint buffer)
 {
     OpenglRedirectorBase::glBindBufferBase(target, index, buffer);
     if (target == GL_UNIFORM_BUFFER)
         m_Context.getUniformBlocksTracker().setUniformBinding(buffer, index);
 }
 
-void Repeater::glBindBuffersBase(GLenum target, GLuint first, GLsizei count, const GLuint* buffers)
+void Dispatcher::glBindBuffersBase(GLenum target, GLuint first, GLsizei count, const GLuint* buffers)
 {
     OpenglRedirectorBase::glBindBuffersBase(target, first, count, buffers);
 
@@ -795,7 +795,7 @@ void Repeater::glBindBuffersBase(GLenum target, GLuint first, GLsizei count, con
     }
 }
 
-void Repeater::glBindBuffersRange(GLenum target, GLuint first, GLsizei count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes)
+void Dispatcher::glBindBuffersRange(GLenum target, GLuint first, GLsizei count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes)
 {
     OpenglRedirectorBase::glBindBuffersRange(target, first, count, buffers, offsets, sizes);
 
@@ -808,7 +808,7 @@ void Repeater::glBindBuffersRange(GLenum target, GLuint first, GLsizei count, co
     }
 }
 
-void Repeater::glBufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage)
+void Dispatcher::glBufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage)
 {
     OpenglRedirectorBase::glBufferData(target, size, data, usage);
 
@@ -873,7 +873,7 @@ void Repeater::glBufferData(GLenum target, GLsizeiptr size, const void* data, GL
         }
     }
 }
-void Repeater::glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const void* data)
+void Dispatcher::glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const void* data)
 {
     OpenglRedirectorBase::glBufferSubData(target, offset, size, data);
 
@@ -903,13 +903,13 @@ void Repeater::glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, 
 }
 
 // ----------------------------------------------------------------------------
-void Repeater::glMatrixMode(GLenum mode)
+void Dispatcher::glMatrixMode(GLenum mode)
 {
     OpenglRedirectorBase::glMatrixMode(mode);
     m_Context.getLegacyTracker().matrixMode(mode);
     //Logger::log("glMatrixMode ", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
 }
-void Repeater::glLoadMatrixd(const GLdouble* m)
+void Dispatcher::glLoadMatrixd(const GLdouble* m)
 {
     OpenglRedirectorBase::glLoadMatrixd(m);
     if (m_Context.getLegacyTracker().getMatrixMode() == GL_PROJECTION)
@@ -919,7 +919,7 @@ void Repeater::glLoadMatrixd(const GLdouble* m)
     }
     //helper::dumpOpenglMatrix(m);
 }
-void Repeater::glLoadMatrixf(const GLfloat* m)
+void Dispatcher::glLoadMatrixf(const GLfloat* m)
 {
     OpenglRedirectorBase::glLoadMatrixf(m);
     if (m_Context.getLegacyTracker().getMatrixMode() == GL_PROJECTION)
@@ -930,7 +930,7 @@ void Repeater::glLoadMatrixf(const GLfloat* m)
     //helper::dumpOpenglMatrix(m);
 }
 
-void Repeater::glLoadIdentity(void)
+void Dispatcher::glLoadIdentity(void)
 {
     OpenglRedirectorBase::glLoadIdentity();
     if (m_Context.getLegacyTracker().getMatrixMode() == GL_PROJECTION)
@@ -940,7 +940,7 @@ void Repeater::glLoadIdentity(void)
     }
 }
 
-void Repeater::glMultMatrixd(const GLdouble* m)
+void Dispatcher::glMultMatrixd(const GLdouble* m)
 {
     OpenglRedirectorBase::glMultMatrixd(m);
     if (m_Context.getLegacyTracker().getMatrixMode() == GL_PROJECTION)
@@ -950,7 +950,7 @@ void Repeater::glMultMatrixd(const GLdouble* m)
     }
 }
 
-void Repeater::glMultMatrixf(const GLfloat* m)
+void Dispatcher::glMultMatrixf(const GLfloat* m)
 {
     OpenglRedirectorBase::glMultMatrixf(m);
     if (m_Context.getLegacyTracker().getMatrixMode() == GL_PROJECTION)
@@ -960,19 +960,19 @@ void Repeater::glMultMatrixf(const GLfloat* m)
     }
 }
 
-void Repeater::glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val)
+void Dispatcher::glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val)
 {
     OpenglRedirectorBase::glOrtho(left, right, bottom, top, near_val, far_val);
     m_Context.getLegacyTracker().multMatrix(glm::ortho(left, right, bottom, top, near_val, far_val));
 }
 
-void Repeater::glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val)
+void Dispatcher::glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val)
 {
     OpenglRedirectorBase::glFrustum(left, right, bottom, top, near_val, far_val);
     m_Context.getLegacyTracker().multMatrix(glm::frustum(left, right, bottom, top, near_val, far_val));
 }
 
-void Repeater::glBegin(GLenum mode)
+void Dispatcher::glBegin(GLenum mode)
 {
     if (m_Context.m_callList == 0)
     {
@@ -982,7 +982,7 @@ void Repeater::glBegin(GLenum mode)
     OpenglRedirectorBase::glBegin(mode);
 }
 
-void Repeater::glEnd()
+void Dispatcher::glEnd()
 {
     OpenglRedirectorBase::glEnd();
     OpenglRedirectorBase::glEndList();
@@ -992,13 +992,13 @@ void Repeater::glEnd()
     });
 }
 
-void Repeater::glCallList(GLuint list)
+void Dispatcher::glCallList(GLuint list)
 {
     m_DrawManager.draw(m_Context, [&]() {
         OpenglRedirectorBase::glCallList(list);
     });
 }
-void Repeater::glCallLists(GLsizei n, GLenum type, const GLvoid* lists)
+void Dispatcher::glCallLists(GLsizei n, GLenum type, const GLvoid* lists)
 {
     m_DrawManager.draw(m_Context, [&]() {
         OpenglRedirectorBase::glCallLists(n, type, lists);
@@ -1008,17 +1008,17 @@ void Repeater::glCallLists(GLsizei n, GLenum type, const GLvoid* lists)
 //-----------------------------------------------------------------------------
 // Debugging utils
 //-----------------------------------------------------------------------------
-int Repeater::XNextEvent(Display* display, XEvent* event_return)
+int Dispatcher::XNextEvent(Display* display, XEvent* event_return)
 {
     //return OpenglRedirectorBase::XNextEvent(display, event_return);
     return m_Context.getX11Sniffer().onXNextEvent(display, event_return);
 }
 
-int Repeater::XWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y)
+int Dispatcher::XWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y)
 {
     return OpenglRedirectorBase::XWarpPointer(display, src_w, dest_w, src_x, src_y, src_width, src_height, dest_x, dest_y);
 }
-Window Repeater::XCreateWindow(Display* display, Window parent, int x, int y, unsigned int width, unsigned int height, unsigned int border_width, int depth, unsigned int classInstance, Visual* visual, unsigned long valuemask, XSetWindowAttributes* attributes)
+Window Dispatcher::XCreateWindow(Display* display, Window parent, int x, int y, unsigned int width, unsigned int height, unsigned int border_width, int depth, unsigned int classInstance, Visual* visual, unsigned long valuemask, XSetWindowAttributes* attributes)
 {
     if (width > 1 && height > 1)
     {
@@ -1038,7 +1038,7 @@ Window Repeater::XCreateWindow(Display* display, Window parent, int x, int y, un
     return OpenglRedirectorBase::XCreateWindow(display, parent, x, y, width, height, border_width, depth, classInstance, visual, valuemask, attributes);
 }
 
-int Repeater::XMapWindow(Display* display, Window win)
+int Dispatcher::XMapWindow(Display* display, Window win)
 {
     if (!m_Context.keepWindowInBackgroundFlag)
     {
@@ -1047,7 +1047,7 @@ int Repeater::XMapWindow(Display* display, Window win)
     return 0;
 }
 
-void Repeater::XSetWMNormalHints(Display* display, Window w, XSizeHints* hints)
+void Dispatcher::XSetWMNormalHints(Display* display, Window w, XSizeHints* hints)
 {
     if (hints)
     {

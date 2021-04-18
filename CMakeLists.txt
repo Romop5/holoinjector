@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(enhancer
+project(holoinjector
     VERSION 1.0
     DESCRIPTION "A conversion layer for legacy OpenGL apps to multiview, wide-angle 3D display"
-    HOMEPAGE_URL "https://github.com/Romop5/diploma-thesis")
+    HOMEPAGE_URL "https://github.com/Romop5/holoinjector")
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
@@ -25,26 +25,26 @@ endif ()
 ###############################################################################
 # Get options from user
 ###############################################################################
-option(ENHANCER_BUILD_TESTS "Should also build unittests?" ON)
-option(ENHANCER_BUILD_DOCS "Should also build Doxygen docs?" OFF)
-option(ENHANCER_BUILD_TESTS_COVERAGE "Should also enable code coverage?" OFF)
-option(ENHANCER_32 "Force 32-bit compilation" OFF)
+option(HOLOINJECTOR_BUILD_TESTS          "Should also build unittests?" ON)
+option(HOLOINJECTOR_BUILD_DOCS           "Should also build Doxygen docs?" OFF)
+option(HOLOINJECTOR_BUILD_TESTS_COVERAGE "Should also enable code coverage?" OFF)
+option(HOLOINJECTOR_32                   "Force 32-bit compilation" OFF)
 
-# Stores 32 or 64 into ENHANCER_BITS
-set(ENHANCER_BITS 64)
+# Stores 32 or 64 into HOLOINJECTOR_BITS
+set(HOLOINJECTOR_BITS 64)
 
-if(${ENHANCER_32})
+if(${HOLOINJECTOR_32})
     message(STATUS "Forcing 32-bit compilation")
-    set(ENHANCER_BITS 32)
+    set(HOLOINJECTOR_BITS 32)
 endif()
 
 set(PROJECT_SUFFIX, "_64")
-if(${ENHANCER_32})
+if(${HOLOINJECTOR_32})
     set(PROJECT_SUFFIX "_32")
 endif()
 
-set(ENHANCER_PROJECT_NAME "enhancer${PROJECT_SUFFIX}")
-message(STATUS "Using project name: ${ENHANCER_PROJECT_NAME}")
+set(HOLOINJECTOR_PROJECT_NAME "HoloInjector${PROJECT_SUFFIX}")
+message(STATUS "Using project name: ${HOLOINJECTOR_PROJECT_NAME}")
 
 ###############################################################################
 # Find subhook & 3rd parties
@@ -53,14 +53,14 @@ message(STATUS "Using project name: ${ENHANCER_PROJECT_NAME}")
 #find_file (SUBHOOK_SO64 NAMES libsubhook.so PATHS /usr/local/lib64/ REQUIRED)
 #find_file (SUBHOOK_H NAMES subhook.h REQUIRED)
 
-#set(SUBHOOK_SO ${SUBHOOK_SO${ENHANCER_BITS}})
+#set(SUBHOOK_SO ${SUBHOOK_SO${HOLOINJECTOR_BITS}})
 #get_filename_component(SUBHOOK_INCL ${SUBHOOK_H} DIRECTORY)
 
 find_file (SIMPLECPP_SO32 NAMES libsimplecpp.so PATHS /usr/local/lib/ REQUIRED)
 find_file (SIMPLECPP_SO64 NAMES libsimplecpp.so PATHS /usr/local/lib/ REQUIRED)
 find_file (SIMPLECPP_H NAMES simplecpp.h REQUIRED)
 
-set(SIMPLECPP_SO ${SIMPLECPP_SO${ENHANCER_BITS}})
+set(SIMPLECPP_SO ${SIMPLECPP_SO${HOLOINJECTOR_BITS}})
 
 message("Found simplecpp.so: ${SIMPLECPP_SO}")
 
@@ -75,7 +75,7 @@ find_package(yaml-cpp REQUIRED)
 
 find_library(IMGUI_LIB libimgui.so PATHS lib lib64 REQUIRED)
 
-if(${ENHANCER_BUILD_DOCS})
+if(${HOLOINJECTOR_BUILD_DOCS})
     find_package(Doxygen
                  REQUIRED dot
                  OPTIONAL_COMPONENTS mscgen dia)
@@ -91,7 +91,7 @@ endif()
 # Create core library (enhancer)
 ###############################################################################
 
-add_library(enhancer_core
+add_library(injector_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_tracker.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/shader_tracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/trackers/framebuffer_tracker.hpp
@@ -178,29 +178,29 @@ add_library(enhancer_core
 
 # Hack: we would like a static library to be linked into shared library later
 # => Position Independent Code is thus required
-target_compile_options(enhancer_core PRIVATE "-fPIC")
-set_target_properties(enhancer_core PROPERTIES CXX_VISIBILITY_PRESET "hidden")
-set_target_properties(enhancer_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+target_compile_options(injector_core PRIVATE "-fPIC")
+set_target_properties(injector_core PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+set_target_properties(injector_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
-target_link_libraries(enhancer_core PUBLIC GL GLU glm ${FREEIMAGE_LIBRARIES}
+target_link_libraries(injector_core PUBLIC GL GLU GLEW glm ${FREEIMAGE_LIBRARIES}
     yaml-cpp )
-target_include_directories(enhancer_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
+target_include_directories(injector_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${FREEIMAGE_INCLUDE_DIR})
-target_compile_features(enhancer_core PUBLIC cxx_std_17)
+target_compile_features(injector_core PUBLIC cxx_std_17)
 
 ###############################################################################
-# Create utils library (enhancer_core)
+# Create utils library (injector_core)
 ###############################################################################
-add_library(${ENHANCER_PROJECT_NAME} INTERFACE 
+add_library(${HOLOINJECTOR_PROJECT_NAME} INTERFACE 
 )
 
-target_sources(${ENHANCER_PROJECT_NAME} INTERFACE
+target_sources(${HOLOINJECTOR_PROJECT_NAME} INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hooking/opengl_redirector_base.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hooking/opengl_redirector_base.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/startup_enhancer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/startup_injector.cpp
     )
 
-target_link_libraries(${ENHANCER_PROJECT_NAME} INTERFACE ${SUBHOOK_SO} dl X11 glm enhancer_core)
+target_link_libraries(${HOLOINJECTOR_PROJECT_NAME} INTERFACE ${SUBHOOK_SO} dl X11 glm injector_core)
 
 
 ###############################################################################
@@ -212,12 +212,12 @@ macro(createEnhancerApplication name)
     add_library(${APPLICATION_NAME} SHARED
         ${ARGN}
     )
-    target_link_libraries(${APPLICATION_NAME} PRIVATE ${ENHANCER_PROJECT_NAME})
+    target_link_libraries(${APPLICATION_NAME} PRIVATE ${HOLOINJECTOR_PROJECT_NAME})
     target_link_libraries(${APPLICATION_NAME} PUBLIC ${SIMPLECPP_SO} ${IMGUI_LIB})
     set_target_properties(${APPLICATION_NAME} PROPERTIES CXX_VISIBILITY_PRESET "hidden")
     set_target_properties(${APPLICATION_NAME} PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
-    if(${ENHANCER_32})
+    if(${HOLOINJECTOR_32})
         set_target_properties(${APPLICATION_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
     endif()
 endmacro()
@@ -226,7 +226,7 @@ endmacro()
 ###############################################################################
 # Create apps
 ###############################################################################
-createEnhancerApplication(repeater src/startup_repeater.cpp src/repeater.cpp)
+createEnhancerApplication(holoInjector src/startup_main.cpp src/dispatcher.cpp)
 #createEnhancerApplication(shaderDumper src/startup_dumper.cpp src/shader_dumper.cpp)
 
 ###############################################################################
@@ -235,17 +235,17 @@ createEnhancerApplication(repeater src/startup_repeater.cpp src/repeater.cpp)
 add_executable(app 
     src/main.cpp
 )
-if(${ENHANCER_32})
+if(${HOLOINJECTOR_32})
     set_target_properties(app PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
 endif()
-target_link_libraries(app PRIVATE repeater${PROJECT_SUFFIX} dl)
-target_link_libraries(enhancer_core PUBLIC ${SIMPLECPP_SO})
+target_link_libraries(app PRIVATE holoInjector${PROJECT_SUFFIX} dl)
+target_link_libraries(injector_core PUBLIC ${SIMPLECPP_SO})
 
 ###############################################################################
 # Create tests
 ###############################################################################
 
-if(${ENHANCER_BUILD_TESTS})
+if(${HOLOINJECTOR_BUILD_TESTS})
     enable_testing()
     find_package(GTest REQUIRED)
     find_package(Threads)
@@ -258,7 +258,7 @@ if(${ENHANCER_BUILD_TESTS})
     add_executable(unittests 
         ${UNITTEST_FILES}
     )
-    target_link_libraries(unittests ${GTEST_BOTH_LIBRARIES} enhancer_core Threads::Threads)
+    target_link_libraries(unittests ${GTEST_BOTH_LIBRARIES} injector_core Threads::Threads)
     set(TARGET unittests PROPERTY CXX_STANDARD 17)
 
     #===========================================================================
@@ -266,12 +266,12 @@ if(${ENHANCER_BUILD_TESTS})
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/opengl/opengl_test_context.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/opengl/output_fbo_test.cpp
     )
-    target_link_libraries(opengl-unittest ${GTEST_BOTH_LIBRARIES} enhancer_core GL X11)
+    target_link_libraries(opengl-unittest ${GTEST_BOTH_LIBRARIES} injector_core GL X11)
     set(TARGET opengl-unittest PROPERTY CXX_STANDARD 17)
 
     #===========================================================================
     add_test(NAME AllTests COMMAND "$<TARGET_FILE:unittests>")
-    if(${ENHANCER_BUILD_TESTS_COVERAGE})
+    if(${HOLOINJECTOR_BUILD_TESTS_COVERAGE})
         include(CodeCoverage)
         append_coverage_compiler_flags()
 

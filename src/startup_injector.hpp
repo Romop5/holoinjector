@@ -2,12 +2,12 @@
 *
 *  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
 *  LICENSE:     See LICENSE in the top level directory
-*  FILE:        startup_enhancer.hpp
+*  FILE:        startup_injector.hpp
 *
 *****************************************************************************/
 
-#ifndef __STARTUP_ENHANCER__HPP
-#define __STARTUP_ENHANCER__HPP
+#ifndef __STARTUP_INJECTOR__HPP
+#define __STARTUP_INJECTOR__HPP
 #include "hooking/redirector_base.hpp"
 #include <memory>
 /**
@@ -15,7 +15,7 @@
  *
  * @param redirector
  */
-void enhancer_setup(std::unique_ptr<ve::hooking::RedirectorBase> redirector);
-void enhancer_cleaner();
+void injector_setup(std::unique_ptr<ve::hooking::RedirectorBase> redirector);
+void injector_cleaner();
 
 #endif

@@ -24,13 +24,13 @@ namespace ve
 /**
      * @brief Reroutes hooked OpenGL calls to submodules
      *
-     * Repeater serves as a dispatcher, redirecting OpenGL's API calls to
+     * Dispatcher serves as a dispatcher, redirecting OpenGL's API calls to
      * corresponding trackers and managers.
      *
      * Trackers keep track of object' properties and bindings whereas 
      * managers are responsible for handling events w.r.t. context.
      */
-class Repeater : public ve::hooking::OpenglRedirectorBase
+class Dispatcher : public ve::hooking::OpenglRedirectorBase
 {
 public:
     virtual void registerCallbacks() override;

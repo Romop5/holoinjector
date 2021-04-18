@@ -2,7 +2,7 @@
 *
 *  PROJECT:     HoloInjector - https://github.com/Romop5/holoinjector
 *  LICENSE:     See LICENSE in the top level directory
-*  FILE:        startup_enhancer.cpp
+*  FILE:        startup_injector.cpp
 *
 *****************************************************************************/
 
@@ -21,17 +21,17 @@
 #include <cassert>
 #include <unistd.h>
 
-#define ENHANCER_API_EXPORT __attribute__((visibility("default")))
+#define INJECTOR_API_EXPORT __attribute__((visibility("default")))
 
 using namespace ve;
 
-struct EnhancerContext
+struct InjectorContext
 {
     std::unique_ptr<ve::hooking::RedirectorBase> redirector;
     //subhook_t dlsymhook;
 };
 
-static std::unique_ptr<EnhancerContext> context = nullptr;
+static std::unique_ptr<InjectorContext> context = nullptr;
 
 extern "C" void* __libc_dlopen_mode(const char* filename, int flag);
 extern "C" void* __libc_dlsym(void* handle, const char* symbol);
@@ -44,7 +44,7 @@ bool shouldLogApiCall()
     static bool isQueried = false;
     if (!isQueried)
     {
-        shouldLogApiCall = (getenv("ENHANCER_LOG_LOAD") != nullptr);
+        shouldLogApiCall = (getenv("INJECTOR_LOG_LOAD") != nullptr);
         isQueried = true;
     }
     return shouldLogApiCall;
@@ -73,7 +73,7 @@ void* original_dlsym(void* params, const char* symbol)
         {
             if (helper::shouldLogApiCall())
             {
-                printf("[Enhancer] error: failed to look up real dlsym\n");
+                printf("[Injector] error: failed to look up real dlsym\n");
             }
             return NULL;
         }
@@ -89,7 +89,7 @@ void* original_dlsym(void* params, const char* symbol)
             original_dlsym = subhook_get_trampoline(context->dlsymhook);
         if(original_dlsym == nullptr)
         {
-            puts("[Enhancer] failed to get original address of dlsym\n");
+            puts("[Injector] failed to get original address of dlsym\n");
             exit(1);
         }
         using dlsym_type = void*(void*, const char*);
@@ -118,7 +118,7 @@ void* hooked_dlsym(void* params, const char* symbol)
             }
             if (!dlopen_sym)
             {
-                printf("[Enhancer] error: failed to look up real dlsym\n");
+                printf("[Injector] error: failed to look up real dlsym\n");
                 return NULL;
             }
         }
@@ -130,7 +130,7 @@ void* hooked_dlsym(void* params, const char* symbol)
 
     if (helper::shouldLogApiCall())
     {
-        printf("[Enhancer dlsym] '%s'\n", symbol);
+        printf("[Injector dlsym] '%s'\n", symbol);
     }
 
     assert(context != nullptr);
@@ -157,12 +157,12 @@ void* getOriginalCallAddress(std::string symbol)
 
     if (helper::shouldLogApiCall())
     {
-        printf("[Enhancer- symbol getter] Calling original dlsym with symbo %s\n", symbol.c_str());
+        printf("[Injector- symbol getter] Calling original dlsym with symbo %s\n", symbol.c_str());
     }
     auto addr = ve::original_dlsym(RTLD_NEXT, symbol.c_str());
     if (addr == NULL)
     {
-        puts("[Enhancer- symbol getter] Failed to get original address via dlsym()");
+        puts("[Injector- symbol getter] Failed to get original address via dlsym()");
     }
     return addr;
 }
@@ -170,7 +170,7 @@ void* getOriginalCallAddress(std::string symbol)
 } // namespace ve
 
 // Hooked
-ENHANCER_API_EXPORT void* dlsym(void* params, const char* symbol)
+INJECTOR_API_EXPORT void* dlsym(void* params, const char* symbol)
 {
     if (context == nullptr)
         return ve::original_dlsym(params, symbol);
@@ -186,14 +186,14 @@ namespace helper
         auto retval = subhook_install(hook);
         if(retval != 0)
         {
-            fputs("[Enhancer] failed: failed to hook dlsym()\n",stdout);
+            fputs("[Injector] failed: failed to hook dlsym()\n",stdout);
             return false;
         }
 
         auto trampoline_test = subhook_get_trampoline(hook);
         if(trampoline_test == NULL)
         {
-            fputs("[Enhancer] failed: failed to create trampoline()\n",stdout);
+            fputs("[Injector] failed: failed to create trampoline()\n",stdout);
             return false;
         }
         return true;
@@ -222,7 +222,7 @@ void dumpRedirections(DICT dict)
  */
 void _hack_preventLazyBinding()
 {
-    auto test = dlsym(reinterpret_cast<void*>(RTLD_DEFAULT), "enhancer_setup");
+    auto test = dlsym(reinterpret_cast<void*>(RTLD_DEFAULT), "injector_setup");
     static_cast<void>(test);
 }
 
@@ -231,17 +231,17 @@ void _hack_preventLazyBinding()
  *
  * Hooks all neccessary functions to detour OpenGL library calls
  */
-void enhancer_setup(std::unique_ptr<ve::hooking::RedirectorBase> redirector)
+void injector_setup(std::unique_ptr<ve::hooking::RedirectorBase> redirector)
 {
     // Necessary hack
     _hack_preventLazyBinding();
 
-    puts("[Enhancer] starting setup...");
+    puts("[Injector] starting setup...");
     // Decide whether to use 64bit hook or not
     /* SUBHOOK
      * auto hookTypeFlags = static_cast<subhook_flags>(SUBHOOK_BITS == 32?0:SUBHOOK_64BIT_OFFSET);
      */
-    context = std::make_unique<EnhancerContext>();
+    context = std::make_unique<InjectorContext>();
     context->redirector = std::move(redirector);
     /*
      * Hook dlopen/dlsym functions and dispatch via our own function
@@ -261,16 +261,16 @@ void enhancer_setup(std::unique_ptr<ve::hooking::RedirectorBase> redirector)
      */
     context->redirector->registerCallbacks();
     helper::dumpRedirections(context->redirector->getRedirectedFunctions().getMapping());
-    fputs("[Enhancer] Registration done\n", stdout);
+    fputs("[Injector] Registration done\n", stdout);
     if (dlSymHookStatus == false)
     {
-        fputs("[Enhancer] Hooking dlsym() failed -> we can't hook any of OpenGL API functions\n", stdout);
-        fputs("[Enhancer] Make sure that 'getsebool allow_execheap' is on\n", stdout);
-        fputs("[Enhancer] If not, run 'setsebool allow_execheap on' as administrator\n", stdout);
+        fputs("[Injector] Hooking dlsym() failed -> we can't hook any of OpenGL API functions\n", stdout);
+        fputs("[Injector] Make sure that 'getsebool allow_execheap' is on\n", stdout);
+        fputs("[Injector] If not, run 'setsebool allow_execheap on' as administrator\n", stdout);
     }
 }
 
-void enhancer_cleaner()
+void injector_cleaner()
 {
     context.reset();
 }
