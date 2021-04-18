@@ -131,6 +131,8 @@ void Config::loadFromEnvironment(ConfigDict& dict)
         { "ENHANCER_WIDE", "wide" },
         { "ENHANCER_QUILTX", "gridXSize" },
         { "ENHANCER_QUILTY", "gridYSize" },
+        { "ENHANCER_FBOWIDTH", "outputXSize" },
+        { "ENHANCER_FBOHEIGHT", "outputYSize" },
         { "ENHANCER_EXIT_AFTER", "exitAfterFrames" },
         { "ENHANCER_CAMERAID", "onlyShownCameraID" },
         { "ENHANCER_SCREENSHOT", "screenshotFormatString" },
