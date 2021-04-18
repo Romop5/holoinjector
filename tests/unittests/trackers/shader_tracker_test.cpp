@@ -56,7 +56,7 @@ namespace helper
 
 #define EXPECT_TOKENS(code, ...)\
 {\
-    auto tokens = ve::pipeline::tokenize(code);\
+    auto tokens = hi::pipeline::tokenize(code);\
     helper::token_stream expectedTokens = {__VA_ARGS__ };\
     auto comparison = helper::compareStreams(tokens, expectedTokens);\
     EXPECT_TRUE(comparison.areSame);\

@@ -18,8 +18,8 @@
 #include "pipeline/shader_parser.hpp"
 #include "utils/glsl_preprocess.hpp"
 
-using namespace ve;
-using namespace ve::pipeline;
+using namespace hi;
+using namespace hi::pipeline;
 
 namespace helper
 {
@@ -64,7 +64,7 @@ std::string wrapAssignmentExpresion(const std::string assignment, const std::str
 }
 } // namespace helper
 
-bool ve::pipeline::ShaderInspector::isIdentifier(const std::string_view& token) const
+bool hi::pipeline::ShaderInspector::isIdentifier(const std::string_view& token) const
 {
     auto tk = std::string(token);
     std::smatch m;
@@ -72,7 +72,7 @@ bool ve::pipeline::ShaderInspector::isIdentifier(const std::string_view& token) 
     return std::regex_match(tk, m, identifier);
 }
 
-bool ve::pipeline::ShaderInspector::isUniformVariableInInterfaceBlock(const std::string& identifier) const
+bool hi::pipeline::ShaderInspector::isUniformVariableInInterfaceBlock(const std::string& identifier) const
 {
     std::string regexLiteral = std::string("uniform[^;]*\\{[^\\}]*[\f\n\r\t\v ]") + identifier + std::string("[\f\n\r\t\v ]*;[^\\}]*\\}");
     auto isDefinedAsUniform = std::regex(regexLiteral, std::regex::extended);
@@ -81,7 +81,7 @@ bool ve::pipeline::ShaderInspector::isUniformVariableInInterfaceBlock(const std:
     return m.size() > 0;
 }
 
-std::string ve::pipeline::ShaderInspector::getUniformBlockName(const std::string& uniformName) const
+std::string hi::pipeline::ShaderInspector::getUniformBlockName(const std::string& uniformName) const
 {
     if (uniformName.empty())
         return "";
@@ -97,7 +97,7 @@ std::string ve::pipeline::ShaderInspector::getUniformBlockName(const std::string
     return "";
 }
 
-bool ve::pipeline::ShaderInspector::isUniformVariable(const std::string& identifier) const
+bool hi::pipeline::ShaderInspector::isUniformVariable(const std::string& identifier) const
 {
     if (identifier.empty())
         return false;
@@ -111,7 +111,7 @@ bool ve::pipeline::ShaderInspector::isUniformVariable(const std::string& identif
     return m.size() > 0;
 }
 
-std::string ve::pipeline::ShaderInspector::getVariableType(const std::string& variable) const
+std::string hi::pipeline::ShaderInspector::getVariableType(const std::string& variable) const
 {
     std::string regexLiteral = std::string("[a-zA-Z0-9]+[\f\n\r\t\v ]+") + variable + std::string("[\f\n\r\t\v ]*;");
     auto definitionPattern = std::regex(regexLiteral, std::regex::extended);
@@ -124,7 +124,7 @@ std::string ve::pipeline::ShaderInspector::getVariableType(const std::string& va
     return definitionStatementRawText.substr(0, firstWhitespacePosition);
 }
 
-std::vector<ShaderInspector::VertextAssignment> ve::pipeline::ShaderInspector::findAllOutVertexAssignments() const
+std::vector<ShaderInspector::VertextAssignment> hi::pipeline::ShaderInspector::findAllOutVertexAssignments() const
 {
     std::vector<VertextAssignment> results;
     // Search for all assignments into gl_Position
@@ -181,7 +181,7 @@ std::vector<ShaderInspector::VertextAssignment> ve::pipeline::ShaderInspector::f
     return results;
 }
 
-std::string ve::pipeline::ShaderInspector::injectShader(const std::vector<ShaderInspector::VertextAssignment>& assignments)
+std::string hi::pipeline::ShaderInspector::injectShader(const std::vector<ShaderInspector::VertextAssignment>& assignments)
 {
     std::string output = sourceCode;
     for (auto& statement : assignments)
@@ -206,7 +206,7 @@ std::string ve::pipeline::ShaderInspector::injectShader(const std::vector<Shader
     return output;
 }
 
-std::string ve::pipeline::ShaderInspector::getTransformationUniformName(std::vector<VertextAssignment> assignments)
+std::string hi::pipeline::ShaderInspector::getTransformationUniformName(std::vector<VertextAssignment> assignments)
 {
     for (const auto& statement : assignments)
     {
@@ -217,7 +217,7 @@ std::string ve::pipeline::ShaderInspector::getTransformationUniformName(std::vec
 }
 
 /// Get count of declared uniforms in shader
-size_t ve::pipeline::ShaderInspector::getCountOfUniforms() const
+size_t hi::pipeline::ShaderInspector::getCountOfUniforms() const
 {
     size_t count = 0;
     size_t position = sourceCode.find("uniform");
@@ -229,7 +229,7 @@ size_t ve::pipeline::ShaderInspector::getCountOfUniforms() const
     return count;
 }
 
-std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::getListOfUniforms() const
+std::vector<std::pair<std::string, std::string>> hi::pipeline::ShaderInspector::getListOfUniforms() const
 {
     std::vector<std::pair<std::string, std::string>> result;
     size_t position = sourceCode.find("uniform");
@@ -243,7 +243,7 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
             // parser shader block
             auto positionBracketEnd = sourceCode.find_first_of("}", position + 1);
             auto uniformDefinition = sourceCode.substr(position, positionBracketEnd - position);
-            auto tokens = ve::pipeline::tokenize(uniformDefinition);
+            auto tokens = hi::pipeline::tokenize(uniformDefinition);
             decltype(tokens)::iterator semicolon = tokens.begin();
             while ((semicolon = std::find(semicolon, tokens.end(), ";")) != tokens.end())
             {
@@ -255,7 +255,7 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
         {
             // parse scalar uniform definition
             auto uniformDefinition = sourceCode.substr(position, positionSemicolon - position);
-            auto definitionTokens = ve::pipeline::tokenize(uniformDefinition);
+            auto definitionTokens = hi::pipeline::tokenize(uniformDefinition);
             const auto& type = definitionTokens[definitionTokens.size() - 2];
             const auto& name = definitionTokens[definitionTokens.size() - 1];
 
@@ -267,7 +267,7 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
     return result;
 }
 
-std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::getListOfInputs() const
+std::vector<std::pair<std::string, std::string>> hi::pipeline::ShaderInspector::getListOfInputs() const
 {
     std::vector<std::pair<std::string, std::string>> result;
 
@@ -292,7 +292,7 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
                 auto idEnd = sourceCode.find(";", end);
 
                 auto snippet = sourceCode.substr(start, idEnd - start);
-                auto definitionTokens = ve::pipeline::tokenize(snippet);
+                auto definitionTokens = hi::pipeline::tokenize(snippet);
 
                 const auto type = sourceCode.substr(start, end - start);
                 const auto& name = definitionTokens[definitionTokens.size() - 1];
@@ -302,7 +302,7 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
             }
 
             // is interface
-            auto definitionTokens = ve::pipeline::tokenize(s);
+            auto definitionTokens = hi::pipeline::tokenize(s);
             assert(definitionTokens.size() >= 2);
             const auto& type = definitionTokens[definitionTokens.size() - 2];
             const auto& name = definitionTokens[definitionTokens.size() - 1];
@@ -316,7 +316,7 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
     return result;
 }
 
-std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::getListOfOutputs() const
+std::vector<std::pair<std::string, std::string>> hi::pipeline::ShaderInspector::getListOfOutputs() const
 {
     std::vector<std::pair<std::string, std::string>> result;
 
@@ -329,7 +329,7 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
         for (auto& match : m)
         {
             std::string s = match.str();
-            auto definitionTokens = ve::pipeline::tokenize(s);
+            auto definitionTokens = hi::pipeline::tokenize(s);
             assert(definitionTokens.size() >= 2);
             const auto& type = definitionTokens[definitionTokens.size() - 2];
             const auto& name = definitionTokens[definitionTokens.size() - 1];
@@ -343,7 +343,7 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
     return result;
 }
 
-std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::getListOfVaryings() const
+std::vector<std::pair<std::string, std::string>> hi::pipeline::ShaderInspector::getListOfVaryings() const
 {
     std::vector<std::pair<std::string, std::string>> result;
 
@@ -356,7 +356,7 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
         for (auto& match : m)
         {
             std::string s = match.str();
-            auto definitionTokens = ve::pipeline::tokenize(s);
+            auto definitionTokens = hi::pipeline::tokenize(s);
             assert(definitionTokens.size() >= 2);
             const auto& type = definitionTokens[definitionTokens.size() - 2];
             const auto& name = definitionTokens[definitionTokens.size() - 1];
@@ -370,18 +370,18 @@ std::vector<std::pair<std::string, std::string>> ve::pipeline::ShaderInspector::
     return result;
 }
 
-ve::pipeline::ShaderInspector::TypeNamePairList ve::pipeline::ShaderInspector::mergeList(const TypeNamePairList a, const TypeNamePairList b) const
+hi::pipeline::ShaderInspector::TypeNamePairList hi::pipeline::ShaderInspector::mergeList(const TypeNamePairList a, const TypeNamePairList b) const
 {
     auto outlist = a;
     std::copy(b.begin(), b.end(), std::back_inserter(outlist));
     return outlist;
 }
 
-ShaderInspector::Analysis ve::pipeline::ShaderInspector::analyzeGLPositionAssignment(std::string& assignment) const
+ShaderInspector::Analysis hi::pipeline::ShaderInspector::analyzeGLPositionAssignment(std::string& assignment) const
 {
-    auto tokens = ve::pipeline::tokenize(assignment);
+    auto tokens = hi::pipeline::tokenize(assignment);
 
-    auto firstIdentifier = std::find_if(tokens.begin() + 1, tokens.end(), [&](const auto token) -> bool { return isIdentifier(token) && !ve::pipeline::isBuiltinGLSLType(token); });
+    auto firstIdentifier = std::find_if(tokens.begin() + 1, tokens.end(), [&](const auto token) -> bool { return isIdentifier(token) && !hi::pipeline::isBuiltinGLSLType(token); });
 
     const auto uniforms = getListOfUniforms();
     const auto inputs = getListOfInputs();
@@ -421,7 +421,7 @@ ShaderInspector::Analysis ve::pipeline::ShaderInspector::analyzeGLPositionAssign
     return ana;
 }
 
-std::string ve::pipeline::ShaderInspector::replaceGLPositionAssignment(VertextAssignment assignment) const
+std::string hi::pipeline::ShaderInspector::replaceGLPositionAssignment(VertextAssignment assignment) const
 {
     if (assignment.isFixedPipelineUsed)
         return assignment.statementRawText;
@@ -429,11 +429,11 @@ std::string ve::pipeline::ShaderInspector::replaceGLPositionAssignment(VertextAs
     switch (assignment.analysis.type)
     {
     case UNIFORM:
-        return helper::wrapAssignmentExpresion(assignment.statementRawText, "enhancer_VStransform");
+        return helper::wrapAssignmentExpresion(assignment.statementRawText, "injector_VStransform");
     case POSSIBLE_TEMPORARY_VARIABLE:
     case INPUT:
         break;
-        ///return helper::wrapAssignmentExpresion(assignment.statementRawText, "enhancer_transform_HUD");
+        ///return helper::wrapAssignmentExpresion(assignment.statementRawText, "injector_transform_HUD");
     case GLPOSITION:
     case FUNCTION:
     default:
@@ -452,9 +452,9 @@ std::string ShaderInspector::recursivelySearchUniformFromTemporaryVariable(std::
     while (std::regex_search(sourceCode, m, firstTokenPattern))
     {
         std::string foundStr = m.str();
-        auto tokens = ve::pipeline::tokenize(foundStr);
+        auto tokens = hi::pipeline::tokenize(foundStr);
 
-        auto firstIdentifier = std::find_if(tokens.begin() + 1, tokens.end(), [&](const auto token) -> bool { return isIdentifier(token) && !ve::pipeline::isBuiltinGLSLType(token); });
+        auto firstIdentifier = std::find_if(tokens.begin() + 1, tokens.end(), [&](const auto token) -> bool { return isIdentifier(token) && !hi::pipeline::isBuiltinGLSLType(token); });
 
         if (firstIdentifier != tokens.end())
         {
@@ -511,66 +511,66 @@ void ShaderInspector::injectCommonCode(std::string& sourceOriginal)
 std::string ShaderInspector::getCommonTransformationShader()
 {
     static std::string code = R"(
-    uniform int enhancer_cameraId = 0;
-    uniform int enhancer_max_views = 9;
-    uniform bool enhancer_isSingleViewActivated = false;
-    uniform int enhancer_singleViewID = 0;
+    uniform int injector_cameraId = 0;
+    uniform int injector_max_views = 9;
+    uniform bool injector_isSingleViewActivated = false;
+    uniform int injector_singleViewID = 0;
 
-    uniform float enhancer_XShiftMultiplier = 5.0;
-    uniform float enhancer_FrontalDistance = 5.0;
+    uniform float injector_XShiftMultiplier = 5.0;
+    uniform float injector_FrontalDistance = 5.0;
 
-    uniform bool enhancer_isOrthogonal = false; 
+    uniform bool injector_isOrthogonal = false; 
     // when true, keeps original transformation flowing => used for shadow maps
-    uniform bool enhancer_identity = true;
+    uniform bool injector_identity = true;
 
     // Contains (fx,fy, near,far), estimated from original projection
-    uniform vec4 enhancer_deprojection;
+    uniform vec4 injector_deprojection;
 
     // 1/fx, etc...
-    uniform vec4 enhancer_deprojection_inv;
+    uniform vec4 injector_deprojection_inv;
 
-    float enhancer_normalizedCamera(int cameraId)
+    float injector_normalizedCamera(int cameraId)
     {
-        return 1.0-2.0*float(cameraId+1)/float(enhancer_max_views+1);
+        return 1.0-2.0*float(cameraId+1)/float(injector_max_views+1);
     }
-    float enhancer_getProjectionShift(int cameraId)
+    float injector_getProjectionShift(int cameraId)
     {
-        float normalizedDistance = 1.0-2.0*float(cameraId+1)/float(enhancer_max_views+1);
-        return normalizedDistance*enhancer_XShiftMultiplier/enhancer_FrontalDistance;
-    }
-
-    float enhancer_getShearCoeff(int cameraId, float r)
-    {
-        float normalizedDistance = 1.0-2.0*float(cameraId+1)/float(enhancer_max_views+1);
-        return 1.0*normalizedDistance*enhancer_XShiftMultiplier/r;
+        float normalizedDistance = 1.0-2.0*float(cameraId+1)/float(injector_max_views+1);
+        return normalizedDistance*injector_XShiftMultiplier/injector_FrontalDistance;
     }
 
-
-    float enhancer_getCenterShift(int cameraId)
+    float injector_getShearCoeff(int cameraId, float r)
     {
-        float normalizedDistance = 1.0- 2.0*float(cameraId+1)/float(enhancer_max_views+1);
-        return normalizedDistance*enhancer_XShiftMultiplier;
+        float normalizedDistance = 1.0-2.0*float(cameraId+1)/float(injector_max_views+1);
+        return 1.0*normalizedDistance*injector_XShiftMultiplier/r;
+    }
+
+
+    float injector_getCenterShift(int cameraId)
+    {
+        float normalizedDistance = 1.0- 2.0*float(cameraId+1)/float(injector_max_views+1);
+        return normalizedDistance*injector_XShiftMultiplier;
     }
 
     // Reversts original projection and apple per-view transformation & projection
-    vec4 enhancer_extractViewSpace(vec4 clipSpace)
+    vec4 injector_extractViewSpace(vec4 clipSpace)
     {
-	if(enhancer_isOrthogonal || enhancer_identity)
+	if(injector_isOrthogonal || injector_identity)
             return clipSpace;
 
         // Revert clip-space to view-space
-        vec4 viewSpace = vec4(clipSpace.x*enhancer_deprojection_inv[0], clipSpace.y*enhancer_deprojection_inv[1], -clipSpace.w,1.0);
+        vec4 viewSpace = vec4(clipSpace.x*injector_deprojection_inv[0], clipSpace.y*injector_deprojection_inv[1], -clipSpace.w,1.0);
 	return viewSpace;
     }
-    vec4 enhancer_transform(bool isClipSpace, int camera, vec4 clipSpace)
+    vec4 injector_transform(bool isClipSpace, int camera, vec4 clipSpace)
     {
-        if(enhancer_isOrthogonal || enhancer_identity)
+        if(injector_isOrthogonal || injector_identity)
             return clipSpace;
 
-        float nearOriginal = enhancer_deprojection[2];
-        //float near = enhancer_FrontalDistance;
+        float nearOriginal = injector_deprojection[2];
+        //float near = injector_FrontalDistance;
         float near = nearOriginal;
-        float far = enhancer_deprojection[3];
+        float far = injector_deprojection[3];
         
         float A = -2.0/(far-near);
         float B = -(far+near)/(far-near);
@@ -580,28 +580,28 @@ std::string ShaderInspector::getCommonTransformationShader()
 
         float r = tan(angle*0.5)*near;
 
-        float fovX = enhancer_deprojection[0];
-        float fovY = enhancer_deprojection[1];
+        float fovX = injector_deprojection[0];
+        float fovY = injector_deprojection[1];
         //float fovX = near/r;
         //float fovY = fovX*aspect;
         
         mat4 projection = mat4(
             vec4(fovX,0.0f,0.0,0.0),
             vec4(0.0f,fovY,0.0f,0.0),
-            vec4(enhancer_getProjectionShift(camera),0.0f,A,-1.0),
+            vec4(injector_getProjectionShift(camera),0.0f,A,-1.0),
             vec4(0,0.0f,B,0.0));
 
         // Do per-view transformation
-        vec4 viewSpace = enhancer_extractViewSpace(clipSpace);
+        vec4 viewSpace = injector_extractViewSpace(clipSpace);
         if(!isClipSpace)
-            viewSpace.x += enhancer_getCenterShift(camera);
+            viewSpace.x += injector_getCenterShift(camera);
         vec4 viewSpaceTransformed = projection*viewSpace;
         if(isClipSpace)
             return viewSpaceTransformed.xyww;
         return viewSpaceTransformed;
     }
 
-    vec4 enhancer_VStransform(vec4 clipSpace)
+    vec4 injector_VStransform(vec4 clipSpace)
     {
         return clipSpace;
     }

@@ -11,7 +11,7 @@
 #include <chrono>
 #include <sstream>
 
-using namespace ve;
+using namespace hi;
 void Diagnostics::setTerminationAfterFrame(size_t lastFrame)
 {
     m_ExitAfterFrames = lastFrame;

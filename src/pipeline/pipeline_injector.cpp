@@ -15,8 +15,8 @@
 #include <cassert>
 #include <regex>
 
-using namespace ve;
-using namespace ve::pipeline;
+using namespace hi;
+using namespace hi::pipeline;
 
 PipelineInjector::PipelineProcessResult PipelineInjector::identity(PipelineType input)
 {
@@ -136,19 +136,19 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
         layout (triangles) in;
         )";
 
-    geometryShaderStream << "//------------ Enhancer Insert Header start\n";
+    geometryShaderStream << "//------------ Injector Insert Header start\n";
     geometryShaderStream << ShaderInspector::getCommonTransformationShader() << "\n";
     geometryShaderStream << "layout (triangle_strip, max_vertices = " << 3 * params.countOfPrimitivesDuplicates << ") out;\n";
     geometryShaderStream << "layout (invocations= " << params.countOfInvocations << ") in;\n";
-    geometryShaderStream << "const bool enhancer_geometry_isClipSpace = "
+    geometryShaderStream << "const bool injector_geometry_isClipSpace = "
                          << (params.shouldRenderToClipspace ? "true" : "false") << ";\n";
-    geometryShaderStream << "const int enhancer_max_invocations = " << params.countOfInvocations << ";\n";
-    geometryShaderStream << "const int enhancer_duplications = " << params.countOfPrimitivesDuplicates << ";\n";
+    geometryShaderStream << "const int injector_max_invocations = " << params.countOfInvocations << ";\n";
+    geometryShaderStream << "const int injector_duplications = " << params.countOfPrimitivesDuplicates << ";\n";
     geometryShaderStream << R"(
         void identity_main(int layer)
         {
             // Only render once per draw call for singleViewID
-            if(enhancer_isSingleViewActivated == true && enhancer_singleViewID != layer)
+            if(injector_isSingleViewActivated == true && injector_singleViewID != layer)
             {
                 return;
             }
@@ -156,8 +156,8 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
             for(int i = 0; i < 3; i++)
             {
                 gl_Position = gl_in[i].gl_Position;
-                gl_Layer = (enhancer_isSingleViewActivated?enhancer_singleViewID:layer);
-		gl_Position = enhancer_transform(enhancer_geometry_isClipSpace,layer,gl_Position);
+                gl_Layer = (injector_isSingleViewActivated?injector_singleViewID:layer);
+		gl_Position = injector_transform(injector_geometry_isClipSpace,layer,gl_Position);
                 EmitVertex();
             }
             EndPrimitive();
@@ -166,18 +166,18 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
         void main()
         {
             // Allows to override max_invocations using uniform
-            //if(gl_InvocationID >= enhancer_max_invocations)
+            //if(gl_InvocationID >= injector_max_invocations)
             //    return;
-            int layer = gl_InvocationID*enhancer_duplications;
-            for(int i = 0; i < enhancer_duplications; i++)
+            int layer = gl_InvocationID*injector_duplications;
+            for(int i = 0; i < injector_duplications; i++)
             {
-                if((layer+i) >= enhancer_max_views)
+                if((layer+i) >= injector_max_views)
                     return;
                 identity_main(layer+i);
             }
         }
     )";
-    geometryShaderStream << "//------------ Enhancer Insert Header end\n";
+    geometryShaderStream << "//------------ Injector Insert Header end\n";
     auto geometryShader = std::move(geometryShaderStream.str());
 
     /*
@@ -196,19 +196,19 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
     std::string ioRedirections;
     /*
      * For each "in type name;" in Fragment Shader
-     * Create "in type name[]; out type enhancer_frag_name;"
+     * Create "in type name[]; out type injector_frag_name;"
      * +
-     * create "enhancer_frag_name = name[i];
+     * create "injector_frag_name = name[i];
      */
     for (const auto& [type, name] : inputs)
     {
         ioDefinitionString += "in " + type + " " + name + "[];\n";
-        ioDefinitionString += "out " + type + " " + "enhancer_frag_" + name + ";\n";
+        ioDefinitionString += "out " + type + " " + "injector_frag_" + name + ";\n";
 
         bool isInterfaceBlock = type.find_first_of("{}") != std::string::npos;
         if (!isInterfaceBlock)
         {
-            ioRedirections += "enhancer_frag_" + name + " = " + name + "[i];\n";
+            ioRedirections += "injector_frag_" + name + " = " + name + "[i];\n";
         }
         else
         {
@@ -216,13 +216,13 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
              * Interface blocks must be copied per-partes
              * => for each identifier, generate "out.id = in.id;" statement
              */
-            auto interfaceBlockDefinitionTokens = ve::pipeline::tokenize(type);
+            auto interfaceBlockDefinitionTokens = hi::pipeline::tokenize(type);
             for (size_t i = 1; i < interfaceBlockDefinitionTokens.size(); i++)
             {
                 if (interfaceBlockDefinitionTokens[i] != ";")
                     continue;
                 std::stringstream ibRedirectionString;
-                ibRedirectionString << "enhancer_frag_" << name << "." << interfaceBlockDefinitionTokens[i - 1] << " = " << name << "[i]." << interfaceBlockDefinitionTokens[i - 1] << ";\n";
+                ibRedirectionString << "injector_frag_" << name << "." << interfaceBlockDefinitionTokens[i - 1] << " = " << name << "[i]." << interfaceBlockDefinitionTokens[i - 1] << ";\n";
                 ioRedirections += ibRedirectionString.str();
             }
         }
@@ -245,7 +245,7 @@ PipelineInjector::PipelineType PipelineInjector::insertGeometryShader(const Pipe
         std::string inputName = name;
         bool isInterfaceBlock = type.find_first_of("{}") != std::string::npos;
         auto nameSuffix = (isInterfaceBlock ? "_fs" : "");
-        fragmentShader = utils::regex_replace_identifiers(fragmentShader, inputName, [inputName, nameSuffix] { return "enhancer_frag_" + inputName + nameSuffix; });
+        fragmentShader = utils::regex_replace_identifiers(fragmentShader, inputName, [inputName, nameSuffix] { return "injector_frag_" + inputName + nameSuffix; });
     }
 
     /*
@@ -276,20 +276,20 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     lastMacroDeclarationPosition += 1;
 
     std::stringstream headerInclude;
-    headerInclude << "//------------ Enhancer Inject Header start\n";
-    headerInclude << "int enhancer_layer = 0; \n";
+    headerInclude << "//------------ Injector Inject Header start\n";
+    headerInclude << "int injector_layer = 0; \n";
     // Already injected by ShaderInspector::inject()
     //headerInclude << ShaderInspector::getCommonTransformationShader() << "\n";
-    headerInclude << "//------------ Enhancer Inject Header end\n";
+    headerInclude << "//------------ Injector Inject Header end\n";
     geometryShader.insert(lastMacroDeclarationPosition, headerInclude.str());
 
     // 1. rename void main() to void old_main()
     assert(geometryShader.find("void main") != std::string::npos);
-    geometryShader = std::regex_replace(geometryShader, std::regex("void[\f\n\r\t\v ]+main[\f\n\r\t\v ]*\\([\f\n\r\t\v ]*\\)"), "void old_main(int enhancer_layer)");
+    geometryShader = std::regex_replace(geometryShader, std::regex("void[\f\n\r\t\v ]+main[\f\n\r\t\v ]*\\([\f\n\r\t\v ]*\\)"), "void old_main(int injector_layer)");
 
-    // 2. Add gl_Layer = enhancer_layer; before each EmitVertex
-    geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"), "gl_Layer = (enhancer_isSingleViewActivated?enhancer_singleViewID:enhancer_layer); \nEmitVertex");
-    geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"), "gl_Position = enhancer_transform(enhancer_geometry_isClipSpace, enhancer_layer, gl_Position); \nEmitVertex");
+    // 2. Add gl_Layer = injector_layer; before each EmitVertex
+    geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"), "gl_Layer = (injector_isSingleViewActivated?injector_singleViewID:injector_layer); \nEmitVertex");
+    geometryShader = std::regex_replace(geometryShader, std::regex("EmitVertex"), "gl_Position = injector_transform(injector_geometry_isClipSpace, injector_layer, gl_Position); \nEmitVertex");
     // 3. insert double the 'max_vertices' count
     // 3. insert double the 'max_vertices' count
     auto maxVerticesPosition = geometryShader.find("max_vertices");
@@ -301,10 +301,10 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
     // 4. insert invocations
     // finds the old main() function
     std::stringstream beforeMainCodeChunk;
-    beforeMainCodeChunk << "//------------ Enhancer Inject Header start\n";
+    beforeMainCodeChunk << "//------------ Injector Inject Header start\n";
     beforeMainCodeChunk << "layout(invocations = " << params.countOfInvocations << ") in;\n";
-    beforeMainCodeChunk << "const bool enhancer_geometry_isClipSpace = " << (params.shouldRenderToClipspace ? "true" : "false") << ";\n";
-    beforeMainCodeChunk << "//------------ Enhancer Inject Header end\n";
+    beforeMainCodeChunk << "const bool injector_geometry_isClipSpace = " << (params.shouldRenderToClipspace ? "true" : "false") << ";\n";
+    beforeMainCodeChunk << "//------------ Injector Inject Header end\n";
 
     auto beforeMainFunctionPosition = geometryShader.find("void");
     geometryShader.insert(beforeMainFunctionPosition, beforeMainCodeChunk.str());
@@ -319,16 +319,16 @@ PipelineInjector::PipelineType PipelineInjector::injectGeometryShader(const Pipe
         int duplicationId = 0;
         for(duplicationId = 0; duplicationId < maxDuplications; duplicationId++)
         {
-            enhancer_layer = gl_InvocationID*maxDuplications+duplicationId;
-            if(enhancer_layer>= enhancer_max_views)
+            injector_layer = gl_InvocationID*maxDuplications+duplicationId;
+            if(injector_layer>= injector_max_views)
             {
                 return;
             }
-            if(enhancer_isSingleViewActivated && enhancer_singleViewID != enhancer_layer)
+            if(injector_isSingleViewActivated && injector_singleViewID != injector_layer)
             {
                 continue;
             }
-            old_main(enhancer_layer);
+            old_main(injector_layer);
         }
     }
     )";
@@ -360,11 +360,11 @@ PipelineInjector::PipelineType PipelineInjector::injectVertexShader(const Pipeli
     lastMacroDeclarationPosition += 1;
 
     std::stringstream headerInclude;
-    headerInclude << "//------------ Enhancer Inject Header start\n";
-    headerInclude << "int enhancer_layer = 0; \n";
+    headerInclude << "//------------ Injector Inject Header start\n";
+    headerInclude << "int injector_layer = 0; \n";
     // Already injected by ShaderInspector::inject()
     //headerInclude << ShaderInspector::getCommonTransformationShader() << "\n";
-    headerInclude << "//------------ Enhancer Inject Header end\n";
+    headerInclude << "//------------ Injector Inject Header end\n";
     vertexShader.insert(lastMacroDeclarationPosition, headerInclude.str());
 
     // 1. rename void main() to void old_main()
@@ -376,9 +376,9 @@ PipelineInjector::PipelineType PipelineInjector::injectVertexShader(const Pipeli
     // 2. insert invocations
     // finds the old main() function
     std::stringstream beforeMainCodeChunk;
-    beforeMainCodeChunk << "//------------ Enhancer Inject Header start\n";
-    beforeMainCodeChunk << "const bool enhancer_geometry_isClipSpace = " << (params.shouldRenderToClipspace ? "true" : "false") << ";\n";
-    beforeMainCodeChunk << "//------------ Enhancer Inject Header end\n";
+    beforeMainCodeChunk << "//------------ Injector Inject Header start\n";
+    beforeMainCodeChunk << "const bool injector_geometry_isClipSpace = " << (params.shouldRenderToClipspace ? "true" : "false") << ";\n";
+    beforeMainCodeChunk << "//------------ Injector Inject Header end\n";
 
     auto beforeMainFunctionPosition = vertexShader.find("void");
     vertexShader.insert(beforeMainFunctionPosition, beforeMainCodeChunk.str());
@@ -389,7 +389,7 @@ PipelineInjector::PipelineType PipelineInjector::injectVertexShader(const Pipeli
     void main()
     {
         old_main();
-        gl_Position = enhancer_transform(enhancer_geometry_isClipSpace,enhancer_singleViewID, gl_Position);
+        gl_Position = injector_transform(injector_geometry_isClipSpace,injector_singleViewID, gl_Position);
     }
     )";
 

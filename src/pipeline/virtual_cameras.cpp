@@ -10,8 +10,8 @@
 #include <cassert>
 #include <glm/gtx/transform.hpp>
 
-using namespace ve;
-using namespace ve::pipeline;
+using namespace hi;
+using namespace hi::pipeline;
 const glm::mat4& Camera::getViewMatrix() const
 {
     return m_viewMatrix;

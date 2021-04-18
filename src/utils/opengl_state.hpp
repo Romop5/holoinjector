@@ -6,14 +6,14 @@
 *
 *****************************************************************************/
 
-#ifndef VE_UTILS_OPENGL_STATE_HPP
-#define VE_UTILS_OPENGL_STATE_HPP
+#ifndef HI_UTILS_OPENGL_STATE_HPP
+#define HI_UTILS_OPENGL_STATE_HPP
 
 #include <GL/gl.h>
 #include <functional>
 #include <vector>
 
-namespace ve
+namespace hi
 {
 namespace utils
 {
@@ -45,5 +45,5 @@ namespace utils
     void restoreStateFunctor(const std::vector<GLenum>& states, const std::function<void()>& functor);
 
 } // namespace raii
-} // namespace ve
+} // namespace hi
 #endif

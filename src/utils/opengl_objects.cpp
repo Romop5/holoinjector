@@ -12,7 +12,7 @@
 #include "GL/gl.h"
 #include "utils/opengl_objects.hpp"
 
-ve::utils::glObject::~glObject()
+hi::utils::glObject::~glObject()
 {
     if (m_ID == 0)
         return;
@@ -38,7 +38,7 @@ ve::utils::glObject::~glObject()
     m_ID = 0;
 }
 
-bool ve::utils::glShader::create(const std::string& src, GLenum type)
+bool hi::utils::glShader::create(const std::string& src, GLenum type)
 {
     auto shaderId = glCreateShader(type);
     const char* code = src.c_str();
@@ -65,7 +65,7 @@ bool ve::utils::glShader::create(const std::string& src, GLenum type)
     return shaderId;
 }
 
-bool ve::utils::glProgram::link(const std::vector<size_t> shaders)
+bool hi::utils::glProgram::link(const std::vector<size_t> shaders)
 {
     auto program = glCreateProgram();
 
@@ -80,7 +80,7 @@ bool ve::utils::glProgram::link(const std::vector<size_t> shaders)
     return true;
 }
 
-void ve::utils::glFullscreenVAO::create()
+void hi::utils::glFullscreenVAO::create()
 {
     struct VertexData
     {
@@ -124,7 +124,7 @@ void ve::utils::glFullscreenVAO::create()
     setID(vao);
 }
 
-void ve::utils::glFullscreenVAO::draw()
+void hi::utils::glFullscreenVAO::draw()
 {
     GLint oldVao;
     glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &oldVao);

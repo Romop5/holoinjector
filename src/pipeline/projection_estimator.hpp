@@ -6,8 +6,8 @@
 *
 *****************************************************************************/
 
-#ifndef VE_PROJECTION_ESTIMATOR_HPP
-#define VE_PROJECTION_ESTIMATOR_HPP
+#ifndef HI_PROJECTION_ESTIMATOR_HPP
+#define HI_PROJECTION_ESTIMATOR_HPP
 /**
  * @file pipeline/projection_estimator.hpp
  * @brief Helper routines for estimating projection from MVP matrix
@@ -15,7 +15,7 @@
  * @date 2020-09-16
  */
 #include <glm/glm.hpp>
-namespace ve
+namespace hi
 {
 namespace pipeline
 {
@@ -45,5 +45,5 @@ namespace pipeline
      */
     PerspectiveProjectionParameters estimatePerspectiveProjection(glm::mat4 transformationMatrix);
 } // namespace pipeline
-} // namespace ve
+} // namespace hi
 #endif

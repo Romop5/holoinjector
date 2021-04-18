@@ -19,8 +19,8 @@
 #include "utils/opengl_state.hpp"
 #include "utils/opengl_utils.hpp"
 
-using namespace ve;
-using namespace ve::managers;
+using namespace hi;
+using namespace hi::managers;
 
 void FramebufferManager::clear(Context& context, GLbitfield mask)
 {
@@ -72,7 +72,7 @@ void FramebufferManager::bindFramebuffer(Context& context, GLenum target, GLuint
                     fbo->createShadowedFBO(context.getOutputFBO().getParams().getLayers());
                     if (!fbo->hasShadowFBO())
                     {
-                        Logger::logError("Failed to create shadow FBO for FBO: ", id, ENHANCER_POS);
+                        Logger::logError("Failed to create shadow FBO for FBO: ", id, HI_POS);
                     }
                 }
                 // Creation of shadow FBO should never fail
@@ -107,7 +107,7 @@ void FramebufferManager::swapBuffers(Context& context, std::function<void(void)>
 
 void FramebufferManager::renderFromOutputFBO(Context& context)
 {
-    ve::utils::restoreStateFunctor({ GL_CULL_FACE, GL_DEPTH_TEST, GL_SCISSOR_TEST }, [this, &context]() {
+    hi::utils::restoreStateFunctor({ GL_CULL_FACE, GL_DEPTH_TEST, GL_SCISSOR_TEST }, [this, &context]() {
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_SCISSOR_TEST);

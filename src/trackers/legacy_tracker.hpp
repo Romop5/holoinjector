@@ -9,7 +9,7 @@
 #include <GL/gl.h>
 #include <glm/glm.hpp>
 
-namespace ve
+namespace hi
 {
 namespace trackers
 {
@@ -63,4 +63,4 @@ namespace trackers
     };
 
 } // namespace trackers
-} // namespace ve
+} // namespace hi

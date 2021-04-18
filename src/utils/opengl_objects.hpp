@@ -6,8 +6,8 @@
 *
 *****************************************************************************/
 
-#ifndef VE_UTILS_OPENGL_OBJECTS_HPP
-#define VE_UTILS_OPENGL_OBJECTS_HPP
+#ifndef HI_UTILS_OPENGL_OBJECTS_HPP
+#define HI_UTILS_OPENGL_OBJECTS_HPP
 
 #include <vector>
 
@@ -17,7 +17,7 @@
 
 #include "logger.hpp"
 
-namespace ve
+namespace hi
 {
 namespace utils
 {
@@ -99,5 +99,5 @@ namespace utils
     };
 
 } //namespace utils
-} //namespace ve
+} //namespace hi
 #endif

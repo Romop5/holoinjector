@@ -16,7 +16,7 @@
 #include "context.hpp"
 #include "pipeline/viewport_area.hpp"
 
-using namespace ve;
+using namespace hi;
 
 namespace helper
 {
@@ -60,7 +60,7 @@ size_t mapXKeyTo256Array(size_t xkey)
 }
 };
 
-bool ve::ImguiAdapter::initialize()
+bool hi::ImguiAdapter::initialize()
 {
     glewInit();
     IMGUI_CHECKVERSION();
@@ -100,7 +100,7 @@ bool ve::ImguiAdapter::initialize()
     return true;
 }
 
-void ve::ImguiAdapter::beginFrame(Context& context)
+void hi::ImguiAdapter::beginFrame(Context& context)
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGuiIO& io = ImGui::GetIO();
@@ -118,22 +118,22 @@ void ve::ImguiAdapter::beginFrame(Context& context)
 
     ImGui::NewFrame();
 }
-void ve::ImguiAdapter::endFrame()
+void hi::ImguiAdapter::endFrame()
 {
     ImGui::Render();
 }
 
-void ve::ImguiAdapter::renderCurrentFrame()
+void hi::ImguiAdapter::renderCurrentFrame()
 {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void ve::ImguiAdapter::destroy()
+void hi::ImguiAdapter::destroy()
 {
     ImGui_ImplOpenGL3_Shutdown();
 }
 
-void ve::ImguiAdapter::onKey(size_t key, bool isDown)
+void hi::ImguiAdapter::onKey(size_t key, bool isDown)
 {
     ImGuiIO& io = ImGui::GetIO();
     io.KeysDown[helper::mapXKeyTo256Array(key)] = isDown;
@@ -143,7 +143,7 @@ void ve::ImguiAdapter::onKey(size_t key, bool isDown)
     }
 }
 
-void ve::ImguiAdapter::onMousePosition(float x, float y)
+void hi::ImguiAdapter::onMousePosition(float x, float y)
 {
     posX += x;
     posY += y;
@@ -151,7 +151,7 @@ void ve::ImguiAdapter::onMousePosition(float x, float y)
     io.MousePos = ImVec2(posX, posY);
 }
 
-void ve::ImguiAdapter::onButton(size_t buttonID, bool isPressed)
+void hi::ImguiAdapter::onButton(size_t buttonID, bool isPressed)
 {
     assert(buttonID < 5);
     ImGuiIO& io = ImGui::GetIO();
@@ -170,16 +170,16 @@ void ve::ImguiAdapter::onButton(size_t buttonID, bool isPressed)
     }
 }
 
-bool ve::ImguiAdapter::isVisible()
+bool hi::ImguiAdapter::isVisible()
 {
     return m_Visibility;
 }
-void ve::ImguiAdapter::setVisibility(bool isVisible)
+void hi::ImguiAdapter::setVisibility(bool isVisible)
 {
     m_Visibility = isVisible;
 }
 
-void ve::ImguiAdapter::setScaling(float scale)
+void hi::ImguiAdapter::setScaling(float scale)
 {
     m_Scaling = scale;
 }

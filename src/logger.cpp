@@ -9,32 +9,32 @@
 #include "logger.hpp"
 #include <memory>
 
-ve::Logger& ve::Logger::getInstance()
+hi::Logger& hi::Logger::getInstance()
 {
-    static std::unique_ptr<ve::Logger> m_singleton = nullptr;
+    static std::unique_ptr<hi::Logger> m_singleton = nullptr;
     if (!m_singleton)
     {
-        m_singleton.reset(new ve::Logger());
+        m_singleton.reset(new hi::Logger());
     }
     return *m_singleton;
 }
 
-void ve::Logger::setMaximumLevel(ve::Logger::LogLevel level)
+void hi::Logger::setMaximumLevel(hi::Logger::LogLevel level)
 {
     m_maximalLogLevel = level;
 }
 
-ve::Logger::LogLevel ve::Logger::getMaximumLevel() const
+hi::Logger::LogLevel hi::Logger::getMaximumLevel() const
 {
     return m_maximalLogLevel;
 }
 
-void ve::Logger::incrementFrameNumber()
+void hi::Logger::incrementFrameNumber()
 {
     m_currentFrameID++;
 }
 
-void ve::Logger::printLog(const std::string& msg, LogLevel level)
+void hi::Logger::printLog(const std::string& msg, LogLevel level)
 {
     if (m_maximalLogLevel < level)
         return;
@@ -42,12 +42,12 @@ void ve::Logger::printLog(const std::string& msg, LogLevel level)
     printf("%s", msg.c_str());
 }
 
-void ve::Logger::flush()
+void hi::Logger::flush()
 {
     fflush(stdout);
 }
 
-void ve::Logger::printLogBanner(LogLevel level)
+void hi::Logger::printLogBanner(LogLevel level)
 {
     printf("[Repeater]");
     switch (level)

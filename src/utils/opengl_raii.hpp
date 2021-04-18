@@ -6,12 +6,12 @@
 *
 *****************************************************************************/
 
-#ifndef VE_UTILS_OPENGL_RAII_HPP
-#define VE_UTILS_OPENGL_RAII_HPP
+#ifndef HI_UTILS_OPENGL_RAII_HPP
+#define HI_UTILS_OPENGL_RAII_HPP
 
 #include "utils/opengl_objects.hpp"
 
-namespace ve
+namespace hi
 {
 namespace utils
 {
@@ -27,5 +27,5 @@ namespace utils
     private:
     };
 } // namespace raii
-} // namespace ve
+} // namespace hi
 #endif

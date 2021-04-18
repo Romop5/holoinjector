@@ -2,8 +2,8 @@
 #include "utils/opengl_utils.hpp"
 #include <cstdlib>
 
-using namespace ve;
-using namespace ve::opengl_utils;
+using namespace hi;
+using namespace hi::opengl_utils;
 
 namespace {
 TEST(opengl_utils, createMatrixFromRawGL) {

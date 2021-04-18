@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
     OpenGLTestContext windowSystem;
     windowSystem.initialize();
 
-    ve::pipeline::OutputFBO fbo;
+    hi::pipeline::OutputFBO fbo;
     fbo.initialize();
 
     Triangle triangle;
@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
     // Set GL Sample stuff
     glClearColor(0.5f, 0.6f, 0.7f, 1.0f);
 
-    ve::pipeline::CameraParameters params;
+    hi::pipeline::CameraParameters params;
 
         // Enter message loop
     while (true) {

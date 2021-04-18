@@ -8,8 +8,8 @@
 
 #include "pipeline/program_metadata.hpp"
 
-using namespace ve;
-using namespace ve::pipeline;
+using namespace hi;
+using namespace hi::pipeline;
 
 bool ProgramMetadata::isUBOused() const
 {

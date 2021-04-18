@@ -14,7 +14,7 @@
 /// Original symbol getter type
 using original_symbol_getter = std::function<void*(const char* symbolName)>;
 
-namespace ve
+namespace hi
 {
 namespace hooking
 {
@@ -46,5 +46,5 @@ namespace hooking
         }
     };
 } // namespace hooking
-} // namespace ve
+} // namespace hi
 #endif

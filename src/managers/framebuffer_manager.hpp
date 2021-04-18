@@ -6,12 +6,12 @@
 *
 *****************************************************************************/
 
-#ifndef VE_FRAMEBUFFER_MANAGER_HPP
-#define VE_FRAMEBUFFER_MANAGER_HPP
+#ifndef HI_FRAMEBUFFER_MANAGER_HPP
+#define HI_FRAMEBUFFER_MANAGER_HPP
 
 #include <functional>
 
-namespace ve
+namespace hi
 {
 class Context;
 namespace managers

@@ -26,34 +26,34 @@
 
 #include "utils/opengl_debug.hpp"
 
-using namespace ve;
-using namespace ve::managers;
+using namespace hi;
+using namespace hi::managers;
 
 namespace helpers
 {
 namespace uniforms
 {
     /*
-         * \brief Enhancer internal: don't repeat draw calls and render to a single output layer of
+         * \brief Injector internal: don't repeat draw calls and render to a single output layer of
          * bounded FBO
          */
     void renderToSingleLayer(size_t shaderId, size_t layerID)
     {
         CLEAR_GL_ERROR();
-        auto loc = glGetUniformLocation(shaderId, "enhancer_isSingleViewActivated");
+        auto loc = glGetUniformLocation(shaderId, "injector_isSingleViewActivated");
         glUniform1i(loc, true);
         ASSERT_GL_ERROR();
 
-        loc = glGetUniformLocation(shaderId, "enhancer_singleViewID");
+        loc = glGetUniformLocation(shaderId, "injector_singleViewID");
         glUniform1i(loc, layerID);
         ASSERT_GL_ERROR();
     }
     /*
-         * \brief Enhancer internal: replicate transformed geometry to all output layers of bound FBO
+         * \brief Injector internal: replicate transformed geometry to all output layers of bound FBO
          */
     void renderToAllLayers(size_t shaderId)
     {
-        auto loc = glGetUniformLocation(shaderId, "enhancer_isSingleViewActivated");
+        auto loc = glGetUniformLocation(shaderId, "injector_isSingleViewActivated");
         glUniform1i(loc, false);
         ASSERT_GL_ERROR();
     }
@@ -68,7 +68,7 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
 
     if (!context.m_IsMultiviewActivated || (context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()))
     {
-        setEnhancerIdentity(context);
+        setInjectorIdentity(context);
         drawGeneric(context, drawCallLambda);
         return;
     }
@@ -104,12 +104,12 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
         const auto& indexStructure = context.getUniformBlocksTracker().getBindingIndex(index);
         if (indexStructure.hasTransformation)
         {
-            setEnhancerDecodedProjection(context, context.getManager().getBoundId(), indexStructure.projection);
+            setInjectorDecodedProjection(context, context.getManager().getBoundId(), indexStructure.projection);
         }
         else
         {
             Logger::log("Unexpected state. Expected UBO, but not found. Falling back to identity\n");
-            setEnhancerIdentity(context);
+            setInjectorIdentity(context);
         }
     }
     /*
@@ -118,7 +118,7 @@ void DrawManager::draw(Context& context, const std::function<void(void)>& drawCa
     if (context.getManager().hasBounded())
     {
         const auto shaderID = context.getManager().getBoundId();
-        setEnhancerUniforms(shaderID, context);
+        setInjectorUniforms(shaderID, context);
     }
     drawGeneric(context, drawCallLambda);
     return;
@@ -169,7 +169,7 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
     {
         helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
         drawCallLambda();
-        Logger::logDebugPerFrame(dumpDrawContext(context), "drawGS: multiview off", ENHANCER_POS);
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawGS: multiview off", HI_POS);
         return;
     }
 
@@ -177,7 +177,7 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
     {
         helpers::uniforms::renderToAllLayers(context.getManager().getBoundId());
         drawCallLambda();
-        Logger::logDebugPerFrame(dumpDrawContext(context), "drawGS: single view", ENHANCER_POS);
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawGS: single view", HI_POS);
         return;
     }
 
@@ -188,7 +188,7 @@ void DrawManager::drawWithGeometryShader(Context& context, const std::function<v
 
         helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), l);
         drawCallLambda();
-        Logger::logDebugPerFrame(dumpDrawContext(context), "drawGS: layer ", l, ENHANCER_POS);
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawGS: layer ", l, HI_POS);
     }
     context.getTextureTracker().getTextureUnits().unbindShadowedTextures();
 }
@@ -201,7 +201,7 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
     {
         helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
         drawCallLambda();
-        Logger::logDebugPerFrame(dumpDrawContext(context), "drawVS: non-multiview", ENHANCER_POS);
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawVS: non-multiview", HI_POS);
         return;
     }
 
@@ -211,7 +211,7 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
 
         helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
         drawCallLambda();
-        Logger::logDebugPerFrame(dumpDrawContext(context), "drawVS: single", ENHANCER_POS);
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawVS: single", HI_POS);
         return;
     }
     for (size_t cameraID = 0; cameraID < context.getCameras().getCameras().size(); cameraID++)
@@ -229,7 +229,7 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
 
         drawCallLambda();
         Logger::logDebugPerFrame(dumpDrawContext(context), "drawVS: layer: ", cameraID,
-            "shadowFBO: ", shadowFBO, ENHANCER_POS);
+            "shadowFBO: ", shadowFBO, HI_POS);
     }
     context.getTextureTracker().getTextureUnits().unbindShadowedTextures();
 }
@@ -241,7 +241,7 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
     {
         helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
         drawCallLambda();
-        Logger::logDebugPerFrame(dumpDrawContext(context), "drawLegacy: non-multiview", ENHANCER_POS);
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawLegacy: non-multiview", HI_POS);
         return;
     }
     if ((context.getFBOTracker().hasBounded() && !context.getFBOTracker().isSuitableForRepeating()))
@@ -249,7 +249,7 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
         context.getTextureTracker().getTextureUnits().bindShadowedTexturesToLayer(0);
         helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
         drawCallLambda();
-        Logger::logDebugPerFrame(dumpDrawContext(context), "drawLegacy: single", ENHANCER_POS);
+        Logger::logDebugPerFrame(dumpDrawContext(context), "drawLegacy: single", HI_POS);
         return;
     }
 
@@ -265,11 +265,11 @@ void DrawManager::drawLegacy(Context& context, const std::function<void(void)>& 
         helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
 
         const auto& t = camera.getViewMatrix();
-        setEnhancerShift(context, t, camera.getAngle() * context.getCameraParameters().m_XShiftMultiplier / context.getCameraParameters().m_frontOpticalAxisCentreDistance);
+        setInjectorShift(context, t, camera.getAngle() * context.getCameraParameters().m_XShiftMultiplier / context.getCameraParameters().m_frontOpticalAxisCentreDistance);
         drawCallLambda();
         Logger::logDebugPerFrame(dumpDrawContext(context), "drawLegacy: layer", cameraID,
-            "shadowFBO: ", shadowFBO, ENHANCER_POS);
-        resetEnhancerShift(context);
+            "shadowFBO: ", shadowFBO, HI_POS);
+        resetInjectorShift(context);
     }
     context.getTextureTracker().getTextureUnits().unbindShadowedTextures();
 }
@@ -285,7 +285,7 @@ std::string DrawManager::dumpDrawContext(Context& context) const
  * ----------------------------------------------------------------------------
  */
 
-void DrawManager::setEnhancerShift(Context& context, const glm::mat4& viewSpaceTransform, float projectionAdjust)
+void DrawManager::setInjectorShift(Context& context, const glm::mat4& viewSpaceTransform, float projectionAdjust)
 {
     const auto& resultMat = viewSpaceTransform;
     auto program = context.getManager().getBoundId();
@@ -293,7 +293,7 @@ void DrawManager::setEnhancerShift(Context& context, const glm::mat4& viewSpaceT
     {
         //helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
 
-        auto location = glGetUniformLocation(program, "enhancer_identity");
+        auto location = glGetUniformLocation(program, "injector_identity");
         glUniform1i(location, GL_TRUE);
     }
 
@@ -312,7 +312,7 @@ void DrawManager::setEnhancerShift(Context& context, const glm::mat4& viewSpaceT
     }
 }
 
-void DrawManager::resetEnhancerShift(Context& context)
+void DrawManager::resetInjectorShift(Context& context)
 {
     if (context.getLegacyTracker().isLegacyNeeded())
     {
@@ -320,32 +320,32 @@ void DrawManager::resetEnhancerShift(Context& context)
     }
 }
 
-void DrawManager::setEnhancerIdentity(Context& context)
+void DrawManager::setInjectorIdentity(Context& context)
 {
     const auto identity = glm::mat4(1.0);
     auto program = context.getManager().getBoundId();
     if (program == 0)
         return;
-    auto location = glGetUniformLocation(program, "enhancer_identity");
+    auto location = glGetUniformLocation(program, "injector_identity");
     glUniform1i(location, GL_TRUE);
 
-    location = glGetUniformLocation(program, "enhancer_max_views");
+    location = glGetUniformLocation(program, "injector_max_views");
     glUniform1i(location, 1);
-    location = glGetUniformLocation(program, "enhancer_max_invocations");
+    location = glGetUniformLocation(program, "injector_max_invocations");
     glUniform1i(location, 1);
 }
 
-void DrawManager::setEnhancerDecodedProjection(Context& context, GLuint program, const ve::pipeline::PerspectiveProjectionParameters& projection)
+void DrawManager::setInjectorDecodedProjection(Context& context, GLuint program, const hi::pipeline::PerspectiveProjectionParameters& projection)
 {
     // upload parameters to GPU's program
-    auto parametersLocation = glGetUniformLocation(program, "enhancer_deprojection");
+    auto parametersLocation = glGetUniformLocation(program, "injector_deprojection");
     glUniform4fv(parametersLocation, 1, glm::value_ptr(projection.asVector()));
 
-    parametersLocation = glGetUniformLocation(program, "enhancer_deprojection_inv");
+    parametersLocation = glGetUniformLocation(program, "injector_deprojection_inv");
     glm::vec4 inverted = glm::vec4(1.0) / projection.asVector();
     glUniform4fv(parametersLocation, 1, glm::value_ptr(inverted));
 
-    auto typeLocation = glGetUniformLocation(program, "enhancer_isOrthogonal");
+    auto typeLocation = glGetUniformLocation(program, "injector_isOrthogonal");
     glUniform1i(typeLocation, !projection.isPerspective);
 }
 
@@ -379,7 +379,7 @@ GLuint DrawManager::createSingleViewFBO(Context& context, size_t layer)
             {
                 if (fbo->hasFailedToCreateShadowFBO())
                 {
-                    Logger::logDebug("Drawing to FBO without shadow FBO due to failed init", ENHANCER_POS);
+                    Logger::logDebug("Drawing to FBO without shadow FBO due to failed init", HI_POS);
                 }
                 else
                 {
@@ -419,24 +419,24 @@ bool DrawManager::isRepeatingSuitable(Context& context)
     return true;
 }
 
-void DrawManager::setEnhancerUniforms(size_t shaderID, Context& context)
+void DrawManager::setInjectorUniforms(size_t shaderID, Context& context)
 {
     assert(context.getManager().hasBounded());
 
-    auto loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_XShiftMultiplier");
+    auto loc = glGetUniformLocation(context.getManager().getBoundId(), "injector_XShiftMultiplier");
     glUniform1f(loc, context.getCameraParameters().m_XShiftMultiplier);
 
-    loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_FrontalDistance");
+    loc = glGetUniformLocation(context.getManager().getBoundId(), "injector_FrontalDistance");
     glUniform1f(loc, context.getCameraParameters().m_frontOpticalAxisCentreDistance);
 
     const auto maxViews = context.getOutputFBO().getParams().getLayers();
-    auto location = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_max_views");
+    auto location = glGetUniformLocation(context.getManager().getBoundId(), "injector_max_views");
     glUniform1i(location, maxViews);
 
-    location = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_max_invocations");
+    location = glGetUniformLocation(context.getManager().getBoundId(), "injector_max_invocations");
     glUniform1i(location, maxViews);
 
-    loc = glGetUniformLocation(context.getManager().getBoundId(), "enhancer_identity");
+    loc = glGetUniformLocation(context.getManager().getBoundId(), "injector_identity");
 
     bool shouldNotUseIdentity = (context.getManager().getBound()->isInjected());
     glUniform1i(loc, !shouldNotUseIdentity);

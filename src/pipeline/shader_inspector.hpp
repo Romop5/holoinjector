@@ -6,13 +6,13 @@
 *
 *****************************************************************************/
 
-#ifndef VE_SHADER_INSPECTOR_HPP
-#define VE_SHADER_INSPECTOR_HPP
+#ifndef HI_SHADER_INSPECTOR_HPP
+#define HI_SHADER_INSPECTOR_HPP
 
 #include <string>
 #include <vector>
 
-namespace ve
+namespace hi
 {
 namespace pipeline
 {
@@ -71,7 +71,7 @@ namespace pipeline
         /// Compute final statement
         std::string replaceGLAssignement(VertextAssignment originalStatement);
 
-        /// Injects Enhancer-specific transformation into shader and returns modified code
+        /// Injects Injector-specific transformation into shader and returns modified code
         std::string injectShader(const std::vector<VertextAssignment>& assignments);
 
         /// Get transformation matrix from assigments
@@ -106,6 +106,6 @@ namespace pipeline
         static std::string getCommonTransformationShader();
     };
 } //namespace pipeline
-} //namespace ve
+} //namespace hi
 
 #endif

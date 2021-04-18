@@ -6,13 +6,13 @@
 *
 *****************************************************************************/
 
-#ifndef VE_UI_X11_SNIFFER_HPP
-#define VE_UI_X11_SNIFFER_HPP
+#ifndef HI_UI_X11_SNIFFER_HPP
+#define HI_UI_X11_SNIFFER_HPP
 
 #include <X11/Xlib.h>
 #include <functional>
 
-namespace ve
+namespace hi
 {
 class X11Sniffer
 {
@@ -49,5 +49,5 @@ private:
     Window m_Window;
     Display* m_Display = nullptr;
 };
-} // namespace ve
+} // namespace hi
 #endif

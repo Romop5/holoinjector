@@ -13,8 +13,8 @@
 #include "renderbuffer_tracker.hpp"
 #include "utils/opengl_debug.hpp"
 
-using namespace ve;
-using namespace ve::trackers;
+using namespace hi;
+using namespace hi::trackers;
 //-----------------------------------------------------------------------------
 // RenderbufferMetadata
 //-----------------------------------------------------------------------------
@@ -27,11 +27,11 @@ void RenderbufferMetadata::createShadowedTexture(size_t numOfLayers)
 {
     if (getWidth() == 0 || getHeight() == 0)
     {
-        Logger::logError(" Failed to get texture size. Got ", getWidth(), "x", getHeight(), ENHANCER_POS);
+        Logger::logError(" Failed to get texture size. Got ", getWidth(), "x", getHeight(), HI_POS);
         return;
     }
     Logger::logDebug("Creating shadow texture: renderbuffer: with resolution: ", getWidth(), "x",
-        getHeight(), " and format: ", TextureMetadata::getFormatAsString(getFormat()), ENHANCER_POS);
+        getHeight(), " and format: ", TextureMetadata::getFormatAsString(getFormat()), HI_POS);
 
     glGetError();
     GLuint layeredTexture;
@@ -52,7 +52,7 @@ void RenderbufferMetadata::createShadowedTexture(size_t numOfLayers)
     }
     else
     {
-        Logger::logError("Error while creating texture for renderbuffer texture", ENHANCER_POS);
+        Logger::logError("Error while creating texture for renderbuffer texture", HI_POS);
     }
 
     ASSERT_GL_ERROR();

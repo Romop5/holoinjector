@@ -7,11 +7,11 @@
 *****************************************************************************/
 
 #ifndef PARALAX_MAPPING_HPP
-#define PARALAX_MAPPING_HPP
+#define HI_PARALAXMAPPING_HPP
 
 #include <memory>
 
-namespace ve
+namespace hi
 {
 namespace utils
 {
@@ -34,10 +34,10 @@ namespace paralax
     private:
         void setUniform1i(const std::string& name, size_t value);
         void setUniform1f(const std::string& name, float value);
-        std::shared_ptr<ve::utils::glProgram> m_program;
-        std::shared_ptr<ve::utils::glFullscreenVAO> m_VAO;
+        std::shared_ptr<hi::utils::glProgram> m_program;
+        std::shared_ptr<hi::utils::glFullscreenVAO> m_VAO;
     };
 } //namespace paralax
-}; // namespace ve
+}; // namespace hi
 
 #endif

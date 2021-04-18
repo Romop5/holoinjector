@@ -6,14 +6,14 @@
 *
 *****************************************************************************/
 
-#ifndef VE_UTILS_OPENGL_UTILS_HPP
-#define VE_UTILS_OPENGL_UTILS_HPP
+#ifndef HI_UTILS_OPENGL_UTILS_HPP
+#define HI_UTILS_OPENGL_UTILS_HPP
 #include <GL/gl.h>
 #include <glm/glm.hpp>
 #include <optional>
 #include <string>
 
-namespace ve
+namespace hi
 {
 namespace opengl_utils
 {
@@ -35,5 +35,5 @@ namespace opengl_utils
 
     bool isProgramLinked(size_t programID);
 } //namespace opengl_utils
-} //namespace ve
+} //namespace hi
 #endif

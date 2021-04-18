@@ -7,10 +7,10 @@
 *****************************************************************************/
 
 #ifndef CONFIG_HPP
-#define CONFIG_HPP
+#define HI_CONFIGHPP
 #include <string>
 #include <unordered_map>
-namespace ve
+namespace hi
 {
 /**
      * @brief Handles user's config files & enviromental variables
@@ -43,5 +43,5 @@ private:
     void loadFromFile(ConfigDict& dict, const std::string& fileName);
     void loadFromEnvironment(ConfigDict& dict);
 };
-} // namespace ve
+} // namespace hi
 #endif

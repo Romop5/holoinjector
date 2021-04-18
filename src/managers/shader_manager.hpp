@@ -6,12 +6,12 @@
 *
 *****************************************************************************/
 
-#ifndef VE_SHADER_MANAGER_HPP
-#define VE_SHADER_MANAGER_HPP
+#ifndef HI_SHADER_MANAGER_HPP
+#define HI_SHADER_MANAGER_HPP
 
 #include <functional>
 
-namespace ve
+namespace hi
 {
 class Context;
 
@@ -35,6 +35,6 @@ namespace managers
         void linkProgram(Context& context, GLuint program);
     };
 } // namespace managers
-} // namespace ve
+} // namespace hi
 
 #endif

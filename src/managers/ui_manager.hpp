@@ -6,13 +6,13 @@
 *
 *****************************************************************************/
 
-#ifndef VE_UI_MANAGER_HPP
-#define VE_UI_MANAGER_HPP
+#ifndef HI_UI_MANAGER_HPP
+#define HI_UI_MANAGER_HPP
 
 #include <cstddef>
 #include <memory>
 
-namespace ve
+namespace hi
 {
 class Context;
 

@@ -11,8 +11,8 @@
 #include <cstdlib> // size_t
 #include <cstring> // memcmp
 
-using namespace ve;
-using namespace ve::pipeline;
+using namespace hi;
+using namespace hi::pipeline;
 
 ViewportArea::ViewportArea()
 {

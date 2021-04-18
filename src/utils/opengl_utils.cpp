@@ -21,7 +21,7 @@
 #include "FreeImage.h"
 
 template <typename T>
-void ve::opengl_utils::dumpOpenglMatrix(const T* m)
+void hi::opengl_utils::dumpOpenglMatrix(const T* m)
 {
     Logger::log("Matrix: ");
     Logger::log("", m[0], m[4], m[8], m[12]);
@@ -31,16 +31,16 @@ void ve::opengl_utils::dumpOpenglMatrix(const T* m)
 }
 
 template <>
-void ve::opengl_utils::dumpOpenglMatrix<glm::mat4>(const glm::mat4* m);
+void hi::opengl_utils::dumpOpenglMatrix<glm::mat4>(const glm::mat4* m);
 
-glm::mat4 ve::opengl_utils::createMatrixFromRawGL(const GLfloat* values)
+glm::mat4 hi::opengl_utils::createMatrixFromRawGL(const GLfloat* values)
 {
     glm::mat4 result;
     std::memcpy(glm::value_ptr(result), values, 16 * sizeof(GLfloat));
     return result;
 }
 
-glm::mat4 ve::opengl_utils::createMatrixFromRawGL(const GLdouble* value)
+glm::mat4 hi::opengl_utils::createMatrixFromRawGL(const GLdouble* value)
 {
     GLfloat newM[16];
     for (size_t i = 0; i < 16; i++)
@@ -52,12 +52,12 @@ glm::mat4 ve::opengl_utils::createMatrixFromRawGL(const GLdouble* value)
     return result;
 }
 
-std::string ve::opengl_utils::getEnumStringRepresentation(GLenum type)
+std::string hi::opengl_utils::getEnumStringRepresentation(GLenum type)
 {
     return "UNKNOWN";
 }
 
-bool ve::opengl_utils::takeScreenshot(const std::string& path, size_t screenWidth, size_t screenHeight)
+bool hi::opengl_utils::takeScreenshot(const std::string& path, size_t screenWidth, size_t screenHeight)
 {
     using BYTE = uint8_t;
     GLfloat viewport[4];
@@ -89,7 +89,7 @@ bool ve::opengl_utils::takeScreenshot(const std::string& path, size_t screenWidt
     return true;
 }
 
-std::optional<std::string> ve::opengl_utils::getShaderLogMessage(size_t shaderID)
+std::optional<std::string> hi::opengl_utils::getShaderLogMessage(size_t shaderID)
 {
     GLint logSize = 0;
     glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &logSize);
@@ -106,7 +106,7 @@ std::optional<std::string> ve::opengl_utils::getShaderLogMessage(size_t shaderID
     return {};
 }
 
-std::optional<std::string> ve::opengl_utils::getProgramLogMessage(size_t programID)
+std::optional<std::string> hi::opengl_utils::getProgramLogMessage(size_t programID)
 {
     GLint logSize = 0;
     glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &logSize);
@@ -123,7 +123,7 @@ std::optional<std::string> ve::opengl_utils::getProgramLogMessage(size_t program
     return {};
 }
 
-bool ve::opengl_utils::isProgramLinked(size_t programID)
+bool hi::opengl_utils::isProgramLinked(size_t programID)
 {
     GLint linkStatus = 0;
     glGetProgramiv(programID, GL_LINK_STATUS, &linkStatus);

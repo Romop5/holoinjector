@@ -17,7 +17,7 @@
 #include "logger.hpp"
 #include "utils/enviroment.hpp"
 
-using namespace ve;
+using namespace hi;
 
 ///////////////////////////////////////////////////////////////////////////////
 // ConfigDict
@@ -68,10 +68,10 @@ const Config::ConfigDict Config::load()
 
 const std::string Config::getConfigPath() const
 {
-    // 1. has enviroment variable ENHANCER_CONFIG
+    // 1. has enviroment variable HI_CONFIG
     if (enviroment::hasEnviromentalVariable("EHANCER_CONFIG"))
     {
-        return enviroment::getEnviromentValueStr("ENHANCER_CONFIG", "");
+        return enviroment::getEnviromentValueStr("HI_CONFIG", "");
     }
     // 2. has enhancer.cfg in current work dir?
     const auto relativeConfig = std::filesystem::current_path() / "enhancer.cfg";
@@ -124,21 +124,21 @@ void Config::loadFromFile(ConfigDict& dict, const std::string& fileName)
 void Config::loadFromEnvironment(ConfigDict& dict)
 {
     static std::vector<std::pair<std::string, std::string>> enviromentVariables = {
-        { "ENHANCER_XMULTIPLIER", "xmultiplier" },
-        { "ENHANCER_DISTANCE", "distance" },
-        { "ENHANCER_NOW", "now" },
-        { "ENHANCER_QUILT", "quilt" },
-        { "ENHANCER_WIDE", "wide" },
-        { "ENHANCER_QUILTX", "gridXSize" },
-        { "ENHANCER_QUILTY", "gridYSize" },
-        { "ENHANCER_FBOWIDTH", "outputXSize" },
-        { "ENHANCER_FBOHEIGHT", "outputYSize" },
-        { "ENHANCER_EXIT_AFTER", "exitAfterFrames" },
-        { "ENHANCER_CAMERAID", "onlyShownCameraID" },
-        { "ENHANCER_SCREENSHOT", "screenshotFormatString" },
-        { "ENHANCER_NONINTRUSIVE", "shouldBeNonIntrusive" },
-        { "ENHANCER_RUNINBG", "runInBackground" },
-        { "ENHANCER_RECORDFPS", "shouldRecordFPS" },
+        { "HI_XMULTIPLIER", "xmultiplier" },
+        { "HI_DISTANCE", "distance" },
+        { "HI_NOW", "now" },
+        { "HI_QUILT", "quilt" },
+        { "HI_WIDE", "wide" },
+        { "HI_QUILTX", "gridXSize" },
+        { "HI_QUILTY", "gridYSize" },
+        { "HI_FBOWIDTH", "outputXSize" },
+        { "HI_FBOHEIGHT", "outputYSize" },
+        { "HI_EXIT_AFTER", "exitAfterFrames" },
+        { "HI_CAMERAID", "onlyShownCameraID" },
+        { "HI_SCREENSHOT", "screenshotFormatString" },
+        { "HI_NONINTRUSIVE", "shouldBeNonIntrusive" },
+        { "HI_RUNINBG", "runInBackground" },
+        { "HI_RECORDFPS", "shouldRecordFPS" },
     };
     for (const auto& entry : enviromentVariables)
     {

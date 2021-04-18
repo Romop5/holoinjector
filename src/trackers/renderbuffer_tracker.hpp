@@ -6,15 +6,15 @@
 *
 *****************************************************************************/
 
-#ifndef VE_RENDERBUFFER_TRACKER_HPP
-#define VE_RENDERBUFFER_TRACKER_HPP
+#ifndef HI_RENDERBUFFER_TRACKER_HPP
+#define HI_RENDERBUFFER_TRACKER_HPP
 
 #include "GL/gl.h"
 #include <memory>
 
 #include "trackers/texture_tracker.hpp"
 
-namespace ve
+namespace hi
 {
 namespace trackers
 {
@@ -33,5 +33,5 @@ namespace trackers
     {
     };
 } //namespace trackers
-} //namespace ve
+} //namespace hi
 #endif

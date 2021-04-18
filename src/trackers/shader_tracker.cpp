@@ -11,8 +11,8 @@
 
 #include <cassert>
 
-using namespace ve;
-using namespace ve::trackers;
+using namespace hi;
+using namespace hi::trackers;
 
 ///////////////////////////////////////////////////////////////////////////////
 // ShaderMetadata

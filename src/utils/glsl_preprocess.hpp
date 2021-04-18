@@ -6,13 +6,13 @@
 *
 *****************************************************************************/
 
-#ifndef VE_GLSL_PREPROCESS_HPP
-#define VE_GLSL_PREPROCESS_HPP
+#ifndef HI_GLSL_PREPROCESS_HPP
+#define HI_GLSL_PREPROCESS_HPP
 
 #include <GL/gl.h>
 #include <string>
 
-namespace ve
+namespace hi
 {
 namespace glsl_preprocess
 {
@@ -23,6 +23,6 @@ namespace glsl_preprocess
 
     std::string removeComments(std::string code);
 } //namespace glsl_preprocess
-} //namespace ve
+} //namespace hi
 
 #endif

@@ -18,7 +18,7 @@ namespace helper
 class RegisterAPIFunction;
 }
 
-namespace ve
+namespace hi
 {
 namespace hooking
 {
@@ -3035,4 +3035,4 @@ namespace hooking
         friend class helper::RegisterAPIFunction;
     };
 } //namespace hooking
-} //namespace ve
+} //namespace hi

@@ -14,8 +14,8 @@
 #include "utils/opengl_debug.hpp"
 #include <cassert>
 
-using namespace ve;
-using namespace ve::trackers;
+using namespace hi;
+using namespace hi::trackers;
 
 namespace helper
 {
@@ -119,24 +119,24 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
 {
     if (m_shadowedLayerVersionId != 0)
     {
-        Logger::logDebug("Shadow texture already exist for texture: ", getID(), ENHANCER_POS);
+        Logger::logDebug("Shadow texture already exist for texture: ", getID(), HI_POS);
         return;
     }
     if (getType() != GL_TEXTURE_2D)
     {
-        Logger::logError(" Expected GL_TEXTURE_2D as texture type of FBO's attachment, got ", getTypeAsString(getType()), " instead", ENHANCER_POS);
+        Logger::logError(" Expected GL_TEXTURE_2D as texture type of FBO's attachment, got ", getTypeAsString(getType()), " instead", HI_POS);
         CLEAR_GL_ERROR();
         return;
     }
 
     if (getWidth() == 0 || getHeight() == 0)
     {
-        Logger::logError(" Failed to get texture size. Got ", getWidth(), "x", getHeight(), ENHANCER_POS);
+        Logger::logError(" Failed to get texture size. Got ", getWidth(), "x", getHeight(), HI_POS);
         return;
     }
 
     Logger::logDebug("Creating shadow texture with resolution: ", getWidth(), "x",
-        getHeight(), " and format: ", TextureMetadata::getFormatAsString(getFormat()), ENHANCER_POS);
+        getHeight(), " and format: ", TextureMetadata::getFormatAsString(getFormat()), HI_POS);
 
     CLEAR_GL_ERROR();
     GLuint textures[2];
@@ -156,7 +156,7 @@ void TextureMetadata::createShadowedTexture(size_t numOfLayers)
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, getFormat(), shadowTextureWidth, shadowTextureHeight, numOfLayers);
     if (glGetError() != GL_NO_ERROR)
     {
-        Logger::logError("Failed to set layered shadow texture's storage", ENHANCER_POS);
+        Logger::logError("Failed to set layered shadow texture's storage", HI_POS);
         return;
     }
 
@@ -202,7 +202,7 @@ void TextureMetadata::setTextureViewToLayer(size_t layer)
     auto textureViewError = glGetError();
     if (textureViewError != GL_NO_ERROR)
     {
-        Logger::logError(" Failed to create texture view.: ", ve::debug::convertErrorToString(textureViewError), ENHANCER_POS);
+        Logger::logError(" Failed to create texture view.: ", hi::debug::convertErrorToString(textureViewError), HI_POS);
         return;
     }
     m_shadowTextureViewId = viewId;
@@ -337,13 +337,13 @@ void TextureUnitTracker::bindShadowedTexturesToLayer(size_t layer)
             auto textureView = texture->getTextureViewIdOfShadowedTexture();
             if (textureView)
             {
-                Logger::logDebugPerFrame("TU: bindShadowTexture (", texture->getID(), " -> ", textureView, ENHANCER_POS);
+                Logger::logDebugPerFrame("TU: bindShadowTexture (", texture->getID(), " -> ", textureView, HI_POS);
                 glBindTexture(target, textureView);
                 ASSERT_GL_ERROR();
             }
             else
             {
-                Logger::logError("TU: Texture has shadowed texture,but not view", ENHANCER_POS);
+                Logger::logError("TU: Texture has shadowed texture,but not view", HI_POS);
             }
         }
     }
@@ -457,7 +457,7 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
         case GL_FLOAT:
             return GL_R32F;
         default:
-            Logger::logDebug("Unknown internal format for GL_RED and size ", size, ENHANCER_POS);
+            Logger::logDebug("Unknown internal format for GL_RED and size ", size, HI_POS);
             return 0;
         }
 
@@ -481,7 +481,7 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
         case GL_FLOAT:
             return GL_RGB32F;
         default:
-            Logger::logDebug("Unknown internal format for GL_RGB and size ", size, ENHANCER_POS);
+            Logger::logDebug("Unknown internal format for GL_RGB and size ", size, HI_POS);
             return 0;
         }
     case GL_BGRA:
@@ -505,14 +505,14 @@ GLenum TextureTracker::convertToSizedFormat(GLenum internalFormat, GLenum size)
         case GL_FLOAT:
             return GL_RGBA32F;
         default:
-            Logger::logDebug("Unknown internal format for GL_RGBA and size ", size, ENHANCER_POS);
+            Logger::logDebug("Unknown internal format for GL_RGBA and size ", size, HI_POS);
             return 0;
         }
     }
     case GL_DEPTH_COMPONENT:
         return GL_DEPTH_COMPONENT32F;
     default:
-        Logger::logDebug("Unknown internal format: ", internalFormat, " with size: ", size, ENHANCER_POS);
+        Logger::logDebug("Unknown internal format: ", internalFormat, " with size: ", size, HI_POS);
         return 0;
     }
     return 0;

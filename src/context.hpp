@@ -6,10 +6,10 @@
 *
 *****************************************************************************/
 
-#ifndef VE_CONTEXT_HPP
-#define VE_CONTEXT_HPP
+#ifndef HI_CONTEXT_HPP
+#define HI_CONTEXT_HPP
 #include <memory>
-namespace ve
+namespace hi
 {
 namespace pipeline
 {
@@ -50,9 +50,9 @@ public:
     /// Is repeater rendering scene into multiple virtual screens
     bool m_IsMultiviewActivated = false;
     /// Determines how virtual views are placed in view-space
-    ve::pipeline::CameraParameters& getCameraParameters();
+    hi::pipeline::CameraParameters& getCameraParameters();
     /// Store's repeating setup
-    ve::pipeline::VirtualCameras& getCameras();
+    hi::pipeline::VirtualCameras& getCameras();
     /// Provides interface for system testing
     Diagnostics& getDiagnostics();
 
@@ -71,24 +71,24 @@ public:
      *  TRACKERS
      * ----------------------------------------------------------------------*/
     /// Store metadata about application's shaders and programs
-    ve::trackers::ShaderTracker& getManager();
+    hi::trackers::ShaderTracker& getManager();
     /// Store metadata about create Frame Buffer Objects
-    ve::trackers::FramebufferTracker& getFBOTracker();
+    hi::trackers::FramebufferTracker& getFBOTracker();
     /// Keeps track of OpenGL fixed-pipeline calls
-    ve::trackers::LegacyTracker& getLegacyTracker();
+    hi::trackers::LegacyTracker& getLegacyTracker();
     /// Keeps track of each GL_TEXTURE_XYZ
-    ve::trackers::TextureTracker& getTextureTracker();
+    hi::trackers::TextureTracker& getTextureTracker();
     /// Keeps track of GL_RENDERBUFFER objects
-    ve::trackers::RenderbufferTracker& getRenderbufferTracker();
+    hi::trackers::RenderbufferTracker& getRenderbufferTracker();
     /// Store metadata and bindings for UBO
-    ve::trackers::UniformBlockTracing& getUniformBlocksTracker();
+    hi::trackers::UniformBlockTracing& getUniformBlocksTracker();
 
     /* ------------------------------------------------------------------------
      *  HELPER STRUCTURES
      * ----------------------------------------------------------------------*/
     /// Caches current viewport/scissor area
-    ve::pipeline::ViewportArea& getCurrentViewport();
-    ve::pipeline::ViewportArea& getCurrentScissorArea();
+    hi::pipeline::ViewportArea& getCurrentViewport();
+    hi::pipeline::ViewportArea& getCurrentScissorArea();
     /*
      * Global glCallList for legacy OpenGL primitives
      * - record everything between glBegin()/glEnd() 
@@ -97,7 +97,7 @@ public:
     uint32_t m_callList = 0;
 
     /// FBO with all raw virtual cameras
-    ve::pipeline::OutputFBO& getOutputFBO();
+    hi::pipeline::OutputFBO& getOutputFBO();
 
     /// Determines if newly create GL window should be put to background
     bool keepWindowInBackgroundFlag = false;
@@ -105,5 +105,5 @@ public:
 private:
     std::unique_ptr<ContextPimpl> pimpl;
 };
-} // namespace ve
+} // namespace hi
 #endif

@@ -15,7 +15,7 @@
  *
  * @param redirector
  */
-void injector_setup(std::unique_ptr<ve::hooking::RedirectorBase> redirector);
+void injector_setup(std::unique_ptr<hi::hooking::RedirectorBase> redirector);
 void injector_cleaner();
 
 #endif

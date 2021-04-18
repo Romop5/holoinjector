@@ -8,7 +8,7 @@
 
 #include <string>
 #include <unordered_map>
-namespace ve
+namespace hi
 {
 namespace hooking
 {
@@ -43,4 +43,4 @@ namespace hooking
         }
     };
 } //namespace hooking
-} //namespace ve
+} //namespace hi

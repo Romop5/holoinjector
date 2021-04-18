@@ -6,10 +6,10 @@
 *
 *****************************************************************************/
 
-#ifndef ENHANCER_VIEWPORT_AREA_HPP
-#define ENHANCER_VIEWPORT_AREA_HPP
+#ifndef HI_VIEWPORT_AREA_HPP
+#define HI_VIEWPORT_AREA_HPP
 #include <GL/gl.h>
-namespace ve
+namespace hi
 {
 namespace pipeline
 {
@@ -42,5 +42,5 @@ namespace pipeline
         GLint data[4];
     };
 } //namespace pipeline
-} //namespace ve
+} //namespace hi
 #endif

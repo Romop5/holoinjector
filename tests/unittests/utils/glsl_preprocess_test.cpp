@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include "utils/glsl_preprocess.hpp"
 
-using namespace ve;
-using namespace ve::glsl_preprocess;
+using namespace hi;
+using namespace hi::glsl_preprocess;
 
 namespace {
 TEST(glsl_preprocess, preprocessGLSLCodeBasic) {

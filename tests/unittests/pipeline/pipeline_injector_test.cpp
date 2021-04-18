@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include "pipeline/pipeline_injector.hpp"
 #include <GL/gl.h>
-using namespace ve;
-using namespace ve::pipeline;
+using namespace hi;
+using namespace hi::pipeline;
 namespace helper
 {
     static void printPipeline(PipelineInjector::PipelineType& pipeline)

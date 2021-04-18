@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
 #include "pipeline/viewport_area.hpp"
 
-using namespace ve;
+using namespace hi;
 
 namespace {
 TEST(ViewportArea, Basic) {
-    ve::pipeline::ViewportArea area(1,2,3,4);
+    hi::pipeline::ViewportArea area(1,2,3,4);
     ASSERT_EQ(area.getX(), 1);
     ASSERT_EQ(area[0], 1);
     ASSERT_EQ(area.getY(), 2);
@@ -24,7 +24,7 @@ TEST(ViewportArea, Basic) {
 }
 
 TEST(ViewportArea, RawPtr) {
-    ve::pipeline::ViewportArea area;
+    hi::pipeline::ViewportArea area;
     area.getDataPtr()[0] = 666;
     ASSERT_EQ(area[0],666);
 }

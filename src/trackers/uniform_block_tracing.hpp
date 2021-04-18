@@ -6,13 +6,13 @@
 *
 *****************************************************************************/
 
-#ifndef VE_UNIFORM_BLOCK_TRACING_HPP
-#define VE_UNIFORM_BLOCK_TRACING_HPP
+#ifndef HI_UNIFORM_BLOCK_TRACING_HPP
+#define HI_UNIFORM_BLOCK_TRACING_HPP
 #include "pipeline/projection_estimator.hpp"
 #include <glm/glm.hpp>
 #include <unordered_map>
 
-namespace ve
+namespace hi
 {
 namespace trackers
 {
@@ -22,7 +22,7 @@ namespace trackers
         bool hasTransformation = false;
         size_t transformationOffset = -1;
         glm::mat4 transformation;
-        ve::pipeline::PerspectiveProjectionParameters projection;
+        hi::pipeline::PerspectiveProjectionParameters projection;
     };
 
     /**
@@ -45,5 +45,5 @@ namespace trackers
         std::unordered_map<size_t, UniformBinding> m_UniformBindings;
     };
 } //namespace trackers
-} //namespace ve
+} //namespace hi
 #endif

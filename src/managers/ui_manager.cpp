@@ -19,8 +19,8 @@
 #include "pipeline/virtual_cameras.hpp"
 #include <X11/keysym.h>
 
-using namespace ve;
-using namespace ve::managers;
+using namespace hi;
+using namespace hi::managers;
 
 UIManager::UIManager() = default;
 UIManager::~UIManager() = default;
@@ -129,7 +129,7 @@ void UIManager::onKeyPressed(Context& context, size_t keySym)
         context.getCameraParameters().m_frontOpticalAxisCentreDistance += (keySym == XK_F3 ? 1.0 : -1.0) * 0.5;
         break;
     case XK_F5:
-        context.getCameraParameters() = ve::pipeline::CameraParameters();
+        context.getCameraParameters() = hi::pipeline::CameraParameters();
         break;
     case XK_F11:
         context.getGui().setVisibility(!context.getGui().isVisible());

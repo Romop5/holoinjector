@@ -19,7 +19,7 @@
 #include "managers/shader_manager.hpp"
 #include "managers/ui_manager.hpp"
 
-namespace ve
+namespace hi
 {
 /**
      * @brief Reroutes hooked OpenGL calls to submodules
@@ -30,7 +30,7 @@ namespace ve
      * Trackers keep track of object' properties and bindings whereas 
      * managers are responsible for handling events w.r.t. context.
      */
-class Dispatcher : public ve::hooking::OpenglRedirectorBase
+class Dispatcher : public hi::hooking::OpenglRedirectorBase
 {
 public:
     virtual void registerCallbacks() override;
@@ -182,10 +182,10 @@ private:
     ///////////////////////////////////////////////////////////////////////
     Context m_Context;
 
-    ve::managers::DrawManager m_DrawManager;
-    ve::managers::ShaderManager m_ShaderManager;
-    ve::managers::FramebufferManager m_FramebufferManager;
-    ve::managers::UIManager m_UIManager;
+    hi::managers::DrawManager m_DrawManager;
+    hi::managers::ShaderManager m_ShaderManager;
+    hi::managers::FramebufferManager m_FramebufferManager;
+    hi::managers::UIManager m_UIManager;
 
     struct
     {
@@ -193,4 +193,4 @@ private:
         int m_LastYPosition = 0;
     } X11MouseHook;
 };
-} // namespace ve
+} // namespace hi

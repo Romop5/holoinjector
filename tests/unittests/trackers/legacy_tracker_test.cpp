@@ -4,8 +4,8 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-using namespace ve;
-using namespace ve::trackers;
+using namespace hi;
+using namespace hi::trackers;
 namespace helper {
     static bool areMatricesSame(const glm::mat4& a, const glm::mat4& b, float eps = 1e-6)
     {

@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include "pipeline/virtual_cameras.hpp"
 
-using namespace ve;
-using namespace ve::pipeline;
+using namespace hi;
+using namespace hi::pipeline;
 
 namespace {
 TEST(VirtualCameras, Setup) {

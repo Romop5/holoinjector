@@ -12,7 +12,7 @@
 __attribute((constructor)) void hi_setup()
 {
     puts("Injector startup");
-    injector_setup(std::make_unique<ve::Dispatcher>());
+    injector_setup(std::make_unique<hi::Dispatcher>());
 }
 
 __attribute((destructor)) void hi_cleaner()

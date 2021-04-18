@@ -8,10 +8,10 @@
 
 #include "utils/string_utils.hpp"
 
-using namespace ve::utils;
+using namespace hi::utils;
 
 /// Iterate&replace over generic text, matched by regex
-std::string ve::utils::regex_replace_functor(const std::string str, const std::regex reg, std::function<std::string(std::string)> functor)
+std::string hi::utils::regex_replace_functor(const std::string str, const std::regex reg, std::function<std::string(std::string)> functor)
 {
     std::string result = str;
     size_t startPosition = 0;
@@ -34,10 +34,10 @@ std::string ve::utils::regex_replace_functor(const std::string str, const std::r
 }
 
 /// Iterate&replace over all identifiers in text
-std::string ve::utils::regex_replace_identifiers(const std::string str, const std::string identifierName, std::function<std::string()> functor)
+std::string hi::utils::regex_replace_identifiers(const std::string str, const std::string identifierName, std::function<std::string()> functor)
 {
     auto replaceRegexSearch = std::regex(std::string("([a-zA-Z_-][a-zA-Z0-9_-]*)?") + identifierName + std::string("[a-zA-Z0-9_-]*"));
-    return ve::utils::regex_replace_functor(str, replaceRegexSearch, [&](auto str) -> std::string {
+    return hi::utils::regex_replace_functor(str, replaceRegexSearch, [&](auto str) -> std::string {
         if (str == identifierName)
             return functor();
         return str;

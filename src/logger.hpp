@@ -6,15 +6,15 @@
 *
 *****************************************************************************/
 
-#ifndef LOGGER_HPP
-#define LOGGER_HPP
+#ifndef HI_LOGGER_HPP
+#define HI_LOGGER_HPP
 
 #include <sstream>
 #include <string>
 
-#define ENHANCER_POS (__FILE__ ":" + std::to_string(__LINE__))
+#define HI_POS (__FILE__ ":" + std::to_string(__LINE__))
 
-namespace ve
+namespace hi
 {
 class Logger
 {
@@ -121,6 +121,6 @@ private:
 
     size_t m_currentFrameID = 0;
 };
-} //namespace ve
+} //namespace hi
 
 #endif

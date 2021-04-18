@@ -25,7 +25,7 @@
 #include "ui/settings_widget.hpp"
 #include "ui/x11_sniffer.hpp"
 
-namespace ve
+namespace hi
 {
 /**
      * @brief Stores all OpenGL-context related structures
@@ -39,9 +39,9 @@ public:
     /// Is repeater rendering scene into multiple virtual screens
     bool m_IsMultiviewActivated = false;
     /// Determines how virtual views are placed in view-space
-    ve::pipeline::CameraParameters m_cameraParameters;
+    hi::pipeline::CameraParameters m_cameraParameters;
     /// Store's repeating setup
-    ve::pipeline::VirtualCameras m_cameras;
+    hi::pipeline::VirtualCameras m_cameras;
     /// Provides interface for system testing
     Diagnostics m_diagnostics;
 
@@ -56,23 +56,23 @@ public:
          *  TRACKERS
          * ----------------------------------------------------------------------*/
     /// Store metadata about application's shaders and programs
-    ve::trackers::ShaderTracker m_Manager;
+    hi::trackers::ShaderTracker m_Manager;
     /// Store metadata about create Frame Buffer Objects
-    ve::trackers::FramebufferTracker m_FBOTracker;
+    hi::trackers::FramebufferTracker m_FBOTracker;
     /// Keeps track of OpenGL fixed-pipeline calls
-    ve::trackers::LegacyTracker m_LegacyTracker;
+    hi::trackers::LegacyTracker m_LegacyTracker;
     /// Keeps track of each GL_TEXTURE_XYZ
-    ve::trackers::TextureTracker m_TextureTracker;
+    hi::trackers::TextureTracker m_TextureTracker;
     /// Keeps track of GL_RENDERBUFFER objects
-    ve::trackers::RenderbufferTracker m_RenderbufferTracker;
+    hi::trackers::RenderbufferTracker m_RenderbufferTracker;
     /// Store metadata and bindings for UBO
-    ve::trackers::UniformBlockTracing m_UniformBlocksTracker;
+    hi::trackers::UniformBlockTracing m_UniformBlocksTracker;
 
     /* ------------------------------------------------------------------------
          *  HELPER STRUCTURES
          * ----------------------------------------------------------------------*/
     /// Caches current viewport/scissor area
-    ve::pipeline::ViewportArea currentViewport, currentScissorArea;
+    hi::pipeline::ViewportArea currentViewport, currentScissorArea;
     /*
          * Global glCallList for legacy OpenGL primitives
          * - record everything between glBegin()/glEnd() 
@@ -81,7 +81,7 @@ public:
     GLint m_callList = 0;
 
     /// FBO with all raw virtual cameras
-    ve::pipeline::OutputFBO m_OutputFBO;
+    hi::pipeline::OutputFBO m_OutputFBO;
 };
 
 Context::Context()
@@ -96,11 +96,11 @@ void Context::reset()
     pimpl = std::make_unique<ContextPimpl>();
 }
 
-ve::pipeline::CameraParameters& Context::getCameraParameters()
+hi::pipeline::CameraParameters& Context::getCameraParameters()
 {
     return pimpl->m_cameraParameters;
 }
-ve::pipeline::VirtualCameras& Context::getCameras()
+hi::pipeline::VirtualCameras& Context::getCameras()
 {
     return pimpl->m_cameras;
 }
@@ -124,44 +124,44 @@ X11Sniffer& Context::getX11Sniffer()
     return pimpl->m_x11Sniffer;
 }
 
-ve::trackers::ShaderTracker& Context::getManager()
+hi::trackers::ShaderTracker& Context::getManager()
 {
     return pimpl->m_Manager;
 }
 
-ve::trackers::FramebufferTracker& Context::getFBOTracker()
+hi::trackers::FramebufferTracker& Context::getFBOTracker()
 {
     return pimpl->m_FBOTracker;
 }
-ve::trackers::LegacyTracker& Context::getLegacyTracker()
+hi::trackers::LegacyTracker& Context::getLegacyTracker()
 {
     return pimpl->m_LegacyTracker;
 }
-ve::trackers::TextureTracker& Context::getTextureTracker()
+hi::trackers::TextureTracker& Context::getTextureTracker()
 {
     return pimpl->m_TextureTracker;
 }
-ve::trackers::RenderbufferTracker& Context::getRenderbufferTracker()
+hi::trackers::RenderbufferTracker& Context::getRenderbufferTracker()
 {
     return pimpl->m_RenderbufferTracker;
 }
 
-ve::trackers::UniformBlockTracing& Context::getUniformBlocksTracker()
+hi::trackers::UniformBlockTracing& Context::getUniformBlocksTracker()
 {
     return pimpl->m_UniformBlocksTracker;
 }
 
-ve::pipeline::ViewportArea& Context::getCurrentViewport()
+hi::pipeline::ViewportArea& Context::getCurrentViewport()
 {
     return pimpl->currentViewport;
 }
 
-ve::pipeline::ViewportArea& Context::getCurrentScissorArea()
+hi::pipeline::ViewportArea& Context::getCurrentScissorArea()
 {
     return pimpl->currentScissorArea;
 }
 
-ve::pipeline::OutputFBO& Context::getOutputFBO()
+hi::pipeline::OutputFBO& Context::getOutputFBO()
 {
     return pimpl->m_OutputFBO;
 }

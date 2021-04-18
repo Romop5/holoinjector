@@ -88,7 +88,7 @@ endif()
 ###############################################################################
 
 ###############################################################################
-# Create core library (enhancer)
+# Create core library (holoinjector)
 ###############################################################################
 
 add_library(injector_core
@@ -204,9 +204,9 @@ target_link_libraries(${HOLOINJECTOR_PROJECT_NAME} INTERFACE ${SUBHOOK_SO} dl X1
 
 
 ###############################################################################
-# Define function for applications, based on redirector (enhancer)
+# Define function for applications, based on redirector (holoinjector)
 ###############################################################################
-macro(createEnhancerApplication name)
+macro(createHoloInjectorApplication name)
     set(APPLICATION_NAME "${name}${PROJECT_SUFFIX}")
 
     add_library(${APPLICATION_NAME} SHARED
@@ -226,8 +226,8 @@ endmacro()
 ###############################################################################
 # Create apps
 ###############################################################################
-createEnhancerApplication(holoInjector src/startup_main.cpp src/dispatcher.cpp)
-#createEnhancerApplication(shaderDumper src/startup_dumper.cpp src/shader_dumper.cpp)
+createHoloInjectorApplication(holoInjector src/startup_main.cpp src/dispatcher.cpp)
+#createHoloInjectorApplication(shaderDumper src/startup_dumper.cpp src/shader_dumper.cpp)
 
 ###############################################################################
 # Create test app

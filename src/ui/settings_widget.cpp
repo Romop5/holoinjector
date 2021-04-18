@@ -9,7 +9,7 @@
 #include "settings_widget.hpp"
 #include <imgui.h>
 
-using namespace ve;
+using namespace hi;
 
 template <>
 void SettingsWidgetInputItem<float>::drawContent()

@@ -11,7 +11,7 @@
 
 #include "utils/glsl_preprocess.hpp"
 
-namespace ve::glsl_preprocess
+namespace hi::glsl_preprocess
 {
 std::string wrapGLSLMacros(std::string code)
 {

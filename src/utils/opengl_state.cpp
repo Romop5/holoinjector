@@ -8,7 +8,7 @@
 
 #include "utils/opengl_state.hpp"
 
-namespace ve::utils
+namespace hi::utils
 {
 BackupOpenGLStatesRAII::~BackupOpenGLStatesRAII()
 {

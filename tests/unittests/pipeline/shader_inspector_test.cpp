@@ -15,7 +15,7 @@ TEST(ShaderInspector, Basics) {
             gl_Position    =   P*   MVP*vec4(1.0);
         }
         )";
-    auto inspector = ve::pipeline::ShaderInspector(shader);
+    auto inspector = hi::pipeline::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 1);
     ASSERT_EQ(assignments[0].transformName, "P");
@@ -33,12 +33,12 @@ TEST(ShaderInspector, TextVS) {
             gl_Position    =   vec4(normal, 1.0);
         }
         )";
-    auto inspector = ve::pipeline::ShaderInspector(shader);
+    auto inspector = hi::pipeline::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 1);
     ASSERT_EQ(assignments[0].transformName, "");
-    ASSERT_TRUE(ve::pipeline::isBuiltinGLSLType("vec4"));
-    ASSERT_TRUE(ve::pipeline::isBuiltinGLSLType("vec3"));
+    ASSERT_TRUE(hi::pipeline::isBuiltinGLSLType("vec4"));
+    ASSERT_TRUE(hi::pipeline::isBuiltinGLSLType("vec3"));
     ASSERT_EQ(inspector.getTransformationUniformName(assignments), "");
 }
 
@@ -54,7 +54,7 @@ TEST(ShaderInspector, VSFalseTestMultiline) {
             gl_Position = gl_Position+vec3(1.0);
         }
         )";
-    auto inspector = ve::pipeline::ShaderInspector(shader);
+    auto inspector = hi::pipeline::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 2);
     ASSERT_EQ(assignments[0].statementRawText, "gl_Position = vec3(normal, 1.0);");
@@ -73,7 +73,7 @@ TEST(ShaderInspector, TextVSXYZ) {
             gl_Position.xyz    =   vec3(normal, 1.0);
         }
         )";
-    auto inspector = ve::pipeline::ShaderInspector(shader);
+    auto inspector = hi::pipeline::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 0);
     ASSERT_EQ(inspector.getCountOfUniforms(), 0);
@@ -88,7 +88,7 @@ TEST(ShaderInspector, TextVSReplace) {
             gl_Position=   vec4(normal, 1.0);
         }
         )";
-    auto inspector = ve::pipeline::ShaderInspector(shader);
+    auto inspector = hi::pipeline::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 1);
     auto result = inspector.injectShader(assignments);
@@ -115,7 +115,7 @@ TEST(ShaderInspector, VSTakeFirstMVP) {
             gl_Position = gl_Position + vec4(0.0,0.0,1.0,0.0);
         }
         )";
-    auto inspector = ve::pipeline::ShaderInspector(shader);
+    auto inspector = hi::pipeline::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 2);
     ASSERT_EQ(assignments[0].statementRawText, "gl_Position   =   MVP*position;");
@@ -148,7 +148,7 @@ TEST(ShaderInspector, VSExample) {
                 UV = vertexUV;
         }
         )";
-    auto inspector = ve::pipeline::ShaderInspector(shader);
+    auto inspector = hi::pipeline::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 1);
     ASSERT_EQ(assignments[0].statementRawText, "gl_Position =  MVP * vec4(vertexPosition_modelspace,1);");
@@ -182,7 +182,7 @@ TEST(ShaderInspector, InterfaceBlockUniform) {
                 UV = vertexUV;
         }
         )";
-    auto inspector = ve::pipeline::ShaderInspector(shader);
+    auto inspector = hi::pipeline::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 1);
     ASSERT_EQ(assignments[0].statementRawText, "gl_Position =  MVP * vec4(vertexPosition_modelspace,1);");
@@ -209,7 +209,7 @@ TEST(ShaderInspector, VSClipSpace) {
             gl_Position = pos.xyww;
         }        
         )";
-    auto inspector = ve::pipeline::ShaderInspector(shader);
+    auto inspector = hi::pipeline::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     ASSERT_EQ(assignments.size(), 1);
     ASSERT_EQ(assignments[0].statementRawText, "gl_Position = pos.xyww;");
@@ -236,7 +236,7 @@ TEST(ShaderInspector, VSUniforms) {
             gl_Position = pos.xyww;
         }        
         )";
-    auto inspector = ve::pipeline::ShaderInspector(shader);
+    auto inspector = hi::pipeline::ShaderInspector(shader);
     auto uniforms = inspector.getListOfUniforms();
     for(auto& def: uniforms)
     {
@@ -284,14 +284,14 @@ TEST(ShaderInspector, Experimental) {
             gl_Position = b;
         }        
         )";
-    auto inspector = ve::pipeline::ShaderInspector(shader);
+    auto inspector = hi::pipeline::ShaderInspector(shader);
     auto assignments = inspector.findAllOutVertexAssignments();
     for(auto& assignment: assignments)
     {
         auto result = inspector.analyzeGLPositionAssignment(assignment.statementRawText);
         std::cout << "ID: " << result.foundIdentifier << " - " << result.type << std::endl;
 
-        if(result.type == ve::pipeline::ShaderInspector::AnalysisType::POSSIBLE_TEMPORARY_VARIABLE)
+        if(result.type == hi::pipeline::ShaderInspector::AnalysisType::POSSIBLE_TEMPORARY_VARIABLE)
         {
             auto finalUniform = inspector.recursivelySearchUniformFromTemporaryVariable(result.foundIdentifier);
             std::cout << "Final uniform: " << finalUniform << std::endl;
@@ -318,7 +318,7 @@ TEST(ShaderInspector, InOutTest) {
             gl_Position = pos.xyww;
         }
         )";
-    auto inspector = ve::pipeline::ShaderInspector(shader);
+    auto inspector = hi::pipeline::ShaderInspector(shader);
     auto uniforms = inspector.getListOfUniforms();
     for(auto& def: uniforms)
     {

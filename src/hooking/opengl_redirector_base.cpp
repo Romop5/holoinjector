@@ -30,8 +30,8 @@
  * call to overloaded function.
  */
 
-using namespace ve;
-using namespace ve::hooking;
+using namespace hi;
+using namespace hi::hooking;
 
 static OpenglRedirectorBase* g_OpenGLRedirector = nullptr;
 thread_local bool g_IsAlreadyInsideWrapper = false;
@@ -53,7 +53,7 @@ bool shouldLogApiMessages()
     static bool isQueried = false;
     if (!isQueried)
     {
-        shouldLogApiCall = (getenv("ENHANCER_LOG_LOAD") != nullptr);
+        shouldLogApiCall = (getenv("HI_LOG_LOAD") != nullptr);
         isQueried = true;
     }
     return shouldLogApiCall;
@@ -63,7 +63,7 @@ void log_api_call(const std::string apiName, const std::string serializedArgumen
 {
     if (shouldLogApiMessages())
     {
-        printf("[Enhancer API CALL: %s] %s\n", apiName.c_str(), serializedArguments.c_str());
+        printf("[Injector API CALL: %s] %s\n", apiName.c_str(), serializedArguments.c_str());
     }
 }
 
@@ -78,13 +78,13 @@ public:
         {
             if (shouldLogApiMessages())
             {
-                printf("[Enhancer] Error: g_OpenGLRedirector == nullptr\nenhancer_startup() was not called before C++ initialization. (%s)\n", name.c_str());
+                printf("[Injector] Error: g_OpenGLRedirector == nullptr\ninjector_startup() was not called before C++ initialization. (%s)\n", name.c_str());
             }
             return;
         }
         if (shouldLogApiMessages())
         {
-            printf("[Enhancer] Registering redirection for %s\n", name.c_str());
+            printf("[Injector] Registering redirection for %s\n", name.c_str());
         }
         g_OpenGLRedirector->redirector.addRedirection(name, address);
         //definedAPIFunctions[name] = address;
@@ -112,7 +112,7 @@ std::string serialize(const std::string s)
 
 std::string serialize(GLenum c)
 {
-    return ve::opengl_utils::getEnumStringRepresentation(c);
+    return hi::opengl_utils::getEnumStringRepresentation(c);
 }
 
 std::string serialize(char c)

@@ -8,7 +8,7 @@
 
 #include "opengl_hooking/redirector_base.hpp"
 
-namespace ve
+namespace hi
 {
 class ShaderDumper : public OpenglRedirectorBase
 {

@@ -6,10 +6,10 @@
 *
 *****************************************************************************/
 
-#ifndef VE_INSPECTOR_WIDGET_HPP
-#define VE_INSPECTOR_WIDGET_HPP
+#ifndef HI_INSPECTOR_WIDGET_HPP
+#define HI_INSPECTOR_WIDGET_HPP
 
-namespace ve
+namespace hi
 {
 namespace trackers
 {

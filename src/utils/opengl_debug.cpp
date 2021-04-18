@@ -15,7 +15,7 @@
 
 #include "GL/glu.h"
 
-namespace ve::debug
+namespace hi::debug
 {
 void logOpenglDebugMessage(std::string file, size_t location, GLenum errorCode)
 {

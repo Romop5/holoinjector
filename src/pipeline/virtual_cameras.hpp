@@ -6,14 +6,14 @@
 *
 *****************************************************************************/
 
-#ifndef ENHANCER_VIRTUAL_CAMERAS_HPP
-#define ENHANCER_VIRTUAL_CAMERAS_HPP
+#ifndef HI_VIRTUAL_CAMERAS_HPP
+#define HI_VIRTUAL_CAMERAS_HPP
 #include "pipeline/camera_parameters.hpp"
 #include "pipeline/viewport_area.hpp"
 #include <glm/glm.hpp>
 #include <vector>
 
-namespace ve
+namespace hi
 {
 namespace pipeline
 {
@@ -80,5 +80,5 @@ namespace pipeline
         size_t m_CamerasPerWidth = 1;
     };
 } //namespace pipeline
-} //namespace ve
+} //namespace hi
 #endif

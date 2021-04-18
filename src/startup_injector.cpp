@@ -23,11 +23,11 @@
 
 #define INJECTOR_API_EXPORT __attribute__((visibility("default")))
 
-using namespace ve;
+using namespace hi;
 
 struct InjectorContext
 {
-    std::unique_ptr<ve::hooking::RedirectorBase> redirector;
+    std::unique_ptr<hi::hooking::RedirectorBase> redirector;
     //subhook_t dlsymhook;
 };
 
@@ -51,7 +51,7 @@ bool shouldLogApiCall()
 }
 
 }
-namespace ve
+namespace hi
 {
 /*
      * Stores function names, that were replaced by our symbols
@@ -159,7 +159,7 @@ void* getOriginalCallAddress(std::string symbol)
     {
         printf("[Injector- symbol getter] Calling original dlsym with symbo %s\n", symbol.c_str());
     }
-    auto addr = ve::original_dlsym(RTLD_NEXT, symbol.c_str());
+    auto addr = hi::original_dlsym(RTLD_NEXT, symbol.c_str());
     if (addr == NULL)
     {
         puts("[Injector- symbol getter] Failed to get original address via dlsym()");
@@ -167,14 +167,14 @@ void* getOriginalCallAddress(std::string symbol)
     return addr;
 }
 
-} // namespace ve
+} // namespace hi
 
 // Hooked
 INJECTOR_API_EXPORT void* dlsym(void* params, const char* symbol)
 {
     if (context == nullptr)
-        return ve::original_dlsym(params, symbol);
-    return ve::hooked_dlsym(params, symbol);
+        return hi::original_dlsym(params, symbol);
+    return hi::hooked_dlsym(params, symbol);
 }
 
 namespace helper
@@ -231,7 +231,7 @@ void _hack_preventLazyBinding()
  *
  * Hooks all neccessary functions to detour OpenGL library calls
  */
-void injector_setup(std::unique_ptr<ve::hooking::RedirectorBase> redirector)
+void injector_setup(std::unique_ptr<hi::hooking::RedirectorBase> redirector)
 {
     // Necessary hack
     _hack_preventLazyBinding();

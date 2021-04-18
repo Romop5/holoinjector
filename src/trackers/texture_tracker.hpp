@@ -6,15 +6,15 @@
 *
 *****************************************************************************/
 
-#ifndef VE_TEXTURE_TRACKER_HPP
-#define VE_TEXTURE_TRACKER_HPP
+#ifndef HI_TEXTURE_TRACKER_HPP
+#define HI_TEXTURE_TRACKER_HPP
 #include "GL/gl.h"
 #include <memory>
 
 #include "pipeline/program_metadata.hpp"
 #include "utils/context_tracker.hpp"
 
-namespace ve
+namespace hi
 {
 namespace trackers
 {
@@ -197,5 +197,5 @@ namespace trackers
         TextureUnitTracker m_TextureUnits;
     };
 } //namespace trackers
-} //namespace ve
+} //namespace hi
 #endif

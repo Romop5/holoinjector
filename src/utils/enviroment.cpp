@@ -9,12 +9,12 @@
 #include "utils/enviroment.hpp"
 #include "logger.hpp"
 
-bool ve::enviroment::hasEnviromentalVariable(const std::string& variable)
+bool hi::enviroment::hasEnviromentalVariable(const std::string& variable)
 {
     return getenv(variable.c_str()) != nullptr;
 }
 
-float ve::enviroment::getEnviromentValue(const std::string& variable, float defaultValue)
+float hi::enviroment::getEnviromentValue(const std::string& variable, float defaultValue)
 {
     auto envStringRaw = getenv(variable.c_str());
     if (!envStringRaw)
@@ -27,19 +27,19 @@ float ve::enviroment::getEnviromentValue(const std::string& variable, float defa
     catch (...)
     {
     };
-    Logger::log("[Enhancer] Getting env value of", variable.c_str(), "=>", resultValue);
+    Logger::log("[Injector] Getting env value of", variable.c_str(), "=>", resultValue);
     return resultValue;
 }
 
-std::string ve::enviroment::getEnviromentValueStr(const std::string& variable, std::string defaultValue)
+std::string hi::enviroment::getEnviromentValueStr(const std::string& variable, std::string defaultValue)
 {
     auto envStringRaw = getenv(variable.c_str());
     auto result = (envStringRaw) ? envStringRaw : defaultValue;
-    Logger::log("[Enhancer] Getting env value of", variable.c_str(), "=>", result.c_str());
+    Logger::log("[Injector] Getting env value of", variable.c_str(), "=>", result.c_str());
     return result;
 }
 
-void ve::enviroment::getEnviroment(const std::string& variable, float& storage)
+void hi::enviroment::getEnviroment(const std::string& variable, float& storage)
 {
     storage = getEnviromentValue(variable, storage);
 }

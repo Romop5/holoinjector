@@ -15,7 +15,7 @@
 #include <memory>
 #include <vector>
 
-namespace ve
+namespace hi
 {
 namespace utils
 {
@@ -106,7 +106,7 @@ namespace pipeline
         void setHoloDisplayParameters(const HoloDisplayParameters params);
         //---------------------------------------------------------------------
     private:
-        std::vector<ve::utils::FBORAII> m_proxyFBO;
+        std::vector<hi::utils::FBORAII> m_proxyFBO;
         void clearImageFlag();
 
         /// Render layers in grid layout
@@ -122,7 +122,7 @@ namespace pipeline
         GLuint m_ViewerProgram = 0;
 
         // Full screen quad
-        std::shared_ptr<ve::utils::glFullscreenVAO> m_VAO;
+        std::shared_ptr<hi::utils::glFullscreenVAO> m_VAO;
 
         // Parameters
         OutputFBOParameters m_Params;
@@ -137,5 +137,5 @@ namespace pipeline
     };
 
 }; //namespace pipeline
-}; //namespace ve
+}; //namespace hi
 #endif

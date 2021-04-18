@@ -6,8 +6,8 @@
 *
 *****************************************************************************/
 
-#ifndef VE_SETTINGS_WIDGET_HPP
-#define VE_SETTINGS_WIDGET_HPP
+#ifndef HI_SETTINGS_WIDGET_HPP
+#define HI_SETTINGS_WIDGET_HPP
 
 #include <functional>
 #include <iostream>
@@ -15,11 +15,11 @@
 #include <string>
 #include <vector>
 
-namespace ve
+namespace hi
 {
 class SettingsWidget;
 }
-namespace ve
+namespace hi
 {
 template <typename T>
 class SettingsModelScalar
@@ -116,6 +116,6 @@ std::shared_ptr<SettingsWidgetSliderItem<T>> SettingsWidget::registerSliderItem(
     return item;
 }
 
-} // namespace ve
+} // namespace hi
 
 #endif

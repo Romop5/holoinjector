@@ -7,7 +7,7 @@
 *****************************************************************************/
 
 #ifndef PIPELINE_INJECTOR_HPP
-#define PIPELINE_INJECTOR_HPP
+#define HI_PIPELINEINJECTOR_HPP
 
 #include <GL/gl.h>
 #include <memory>
@@ -16,7 +16,7 @@
 
 #include "pipeline/program_metadata.hpp"
 
-namespace ve
+namespace hi
 {
 namespace pipeline
 {
@@ -91,5 +91,5 @@ namespace pipeline
         bool injectShader(std::string& sourceCode, ProgramMetadata& outMetadata);
     };
 } //namespace pipeline
-} //namespace ve
+} //namespace hi
 #endif

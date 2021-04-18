@@ -2,8 +2,8 @@
 #include "trackers/framebuffer_tracker.hpp"
 #include "trackers/texture_tracker.hpp"
 
-using namespace ve;
-using namespace ve::trackers;
+using namespace hi;
+using namespace hi::trackers;
 
 namespace {
 TEST(FramebufferTracker, Basic) {

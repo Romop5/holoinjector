@@ -6,11 +6,11 @@
 *
 *****************************************************************************/
 
-#ifndef VE_DIAGNOSTICS_HPP
-#define VE_DIAGNOSTICS_HPP
+#ifndef HI_DIAGNOSTICS_HPP
+#define HI_DIAGNOSTICS_HPP
 #include <cstddef>
 #include <string>
-namespace ve
+namespace hi
 {
 /**
      * @brief Stores options regarding to system testing/diagnosis
@@ -64,5 +64,5 @@ private:
     /// Should measure FPS's time in each frame
     bool m_shouldMeasureFPS = false;
 };
-} // namespace ve
+} // namespace hi
 #endif

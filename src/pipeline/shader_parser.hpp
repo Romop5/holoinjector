@@ -9,7 +9,7 @@
 #include <string_view>
 #include <vector>
 
-namespace ve
+namespace hi
 {
 namespace pipeline
 {
@@ -18,4 +18,4 @@ namespace pipeline
     /// Verifies if 'token' names a GLSL builtin type
     bool isBuiltinGLSLType(const std::string_view& token);
 }; //namespace pipeline
-}; //namespace ve
+}; //namespace hi

@@ -44,7 +44,7 @@
 
 #include <X11/Xlib.h>
 
-using namespace ve;
+using namespace hi;
 
 void Dispatcher::initialize()
 {
@@ -66,7 +66,7 @@ void Dispatcher::initialize()
     {
         m_Context.getCameraParameters().m_frontOpticalAxisCentreDistance = settings.getAsFloat("distance");
     }
-    // if ENHANCER_NOW is provided, then start with multiple views right now
+    // if HI_NOW is provided, then start with multiple views right now
     if (settings.hasKey("now"))
     {
         m_Context.m_IsMultiviewActivated = true;
@@ -120,7 +120,7 @@ void Dispatcher::initialize()
     }
 
     // Initialize oputput FBO
-    ve::pipeline::OutputFBOParameters outParameters;
+    hi::pipeline::OutputFBOParameters outParameters;
     if (settings.hasKey("outputXSize"))
     {
         outParameters.pixels_width = settings.getAsSizet("outputXSize");
@@ -352,7 +352,7 @@ void Dispatcher::glGenTextures(GLsizei n, GLuint* textures)
 
     for (size_t i = 0; i < n; i++)
     {
-        auto texture = std::make_shared<ve::trackers::TextureMetadata>(textures[i]);
+        auto texture = std::make_shared<hi::trackers::TextureMetadata>(textures[i]);
         m_Context.getTextureTracker().add(textures[i], texture);
     }
 }
@@ -370,21 +370,21 @@ void Dispatcher::glDeleteTextures(GLsizei n, const GLuint* textures)
 void Dispatcher::glTexImage1D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexImage1D(target, level, internalFormat, width, border, format, type, pixels);
-    auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat) ? ve::trackers::TextureTracker::convertToSizedFormat(format, type) : internalFormat;
-    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, 0, level, 0, finalFormat);
+    auto finalFormat = hi::trackers::TextureTracker::isSizedFormat(internalFormat) ? hi::trackers::TextureTracker::convertToSizedFormat(format, type) : internalFormat;
+    m_Context.getTextureTracker().get(getCurrentID(hi::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, 0, level, 0, finalFormat);
 }
 void Dispatcher::glTexImage2D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
 {
     OpenglRedirectorBase::glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
-    auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalFormat) ? ve::trackers::TextureTracker::convertToSizedFormat(format, type) : internalFormat;
-    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, level, 0, finalFormat);
+    auto finalFormat = hi::trackers::TextureTracker::isSizedFormat(internalFormat) ? hi::trackers::TextureTracker::convertToSizedFormat(format, type) : internalFormat;
+    m_Context.getTextureTracker().get(getCurrentID(hi::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, level, 0, finalFormat);
 }
 
 void Dispatcher::glTexImage3D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels)
 {
     OpenglRedirectorBase::glTexImage3D(target, level, internalformat, width, height, depth, border, format, type, pixels);
-    auto finalFormat = ve::trackers::TextureTracker::isSizedFormat(internalformat) ? ve::trackers::TextureTracker::convertToSizedFormat(format, type) : internalformat;
-    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, level, 0, finalFormat);
+    auto finalFormat = hi::trackers::TextureTracker::isSizedFormat(internalformat) ? hi::trackers::TextureTracker::convertToSizedFormat(format, type) : internalformat;
+    m_Context.getTextureTracker().get(getCurrentID(hi::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, level, 0, finalFormat);
 }
 
 void Dispatcher::glTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid* pixels)
@@ -395,8 +395,8 @@ void Dispatcher::glTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsi
         Logger::logDebug("Skipping setStorage() due to xoffset != 0");
         return;
     }
-    auto finalFormat = ve::trackers::TextureTracker::convertToSizedFormat(format, type);
-    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, 0, level, 0, finalFormat);
+    auto finalFormat = hi::trackers::TextureTracker::convertToSizedFormat(format, type);
+    m_Context.getTextureTracker().get(getCurrentID(hi::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, 0, level, 0, finalFormat);
 }
 
 void Dispatcher::glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels)
@@ -407,8 +407,8 @@ void Dispatcher::glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLin
         Logger::logDebug("Skipping setStorage() due to xoffset != 0 || yoffset != 0");
         return;
     }
-    auto finalFormat = ve::trackers::TextureTracker::convertToSizedFormat(format, type);
-    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, level, 0, finalFormat);
+    auto finalFormat = hi::trackers::TextureTracker::convertToSizedFormat(format, type);
+    m_Context.getTextureTracker().get(getCurrentID(hi::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, level, 0, finalFormat);
 }
 
 void Dispatcher::glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels)
@@ -419,24 +419,24 @@ void Dispatcher::glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLin
         Logger::logDebug("Skipping setStorage() due to xoffset != 0 || yoffset != 0 || zoffset != 0");
         return;
     }
-    auto finalFormat = ve::trackers::TextureTracker::convertToSizedFormat(format, type);
-    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, level, depth, finalFormat);
+    auto finalFormat = hi::trackers::TextureTracker::convertToSizedFormat(format, type);
+    m_Context.getTextureTracker().get(getCurrentID(hi::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, level, depth, finalFormat);
 }
 
 void Dispatcher::glTexStorage1D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
 {
     OpenglRedirectorBase::glTexStorage1D(target, levels, internalformat, width);
-    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, 0, levels, 0, internalformat);
+    m_Context.getTextureTracker().get(getCurrentID(hi::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, 0, levels, 0, internalformat);
 }
 void Dispatcher::glTexStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
 {
     OpenglRedirectorBase::glTexStorage2D(target, levels, internalformat, width, height);
-    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, levels, 0, internalformat);
+    m_Context.getTextureTracker().get(getCurrentID(hi::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, levels, 0, internalformat);
 }
 void Dispatcher::glTexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
 {
     OpenglRedirectorBase::glTexStorage3D(target, levels, internalformat, width, height, depth);
-    m_Context.getTextureTracker().get(getCurrentID(ve::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, levels, depth, internalformat);
+    m_Context.getTextureTracker().get(getCurrentID(hi::trackers::TextureTracker::getParameterForType(target)))->setStorage(target, width, height, levels, depth, internalformat);
 }
 
 void Dispatcher::glTextureStorage1D(GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width)
@@ -461,7 +461,7 @@ void Dispatcher::glGenRenderbuffers(GLsizei n, GLuint* renderbuffers)
 
     for (size_t i = 0; i < n; i++)
     {
-        m_Context.getRenderbufferTracker().add(renderbuffers[i], std::make_shared<ve::trackers::RenderbufferMetadata>(renderbuffers[i]));
+        m_Context.getRenderbufferTracker().add(renderbuffers[i], std::make_shared<hi::trackers::RenderbufferMetadata>(renderbuffers[i]));
     }
 }
 
@@ -563,7 +563,7 @@ void Dispatcher::glUniformMatrix4fv(GLint location, GLsizei count, GLboolean tra
     // get current's program transformation matrix name
     if (!m_Context.getManager().hasBounded())
     {
-        Logger::logDebugPerFrame("glUniformMatrix4fv called without bound program!", ENHANCER_POS);
+        Logger::logDebugPerFrame("glUniformMatrix4fv called without bound program!", HI_POS);
         return;
     }
     auto program = m_Context.getManager().getBound();
@@ -584,13 +584,13 @@ void Dispatcher::glUniformMatrix4fv(GLint location, GLsizei count, GLboolean tra
 
     // estimate projection matrix from value
     const auto mat = opengl_utils::createMatrixFromRawGL(value);
-    auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(mat);
+    auto estimatedParameters = hi::pipeline::estimatePerspectiveProjection(mat);
 
     auto& ep = estimatedParameters;
     Logger::logDebugPerFrame("estimating parameters from uniform matrix");
     Logger::logDebugPerFrame("parameters: fx(", ep.fx, ") fy(", ep.fy, ") near (", ep.nearPlane, ") far (", ep.farPlane, ") isPerspective (", ep.isPerspective, ")");
 
-    m_DrawManager.setEnhancerDecodedProjection(m_Context, programID, estimatedParameters);
+    m_DrawManager.setInjectorDecodedProjection(m_Context, programID, estimatedParameters);
 }
 
 void Dispatcher::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
@@ -660,7 +660,7 @@ void Dispatcher::glGenFramebuffers(GLsizei n, GLuint* framebuffers)
     OpenglRedirectorBase::glGenFramebuffers(n, framebuffers);
     for (size_t i = 0; i < n; i++)
     {
-        auto fbo = std::make_shared<ve::trackers::FramebufferMetadata>(framebuffers[i]);
+        auto fbo = std::make_shared<hi::trackers::FramebufferMetadata>(framebuffers[i]);
         m_Context.getFBOTracker().add(framebuffers[i], fbo);
     }
 }
@@ -717,7 +717,7 @@ GLuint Dispatcher::glGetUniformBlockIndex(GLuint program, const GLchar* uniformB
     auto record = m_Context.getManager().get(program);
     if (record->m_UniformBlocks.count(uniformBlockName) == 0)
     {
-        ve::trackers::ShaderProgram::UniformBlock block;
+        hi::trackers::ShaderProgram::UniformBlock block;
         block.location = result;
         record->m_UniformBlocks[std::string(uniformBlockName)] = block;
     }
@@ -860,7 +860,7 @@ void Dispatcher::glBufferData(GLenum target, GLsizeiptr size, const void* data, 
         if (size >= metadata.transformationOffset + sizeof(float) * 16)
         {
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data) + metadata.transformationOffset, sizeof(float) * 16);
-            auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(metadata.transformation);
+            auto estimatedParameters = hi::pipeline::estimatePerspectiveProjection(metadata.transformation);
 
             Logger::logDebugPerFrame("estimating parameters from UBO");
 
@@ -891,7 +891,7 @@ void Dispatcher::glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size
         if (offset + size >= metadata.transformationOffset + sizeof(float) * 16)
         {
             std::memcpy(glm::value_ptr(metadata.transformation), static_cast<const std::byte*>(data) + metadata.transformationOffset, sizeof(float) * 16);
-            auto estimatedParameters = ve::pipeline::estimatePerspectiveProjection(metadata.transformation);
+            auto estimatedParameters = hi::pipeline::estimatePerspectiveProjection(metadata.transformation);
             Logger::logDebugPerFrame("estimating parameters from UBO");
             auto& ep = estimatedParameters;
             Logger::logDebugPerFrame("parameters: fx(", ep.fx, ") fy(", ep.fy, ") near (", ep.nearPlane, ") near(", ep.farPlane, ")");
@@ -907,7 +907,7 @@ void Dispatcher::glMatrixMode(GLenum mode)
 {
     OpenglRedirectorBase::glMatrixMode(mode);
     m_Context.getLegacyTracker().matrixMode(mode);
-    //Logger::log("glMatrixMode ", ve::opengl_utils::getEnumStringRepresentation(mode).c_str());
+    //Logger::log("glMatrixMode ", hi::opengl_utils::getEnumStringRepresentation(mode).c_str());
 }
 void Dispatcher::glLoadMatrixd(const GLdouble* m)
 {

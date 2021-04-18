@@ -12,10 +12,10 @@
 __attribute((constructor)) void repeater_setup()
 {
     puts("Shader dumper startup");
-    enhancer_setup(std::make_unique<ve::ShaderDumper>());
+    injector_setup(std::make_unique<hi::ShaderDumper>());
 }
 
 __attribute((destructor)) void repeater_cleaner()
 {
-    enhancer_cleaner();
+    injector_cleaner();
 }

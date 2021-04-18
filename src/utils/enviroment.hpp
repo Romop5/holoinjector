@@ -6,12 +6,12 @@
 *
 *****************************************************************************/
 
-#ifndef VE_UTILS_ENVIROMENT_HPP
-#define VE_UTILS_ENVIROMENT_HPP
+#ifndef HI_UTILS_ENVIROMENT_HPP
+#define HI_UTILS_ENVIROMENT_HPP
 
 #include <string>
 
-namespace ve
+namespace hi
 {
 namespace enviroment
 {
@@ -25,6 +25,6 @@ namespace enviroment
     /// Store value of variable to 'storage' (or store 0.0)
     void getEnviroment(const std::string& variable, float& storage);
 };
-} // namespace ve
+} // namespace hi
 
 #endif

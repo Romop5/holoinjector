@@ -12,8 +12,8 @@
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>
 
-using namespace ve;
-using namespace ve::trackers;
+using namespace hi;
+using namespace hi::trackers;
 
 bool LegacyTracker::isLegacyNeeded() const
 {

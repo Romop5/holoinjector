@@ -12,7 +12,7 @@
 #include <regex>
 #include <string>
 
-namespace ve
+namespace hi
 {
 namespace utils
 {

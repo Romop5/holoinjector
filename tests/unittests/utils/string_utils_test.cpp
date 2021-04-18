@@ -2,8 +2,8 @@
 #include "utils/string_utils.hpp"
 #include <cstdlib>
 
-using namespace ve;
-using namespace ve::utils;
+using namespace hi;
+using namespace hi::utils;
 
 namespace {
 TEST(StringUtils, Simple) {

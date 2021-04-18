@@ -2,8 +2,8 @@
 #include "utils/enviroment.hpp"
 #include <cstdlib>
 
-using namespace ve;
-using namespace ve::enviroment;
+using namespace hi;
+using namespace hi::enviroment;
 
 namespace {
 TEST(Enviroment, hasEnviromentalVariable) {

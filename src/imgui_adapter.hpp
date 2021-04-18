@@ -6,12 +6,12 @@
 *
 *****************************************************************************/
 
-#ifndef VE_IMGUI_ADAPTER_HPP
-#define VE_IMGUI_ADAPTER_HPP
+#ifndef HI_IMGUI_ADAPTER_HPP
+#define HI_IMGUI_ADAPTER_HPP
 
 #include <cstddef>
 
-namespace ve
+namespace hi
 {
 // Fwd
 class Context;
@@ -48,5 +48,5 @@ private:
     float posX = 0.0;
     float posY = 0.0;
 };
-} // namespace ve
+} // namespace hi
 #endif

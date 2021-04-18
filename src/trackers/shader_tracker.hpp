@@ -16,7 +16,7 @@
 
 #include <GL/gl.h>
 
-namespace ve
+namespace hi
 {
 namespace trackers
 {
@@ -52,7 +52,7 @@ namespace trackers
         BindableContextTracker<std::shared_ptr<ShaderMetadata>> shaders;
 
         /// Metadata are created as a result of injection
-        std::unique_ptr<ve::pipeline::ProgramMetadata> m_Metadata;
+        std::unique_ptr<hi::pipeline::ProgramMetadata> m_Metadata;
 
         struct UniformBlock
         {
@@ -96,4 +96,4 @@ namespace trackers
         std::shared_ptr<ShaderMetadata> getBoundGS();
     };
 } // namespace trackers
-} // namespace ve
+} // namespace hi

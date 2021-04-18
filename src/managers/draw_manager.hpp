@@ -6,12 +6,12 @@
 *
 *****************************************************************************/
 
-#ifndef VE_DRAW_MANAGER_HPP
-#define VE_DRAW_MANAGER_HPP
+#ifndef HI_DRAW_MANAGER_HPP
+#define HI_DRAW_MANAGER_HPP
 
 #include <functional>
 
-namespace ve
+namespace hi
 {
 class Context;
 
@@ -26,7 +26,7 @@ namespace managers
     {
     public:
         void draw(Context& context, const std::function<void(void)>& code);
-        void setEnhancerDecodedProjection(Context& context, GLuint program, const ve::pipeline::PerspectiveProjectionParameters& projection);
+        void setInjectorDecodedProjection(Context& context, GLuint program, const hi::pipeline::PerspectiveProjectionParameters& projection);
 
     private:
         /// Decide if current draw call is dispached in suitable settings
@@ -43,9 +43,9 @@ namespace managers
         std::string dumpDrawContext(Context& context) const;
 
         // TODO: Replace setters with separate class, devoted for intershader communication
-        void setEnhancerShift(Context& context, const glm::mat4& viewSpaceTransform, float projectionAdjust = 0.0);
-        void resetEnhancerShift(Context& context);
-        void setEnhancerIdentity(Context& context);
+        void setInjectorShift(Context& context, const glm::mat4& viewSpaceTransform, float projectionAdjust = 0.0);
+        void resetInjectorShift(Context& context);
+        void setInjectorIdentity(Context& context);
 
         void pushFixedPipelineProjection(Context& context, const glm::mat4& viewSpaceTransform, float projectionAdjust = 0.0);
         void popFixedPipelineProjection(Context& context);
@@ -57,9 +57,9 @@ namespace managers
         bool isSingleViewPossible(Context& context);
         bool isRepeatingSuitable(Context& context);
 
-        void setEnhancerUniforms(size_t shaderID, Context& context);
+        void setInjectorUniforms(size_t shaderID, Context& context);
     };
 } // namespace managers
-} // namespace ve
+} // namespace hi
 
 #endif

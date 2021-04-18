@@ -16,8 +16,8 @@
 #include <glm/gtc/matrix_access.hpp> // glm::row
 #include <glm/gtx/norm.hpp> // norms
 
-using namespace ve;
-using namespace ve::pipeline;
+using namespace hi;
+using namespace hi::pipeline;
 
 namespace helper
 {
@@ -50,7 +50,7 @@ inline void rescaleIfNecessary(T& value, T scale, bool shouldRescale)
     }
 }
 
-ve::pipeline::PerspectiveProjectionParameters extractPerspective(const glm::mat4& mvp)
+hi::pipeline::PerspectiveProjectionParameters extractPerspective(const glm::mat4& mvp)
 {
     PerspectiveProjectionParameters result;
     // Obtain fx as length of 0th row of 3x3 matrix
@@ -102,7 +102,7 @@ ve::pipeline::PerspectiveProjectionParameters extractPerspective(const glm::mat4
 }
 } //namespace helper
 
-ve::pipeline::PerspectiveProjectionParameters ve::pipeline::estimatePerspectiveProjection(glm::mat4 transformationMatrix)
+hi::pipeline::PerspectiveProjectionParameters hi::pipeline::estimatePerspectiveProjection(glm::mat4 transformationMatrix)
 {
     return helper::extractPerspective(transformationMatrix);
 }

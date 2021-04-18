@@ -9,7 +9,7 @@
 #include "paralax/mapping.hpp"
 #include "utils/opengl_objects.hpp"
 
-void ve::paralax::Mapping::initializeResources()
+void hi::paralax::Mapping::initializeResources()
 {
     auto vs = utils::glShader(R"(
         #version 330 core
@@ -123,21 +123,21 @@ void ve::paralax::Mapping::initializeResources()
     )",
         GL_FRAGMENT_SHADER);
 
-    m_program = std::make_unique<ve::utils::glProgram>(std::move(vs), std::move(fs));
-    m_VAO = std::make_shared<ve::utils::glFullscreenVAO>();
+    m_program = std::make_unique<hi::utils::glProgram>(std::move(vs), std::move(fs));
+    m_VAO = std::make_shared<hi::utils::glFullscreenVAO>();
 }
 
-void ve::paralax::Mapping::bindInputDepthBuffer(size_t bufferID)
+void hi::paralax::Mapping::bindInputDepthBuffer(size_t bufferID)
 {
     setUniform1i("texDepth", bufferID);
 }
 
-void ve::paralax::Mapping::bindInputColorBuffer(size_t bufferID)
+void hi::paralax::Mapping::bindInputColorBuffer(size_t bufferID)
 {
     setUniform1i("tex", bufferID);
 }
 
-void ve::paralax::Mapping::draw(size_t gridXSize, size_t gridYSize, float disparityRatio, float centerRatio)
+void hi::paralax::Mapping::draw(size_t gridXSize, size_t gridYSize, float disparityRatio, float centerRatio)
 {
     setUniform1i("gridXSize", gridXSize);
     setUniform1i("gridYSize", gridYSize);
@@ -146,7 +146,7 @@ void ve::paralax::Mapping::draw(size_t gridXSize, size_t gridYSize, float dispar
     m_VAO->draw();
 }
 
-void ve::paralax::Mapping::setUniform1i(const std::string& name, size_t value)
+void hi::paralax::Mapping::setUniform1i(const std::string& name, size_t value)
 {
     auto progID = m_program->getID();
     size_t texLocation = glGetUniformLocation(progID, name.c_str());
@@ -154,7 +154,7 @@ void ve::paralax::Mapping::setUniform1i(const std::string& name, size_t value)
     glUniform1i(texLocation, value);
 }
 
-void ve::paralax::Mapping::setUniform1f(const std::string& name, float value)
+void hi::paralax::Mapping::setUniform1f(const std::string& name, float value)
 {
     auto progID = m_program->getID();
     size_t texLocation = glGetUniformLocation(progID, name.c_str());

@@ -8,8 +8,8 @@
 
 #include "pipeline/camera_parameters.hpp"
 
-using namespace ve;
-using namespace ve::pipeline;
+using namespace hi;
+using namespace hi::pipeline;
 
 bool CameraParameters::operator==(const CameraParameters& p) const
 {

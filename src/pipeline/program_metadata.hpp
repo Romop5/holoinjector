@@ -6,12 +6,12 @@
 *
 *****************************************************************************/
 
-#ifndef VE_PROGRAM_METADATA_HPP
-#define VE_PROGRAM_METADATA_HPP
+#ifndef HI_PROGRAM_METADATA_HPP
+#define HI_PROGRAM_METADATA_HPP
 
 #include <string>
 
-namespace ve
+namespace hi
 {
 namespace pipeline
 {
@@ -46,5 +46,5 @@ namespace pipeline
     };
 
 } //namespace pipeline
-} //namespace ve
+} //namespace hi
 #endif

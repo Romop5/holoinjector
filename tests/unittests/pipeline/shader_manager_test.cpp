@@ -3,8 +3,8 @@
 
 #include <unordered_set>
 
-using namespace ve;
-using namespace ve::trackers;
+using namespace hi;
+using namespace hi::trackers;
 
 namespace {
 TEST(ShaderTracker, Basic) 

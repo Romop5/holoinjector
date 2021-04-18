@@ -22,10 +22,10 @@
 #include "utils/opengl_utils.hpp"
 #include <cmath>
 
-using namespace ve;
-using namespace ve::managers;
-using namespace ve::pipeline;
-using namespace ve::opengl_utils;
+using namespace hi;
+using namespace hi::managers;
+using namespace hi::pipeline;
+using namespace hi::opengl_utils;
 
 /// Default maximal Geometry Shader invocations, defined by OpenGL standard
 constexpr auto defaultMaximumGSInvocations = 32;
@@ -135,7 +135,7 @@ CompilationResult tryCompilingShaderProgram(const PipelineInjector::PipelineType
 GLuint ShaderManager::createShader(Context& context, GLenum shaderType)
 {
     auto id = glCreateShader(shaderType);
-    auto shaderDesc = std::make_shared<ve::trackers::ShaderMetadata>(id, shaderType);
+    auto shaderDesc = std::make_shared<hi::trackers::ShaderMetadata>(id, shaderType);
     context.getManager().shaders.add(id, shaderDesc);
     return id;
 }
@@ -184,9 +184,9 @@ void ShaderManager::linkProgram(Context& context, GLuint programId)
     /*
      *  Create pipeline injector with correct parameters (number of vies)
      */
-    ve::pipeline::PipelineInjector plInjector;
-    ve::pipeline::PipelineInjector::PipelineType pipeline;
-    ve::pipeline::PipelineParams parameters;
+    hi::pipeline::PipelineInjector plInjector;
+    hi::pipeline::PipelineInjector::PipelineType pipeline;
+    hi::pipeline::PipelineParams parameters;
 
     // TODO: detect if number of invocations is supported
     parameters.countOfInvocations = context.getOutputFBO().getParams().getLayers();
@@ -263,7 +263,7 @@ GLuint ShaderManager::createProgram(Context& context)
 {
     auto result = glCreateProgram();
 
-    auto program = std::make_shared<ve::trackers::ShaderProgram>();
+    auto program = std::make_shared<hi::trackers::ShaderProgram>();
     context.getManager().add(result, program);
     return result;
 }

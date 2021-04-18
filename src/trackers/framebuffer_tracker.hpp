@@ -6,8 +6,8 @@
 *
 *****************************************************************************/
 
-#ifndef VE_FRAMEBUFFER_TRACKER_HPP
-#define VE_FRAMEBUFFER_TRACKER_HPP
+#ifndef HI_FRAMEBUFFER_TRACKER_HPP
+#define HI_FRAMEBUFFER_TRACKER_HPP
 
 #include <memory>
 #include <unordered_map>
@@ -17,7 +17,7 @@
 #include "utils/opengl_raii.hpp"
 #include <GL/gl.h>
 
-namespace ve
+namespace hi
 {
 namespace trackers
 {
@@ -153,5 +153,5 @@ namespace trackers
         bool isSuitableForRepeating() const;
     };
 } // namespace trackers
-} // namespace ve
+} // namespace hi
 #endif

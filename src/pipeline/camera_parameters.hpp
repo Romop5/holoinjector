@@ -6,10 +6,10 @@
 *
 *****************************************************************************/
 
-#ifndef ENHANCER_CAMERA_PARAMETERS_HPP
-#define ENHANCER_CAMERA_PARAMETERS_HPP
+#ifndef HI_CAMERA_PARAMETERS_HPP
+#define HI_CAMERA_PARAMETERS_HPP
 
-namespace ve
+namespace hi
 {
 namespace pipeline
 {
@@ -30,6 +30,6 @@ namespace pipeline
     };
 
 } // namespace pipeline
-} // namespace ve
+} // namespace hi
 
 #endif

@@ -19,8 +19,8 @@
 
 #include "logger.hpp"
 
-using namespace ve;
-using namespace ve::pipeline;
+using namespace hi;
+using namespace hi::pipeline;
 
 //-----------------------------------------------------------------------------
 // OutputFBOParameters
@@ -60,7 +60,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
 
     auto countOfLayers = params.getLayers();
     for (size_t i = 0; i < countOfLayers; i++)
-        m_proxyFBO.push_back(std::move(ve::utils::FBORAII(0)));
+        m_proxyFBO.push_back(std::move(hi::utils::FBORAII(0)));
 
     glGenFramebuffers(1, &m_FBOId);
     ASSERT_GL_ERROR()
@@ -121,7 +121,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
 
     auto FS = std::string(R"(
         #version 440 core
-        uniform sampler2DArray enhancer_layeredScreen;
+        uniform sampler2DArray injector_layeredScreen;
         uniform int gridXSize = 3;
         uniform int gridYSize = 3;
         uniform bool shouldDisplayGrid = false;
@@ -134,14 +134,14 @@ void OutputFBO::initialize(OutputFBOParameters params)
         {
             if(shouldSingleViewQuilt)
             {
-                color = texture(enhancer_layeredScreen, vec3(uv, singleViewID));
+                color = texture(injector_layeredScreen, vec3(uv, singleViewID));
             } else {
                 vec2 newUv = mod(vec2(gridXSize*uv.x, gridYSize*uv.y), 1.0);
                 vec2 indicesuv = vec2(uv.x, 1.0-uv.y);
                 ivec2 indices = ivec2(int(indicesuv.x*float(gridXSize)),int(indicesuv.y*float(gridYSize)));
                 int layer = (gridYSize-indices.y-1)*gridXSize+indices.x;
 
-                color = texture(enhancer_layeredScreen, vec3(newUv, layer));
+                color = texture(injector_layeredScreen, vec3(newUv, layer));
             }
             color.w = 1.0;
         }
@@ -189,7 +189,7 @@ void OutputFBO::initialize(OutputFBOParameters params)
                         rgb[i] = vec4(0.0);
                     }
                     else {
-                        rgb[i] = texture(enhancer_layeredScreen, quiltTextureCoords);
+                        rgb[i] = texture(injector_layeredScreen, quiltTextureCoords);
                     }
                 }
 
@@ -208,16 +208,16 @@ void OutputFBO::initialize(OutputFBOParameters params)
         }
     )");
 
-    auto fs = ve::utils::glShader(FS, GL_FRAGMENT_SHADER);
+    auto fs = hi::utils::glShader(FS, GL_FRAGMENT_SHADER);
     assert(fs.getID() != 0);
-    auto vs = ve::utils::glShader(VS, GL_VERTEX_SHADER);
+    auto vs = hi::utils::glShader(VS, GL_VERTEX_SHADER);
     assert(vs.getID() != 0);
 
-    auto program = ve::utils::glProgram(std::move(vs), std::move(fs));
+    auto program = hi::utils::glProgram(std::move(vs), std::move(fs));
     assert(program.getID() != 0);
     m_ViewerProgram = program.releaseID();
 
-    m_VAO = std::make_shared<ve::utils::glFullscreenVAO>();
+    m_VAO = std::make_shared<hi::utils::glFullscreenVAO>();
 
     setHoloDisplayParameters(HoloDisplayParameters {});
 }
@@ -331,7 +331,7 @@ GLuint OutputFBO::createProxyFBO(size_t layer)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     assert(status == GL_FRAMEBUFFER_COMPLETE);
 
-    m_proxyFBO[layer] = std::move(ve::utils::FBORAII(proxyFBO));
+    m_proxyFBO[layer] = std::move(hi::utils::FBORAII(proxyFBO));
     assert(m_proxyFBO[layer].getID() == proxyFBO);
     return m_proxyFBO[layer].getID();
 }

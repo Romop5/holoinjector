@@ -15,7 +15,7 @@
 #include <sstream>
 #include <string>
 
-using namespace ve;
+using namespace hi;
 
 namespace helper
 {

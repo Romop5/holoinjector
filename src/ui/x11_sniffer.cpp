@@ -11,24 +11,24 @@
 
 #include <X11/Xatom.h>
 
-using namespace ve;
+using namespace hi;
 
-void ve::X11Sniffer::registerOnKeyCallback(KeyEventHandler handler)
+void hi::X11Sniffer::registerOnKeyCallback(KeyEventHandler handler)
 {
     m_KeyEventCallback = std::move(handler);
 }
 
-void ve::X11Sniffer::registerOnMouseMoveCallback(MouseMoveHandler handler)
+void hi::X11Sniffer::registerOnMouseMoveCallback(MouseMoveHandler handler)
 {
     m_MouseEventCallback = std::move(handler);
 }
 
-void ve::X11Sniffer::registerOnButtonCallback(ButtonEventHandler handler)
+void hi::X11Sniffer::registerOnButtonCallback(ButtonEventHandler handler)
 {
     m_ButtonEventCallback = std::move(handler);
 }
 
-int ve::X11Sniffer::onXNextEvent(Display* display, XEvent* event_return)
+int hi::X11Sniffer::onXNextEvent(Display* display, XEvent* event_return)
 {
     auto anyEvent = reinterpret_cast<XAnyEvent*>(event_return);
 
@@ -99,7 +99,7 @@ int ve::X11Sniffer::onXNextEvent(Display* display, XEvent* event_return)
     return returnVal;
 }
 
-int ve::X11Sniffer::onXWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y)
+int hi::X11Sniffer::onXWarpPointer(Display* display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y)
 {
     return 0;
 }

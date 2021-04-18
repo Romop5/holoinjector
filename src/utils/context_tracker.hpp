@@ -6,8 +6,8 @@
 *
 *****************************************************************************/
 
-#ifndef VE_CONTEXT_TRACKER_HPP
-#define VE_CONTEXT_TRACKER_HPP
+#ifndef HI_CONTEXT_TRACKER_HPP
+#define HI_CONTEXT_TRACKER_HPP
 #include <cassert>
 #include <unordered_map>
 

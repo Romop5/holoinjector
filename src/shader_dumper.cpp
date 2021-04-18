@@ -8,7 +8,7 @@
 
 #include "shader_dumper.hpp"
 
-using namespace ve;
+using namespace hi;
 
 namespace helper
 {
