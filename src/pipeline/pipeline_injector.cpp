@@ -18,6 +18,14 @@
 using namespace ve;
 using namespace ve::pipeline;
 
+PipelineInjector::PipelineProcessResult PipelineInjector::identity(PipelineType input)
+{
+    PipelineProcessResult result;
+    result.wasSuccessfull = false;
+    result.pipeline = input;
+    return result;
+}
+
 PipelineInjector::PipelineProcessResult PipelineInjector::process(PipelineType input, const PipelineParams& params)
 {
     PipelineType output = input;

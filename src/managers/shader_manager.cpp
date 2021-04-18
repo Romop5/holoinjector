@@ -11,6 +11,8 @@
 
 #include "context.hpp"
 #include "logger.hpp"
+#include "diagnostics.hpp"
+
 #include "managers/shader_manager.hpp"
 #include "trackers/shader_tracker.hpp"
 
@@ -165,6 +167,12 @@ void ShaderManager::linkProgram(Context& context, GLuint programId)
     // Link the program for 1st time
     // => we can use native GLSL compiler to detect active uniforms
     //glLinkProgram(programId);
+    //
+    /* if (context.getDiagnostics().shouldNotBeIntrusive()) */
+    /* { */
+    /*     glLinkProgram(programId); */
+    /*     return; */
+    /* } */
 
     // Note: this should never happen (if we handle all glCreateProgram/Shader)
     assert(context.getManager().has(programId) && "Fatal fail: we missed glCreateShader or it's extension version");
@@ -205,8 +213,14 @@ void ShaderManager::linkProgram(Context& context, GLuint programId)
      * Inject pipeline
      */
     auto resultPipeline = plInjector.process(pipeline, parameters);
+
+    // Use application's original program when in non-intrusive mode
+    if (context.getDiagnostics().shouldNotBeIntrusive())
+    {
+        resultPipeline = plInjector.identity(pipeline);
+    }
+
     program->m_Metadata = std::move(resultPipeline.metadata);
-    program->m_Metadata->m_IsLinkedCorrectly = false;
     Logger::log("Pipeline process succeeded?: ", resultPipeline.wasSuccessfull);
 
     auto status = helper::tryCompilingShaderProgram(resultPipeline.pipeline, programId);

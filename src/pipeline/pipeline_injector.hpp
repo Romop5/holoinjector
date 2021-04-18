@@ -54,6 +54,10 @@ namespace pipeline
             std::unique_ptr<ProgramMetadata> metadata;
             std::optional<std::string> failReason;
         };
+        
+        /// Create non-modified pipeline 
+        PipelineProcessResult identity(PipelineType inputPipeline);
+
         /**
              * @brief
              *
