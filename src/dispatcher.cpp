@@ -135,9 +135,15 @@ void Dispatcher::initialize()
     {
         outParameters.gridXSize = settings.getAsSizet("gridXSize");
     }
+
     if (settings.hasKey("gridYSize"))
     {
         outParameters.gridYSize = settings.getAsSizet("gridYSize");
+    }
+
+    if (settings.hasKey("noGeometryShader"))
+    {
+        m_Context.dontInsertGeometryShader = true;
     }
 
     // Initialize hidden FBO for redirecting draws to back-buffer

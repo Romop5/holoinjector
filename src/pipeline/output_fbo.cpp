@@ -58,6 +58,12 @@ void OutputFBO::initialize(OutputFBOParameters params)
     // store params
     m_Params = params;
 
+    Logger::log("OutputFBO initialized with: ");
+    Logger::log("   - gridX: ", params.gridXSize);
+    Logger::log("   - gridX: ", params.gridYSize);
+    Logger::log("   - width: ", params.pixels_width);
+    Logger::log("   - height: ", params.pixels_height);
+
     auto countOfLayers = params.getLayers();
     for (size_t i = 0; i < countOfLayers; i++)
         m_proxyFBO.push_back(std::move(hi::utils::FBORAII(0)));

@@ -188,6 +188,8 @@ void ShaderManager::linkProgram(Context& context, GLuint programId)
     hi::pipeline::PipelineInjector::PipelineType pipeline;
     hi::pipeline::PipelineParams parameters;
 
+    // Propagate prevention of Geometry Shader insertion flag
+    parameters.shouldPreventGeometryShaderInsertion = context.dontInsertGeometryShader;
     // TODO: detect if number of invocations is supported
     parameters.countOfInvocations = context.getOutputFBO().getParams().getLayers();
     if (parameters.countOfInvocations > defaultMaximumGSInvocations)

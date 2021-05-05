@@ -102,6 +102,9 @@ public:
     /// Determines if newly create GL window should be put to background
     bool keepWindowInBackgroundFlag = false;
 
+    /// Use Vertex Shader instead of Geometry Shader
+    bool dontInsertGeometryShader = false;
+
 private:
     std::unique_ptr<ContextPimpl> pimpl;
 };

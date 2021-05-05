@@ -139,6 +139,7 @@ void Config::loadFromEnvironment(ConfigDict& dict)
         { "HI_NONINTRUSIVE", "shouldBeNonIntrusive" },
         { "HI_RUNINBG", "runInBackground" },
         { "HI_RECORDFPS", "shouldRecordFPS" },
+        { "HI_VERTEX", "noGeometryShader" },
     };
     for (const auto& entry : enviromentVariables)
     {
