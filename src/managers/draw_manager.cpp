@@ -225,7 +225,7 @@ void DrawManager::drawWithVertexShader(Context& context, const std::function<voi
         glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 
         // Single-view FBO only contains a single layer => 0
-        helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), 0);
+        helpers::uniforms::renderToSingleLayer(context.getManager().getBoundId(), cameraID);
 
         drawCallLambda();
         Logger::logDebugPerFrame(dumpDrawContext(context), "drawVS: layer: ", cameraID,
