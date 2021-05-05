@@ -31,7 +31,7 @@ See [holoinjector-tests](https://github.com/Romop5/holoinjector-tests/) for exam
 
 ## Documentation
 - Link to master's thesis: SOON
-- Link to paper: SOON
+- Link to paper (Excel@FIT VUT): http://excel.fit.vutbr.cz/submissions/2021/018/18.pdf
 - Additionally, you can use Doxygen to generate an HTML representation of docs.
 
 # Bulding & Installation
