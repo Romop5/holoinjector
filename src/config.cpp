@@ -69,27 +69,27 @@ const Config::ConfigDict Config::load()
 const std::string Config::getConfigPath() const
 {
     // 1. has enviroment variable HI_CONFIG
-    if (enviroment::hasEnviromentalVariable("EHANCER_CONFIG"))
+    if (enviroment::hasEnviromentalVariable("HI_CONFIG"))
     {
         return enviroment::getEnviromentValueStr("HI_CONFIG", "");
     }
-    // 2. has enhancer.cfg in current work dir?
-    const auto relativeConfig = std::filesystem::current_path() / "enhancer.cfg";
+    // 2. has holoinjector.cfg in current work dir?
+    const auto relativeConfig = std::filesystem::current_path() / "holoinjector.cfg";
     if (std::filesystem::exists(relativeConfig))
     {
         return relativeConfig;
     }
-    // 3. has enhancer.cfg in ~/.config/enhancer/
+    // 3. has holoinjector.cfg in ~/.config/holoinjector/
     const auto homeDir = enviroment::getEnviromentValueStr("HOME", "/tmp");
-    const auto relativeHomeConfig = std::filesystem::path(homeDir) / ".config/enhancer/enhancer.cfg";
+    const auto relativeHomeConfig = std::filesystem::path(homeDir) / ".config/holoinjector/holoinjector.cfg";
     if (std::filesystem::exists(relativeHomeConfig))
     {
         return relativeHomeConfig;
     }
     // 4. search for system-wide config
-    if (std::filesystem::exists("/etc/enhancer.cfg"))
+    if (std::filesystem::exists("/etc/holoinjector.cfg"))
     {
-        return "/etc/enhancer.cfg";
+        return "/etc/holoinjector.cfg";
     }
     // if no config file was found, simply return an empty string
     return "";
@@ -100,8 +100,8 @@ void Config::loadFromFile(ConfigDict& dict, const std::string& fileName)
     static std::vector<std::pair<std::string, std::string>> keyDefaultValues = {
         { "outputXSize", "512" },
         { "outputYSize", "512" },
-        { "gridXSize", "3" },
-        { "gridYSize", "3" },
+        { "gridXSize", "5" },
+        { "gridYSize", "9" },
     };
 
     YAML::Node config = YAML::LoadFile(fileName);
