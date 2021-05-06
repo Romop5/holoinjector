@@ -261,7 +261,7 @@
 
 /// Redirect glXYZ to OpenglRedirectorBase's method
 #define OPENGL_REDIRECTOR_API(_retType, _name, _handler, ...)                                            \
-    _retType HI_API_EXPORT _name(OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__))                             \
+    _retType HI_API_EXPORT _name(OPENGL_EXPAND_PROTOTYPE(__VA_ARGS__))                                   \
     {                                                                                                    \
         OPENGL_LOG_API_CALL("" #_name, OPENGL_PACK_ARGS(OPENGL_EXPAND_ARGUMENTS(__VA_ARGS__)));          \
         if (!g_IsAlreadyInsideWrapper)                                                                   \

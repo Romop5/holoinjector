@@ -10,8 +10,8 @@
 #include <GL/gl.h>
 
 #include "context.hpp"
-#include "logger.hpp"
 #include "diagnostics.hpp"
+#include "logger.hpp"
 
 #include "managers/shader_manager.hpp"
 #include "trackers/shader_tracker.hpp"

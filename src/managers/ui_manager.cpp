@@ -115,10 +115,9 @@ void UIManager::registerCallbacks(Context& context)
         "Hide GUI", "");
 
     context.getSettingsWidget().registerInputItem<void*>([this, &context](auto) {
-            shouldRenderInspector = !shouldRenderInspector;
+        shouldRenderInspector = !shouldRenderInspector;
     },
         "Show Debug Inspector", "");
-
 }
 
 void UIManager::onKeyPressed(Context& context, size_t keySym)
