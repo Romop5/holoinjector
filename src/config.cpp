@@ -117,6 +117,18 @@ void Config::loadFromFile(ConfigDict& dict, const std::string& fileName)
             dict[key] = defaultValue;
         }
     }
+
+    for(const auto key: config)
+    {
+        std::string strKey, strValue;
+        strKey = key.first.as<std::string>();
+        strValue = key.second.as<std::string>();
+
+        if(dict.count(strKey) == 0)
+        {
+            dict[strKey] = strValue;
+        }
+    }
     // Store default values
     std::ofstream fout(fileName);
     fout << config;
