@@ -128,7 +128,7 @@ void Dispatcher::initialize()
 
     if (settings.hasKey("outputYSize"))
     {
-        outParameters.pixels_width = settings.getAsSizet("outputYSize");
+        outParameters.pixels_height= settings.getAsSizet("outputYSize");
     }
 
     if (settings.hasKey("gridXSize"))
