@@ -32,6 +32,7 @@ namespace managers
     private:
         void registerCallbacks(Context& context);
         std::unique_ptr<InspectorWidget> inspectorWidget;
+        bool shouldRenderInspector = false;
     };
 }
 }

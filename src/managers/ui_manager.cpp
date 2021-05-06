@@ -113,6 +113,12 @@ void UIManager::registerCallbacks(Context& context)
         context.getGui().setVisibility(!context.getGui().isVisible());
     },
         "Hide GUI", "");
+
+    context.getSettingsWidget().registerInputItem<void*>([this, &context](auto) {
+            shouldRenderInspector = !shouldRenderInspector;
+    },
+        "Show Debug Inspector", "");
+
 }
 
 void UIManager::onKeyPressed(Context& context, size_t keySym)
@@ -151,7 +157,7 @@ void UIManager::onKeyPressed(Context& context, size_t keySym)
 void UIManager::onDraw(Context& context)
 {
     context.getSettingsWidget().draw();
-    if (inspectorWidget)
+    if (inspectorWidget && shouldRenderInspector)
     {
         inspectorWidget->onDraw();
     }
