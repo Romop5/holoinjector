@@ -98,10 +98,10 @@ const std::string Config::getConfigPath() const
 void Config::loadFromFile(ConfigDict& dict, const std::string& fileName)
 {
     static std::vector<std::pair<std::string, std::string>> keyDefaultValues = {
-        { "outputXSize", "512" },
-        { "outputYSize", "512" },
-        { "gridXSize", "5" },
-        { "gridYSize", "9" },
+        { "fboWidth", "512" },
+        { "fboHeight", "512" },
+        { "quiltX", "5" },
+        { "quiltY", "9" },
     };
 
     YAML::Node config = YAML::LoadFile(fileName);
@@ -141,17 +141,17 @@ void Config::loadFromEnvironment(ConfigDict& dict)
         { "HI_NOW", "now" },
         { "HI_QUILT", "quilt" },
         { "HI_WIDE", "wide" },
-        { "HI_QUILTX", "gridXSize" },
-        { "HI_QUILTY", "gridYSize" },
-        { "HI_FBOWIDTH", "outputXSize" },
-        { "HI_FBOHEIGHT", "outputYSize" },
-        { "HI_EXIT_AFTER", "exitAfterFrames" },
-        { "HI_CAMERAID", "onlyShownCameraID" },
-        { "HI_SCREENSHOT", "screenshotFormatString" },
-        { "HI_NONINTRUSIVE", "shouldBeNonIntrusive" },
-        { "HI_RUNINBG", "runInBackground" },
-        { "HI_RECORDFPS", "shouldRecordFPS" },
-        { "HI_VERTEX", "noGeometryShader" },
+        { "HI_QUILTX", "quiltX" },
+        { "HI_QUILTY", "quiltY" },
+        { "HI_FBOWIDTH", "fboWidth" },
+        { "HI_FBOHEIGHT", "fboHeight" },
+        { "HI_EXIT_AFTER", "exitAfter" },
+        { "HI_CAMERAID", "cameraID" },
+        { "HI_SCREENSHOT", "screenshot" },
+        { "HI_NONINTRUSIVE", "nonIntrusive" },
+        { "HI_RUNINBG", "runInBg" },
+        { "HI_RECORDFPS", "recordFPS" },
+        { "HI_VERTEX", "vertex" },
     };
     for (const auto& entry : enviromentVariables)
     {

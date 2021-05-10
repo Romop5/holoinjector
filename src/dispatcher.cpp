@@ -81,7 +81,7 @@ void Dispatcher::initialize()
     }
 
     // Prevent application displaying Window (useful for scripts)
-    if (settings.hasKey("runInBackground"))
+    if (settings.hasKey("runInBg"))
     {
         m_Context.keepWindowInBackgroundFlag = true;
     }
@@ -91,57 +91,57 @@ void Dispatcher::initialize()
         m_Context.getOutputFBO().toggleGridView();
     }
 
-    if (settings.hasKey("exitAfterFrames"))
+    if (settings.hasKey("exitAfter"))
     {
-        m_Context.getDiagnostics().setTerminationAfterFrame(settings.getAsSizet("exitAfterFrames"));
+        m_Context.getDiagnostics().setTerminationAfterFrame(settings.getAsSizet("exitAfter"));
     }
 
     /*
      * DIAGNOSTIC
      */
-    if (settings.hasKey("onlyShownCameraID"))
+    if (settings.hasKey("cameraID"))
     {
-        m_Context.getDiagnostics().setOnlyVirtualCamera(settings.getAsSizet("onlyShownCameraID"));
+        m_Context.getDiagnostics().setOnlyVirtualCamera(settings.getAsSizet("cameraID"));
     }
 
-    if (settings.hasKey("screenshotFormatString"))
+    if (settings.hasKey("screenshot"))
     {
-        m_Context.getDiagnostics().setScreenshotFormat(settings.getAsString("screenshotFormatString"));
+        m_Context.getDiagnostics().setScreenshotFormat(settings.getAsString("screenshot"));
     }
 
-    if (settings.hasKey("shouldBeNonIntrusive"))
+    if (settings.hasKey("nonIntrusive"))
     {
         m_Context.getDiagnostics().setNonIntrusiveness(true);
     }
 
-    if (settings.hasKey("shouldRecordFPS"))
+    if (settings.hasKey("recordFPS"))
     {
         m_Context.getDiagnostics().setFPSMeasuringState(true);
     }
 
     // Initialize oputput FBO
     hi::pipeline::OutputFBOParameters outParameters;
-    if (settings.hasKey("outputXSize"))
+    if (settings.hasKey("fboWidth"))
     {
-        outParameters.pixels_width = settings.getAsSizet("outputXSize");
+        outParameters.pixels_width = settings.getAsSizet("fboWidth");
     }
 
-    if (settings.hasKey("outputYSize"))
+    if (settings.hasKey("fboHeight"))
     {
-        outParameters.pixels_height= settings.getAsSizet("outputYSize");
+        outParameters.pixels_height= settings.getAsSizet("fboHeight");
     }
 
-    if (settings.hasKey("gridXSize"))
+    if (settings.hasKey("quiltX"))
     {
-        outParameters.gridXSize = settings.getAsSizet("gridXSize");
+        outParameters.gridXSize = settings.getAsSizet("quiltX");
     }
 
-    if (settings.hasKey("gridYSize"))
+    if (settings.hasKey("quiltY"))
     {
-        outParameters.gridYSize = settings.getAsSizet("gridYSize");
+        outParameters.quiltY = settings.getAsSizet("quiltY");
     }
 
-    if (settings.hasKey("noGeometryShader"))
+    if (settings.hasKey("vertex"))
     {
         m_Context.dontInsertGeometryShader = true;
     }
