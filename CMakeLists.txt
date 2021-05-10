@@ -123,6 +123,7 @@ add_library(injector_core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/program_metadata.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/output_fbo.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/output_fbo.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/pipeline/shader_profile.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/diagnostics.cpp

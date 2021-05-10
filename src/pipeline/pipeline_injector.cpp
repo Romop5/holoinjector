@@ -18,6 +18,11 @@
 using namespace hi;
 using namespace hi::pipeline;
 
+PipelineInjector::PipelineInjector(ShaderProfile& profileInst) :
+    profiles { profileInst }
+{
+}
+
 PipelineInjector::PipelineProcessResult PipelineInjector::identity(PipelineType input)
 {
     PipelineProcessResult result;
@@ -404,12 +409,22 @@ PipelineInjector::PipelineType PipelineInjector::injectVertexShader(const Pipeli
 
 bool PipelineInjector::injectShader(std::string& sourceCode, ProgramMetadata& outMetadata)
 {
+    // Inspect shader: find all assignments to gl_Position and detect transformation name
     ShaderInspector inspector(sourceCode);
     auto statements = inspector.findAllOutVertexAssignments();
     auto transformationName = inspector.getTransformationUniformName(statements);
-    //if(transformationName.empty())
-    //    return false;
 
+    auto shaderHash = utils::computeHash(sourceCode);
+    // If user has provided a profile for this shader, then override detected information
+    if (profiles.hasProfile(shaderHash))
+    {
+        // Use information from user-defined profile
+        const auto profile = profiles.getProfile(shaderHash);
+        if (!profile.transformationMatrixName.empty())
+            transformationName = profile.transformationMatrixName;
+    }
+
+    // Prepare metadata
     outMetadata.m_TransformationMatrixName = transformationName;
     outMetadata.m_IsClipSpaceTransform = inspector.isClipSpaceShader();
     outMetadata.m_HasAnyFtransform = inspector.hasFtransform();

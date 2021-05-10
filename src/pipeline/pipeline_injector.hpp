@@ -15,6 +15,7 @@
 #include <unordered_map>
 
 #include "pipeline/program_metadata.hpp"
+#include "pipeline/shader_profile.hpp"
 
 namespace hi
 {
@@ -45,7 +46,7 @@ namespace pipeline
     class PipelineInjector
     {
     public:
-        PipelineInjector() = default;
+        explicit PipelineInjector(ShaderProfile& profileInst);
         using PipelineType = std::unordered_map<GLenum, std::string>;
         struct PipelineProcessResult
         {
@@ -89,6 +90,8 @@ namespace pipeline
         PipelineType injectVertexShader(const PipelineType& pipeline, const PipelineParams params);
 
         bool injectShader(std::string& sourceCode, ProgramMetadata& outMetadata);
+
+        ShaderProfile& profiles;
     };
 } //namespace pipeline
 } //namespace hi

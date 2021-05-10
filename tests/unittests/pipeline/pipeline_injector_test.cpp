@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "pipeline/pipeline_injector.hpp"
+#include "pipeline/shader_profile.hpp"
 #include <GL/gl.h>
 using namespace hi;
 using namespace hi::pipeline;
@@ -26,7 +27,8 @@ namespace helper
 namespace {
 TEST(PipelineInjector, Insertion) {
 
-    PipelineInjector injector;
+    ShaderProfile profiles;
+    PipelineInjector injector(profiles);
 
     PipelineInjector::PipelineType input =
     {
@@ -62,7 +64,8 @@ TEST(PipelineInjector, Insertion) {
 }
 TEST(PipelineInjector, Injection) {
 
-    PipelineInjector injector;
+    ShaderProfile profiles;
+    PipelineInjector injector(profiles);
 
     PipelineInjector::PipelineType input =
     {
@@ -116,7 +119,8 @@ TEST(PipelineInjector, Injection) {
 
 TEST(PipelineInjector, InOutTest) {
 
-    PipelineInjector injector;
+    ShaderProfile profiles;
+    PipelineInjector injector(profiles);
 
     PipelineInjector::PipelineType input =
     {

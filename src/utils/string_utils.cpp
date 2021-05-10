@@ -7,6 +7,7 @@
 *****************************************************************************/
 
 #include "utils/string_utils.hpp"
+#include <functional>
 
 using namespace hi::utils;
 
@@ -42,4 +43,12 @@ std::string hi::utils::regex_replace_identifiers(const std::string str, const st
             return functor();
         return str;
     });
+}
+
+
+size_t hi::utils::computeHash(const std::string str)
+{
+    // Note: std::hash is implementation-dependent -> this could be replacedwith SHA1/MD5 instead 
+    // See note in https://en.cppreference.com/w/cpp/utility/hash
+    return std::hash<std::string>{}(str);
 }

@@ -184,7 +184,7 @@ void ShaderManager::linkProgram(Context& context, GLuint programId)
     /*
      *  Create pipeline injector with correct parameters (number of vies)
      */
-    hi::pipeline::PipelineInjector plInjector;
+    hi::pipeline::PipelineInjector plInjector(context.getProfiles());
     hi::pipeline::PipelineInjector::PipelineType pipeline;
     hi::pipeline::PipelineParams parameters;
 

@@ -19,6 +19,7 @@
 #include "pipeline/output_fbo.hpp"
 #include "pipeline/viewport_area.hpp"
 #include "pipeline/virtual_cameras.hpp"
+#include "pipeline/shader_profile.hpp"
 
 #include "diagnostics.hpp"
 #include "imgui_adapter.hpp"
@@ -44,6 +45,9 @@ public:
     hi::pipeline::VirtualCameras m_cameras;
     /// Provides interface for system testing
     Diagnostics m_diagnostics;
+
+    /// User-defined shader profiles
+    hi::pipeline::ShaderProfile m_profiles;
 
     /// Dear ImGUI Adapter
     ImguiAdapter m_gui;
@@ -104,9 +108,15 @@ hi::pipeline::VirtualCameras& Context::getCameras()
 {
     return pimpl->m_cameras;
 }
+
 Diagnostics& Context::getDiagnostics()
 {
     return pimpl->m_diagnostics;
+}
+
+hi::pipeline::ShaderProfile& Context::getProfiles()
+{
+    return pimpl->m_profiles;
 }
 
 ImguiAdapter& Context::getGui()

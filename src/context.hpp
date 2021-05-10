@@ -17,6 +17,7 @@ namespace pipeline
     class VirtualCameras;
     class ViewportArea;
     class OutputFBO;
+    class ShaderProfile;
 }
 
 class Diagnostics;
@@ -55,6 +56,8 @@ public:
     hi::pipeline::VirtualCameras& getCameras();
     /// Provides interface for system testing
     Diagnostics& getDiagnostics();
+    /// User-defined shader profiles
+    hi::pipeline::ShaderProfile& getProfiles();
 
     /* ------------------------------------------------------------------------
      *  UI
