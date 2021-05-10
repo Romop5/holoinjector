@@ -414,15 +414,6 @@ bool PipelineInjector::injectShader(std::string& sourceCode, ProgramMetadata& ou
     auto statements = inspector.findAllOutVertexAssignments();
     auto transformationName = inspector.getTransformationUniformName(statements);
 
-    auto shaderHash = utils::computeHash(sourceCode);
-    // If user has provided a profile for this shader, then override detected information
-    if (profiles.hasProfile(shaderHash))
-    {
-        // Use information from user-defined profile
-        const auto profile = profiles.getProfile(shaderHash);
-        if (!profile.transformationMatrixName.empty())
-            transformationName = profile.transformationMatrixName;
-    }
 
     // Prepare metadata
     outMetadata.m_TransformationMatrixName = transformationName;
@@ -431,7 +422,20 @@ bool PipelineInjector::injectShader(std::string& sourceCode, ProgramMetadata& ou
     outMetadata.m_InterfaceBlockName = inspector.getUniformBlockName(outMetadata.m_TransformationMatrixName);
     outMetadata.m_HasAnyUniform = (inspector.getCountOfUniforms() > 0);
 
-    if (!transformationName.empty())
+    // Use user overrides if provieded
+    auto shaderHash = utils::computeHash(sourceCode);
+    // If user has provided a profile for this shader, then override detected information
+    if (profiles.hasProfile(shaderHash))
+    {
+        // Use information from user-defined profile
+        const auto profile = profiles.getProfile(shaderHash);
+        if (!profile.transformationMatrixName.empty())
+            outMetadata.m_TransformationMatrixName = profile.transformationMatrixName;
+        if (profile.shouldMakeProgramInvisible.has_value())
+            outMetadata.m_IsInvisible = profile.shouldMakeProgramInvisible.value();
+    }
+
+    if (!outMetadata.m_TransformationMatrixName.empty())
     {
         sourceCode = inspector.injectShader(statements);
         return true;

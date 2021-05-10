@@ -15,6 +15,9 @@ namespace
         YAML::Node profile;
         if (!entry.transformationMatrixName.empty())
             profile["transformationMatrixName"] = entry.transformationMatrixName;
+
+        if (entry.shouldMakeProgramInvisible.has_value())
+            profile["shouldMakeProgramInvisible"] = entry.shouldMakeProgramInvisible.value();
         return profile;
     }
 
@@ -25,6 +28,11 @@ namespace
         {
             result.transformationMatrixName = config["transformationMatrixName"].as<std::string>();
             hi::Logger::logDebug("[ShaderProfile] Found transformationMatrixName: ", result.transformationMatrixName);
+        }
+        if (config["shouldMakeProgramInvisible"])
+        {
+            result.shouldMakeProgramInvisible = config["shouldMakeProgramInvisible"].as<bool>();
+            hi::Logger::logDebug("[ShaderProfile] Found shouldMakeProgramInvisible: ", result.shouldMakeProgramInvisible.value());
         }
         return result;
     }

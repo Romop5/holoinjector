@@ -11,6 +11,7 @@
 
 #include <map>
 #include <filesystem>
+#include <optional>
 
 namespace hi
 {
@@ -19,6 +20,7 @@ namespace pipeline
     struct ProfileEntry
     {
         std::string transformationMatrixName;
+        std::optional<bool> shouldMakeProgramInvisible;
     };
     /*
      * @brief Provides user-defined settings for given shader
