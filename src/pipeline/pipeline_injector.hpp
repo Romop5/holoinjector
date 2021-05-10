@@ -6,8 +6,8 @@
 *
 *****************************************************************************/
 
-#ifndef PIPELINE_INJECTOR_HPP
-#define HI_PIPELINEINJECTOR_HPP
+#ifndef HI_PIPELINE_INJECTOR_HPP
+#define HI_PIPELINE_INJECTOR_HPP
 
 #include <GL/gl.h>
 #include <memory>

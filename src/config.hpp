@@ -6,8 +6,8 @@
 *
 *****************************************************************************/
 
-#ifndef CONFIG_HPP
-#define HI_CONFIGHPP
+#ifndef HI_CONFIG_HPP
+#define HI_CONFIG_HPP
 #include <string>
 #include <unordered_map>
 namespace hi

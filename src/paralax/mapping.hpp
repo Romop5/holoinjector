@@ -6,8 +6,8 @@
 *
 *****************************************************************************/
 
-#ifndef PARALAX_MAPPING_HPP
-#define HI_PARALAXMAPPING_HPP
+#ifndef HI_PARALAX_MAPPING_HPP
+#define HI_PARALAX_MAPPING_HPP
 
 #include <memory>
 

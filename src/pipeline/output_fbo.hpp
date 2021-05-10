@@ -6,8 +6,8 @@
 *
 *****************************************************************************/
 
-#ifndef REPEATER_OUTPUT_FBO_HPP
-#define REPEATER_OUTPUT_FBO_HPP
+#ifndef HI_REPEATER_OUTPUT_FBO_HPP
+#define HI_REPEATER_OUTPUT_FBO_HPP
 
 #include "GL/gl.h"
 #include "paralax/mapping.hpp"
