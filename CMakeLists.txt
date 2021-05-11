@@ -184,7 +184,7 @@ set_target_properties(injector_core PROPERTIES CXX_VISIBILITY_PRESET "hidden")
 set_target_properties(injector_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
 target_link_libraries(injector_core PUBLIC GL GLU GLEW glm ${FREEIMAGE_LIBRARIES}
-    yaml-cpp )
+  yaml-cpp ${IMGUI_LIB})
 target_include_directories(injector_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${FREEIMAGE_INCLUDE_DIR})
 target_compile_features(injector_core PUBLIC cxx_std_17)
