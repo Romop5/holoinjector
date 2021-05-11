@@ -138,7 +138,7 @@ void Dispatcher::initialize()
 
     if (settings.hasKey("quiltY"))
     {
-        outParameters.quiltY = settings.getAsSizet("quiltY");
+        outParameters.gridYSize = settings.getAsSizet("quiltY");
     }
 
     if (settings.hasKey("vertex"))
