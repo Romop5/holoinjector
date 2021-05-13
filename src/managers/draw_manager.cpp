@@ -39,6 +39,8 @@ namespace uniforms
          */
     void renderToSingleLayer(size_t shaderId, size_t layerID)
     {
+        if(shaderId == 0)
+            return;
         CLEAR_GL_ERROR();
         auto loc = glGetUniformLocation(shaderId, "injector_isSingleViewActivated");
         glUniform1i(loc, true);
